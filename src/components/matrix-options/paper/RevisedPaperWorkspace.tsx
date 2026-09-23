@@ -1,14 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { MouseEvent, ReactNode, Ref } from 'react';
-import { Download, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
-import { createPortal } from 'react-dom';
+import type { CSSProperties, MouseEvent, ReactNode, Ref } from 'react';
+import { ChevronDown, Download, Info, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, RotateCcw } from 'lucide-react';
 
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
 import type { CohortId, CohortManifest } from '@/lib/matrix-options/cohort-contract';
 import type { CohortPortion } from '@/lib/matrix-options/paper/cohort-portions';
 import { stripStandaloneSectionAnchorLines } from '@/lib/matrix-options/paper/full-document';
+import { maxPanelWidth, readPanelPreferences, resolvePanelWidths, writePanelPreferences } from '@/lib/matrix-options/paper/panel-layout';
+import type { PanelPreferences, PanelSide } from '@/lib/matrix-options/paper/panel-layout';
+import { buildReviewNavigation, portionMatchesQuestion } from '@/lib/matrix-options/paper/review-navigation';
 import { PAPER_LANDING_TOLERANCE_PX, PaperScrollAuthority, panelRevealScrollDelta } from '@/lib/matrix-options/paper/scroll-authority';
 import type { PaperRevealCause } from '@/lib/matrix-options/paper/scroll-authority';
 import { owningSectionIndex } from '@/lib/matrix-options/paper/section-window';
@@ -23,8 +25,9 @@ import { CohortReviewNav } from './CohortReviewNav';
 import { PAPER_STICKY_HEADER_HEIGHT_VAR } from './PaperChunkSection';
 import { isPlainPrimaryClick, PaperOutlineNav } from './PaperOutlineNav';
 import type { PaperOutlineNavEntry } from './PaperOutlineNav';
-import { PaperRail, PaperRailToggle, PAPER_SHELL_CLASSES } from './PaperRail';
-import { PaperLoadFullDocumentControl, PaperSectionWindowView, usePaperSectionWindow } from './PaperSectionWindow';
+import { PanelResizeHandle, PaperRail, PaperRailToggle, PAPER_LEFT_WIDTH_VAR, PAPER_RIGHT_WIDTH_VAR, PAPER_SHELL_CLASSES } from './PaperRail';
+import { PaperPopover } from './PaperPopover';
+import { PaperDocumentToolbar, PaperSectionWindowView, usePaperSectionWindow } from './PaperSectionWindow';
 import type { PaperSectionWindowData } from './PaperSectionWindow';
 import { PaperText, portionHeadingOffset } from './PaperText';
 import { isLgViewport } from './paper-viewport';
@@ -58,6 +61,7 @@ export interface RevisedPaperWorkspaceProps {
 export const PAPER_NAVIGATION_RAIL_ID = 'paper-navigation-rail';
 export const PAPER_REVIEW_COMMENTS_RAIL_ID = 'paper-review-comments-rail';
 export const PAPER_DOWNLOAD_PANEL_ID = 'paper-download-files-panel';
+export const PAPER_ABOUT_PANEL_ID = 'paper-about-draft-panel';
 export const PAPER_DOCUMENT_COLUMN_ID = 'paper-document-column';
 export { PAPER_LG_MEDIA_QUERY } from './paper-viewport';
 
@@ -78,7 +82,7 @@ export {
   panelRevealScrollDelta,
 } from '@/lib/matrix-options/paper/scroll-authority';
 
-type PanelKey = 'navigation' | 'review-comments' | 'download';
+type PanelKey = 'navigation' | 'review-comments';
 
 export function normalizeReaderTextForDisplay(text: string): string {
   return stripStandaloneSectionAnchorLines(text);
@@ -238,37 +242,47 @@ function pushUrlState(state: PaperUrlState): void {
   window.history.pushState(window.history.state, '', `${window.location.pathname}${serializePaperUrlState(state)}`);
 }
 
-function CohortPaperPortion({ cohort, portion, headingRef, headingId = 'cohort-paper-heading' }: { readonly cohort: CohortManifest['cohorts'][number] | undefined; readonly portion: CohortPortion | undefined; readonly headingRef: Ref<HTMLHeadingElement>; readonly headingId?: string }) {
-  if (!cohort || !portion) return <section data-testid="cohort-paper" aria-labelledby={headingId} className="rounded-xl border border-sky-200 bg-sky-50 p-5 dark:border-sky-900 dark:bg-sky-950"><h2 ref={headingRef} tabIndex={-1} id={headingId} className="text-lg font-bold">Selected cohort paper</h2><p className="mt-2 text-sm">No authenticated paper portion is available for this cohort.</p></section>;
-  if (portion.status === 'unavailable') return <section data-testid="cohort-paper" aria-labelledby={headingId} className="min-w-0 border-y border-amber-300 py-5 dark:border-amber-800 print:hidden"><p className="text-xs font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">Paper section unavailable</p><h2 ref={headingRef} tabIndex={-1} id={headingId} className="mt-1 text-xl font-bold">{portion.sectionLabel ?? `Section ${portion.sectionNumber}`}</h2><p className="mt-2 text-sm text-slate-700 dark:text-slate-200">Section {portion.sectionNumber} is referenced by this review cohort but is not present as a section in this release.</p><p className="mt-2 break-words text-xs text-slate-600 dark:text-slate-300">Source locator: {portion.sourceLocator}. No paper bytes are attached.</p></section>;
-  const displayPortionText = portion.text ? normalizeReaderTextForDisplay(portion.text) : '';
-  return <section data-testid="cohort-paper" aria-labelledby={headingId} className="min-w-0 border-y border-sky-200 py-5 dark:border-sky-900 print:hidden">
-    <p className="text-xs font-bold uppercase tracking-wide text-sky-800 dark:text-sky-200">Authenticated paper portion</p>
-    <h2 ref={headingRef} tabIndex={-1} id={headingId} className="mt-1 text-xl font-bold">{portion.sectionLabel ?? cohort.name}</h2>
-    <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{cohort.purpose}</p>
-    <p className="mt-2 break-words text-xs text-slate-600 dark:text-slate-300">Authenticated source: {portion.sourceNodeId ?? 'section unavailable'}; bytes {portion.startByte ?? 'unavailable'}-{portion.endByte ?? 'unavailable'}. Five cohorts remain proposed pending owner QP approval.</p>
+function CohortPaperPortion({ cohort, portion, headingRef, headingId = 'cohort-paper-heading', documentVersion, questionId = null }: { readonly cohort: CohortManifest['cohorts'][number] | undefined; readonly portion: CohortPortion | undefined; readonly headingRef: Ref<HTMLHeadingElement>; readonly headingId?: string; readonly documentVersion: string; readonly questionId?: string | null }) {
+  if (!cohort || !portion) return <section data-testid="cohort-paper" aria-labelledby={headingId} className="rounded-md border border-[var(--db-border)] p-5"><h2 ref={headingRef} tabIndex={-1} id={headingId} className="text-lg font-semibold">{cohort?.name ?? 'Review topic'}</h2><p className="mt-2 text-sm text-[var(--db-text-secondary)]">No paper section is linked to this topic yet.</p></section>;
+  if (portion.status === 'unavailable') return <section data-testid="cohort-paper" aria-labelledby={headingId} className="min-w-0 rounded-md border border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] p-5 print:hidden"><h2 ref={headingRef} tabIndex={-1} id={headingId} className="text-lg font-semibold">{portion.sectionLabel ?? `Section ${portion.sectionNumber}`}</h2><p className="mt-2 text-sm">Section {portion.sectionNumber} is referenced by this review topic but is not part of this draft.</p></section>;
+  const title = portion.sectionLabel ?? cohort.name;
+  const displayPortionText = portion.text ? stripLeadingHeading(normalizeReaderTextForDisplay(portion.text), title) : '';
+  return <section data-testid="cohort-paper" aria-labelledby={headingId} className="min-w-0 print:hidden">
+    <header className="flex min-w-0 flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-[var(--db-border)] pb-3">
+      <div className="min-w-0">
+        <p className="text-xs text-[var(--db-text-secondary)]">{cohort.name}</p>
+        <h2 ref={headingRef} tabIndex={-1} id={headingId} className="mt-0.5 scroll-mt-[calc(var(--paper-sticky-header-height,6rem)+0.5rem)] text-xl font-semibold leading-snug focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]">{title}</h2>
+      </div>
+      {portion.sectionAnchor ? <OpenInWorkingDraftLink documentVersion={documentVersion} sectionAnchor={portion.sectionAnchor} title={title} questionId={questionId} /> : null}
+    </header>
     <PaperText markdown={displayPortionText} className="mt-4" headingOffset={portionHeadingOffset(displayPortionText)} headingVariant="portion" />
   </section>;
 }
 
-/** PLAN-R4 3.B.2: per-portion canonical return link, built by the existing url-state serializer. */
-function OpenInWorkingDraftLink({ documentVersion, sectionAnchor }: { readonly documentVersion: string; readonly sectionAnchor: string }) {
-  const href = paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: null, section: sectionAnchor });
-  return <a href={href} className="mt-2 inline-flex min-h-[44px] items-center rounded-md border border-sky-300 px-3 text-sm font-semibold text-sky-800 underline dark:border-sky-700 dark:text-sky-200 print:hidden">Open in Working Draft</a>;
+/**
+ * The portion header already shows the section title, so a first markdown
+ * heading with exactly that text is dropped from the body instead of being
+ * shown twice. Display only: the paper bytes are untouched.
+ */
+export function stripLeadingHeading(markdown: string, title: string): string {
+  const match = /^\s*#{1,6}[ \t]+(.+?)[ \t]*#*[ \t]*(?:\r?\n|$)/.exec(markdown);
+  if (!match || match[1].trim() !== title.trim()) return markdown;
+  return markdown.slice(match[0].length);
+}
+
+/** PLAN-R4 3.B.2: per-portion canonical return link, built by the existing url-state serializer; it names what it opens. */
+function OpenInWorkingDraftLink({ documentVersion, sectionAnchor, title, questionId }: { readonly documentVersion: string; readonly sectionAnchor: string; readonly title: string; readonly questionId: string | null }) {
+  // Carries the active question, so the review panel beside the Working Draft keeps it.
+  const href = paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: questionId, section: sectionAnchor });
+  return <a href={href} data-testid="open-in-working-draft" className="inline-flex min-h-[44px] max-w-full shrink-0 items-center rounded-md px-2 text-sm font-medium text-[var(--db-accent-strong)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] print:hidden">Open &quot;{title}&quot; in Working Draft</a>;
 }
 
 function CohortPortionsUnavailable({ workingDraftHref }: { readonly workingDraftHref: string }) {
-  return <section data-testid="cohort-portions-unavailable" aria-labelledby="cohort-portions-unavailable-heading" className="rounded-xl border border-amber-300 bg-amber-50 p-5 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
-    <h2 id="cohort-portions-unavailable-heading" className="text-lg font-bold">Cohort paper portions unavailable</h2>
-    <p role="status" className="mt-2 text-sm">Authenticated cohort paper portions were not provided for this release, so My Review shows no paper text. The full paper remains available in the Working Draft.</p>
-    <a href={workingDraftHref} className="mt-3 inline-flex min-h-[44px] items-center rounded-md border border-amber-400 px-3 text-sm font-semibold underline dark:border-amber-700">Open the Working Draft</a>
+  return <section data-testid="cohort-portions-unavailable" aria-labelledby="cohort-portions-unavailable-heading" className="rounded-md border border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] p-5">
+    <h2 id="cohort-portions-unavailable-heading" className="text-lg font-semibold">Review sections unavailable</h2>
+    <p role="status" className="mt-2 text-sm">The paper sections for each review topic could not be loaded, so My Review shows no paper text. The full paper is available in the Working Draft.</p>
+    <a href={workingDraftHref} className="mt-3 inline-flex min-h-[44px] items-center rounded-md border border-[var(--db-border-strong)] px-3 text-sm font-medium underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]">Open the Working Draft</a>
   </section>;
-}
-
-function assignmentStateLabel(assignment: AssignmentState): string {
-  if (assignment.state === 'ASSIGNMENT_UNAVAILABLE') return 'Assignment unavailable';
-  if (assignment.state === 'NO_ASSIGNMENT') return 'No assignment';
-  return 'Assigned';
 }
 
 function assignmentSourceLabel(assignment: AssignmentState): string {
@@ -316,16 +330,51 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
   const portions = useMemo(() => cohortPortions ?? [], [cohortPortions]);
   const portionsProvided = cohortPortions !== undefined && cohortPortions.length > 0;
   const workingDraftHref = paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: null, section: null });
-  const myReviewHref = paperWorkspaceHref(documentVersion, { mode: 'my-review', cohort: null, q: null, section: null });
 
-  const [headerActionsHost, setHeaderActionsHost] = useState<HTMLElement | null>(null);
-  const [headerActionsReady, setHeaderActionsReady] = useState(false);
+  /*
+   * The ONE navigation model (review-navigation.ts): topics = cohorts, each
+   * question's cited paper sections, and the most-specific section <-> question
+   * mapping both panels read. Nothing below special-cases a question.
+   */
+  const navigation = useMemo(() => buildReviewNavigation(cohortManifest, reviewerGuide, outline ?? []), [cohortManifest, reviewerGuide, outline]);
   const [navigationOpen, setNavigationOpen] = useState(true);
   const [reviewCommentsOpen, setReviewCommentsOpen] = useState(true);
   const [downloadOpen, setDownloadOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const navigationToggleRef = useRef<HTMLButtonElement>(null);
   const reviewCommentsToggleRef = useRef<HTMLButtonElement>(null);
   const downloadToggleRef = useRef<HTMLButtonElement>(null);
+  const aboutToggleRef = useRef<HTMLButtonElement>(null);
+  /*
+   * Adjustable panels (panel-layout.ts). Preferences are per device
+   * (localStorage), read after mount so server and first client render agree;
+   * `draftPreferences` carries a drag in progress so it is only persisted when
+   * the pointer is released.
+   */
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const [layoutWidth, setLayoutWidth] = useState(0);
+  const [panelPreferences, setPanelPreferences] = useState<PanelPreferences>({});
+  const [draftPreferences, setDraftPreferences] = useState<PanelPreferences | null>(null);
+  const [resizing, setResizing] = useState(false);
+  const [sectionNote, setSectionNote] = useState<string | null>(null);
+  /** Set after mount: the server-rendered header controls do nothing until hydration, so tests (and tooling) can wait for this. */
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
+  /** Download results, announced outside the popover so they are heard even after it closes. */
+  const [downloadAnnouncement, setDownloadAnnouncement] = useState('');
+  // Clear first, so the same message (a second download of the same file) is announced again.
+  const announceTimerRef = useRef<number | null>(null);
+  const announceDownload = useCallback((message: string) => {
+    if (announceTimerRef.current !== null) window.clearTimeout(announceTimerRef.current);
+    setDownloadAnnouncement('');
+    announceTimerRef.current = window.setTimeout(() => {
+      announceTimerRef.current = null;
+      setDownloadAnnouncement(message);
+    }, 60);
+  }, []);
+  useEffect(() => () => {
+    if (announceTimerRef.current !== null) window.clearTimeout(announceTimerRef.current);
+  }, []);
   const navigationHeadingRef = useRef<HTMLHeadingElement>(null);
   const reviewCommentsHeadingRef = useRef<HTMLHeadingElement>(null);
   /*
@@ -375,11 +424,21 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
   // identity stays in the URL unchanged (it is never rewritten or dropped) and
   // the first cohort is shown, because My Review renders portions, not the
   // full paper.
+  // The question the URL names (either mode), else -- in the Working Draft --
+  // the primary question of the section it names.
+  const initialQuestion = useMemo(() => {
+    const fromQ = navigation.questions.find((question) => question.id === urlState.q);
+    if (fromQ) return fromQ;
+    return !isMyReview && urlState.section ? navigation.questionForAnchor(urlState.section) : undefined;
+    // Initial value only; later selections are client state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const initialCohortId = useMemo<CohortId>(() => {
     const fromUrl = cohortManifest.cohorts.find((cohort) => cohort.id === urlState.cohort)?.id;
     if (fromUrl) return fromUrl;
-    const fromSection = urlState.section ? portions.find((portion) => portion.sectionAnchor === urlState.section)?.cohortId : undefined;
-    return fromSection ?? cohortManifest.cohorts[0]?.id ?? 'categories';
+    const fromSection = isMyReview && urlState.section ? portions.find((portion) => portion.sectionAnchor === urlState.section)?.cohortId : undefined;
+    const fromQuestion = initialQuestion ? cohortManifest.cohorts.find((cohort) => cohort.id === initialQuestion.topicId)?.id : undefined;
+    return fromSection ?? fromQuestion ?? cohortManifest.cohorts[0]?.id ?? 'categories';
     // Initial value only; later selections are client state.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -388,34 +447,22 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
   const selectedCohort = cohortManifest.cohorts.find((cohort) => cohort.id === selectedCohortId) ?? cohortManifest.cohorts[0];
 
   /**
-   * Which cohorts' packages the Download Files panel shows.
-   *
-   * Working Draft is the DEFAULT reading mode and shows ALL five cohorts (ten
-   * packages), grouped and labelled by cohort. It previously showed only
-   * `downloadManifests[selectedCohortId]`, and because Working Draft drops the
-   * cohort from the URL by rule and has no cohort setter, that always resolved
-   * to the FIRST cohort - leaving 8 of 10 packages unreachable in the mode most
-   * readers use.
-   *
-   * My Review stays filtered to the selected cohort, which is the mode where a
-   * cohort is actually chosen, and follows cohort state and popstate.
-   *
-   * A cohort with no verified manifest is OMITTED rather than rendered empty or
-   * fabricated; if none survive, the panel shows its pending state. Cohort is
-   * not an authorization boundary - this is presentation only, and every
-   * package still goes through the same authenticated, integrity-checked route.
+   * Download Files lists every review topic's verified PDF and DOCX, in topic
+   * order and labelled by topic ("Categories - PDF"), in both modes. (It used
+   * to show one cohort in My Review; with plain topic labels a reader can pick
+   * any topic's files directly.) A topic with no verified manifest is OMITTED
+   * rather than rendered empty or fabricated; if none survive, the popover
+   * shows its pending state. Topic is not an authorization boundary: every file
+   * still goes through the same authenticated, integrity-checked route.
    */
   const downloadGroups = useMemo(() => {
     if (!downloadManifests) return null;
-    const visible = isMyReview
-      ? cohortManifest.cohorts.filter((cohort) => cohort.id === selectedCohortId)
-      : cohortManifest.cohorts;
-    const groups = visible.flatMap((cohort) => {
+    const groups = cohortManifest.cohorts.flatMap((cohort) => {
       const manifest = downloadManifests[cohort.id];
       return manifest ? [{ cohortId: cohort.id, cohortName: cohort.name, manifest }] : [];
     });
     return groups.length > 0 ? groups : null;
-  }, [downloadManifests, isMyReview, cohortManifest, selectedCohortId]);
+  }, [downloadManifests, cohortManifest]);
 
   // PLAN-R4 3.B.3 "order is all 12 questions in cohort order": the ONE
   // canonical sequence Prev/Next, the progress count, the "Jump to topic"
@@ -429,14 +476,16 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
   );
   const selectedPortions = useMemo(() => portions.filter((portion) => portion.cohortId === selectedCohort?.id), [portions, selectedCohort]);
   const [activeQuestionNumber, setActiveQuestionNumber] = useState<number>(() => {
-    const fromUrl = reviewerGuide.questions.find((question) => question.id === urlState.q && selectedCohort?.questionNumbers.includes(question.number));
-    return fromUrl?.number ?? firstQuestionOf(reviewerGuide, selectedCohort)?.number ?? 1;
+    if (initialQuestion && selectedCohort?.questionNumbers.includes(initialQuestion.number)) return initialQuestion.number;
+    return firstQuestionOf(reviewerGuide, selectedCohort)?.number ?? 1;
   });
   const [selectedPortionId, setSelectedPortionId] = useState<string | undefined>(() => {
     const fromSection = urlState.section ? portions.find((portion) => portion.cohortId === initialCohortId && portion.sectionAnchor === urlState.section) : undefined;
     return fromSection?.id;
   });
   const [paperFocusRequest, setPaperFocusRequest] = useState(0);
+  /** Scroll (never focus) the selected portion into view: a question chosen in the review panel. */
+  const [paperRevealRequest, setPaperRevealRequest] = useState(0);
   const responseRef = useRef<HTMLElement>(null);
   // M2: portions are STACKED (PLAN-R4 3.B.2), so every rendered portion (and
   // the single "no portion for this cohort" fallback) registers its own
@@ -456,13 +505,30 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
   const [targetAnchor, setTargetAnchor] = useState<string | null>(urlState.section);
 
   useEffect(() => {
-    setHeaderActionsHost(document.getElementById('matrix-options-paper-header-actions'));
-    setHeaderActionsReady(true);
-  }, []);
-
-  useEffect(() => {
     currentUrlStateRef.current = urlState;
   }, [urlState]);
+
+  // Panel width preferences for this device, and the layout width they fit into.
+  useEffect(() => {
+    try {
+      setPanelPreferences(readPanelPreferences(window.localStorage));
+    } catch {
+      // Storage blocked: presets only.
+    }
+  }, []);
+  useEffect(() => {
+    const element = layoutRef.current;
+    if (!element) return undefined;
+    const measure = () => setLayoutWidth(Math.round(element.getBoundingClientRect().width));
+    measure();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   // The layout header is sticky and its height depends on width and content
   // (129px at 360, 77px at 768 in browser run-001), so scroll targets were
@@ -512,10 +578,9 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
      */
     authority.panelActivated();
     if (panel === 'navigation') setNavigationOpen(open);
-    else if (panel === 'review-comments') setReviewCommentsOpen(open);
-    else setDownloadOpen(open);
+    else setReviewCommentsOpen(open);
   };
-  const toggleRefFor = (panel: PanelKey) => (panel === 'navigation' ? navigationToggleRef : panel === 'review-comments' ? reviewCommentsToggleRef : downloadToggleRef);
+  const toggleRefFor = (panel: PanelKey) => (panel === 'navigation' ? navigationToggleRef : reviewCommentsToggleRef);
   const closePanel = (panel: PanelKey) => {
     if (pendingRevealRef.current?.panel === panel) pendingRevealRef.current = null;
     setPanelOpen(panel, false);
@@ -525,7 +590,7 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
     // M1R8-08: a request to open an ALREADY-open panel must not leave a pending
     // reveal behind; React bails out of the state update, so nothing would ever
     // consume it and the next unrelated panel change would reveal the wrong one.
-    const alreadyOpen = panel === 'navigation' ? navigationOpen : panel === 'review-comments' ? reviewCommentsOpen : downloadOpen;
+    const alreadyOpen = panel === 'navigation' ? navigationOpen : reviewCommentsOpen;
     const requested = pendingRevealForOpenRequest(panel, alreadyOpen, isLgViewport());
     // Rule 3: the cause is minted by the authority NOW, while the requesting
     // activation dispatches. A request made outside one (M2/M3 programmatic
@@ -539,10 +604,10 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
   useEffect(() => {
     const pending = pendingRevealRef.current;
     if (!pending) return;
-    const open = pending.panel === 'navigation' ? navigationOpen : pending.panel === 'review-comments' ? reviewCommentsOpen : downloadOpen;
+    const open = pending.panel === 'navigation' ? navigationOpen : reviewCommentsOpen;
     if (!open) return;
     pendingRevealRef.current = null;
-    const heading = pending.panel === 'navigation' ? navigationHeadingRef.current : pending.panel === 'review-comments' ? reviewCommentsHeadingRef.current : document.getElementById('paper-download-files-heading');
+    const heading = pending.panel === 'navigation' ? navigationHeadingRef.current : reviewCommentsHeadingRef.current;
     if (!heading) return;
     /*
      * Opening a panel is an explicit reader act, so its reveal claims the
@@ -555,7 +620,7 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
      * a mounted component it is already installed and this does nothing.
      */
     authority.revealPanelHeading(pending.cause, heading);
-  }, [authority, navigationOpen, reviewCommentsOpen, downloadOpen]);
+  }, [authority, navigationOpen, reviewCommentsOpen]);
 
 
 
@@ -577,18 +642,56 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
    * activation (an outline click, a hash change) has already abandoned every
    * earlier reveal by the time it gets here, so it lands.
    */
+  /*
+   * Why the pending Working Draft navigation is happening, keyed by its anchor
+   * and consumed by focusSection (synchronously, or when a deferred section
+   * load lands). A reader navigation (outline, in-paper link) pushes a history
+   * entry, focuses the section and brings the related question into the review
+   * panel. A question-driven navigation scrolls the paper to the question's
+   * section but leaves focus in the review panel and the question unchanged.
+   * Deep links and Back/Forward carry no intent: they restore, never push.
+   */
+  const navIntentRef = useRef<{ readonly anchor: string; readonly push: boolean; readonly focus: boolean; readonly syncQuestion: boolean; readonly scroll: boolean } | null>(null);
+
+  /** Brings the section's primary question into the review panel; null when it has none. */
+  const syncQuestionToAnchor = useCallback((anchor: string): string | null => {
+    const question = navigation.questionForAnchor(anchor);
+    if (question) {
+      setActiveQuestionNumber(question.number);
+      setSelectedCohortId(question.topicId as CohortId);
+      setSectionNote(null);
+      return question.id;
+    }
+    const label = outline?.find((entry) => entry.anchor === anchor)?.label;
+    setSectionNote(`${label ? `"${label}"` : 'This section'} has no review question of its own, so your current question stays open.`);
+    return null;
+  }, [navigation, outline]);
+
   const focusSection = useCallback((anchor: string, writeUrl: boolean): boolean => {
     if (!anchors.has(anchor)) return false;
     const element = document.getElementById(anchor);
     if (!element) return false;
-    authority.pin(anchor);
-    authority.scrollTargetIntoView(element);
-    element.focus({ preventScroll: true });
+    const intent = navIntentRef.current?.anchor === anchor ? navIntentRef.current : null;
+    if (intent) navIntentRef.current = null;
+    // Below lg a question-driven navigation updates identity only: the paper and
+    // the review rail are stacked, so scrolling would carry the reader away from
+    // the editor they are working in. It must not PIN either -- a pin is what the
+    // landing checks (and every later section load / header resize) re-land, so
+    // an identity-only navigation releases any earlier pin instead (the reader's
+    // attention is on the review panel, exactly the panelActivated policy).
+    if (intent?.scroll === false) {
+      authority.panelActivated();
+    } else {
+      authority.pin(anchor);
+      authority.scrollTargetIntoView(element);
+    }
+    if (intent?.focus !== false) element.focus({ preventScroll: true });
     setActiveAnchor(anchor);
     setTargetAnchor(anchor);
-    if (writeUrl) updateUrl({ section: anchor });
+    const questionId = intent?.syncQuestion ? syncQuestionToAnchor(anchor) : null;
+    if (writeUrl) updateUrl({ section: anchor, ...(questionId ? { q: questionId } : {}) }, { push: intent?.push === true });
     return true;
-  }, [anchors, authority, updateUrl]);
+  }, [anchors, authority, syncQuestionToAnchor, updateUrl]);
 
   /*
    * After a section loads or the sticky header resizes, the layout above the
@@ -622,6 +725,7 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
        * scroll back when that section finally arrives.
        */
       authority.cancelPendingNavigation();
+      if (navIntentRef.current && navIntentRef.current.anchor !== anchor) navIntentRef.current = null;
       /*
        * M1R5-01 (root cause, half 1). This SYNCHRONOUS branch used to return
        * focusSection's result directly and never scheduled a landing check,
@@ -635,7 +739,7 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
        * branches. Both now verify their landing.
        */
       if (!focusSection(anchor, writeUrl)) return false;
-      scheduleLandingCheck(anchor);
+      if (authority.pinnedAnchor() === anchor) scheduleLandingCheck(anchor);
       return true;
     }
     const index = outline ? owningSectionIndex(outline, anchor) : null;
@@ -650,6 +754,14 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
     navigateRef.current = navigateToAnchor;
   }, [navigateToAnchor]);
 
+  /** A reader's own navigation to a section (outline, in-paper link, hash). */
+  const navigateFromReader = useCallback((anchor: string, push = true): boolean => {
+    navIntentRef.current = { anchor, push, focus: true, syncQuestion: true, scroll: true };
+    const started = navigateRef.current(anchor, true);
+    if (!started && navIntentRef.current?.anchor === anchor) navIntentRef.current = null;
+    return started;
+  }, []);
+
   useEffect(() => {
     if (isMyReview) return;
     const pending = authority.pendingNavigation();
@@ -662,11 +774,12 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
        */
       if (sectionApi.loadedKey.split(',')[pending.sectionIndex] === 'error') {
         authority.cancelPendingNavigation();
+        if (navIntentRef.current?.anchor === pending.anchor) navIntentRef.current = null;
         return;
       }
       if (document.getElementById(pending.anchor) === null) return;
       authority.cancelPendingNavigation();
-      if (focusSection(pending.anchor, pending.writeUrl)) scheduleLandingCheck(pending.anchor);
+      if (focusSection(pending.anchor, pending.writeUrl) && authority.pinnedAnchor() === pending.anchor) scheduleLandingCheck(pending.anchor);
       return;
     }
     /*
@@ -739,21 +852,76 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
     if (isMyReview) return;
     const hashAnchor = typeof window === 'undefined' ? null : decodeHashValue(window.location.hash);
     if (hashAnchor && anchors.has(hashAnchor) && hashAnchor !== urlState.section) {
-      navigateRef.current(hashAnchor, true);
+      // The fragment never reaches the server, so the initial question could
+      // not be derived from it: sync Review Comments to the section here
+      // (unless an explicit q already chose the question).
+      navIntentRef.current = { anchor: hashAnchor, push: false, focus: true, syncQuestion: !urlState.q, scroll: true };
+      if (!navigateRef.current(hashAnchor, true) && navIntentRef.current?.anchor === hashAnchor) navIntentRef.current = null;
       return;
     }
-    if (urlState.section) navigateRef.current(urlState.section, false);
+    if (urlState.section) {
+      navigateRef.current(urlState.section, false);
+      return;
+    }
+    const linkedQuestion = navigation.questions.find((question) => question.id === urlState.q);
+    const questionAnchor = linkedQuestion ? navigation.anchorForQuestion(linkedQuestion.number) : undefined;
+    if (questionAnchor) {
+      navIntentRef.current = { anchor: questionAnchor, push: false, focus: false, syncQuestion: false, scroll: true };
+      if (!navigateRef.current(questionAnchor, false) && navIntentRef.current?.anchor === questionAnchor) navIntentRef.current = null;
+    }
+    // Deep-link identity only; later selections are client state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMyReview, urlState.section, anchors]);
 
   useEffect(() => {
     if (isMyReview) return undefined;
     const onHashChange = () => {
       const hashAnchor = decodeHashValue(window.location.hash);
-      if (hashAnchor) navigateRef.current(hashAnchor, true);
+      // The hash change already made its own history entry: replace, never push.
+      if (hashAnchor) navigateFromReader(hashAnchor, false);
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
-  }, [isMyReview]);
+  }, [isMyReview, navigateFromReader]);
+
+  /*
+   * Working Draft Back/Forward. Outline and question navigation push history
+   * entries, so Back and Forward must restore BOTH panels from the URL: the
+   * question from `q` (else the section's primary question) and the paper from
+   * `section`. Restoring never writes history (no loop).
+   */
+  useEffect(() => {
+    if (isMyReview) return undefined;
+    const onPopState = () => {
+      const questionCohort = new Map(navigation.questions.map((question) => [question.id, question.topicId]));
+      const ctx: PaperUrlContext = { anchors, questionCohort, cohortIds: new Set(cohortManifest.cohorts.map((cohort) => cohort.id)) };
+      const { state: restored } = parsePaperUrlState(searchParamsRecord(window.location.search), ctx);
+      if (restored.mode !== 'working-draft') return;
+      currentUrlStateRef.current = restored;
+      // An entry with neither q nor section is the page as first opened: the
+      // first question, paper at its start.
+      const firstEntry = restored.q === null && restored.section === null;
+      const question = navigation.questions.find((candidate) => candidate.id === restored.q)
+        ?? (restored.section ? navigation.questionForAnchor(restored.section) : undefined)
+        // No q in the entry: the question it was opened with was the default (first) one.
+        ?? (restored.q === null ? navigation.questions[0] : undefined);
+      if (question) {
+        setActiveQuestionNumber(question.number);
+        setSelectedCohortId(question.topicId as CohortId);
+      }
+      setSectionNote(null);
+      const target = restored.section
+        ?? (firstEntry ? outline?.[0]?.anchor ?? null : null)
+        ?? (question ? navigation.anchorForQuestion(question.number) ?? null : null);
+      if (target) {
+        // Restore only: never push, never pull focus out of the review panel.
+        navIntentRef.current = { anchor: target, push: false, focus: false, syncQuestion: false, scroll: true };
+        if (!navigateRef.current(target, false) && navIntentRef.current?.anchor === target) navIntentRef.current = null;
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [anchors, cohortManifest, isMyReview, navigation, outline]);
 
   /*
    * FIX CYCLE 1 / F1 (PLAN-R4 6.C "pushState on question change so Back
@@ -877,7 +1045,7 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
     const anchor = link ? sectionFromInPageHref(link.getAttribute('href')) : null;
     if (anchor && anchors.has(anchor)) {
       event.preventDefault();
-      navigateToAnchor(anchor, true);
+      navigateFromReader(anchor);
     }
   };
 
@@ -914,7 +1082,15 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusUnlessInert, paperFocusRequest]);
 
+  useEffect(() => {
+    if (paperRevealRequest === 0) return;
+    const targetId = focusPortionIdRef.current;
+    const heading = targetId ? portionHeadingRefs.current.get(targetId) ?? null : null;
+    if (heading && !heading.closest('[inert]')) authority.scrollTargetIntoView(heading);
+  }, [authority, paperRevealRequest]);
+
   const activeQuestion = allQuestionsInCohortOrder.find((question) => question.number === activeQuestionNumber) ?? allQuestionsInCohortOrder[0];
+  const cohortForQuestion = useCallback((questionId: string) => navigation.questions.find((question) => question.id === questionId)?.topicId ?? null, [navigation]);
   const activeQuestionCohortId = cohortManifest.cohorts.find((cohort) => cohort.questionNumbers.includes(activeQuestion?.number ?? -1))?.id ?? selectedCohort?.id ?? null;
 
   const selectQuestion = (number: number) => {
@@ -927,15 +1103,43 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
     const cohort = cohortManifest.cohorts.find((candidate) => candidate.questionNumbers.includes(number));
     const cohortChanged = cohort !== undefined && cohort.id !== selectedCohortId;
     setActiveQuestionNumber(number);
+    setSectionNote(null);
     if (cohortChanged) {
       setSelectedCohortId(cohort.id);
       setExpandedCohortId(cohort.id);
       focusPortionIdRef.current = null;
     }
-    const section = cohortChanged ? (portions.find((portion) => portion.cohortId === cohort.id)?.sectionAnchor ?? null) : currentUrlStateRef.current.section;
+    if (!isMyReview) {
+      // Working Draft: the paper follows the question (shared navigation
+      // model). The outline expands to the section and the paper scrolls to it;
+      // focus stays in the review panel, and the step is one history entry.
+      currentUrlStateRef.current = { ...currentUrlStateRef.current, q: question.id };
+      const anchor = navigation.anchorForQuestion(number);
+      if (anchor) {
+        navIntentRef.current = { anchor, push: true, focus: false, syncQuestion: false, scroll: isLgViewport() };
+        if (navigateToAnchor(anchor, true)) return;
+        navIntentRef.current = null;
+      }
+      updateUrl({ q: question.id }, { push: true });
+      return;
+    }
+    // My Review: the question's own paper portion becomes the selected one and,
+    // where the paper and the panel sit side by side (lg), it is scrolled into
+    // view without taking focus from the response.
+    const cohortId = cohort?.id ?? selectedCohortId;
+    const navQuestion = navigation.questions.find((candidate) => candidate.number === number);
+    const portion = navQuestion ? portions
+      .filter((candidate) => candidate.cohortId === cohortId && candidate.status === 'available' && portionMatchesQuestion(candidate.sectionNumber, navQuestion))
+      .sort((a, b) => b.sectionNumber.split('.').length - a.sectionNumber.split('.').length)[0] : undefined;
+    if (portion) {
+      setSelectedPortionId(portion.id);
+      focusPortionIdRef.current = portion.id;
+      if (isLgViewport()) setPaperRevealRequest((count) => count + 1);
+    }
+    const section = portion?.sectionAnchor ?? (cohortChanged ? (portions.find((candidate) => candidate.cohortId === cohortId)?.sectionAnchor ?? null) : currentUrlStateRef.current.section);
     // PLAN-R4 6.C: a question change pushes a new history entry (so Back
     // steps between questions); every other My Review URL change replaces.
-    updateUrl({ cohort: cohort?.id ?? selectedCohortId, q: question.id, section }, { push: true });
+    updateUrl({ cohort: cohortId, q: question.id, section }, { push: true });
     // Never move focus into the Review Comments rail while it is closed (inert).
     focusUnlessInert(responseRef.current);
   };
@@ -957,15 +1161,21 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
     const portion = portions.find((candidate) => candidate.id === portionId);
     if (!portion) return;
     const cohortChanged = portion.cohortId !== selectedCohortId;
-    if (cohortChanged) {
-      setSelectedCohortId(portion.cohortId);
-      setActiveQuestionNumber(firstQuestionOf(reviewerGuide, cohortManifest.cohorts.find((cohort) => cohort.id === portion.cohortId))?.number ?? 1);
-    }
+    // The portion's own question (shared navigation model) comes into the
+    // review panel; a portion no question in its topic cites keeps the current
+    // question, or the topic's first when the topic changed.
+    // Same ranking as the Working Draft (most specific citation first), limited to this topic.
+    const portionQuestion = navigation.questionsForSection(portion.sectionNumber).find((question) => question.topicId === portion.cohortId)
+      ?? navigation.questions.find((question) => question.topicId === portion.cohortId && portionMatchesQuestion(portion.sectionNumber, question));
+    if (cohortChanged) setSelectedCohortId(portion.cohortId);
+    if (portionQuestion) setActiveQuestionNumber(portionQuestion.number);
+    else if (cohortChanged) setActiveQuestionNumber(firstQuestionOf(reviewerGuide, cohortManifest.cohorts.find((cohort) => cohort.id === portion.cohortId))?.number ?? 1);
+    setSectionNote(null);
     setExpandedCohortId(portion.cohortId);
     setSelectedPortionId(portionId);
     focusPortionIdRef.current = portionId;
     setPaperFocusRequest((count) => count + 1);
-    updateUrl({ cohort: portion.cohortId, q: cohortChanged ? null : currentUrlStateRef.current.q, section: portion.sectionAnchor ?? null });
+    updateUrl({ cohort: portion.cohortId, q: portionQuestion?.id ?? (cohortChanged ? null : currentUrlStateRef.current.q), section: portion.sectionAnchor ?? null });
   };
   const moveQuestion = (offset: number) => {
     const currentIndex = allQuestionsInCohortOrder.findIndex((question) => question.number === activeQuestion?.number);
@@ -973,79 +1183,145 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
     if (next) selectQuestion(next.number);
   };
 
-  const panelControls = <div data-testid="workspace-panel-controls" className="flex flex-wrap items-center gap-2">
-    <PaperRailToggle label="Navigation" open={navigationOpen} controls={PAPER_NAVIGATION_RAIL_ID} buttonRef={navigationToggleRef} onClick={() => togglePanel('navigation', navigationOpen)} icon={navigationOpen ? <PanelLeftClose aria-hidden="true" className="h-4 w-4" /> : <PanelLeftOpen aria-hidden="true" className="h-4 w-4" />} />
-    {isMyReview && <PaperRailToggle label="Review Comments" open={reviewCommentsOpen} controls={PAPER_REVIEW_COMMENTS_RAIL_ID} buttonRef={reviewCommentsToggleRef} onClick={() => togglePanel('review-comments', reviewCommentsOpen)} icon={reviewCommentsOpen ? <PanelRightClose aria-hidden="true" className="h-4 w-4" /> : <PanelRightOpen aria-hidden="true" className="h-4 w-4" />} />}
-  </div>;
+  /*
+   * Adjustable panels (lg and up). The paper column takes whatever the open
+   * panels leave; resolvePanelWidths keeps it at or above its minimum.
+   */
+  const effectivePreferences = draftPreferences ?? panelPreferences;
+  const panelWidths = resolvePanelWidths(layoutWidth, effectivePreferences, { left: navigationOpen, right: reviewCommentsOpen });
+  const panelMax = (side: PanelSide) => maxPanelWidth(side, layoutWidth || 1440, side === 'left' ? panelWidths.right : panelWidths.left, side === 'left' ? reviewCommentsOpen : navigationOpen);
+  const persistPanelPreferences = (next: PanelPreferences) => {
+    setPanelPreferences(next);
+    setDraftPreferences(null);
+    try {
+      writePanelPreferences(window.localStorage, next);
+    } catch {
+      // Storage blocked: the widths still apply for this visit.
+    }
+  };
+  const resizePanel = (side: PanelSide, width: number) => setDraftPreferences({ ...panelPreferences, [side]: width });
+  const commitPanel = (side: PanelSide, width: number) => persistPanelPreferences({ ...panelPreferences, [side]: width });
+  const resetPanel = (side: PanelSide) => persistPanelPreferences(side === 'left' ? { right: panelPreferences.right } : { left: panelPreferences.left });
+  const customWidths = panelPreferences.left !== undefined || panelPreferences.right !== undefined;
+  const layoutStyle = { [PAPER_LEFT_WIDTH_VAR]: `${panelWidths.left}px`, [PAPER_RIGHT_WIDTH_VAR]: `${panelWidths.right}px` } as CSSProperties;
+
+  const headerButton = 'inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-md px-2.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]';
+  const modeLink = (active: boolean) => cn('flex min-h-[44px] items-center rounded-md px-3 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]', active ? 'bg-[var(--db-surface)] text-[var(--db-text-primary)] shadow-[var(--db-shadow-1)]' : 'text-[var(--db-text-secondary)] hover:text-[var(--db-text-primary)]');
 
   return (
-    <>
-    {headerActionsHost ? createPortal(panelControls, headerActionsHost) : null}
-    <div ref={shellRef} data-testid="workspace-shell" className="flex min-h-0 flex-col overflow-x-clip bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-100 lg:h-[calc(100dvh-8rem)] print:block print:h-auto">
-      <header className="shrink-0 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 print:hidden">
-        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">Matrix Options Paper</p>
-            <h1 className="text-xl font-bold">Review workspace</h1>
-            <p className="break-words font-mono text-xs text-slate-500 dark:text-slate-400">{documentVersion}</p>
-            <p role="status" data-testid="noncanonical-preview-banner" className="mt-1 inline-flex rounded border border-amber-500 bg-amber-100 px-2 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-amber-950 dark:border-amber-400 dark:bg-amber-950 dark:text-amber-100">NON-CANONICAL PREVIEW - integration only</p>
-          </div>
-          <div data-testid="workspace-header-controls" className="flex min-w-0 flex-wrap items-center justify-end gap-2">
-            <nav aria-label="Workspace mode" className="flex min-h-[44px] items-center gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-700">
-              <a href={workingDraftHref} aria-current={isMyReview ? undefined : 'page'} className={`flex min-h-[36px] items-center rounded-md px-3 py-2 text-sm font-semibold ${isMyReview ? 'hover:bg-slate-100 dark:hover:bg-slate-800' : 'bg-sky-700 text-white'}`}>Working Draft</a>
-              <a href={myReviewHref} aria-current={isMyReview ? 'page' : undefined} className={`flex min-h-[36px] items-center rounded-md px-3 py-2 text-sm font-semibold ${isMyReview ? 'bg-sky-700 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}>My Review</a>
+    <div ref={shellRef} data-testid="workspace-shell" data-hydrated={hydrated ? 'true' : 'false'} className="flex min-h-0 flex-col overflow-x-clip bg-[var(--db-depth-0)] text-[var(--db-text-primary)] lg:h-[calc(100dvh-8rem)] print:block print:h-auto print:bg-white">
+      <header data-testid="workspace-header" className="shrink-0 border-b border-[var(--db-border)] bg-[var(--db-surface)] print:hidden">
+        <div className="grid grid-cols-1 items-center gap-x-4 gap-y-2 px-4 py-2 sm:px-6 md:grid-cols-[auto_auto] md:justify-between lg:grid-cols-[auto_minmax(0,1fr)_auto] xl:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+          <h1 className="min-w-0 text-center text-base font-semibold md:col-span-2 md:text-left lg:col-span-1 lg:whitespace-nowrap">Matrix Options Paper - Review Workspace</h1>
+          <div data-testid="workspace-header-controls" className="flex min-w-0 flex-wrap items-center justify-center gap-2 md:justify-start lg:justify-center">
+            <nav aria-label="Workspace mode" className="flex items-center gap-0.5 rounded-lg bg-[var(--db-depth-1)] p-0.5">
+              {/* Switching modes keeps the question the reviewer is on. */}
+              <a href={paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: activeQuestion?.id ?? null, section: null })} aria-current={isMyReview ? undefined : 'page'} className={modeLink(!isMyReview)}>Working Draft</a>
+              <a href={paperWorkspaceHref(documentVersion, { mode: 'my-review', cohort: activeQuestionCohortId, q: activeQuestion?.id ?? null, section: null })} aria-current={isMyReview ? 'page' : undefined} className={modeLink(isMyReview)}>My Review</a>
             </nav>
-            <PaperRailToggle label="Download Files" open={downloadOpen} controls={PAPER_DOWNLOAD_PANEL_ID} buttonRef={downloadToggleRef} onClick={() => togglePanel('download', downloadOpen)} icon={<Download aria-hidden="true" className="h-4 w-4" />} />
-            {headerActionsReady && !headerActionsHost && <div className="border-l border-slate-200 pl-2 dark:border-slate-700 sm:ml-1">{panelControls}</div>}
+            <button
+              ref={downloadToggleRef}
+              type="button"
+              data-testid="download-files-toggle"
+              aria-haspopup="dialog"
+              aria-expanded={downloadOpen}
+              aria-controls={PAPER_DOWNLOAD_PANEL_ID}
+              onClick={() => { setAboutOpen(false); setDownloadOpen((open) => !open); }}
+              className={cn(headerButton, 'border border-[var(--db-border-strong)] text-[var(--db-text-primary)] hover:bg-[var(--db-depth-1)]', downloadOpen && 'bg-[var(--db-depth-1)]')}
+            >
+              <Download aria-hidden="true" className="h-4 w-4" />
+              <span>Download Files</span>
+              <ChevronDown aria-hidden="true" className={cn('h-3.5 w-3.5 transition-transform motion-reduce:transition-none', downloadOpen && 'rotate-180')} />
+            </button>
+          </div>
+          <div data-testid="workspace-panel-controls" className="flex min-w-0 flex-wrap items-center justify-center gap-1 md:justify-end">
+            <button
+              ref={aboutToggleRef}
+              type="button"
+              aria-haspopup="dialog"
+              aria-expanded={aboutOpen}
+              aria-controls={PAPER_ABOUT_PANEL_ID}
+              onClick={() => { setDownloadOpen(false); setAboutOpen((open) => !open); }}
+              className={cn(headerButton, 'text-[var(--db-text-secondary)] hover:bg-[var(--db-depth-1)] hover:text-[var(--db-text-primary)]')}
+            >
+              <Info aria-hidden="true" className="h-4 w-4" />
+              <span className="sr-only">About this draft</span>
+            </button>
+            {customWidths ? (
+              <button type="button" data-testid="paper-reset-panel-widths" onClick={() => persistPanelPreferences({})} className={cn(headerButton, 'hidden text-[var(--db-text-secondary)] hover:bg-[var(--db-depth-1)] hover:text-[var(--db-text-primary)] lg:inline-flex')}>
+                <RotateCcw aria-hidden="true" className="h-4 w-4" />
+                <span className="sr-only xl:not-sr-only">Reset panel widths</span>
+              </button>
+            ) : null}
+            <PaperRailToggle label="Navigation" testId="navigation-toggle" open={navigationOpen} controls={PAPER_NAVIGATION_RAIL_ID} buttonRef={navigationToggleRef} onClick={() => togglePanel('navigation', navigationOpen)} icon={navigationOpen ? <PanelLeftClose aria-hidden="true" className="h-4 w-4" /> : <PanelLeftOpen aria-hidden="true" className="h-4 w-4" />} />
+            <PaperRailToggle label="Review Comments" testId="review-comments-toggle" open={reviewCommentsOpen} controls={PAPER_REVIEW_COMMENTS_RAIL_ID} buttonRef={reviewCommentsToggleRef} onClick={() => togglePanel('review-comments', reviewCommentsOpen)} icon={reviewCommentsOpen ? <PanelRightClose aria-hidden="true" className="h-4 w-4" /> : <PanelRightOpen aria-hidden="true" className="h-4 w-4" />} />
           </div>
         </div>
       </header>
 
-      <div data-testid="workspace-layout" className={cn(PAPER_SHELL_CLASSES, 'min-h-0')}>
-        <PaperRail id={PAPER_NAVIGATION_RAIL_ID} testId="navigation-rail" side="left" open={navigationOpen} heading="Navigation" headingId="paper-navigation-rail-heading" headingRef={navigationHeadingRef} onEscape={() => closePanel('navigation')}>
+      {/* keepMounted: a download still in flight keeps its status (and its error) when the popover is closed. */}
+      <PaperPopover id={PAPER_DOWNLOAD_PANEL_ID} testId="download-files-popover" open={downloadOpen} keepMounted triggerRef={downloadToggleRef} label="Download files" width={340} onClose={() => setDownloadOpen(false)}>
+        <DownloadFilesPanel groups={downloadGroups} onAnnounce={announceDownload} />
+      </PaperPopover>
+      <p data-testid="download-announcement" role="status" aria-live="polite" className="sr-only">{downloadAnnouncement}</p>
+      <PaperPopover id={PAPER_ABOUT_PANEL_ID} testId="about-draft-popover" open={aboutOpen} triggerRef={aboutToggleRef} label="About this draft" width={340} onClose={() => setAboutOpen(false)}>
+        <div className="space-y-2 p-2 text-sm">
+          <h2 className="font-semibold">About this draft</h2>
+          <p className="text-[var(--db-text-secondary)]">A review copy of the Matrix Options Paper working draft. It is not the published version of the paper.</p>
+          <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 text-xs">
+            <dt className="text-[var(--db-text-secondary)]">Draft version</dt>
+            <dd data-testid="about-draft-version" className="break-all font-[family-name:var(--db-font-mono)]">{documentVersion}</dd>
+            <dt className="text-[var(--db-text-secondary)]">Review topics</dt>
+            <dd>Proposed; pending approval</dd>
+            <dt className="text-[var(--db-text-secondary)]">Assignments</dt>
+            <dd>{assignmentSourceLabel(assignment)}</dd>
+          </dl>
+          <button type="button" onClick={() => { setAboutOpen(false); aboutToggleRef.current?.focus({ preventScroll: true }); }} className="inline-flex min-h-[44px] items-center rounded-md px-2 text-sm font-medium text-[var(--db-accent-strong)] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]">Close</button>
+        </div>
+      </PaperPopover>
+
+      <div ref={layoutRef} data-testid="workspace-layout" data-resizing={resizing ? 'true' : undefined} style={layoutStyle} className={cn(PAPER_SHELL_CLASSES, 'group/layout min-h-0', resizing && 'cursor-col-resize select-none')}>
+        <PaperRail id={PAPER_NAVIGATION_RAIL_ID} testId="navigation-rail" side="left" open={navigationOpen} heading={isMyReview ? 'Review topics' : 'Contents'} headingId="paper-navigation-rail-heading" headingRef={navigationHeadingRef} onEscape={() => closePanel('navigation')}>
           {isMyReview
-            ? <><p className="mb-3 text-sm text-slate-600 dark:text-slate-300">Choose a release-bound cohort and its authenticated paper portions.</p><CohortReviewNav cohortManifest={cohortManifest} cohortPortions={portions} reviewerGuide={reviewerGuide} selectedCohortId={selectedCohortId} expandedCohortId={expandedCohortId} selectedPortionId={selectedPortionId} activeQuestionNumber={activeQuestionNumber} onSelectCohort={selectCohort} onSelectPortion={selectPortion} onSelectQuestion={(_cohortId, number) => selectQuestion(number)} /></>
+            ? <CohortReviewNav cohortManifest={cohortManifest} cohortPortions={portions} reviewerGuide={reviewerGuide} selectedCohortId={selectedCohortId} expandedCohortId={expandedCohortId} selectedPortionId={selectedPortionId} activeQuestionNumber={activeQuestionNumber} onSelectCohort={selectCohort} onSelectPortion={selectPortion} onSelectQuestion={(_cohortId, number) => selectQuestion(number)} />
             : outline && outline.length > 0
-              ? <PaperOutlineNav outline={outline} activeAnchor={activeAnchor} targetAnchor={targetAnchor} documentTargetId={PAPER_DOCUMENT_COLUMN_ID} onNavigate={(anchor) => { navigateToAnchor(anchor, true); }} onSkipToDocument={skipToDocument} />
-              : <p className="text-sm text-slate-600 dark:text-slate-300">The paper outline is unavailable.</p>}
+              ? <PaperOutlineNav outline={outline} activeAnchor={activeAnchor} targetAnchor={targetAnchor} documentTargetId={PAPER_DOCUMENT_COLUMN_ID} onNavigate={(anchor) => { navigateFromReader(anchor); }} onSkipToDocument={skipToDocument} />
+              : <p className="text-sm text-[var(--db-text-secondary)]">The paper outline is unavailable.</p>}
         </PaperRail>
+        {navigationOpen ? <PanelResizeHandle side="left" label="Resize navigation panel" controls={PAPER_NAVIGATION_RAIL_ID} width={panelWidths.left} max={panelMax('left')} onResize={(width) => resizePanel('left', width)} onCommit={(width) => commitPanel('left', width)} onReset={() => resetPanel('left')} onDragChange={setResizing} /> : null}
 
-        <div ref={documentColumnRef} id={PAPER_DOCUMENT_COLUMN_ID} data-testid="paper-document-column" tabIndex={-1} onClick={onDocumentClick} className="min-w-0 flex-1 focus:outline-none lg:overflow-y-auto print:overflow-visible">
-          <div className="mx-auto min-w-0 max-w-[72rem] space-y-5 px-4 py-5 sm:px-6 print:max-w-none print:p-0">
-            <DownloadFilesPanel open={downloadOpen} groups={downloadGroups} onClose={() => closePanel('download')} closeFocusRef={downloadToggleRef} panelId={PAPER_DOWNLOAD_PANEL_ID} />
-
-            <section aria-label={isMyReview ? 'My Review status' : 'Working Draft status'} className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-slate-200 py-3 dark:border-slate-700 print:hidden">
-              <h2 className="text-lg font-bold">{isMyReview ? 'My Review' : 'Working Draft'}</h2>
-              <span className="max-w-full break-words rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100 [overflow-wrap:anywhere]">{assignmentStateLabel(assignment)}</span>
-              <p className="min-w-0 break-words text-sm [overflow-wrap:anywhere]">Assignment source: {assignmentSourceLabel(assignment)}</p>
-              {!isMyReview && sectionWindow ? <PaperLoadFullDocumentControl api={sectionApi} /> : null}
-            </section>
+        <div ref={documentColumnRef} id={PAPER_DOCUMENT_COLUMN_ID} data-testid="paper-document-column" tabIndex={-1} onClick={onDocumentClick} className="min-w-0 flex-1 bg-[var(--db-surface)] focus:outline-none lg:overflow-y-auto print:overflow-visible print:bg-white">
+          <div className="mx-auto min-w-0 max-w-[72rem] space-y-5 px-4 py-5 sm:px-8 print:max-w-none print:p-0">
+            {!isMyReview && sectionWindow ? (
+              <div data-testid="working-draft-toolbar" className="flex min-w-0 flex-wrap items-center justify-end gap-3 border-b border-[var(--db-border)] pb-3 print:hidden">
+                <PaperDocumentToolbar api={sectionApi} />
+              </div>
+            ) : null}
 
             {isMyReview
               ? portionsProvided
                 ? (selectedPortions.length > 0
-                  ? <div data-testid="cohort-paper-stack" className="space-y-5">
+                  ? <div data-testid="cohort-paper-stack" className="space-y-8">
                       {/* PLAN-R4 3.B.2: every authenticated portion for the selected cohort is rendered in full -- stacked, not paginated. */}
                       {selectedPortions.map((portion) => (
                         <div key={portion.id}>
-                          <CohortPaperPortion cohort={selectedCohort} portion={portion} headingId={`cohort-paper-heading-${portion.id}`} headingRef={portionHeadingRef(portion.id)} />
-                          {portion.status === 'available' && portion.sectionAnchor ? <OpenInWorkingDraftLink documentVersion={documentVersion} sectionAnchor={portion.sectionAnchor} /> : null}
+                          <CohortPaperPortion cohort={selectedCohort} portion={portion} headingId={`cohort-paper-heading-${portion.id}`} headingRef={portionHeadingRef(portion.id)} documentVersion={documentVersion} questionId={activeQuestion?.id ?? null} />
                         </div>
                       ))}
                     </div>
-                  : <CohortPaperPortion cohort={selectedCohort} portion={undefined} headingRef={(element) => { noPortionHeadingRef.current = element; }} />)
+                  : <CohortPaperPortion cohort={selectedCohort} portion={undefined} headingRef={(element) => { noPortionHeadingRef.current = element; }} documentVersion={documentVersion} />)
                 : <CohortPortionsUnavailable workingDraftHref={workingDraftHref} />
               : sectionWindow && children
                 ? <PaperSectionWindowView sectionWindow={sectionWindow} api={sectionApi} scrollRootRef={documentColumnRef}>{children}</PaperSectionWindowView>
-                : children ?? <section data-testid="paper-document-unavailable" className="rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"><h2 className="text-lg font-bold">Paper text unavailable</h2><p role="status" className="mt-2">The authenticated paper text was not provided to this view.</p></section>}
+                : children ?? <section data-testid="paper-document-unavailable" className="rounded-md border border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] p-5 text-sm"><h2 className="text-lg font-semibold">Paper text unavailable</h2><p role="status" className="mt-2">The paper text could not be loaded for this view. Try reloading the page.</p></section>}
           </div>
         </div>
 
-        {isMyReview && <PaperRail id={PAPER_REVIEW_COMMENTS_RAIL_ID} testId="review-comments-rail" side="right" open={reviewCommentsOpen} heading="Review Comments" headingId="paper-review-comments-rail-heading" headingRef={reviewCommentsHeadingRef} onEscape={() => closePanel('review-comments')}>
-          <ReviewCommentsPanel documentVersion={documentVersion} manifestSha256={reviewManifestSha256 ?? ''} cohortId={activeQuestionCohortId} questions={allQuestionsInCohortOrder} question={activeQuestion} responseRef={responseRef} onSelectQuestion={selectQuestion} onPreviousQuestion={() => moveQuestion(-1)} onNextQuestion={() => moveQuestion(1)} />
-        </PaperRail>}
+        {reviewCommentsOpen ? <PanelResizeHandle side="right" label="Resize review comments panel" controls={PAPER_REVIEW_COMMENTS_RAIL_ID} width={panelWidths.right} max={panelMax('right')} onResize={(width) => resizePanel('right', width)} onCommit={(width) => commitPanel('right', width)} onReset={() => resetPanel('right')} onDragChange={setResizing} /> : null}
+        <PaperRail id={PAPER_REVIEW_COMMENTS_RAIL_ID} testId="review-comments-rail" side="right" open={reviewCommentsOpen} heading="Review Comments" headingId="paper-review-comments-rail-heading" headingRef={reviewCommentsHeadingRef} onEscape={() => closePanel('review-comments')}>
+          <ReviewCommentsPanel documentVersion={documentVersion} manifestSha256={reviewManifestSha256 ?? ''} cohortId={activeQuestionCohortId} questions={allQuestionsInCohortOrder} question={activeQuestion} responseRef={responseRef} onSelectQuestion={selectQuestion} onPreviousQuestion={() => moveQuestion(-1)} onNextQuestion={() => moveQuestion(1)} topics={navigation.topics} sectionNote={sectionNote} cohortForQuestion={cohortForQuestion} />
+        </PaperRail>
       </div>
     </div>
-    </>
   );
 }

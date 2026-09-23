@@ -34,7 +34,7 @@ describe('workingDraftSectionHref (M1-04)', () => {
   });
 });
 
-const wd = (section: string | null = null): PaperUrlState => ({ mode: 'working-draft', cohort: null, q: null, section });
+const wd = (section: string | null = null, q: string | null = null): PaperUrlState => ({ mode: 'working-draft', cohort: null, q, section });
 const mr = (cohort: string | null, q: string | null = null, section: string | null = null): PaperUrlState => ({ mode: 'my-review', cohort, q, section });
 
 const cases: ReadonlyArray<readonly [string, PaperSearchParams, PaperUrlState, boolean]> = [
@@ -64,8 +64,10 @@ const cases: ReadonlyArray<readonly [string, PaperSearchParams, PaperUrlState, b
   ['q whose cohort is unknown is dropped', { mode: 'my-review', q: 'q-ghost' }, mr(null), false],
   ['repeated q takes first valid', { mode: 'my-review', cohort: 'pathway-grid', q: ['q-nope', 'q2', Q1] }, mr('pathway-grid', 'q2'), false],
   ['full my-review state is canonical', { mode: 'my-review', cohort: 'categories', q: Q1, section: 'intro' }, mr('categories', Q1, 'intro'), true],
-  ['working-draft drops cohort and q', { mode: 'working-draft', cohort: 'categories', q: Q1 }, wd(), false],
-  ['missing mode drops cohort and q (working-draft default)', { cohort: 'categories', q: Q1, section: 'intro' }, wd('intro'), false],
+  ['working-draft drops cohort but keeps a valid q', { mode: 'working-draft', cohort: 'categories', q: Q1 }, wd(null, Q1), false],
+  ['missing mode drops cohort and keeps q (working-draft default)', { cohort: 'categories', q: Q1, section: 'intro' }, wd('intro', Q1), false],
+  ['working-draft with q and section is canonical', { mode: 'working-draft', q: Q1, section: 'intro' }, wd('intro', Q1), true],
+  ['working-draft drops an unknown q', { mode: 'working-draft', q: 'q-nope' }, wd(), false],
   ['unknown extra params are ignored but non-canonical', { mode: 'working-draft', lens: 'all' }, wd(), false],
   ['parameter order other than canonical is non-canonical', { section: 'intro', mode: 'working-draft' }, wd('intro'), false],
   ['my-review q before cohort is non-canonical', { mode: 'my-review', q: Q1, cohort: 'categories' }, mr('categories', Q1), false],

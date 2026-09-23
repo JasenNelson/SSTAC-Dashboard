@@ -2,7 +2,7 @@
  * Canonical URL state for the Matrix Options paper workspace (PLAN-R4 6.C).
  * Pure and isomorphic: safe for server components and client code.
  *
- *   ?mode=working-draft&section=<anchor>
+ *   ?mode=working-draft&q=<questionId>&section=<anchor>
  *   ?mode=my-review&cohort=<cohortId>&q=<questionId>&section=<anchor>
  */
 
@@ -76,7 +76,9 @@ export function serializePaperUrlState(state: PaperUrlState): string {
  * - cohort must be a known cohort id and q a known question id (whose cohort
  *   is a known cohort), else each is dropped.
  * - a valid q forces cohort to the question's cohort.
- * - in working-draft mode cohort and q are always dropped.
+ * - in working-draft mode cohort is always dropped; a valid q is kept (the
+ *   review panel beside the Working Draft follows it), and a q whose cohort is
+ *   unknown is dropped.
  * - values longer than PAPER_URL_VALUE_MAX_LENGTH (or empty) are invalid.
  * - unknown extra parameters are ignored.
  * canonical is true only when the input's query string (in input key order)
@@ -89,11 +91,11 @@ export function parsePaperUrlState(search: PaperSearchParams, ctx: PaperUrlConte
   const section = firstValid(ownValue(search, 'section'), (candidate) => ctx.anchors.has(candidate));
   let cohort: string | null = null;
   let q: string | null = null;
+  q = firstValid(ownValue(search, 'q'), (candidate) => {
+    const questionCohort = ctx.questionCohort.get(candidate);
+    return questionCohort !== undefined && ctx.cohortIds.has(questionCohort);
+  });
   if (mode === 'my-review') {
-    q = firstValid(ownValue(search, 'q'), (candidate) => {
-      const questionCohort = ctx.questionCohort.get(candidate);
-      return questionCohort !== undefined && ctx.cohortIds.has(questionCohort);
-    });
     cohort = firstValid(ownValue(search, 'cohort'), (candidate) => ctx.cohortIds.has(candidate));
     if (q !== null) {
       const questionCohort = ctx.questionCohort.get(q) ?? null;

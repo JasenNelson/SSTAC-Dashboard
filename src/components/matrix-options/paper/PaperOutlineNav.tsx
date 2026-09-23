@@ -7,7 +7,13 @@ import { ChevronRight } from 'lucide-react';
 import type { PaperOutlineEntry } from '@/lib/matrix-options/paper/full-document';
 import { workingDraftSectionHref } from '@/lib/matrix-options/paper/url-state';
 
-export type PaperOutlineNavEntry = Pick<PaperOutlineEntry, 'id' | 'anchor' | 'label' | 'depth' | 'parentId' | 'childIds'>;
+/**
+ * `parentId`, `childIds` and `level` are the READER hierarchy
+ * (outline-hierarchy.ts), which follows the paper's section numbering; `depth`
+ * is the authored heading depth, kept only because the section loader groups
+ * by depth-1 headings (owningSectionIndex). Display never reads `depth`.
+ */
+export type PaperOutlineNavEntry = Pick<PaperOutlineEntry, 'id' | 'anchor' | 'label' | 'depth' | 'parentId' | 'childIds'> & { readonly level: number };
 
 export interface PaperOutlineNavProps {
   readonly outline: readonly PaperOutlineNavEntry[];
@@ -83,7 +89,7 @@ export function PaperOutlineNav({ outline, activeAnchor, targetAnchor, documentT
         const children = entry.childIds
           .map((childId) => indexed.get(childId)?.entry)
           .filter((child): child is PaperOutlineNavEntry => child !== undefined);
-        const alwaysOpen = variant === 'desktop' && entry.depth <= 1;
+        const alwaysOpen = variant === 'desktop' && entry.level <= 1;
         const open = alwaysOpen || expanded.has(entry.id);
         const listId = `paper-outline-${variant}-children-${index}`;
         const active = entry.anchor === activeAnchor;

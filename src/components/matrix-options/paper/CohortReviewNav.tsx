@@ -46,7 +46,7 @@ export function CohortReviewNav({
   onSelectQuestion,
 }: CohortReviewNavProps) {
   return (
-    <nav aria-label="Review cohorts">
+    <nav aria-label="Review topics">
       <ul className="space-y-2">
         {cohortManifest.cohorts.map((cohort) => {
           const selected = selectedCohortId === cohort.id;
@@ -55,20 +55,20 @@ export function CohortReviewNav({
           const questions = reviewerGuide.questions.filter((question) => cohort.questionNumbers.includes(question.number));
           const portionsId = `cohort-${cohort.id}-portions`;
           return (
-            <li key={cohort.id} className="rounded-lg border border-slate-200 dark:border-slate-700">
+            <li key={cohort.id} className="rounded-md border border-[var(--db-border)] bg-[var(--db-surface)]">
               <button
                 type="button"
                 aria-label={`${cohort.name}, ${cohort.questionNumbers.length} questions`}
                 aria-expanded={expanded}
                 aria-controls={portionsId}
                 onClick={() => onSelectCohort(cohort.id)}
-                className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 ${selected ? 'bg-sky-700 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] ${selected ? 'bg-[var(--db-accent-tint)] font-semibold text-[var(--db-text-primary)]' : 'font-medium text-[var(--db-text-primary)] hover:bg-[var(--db-depth-1)]'}`}
               >
                 <span className="min-w-0 break-words">{cohort.name}</span>
-                <span className="shrink-0 text-xs font-normal">{cohort.questionNumbers.length} questions</span>
+                <span className="shrink-0 text-xs font-normal text-[var(--db-text-secondary)]">{cohort.questionNumbers.length} questions</span>
               </button>
-              <div id={portionsId} hidden={!expanded} className="border-t border-slate-200 p-2 dark:border-slate-700">
-                <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Authenticated paper portions</p>
+              <div id={portionsId} hidden={!expanded} className="border-t border-[var(--db-border)] p-2">
+                <p className="px-2 pb-1 text-xs font-medium text-[var(--db-text-secondary)]">Paper sections</p>
                 {portions.length > 0 ? (
                   <ul className="space-y-1">
                     {portions.map((portion) => (
@@ -78,18 +78,18 @@ export function CohortReviewNav({
                           aria-label={`${portion.sectionLabel ?? `Section ${portion.sectionNumber}`}${portion.status === 'unavailable' ? ', unavailable' : ''}`}
                           aria-pressed={selectedPortionId === portion.id}
                           onClick={() => onSelectPortion(portion.id)}
-                          className={`min-h-[44px] w-full rounded-md px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 ${selectedPortionId === portion.id ? 'bg-sky-100 font-semibold text-sky-900 dark:bg-sky-900/40 dark:text-sky-100' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                          className={`min-h-[44px] w-full rounded-md px-3 py-2 text-left text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] ${selectedPortionId === portion.id ? 'bg-[var(--db-depth-2)] font-semibold text-[var(--db-text-primary)]' : 'text-[var(--db-text-primary)] hover:bg-[var(--db-depth-1)]'}`}
                         >
                           <span className="block break-words">{portion.sectionLabel ?? `Section ${portion.sectionNumber}`}</span>
-                          <span className="mt-1 block text-xs text-slate-600 dark:text-slate-300">{portion.status === 'unavailable' ? 'Unavailable in this release' : portion.sourceLocator}</span>
+                          <span className="mt-0.5 block text-xs text-[var(--db-text-secondary)]">{portion.status === 'unavailable' ? 'Not part of this draft' : portion.sourceLocator}</span>
                         </button>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <p className="px-2 pb-2 text-sm text-slate-600 dark:text-slate-300">No authenticated paper portion is available for this cohort.</p>
+                  <p className="px-2 pb-2 text-sm text-[var(--db-text-secondary)]">No paper section is linked to this topic yet.</p>
                 )}
-                <p className="mt-3 px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Review questions</p>
+                <p className="mt-3 px-2 pb-1 text-xs font-medium text-[var(--db-text-secondary)]">Review questions</p>
                 <ul className="space-y-1">
                   {questions.map((question) => {
                     const active = activeQuestionNumber === question.number;
@@ -99,7 +99,7 @@ export function CohortReviewNav({
                           type="button"
                           aria-current={active ? 'true' : undefined}
                           onClick={() => onSelectQuestion(cohort.id, question.number)}
-                          className={`min-h-[44px] w-full rounded-md px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 ${active ? 'bg-sky-100 font-semibold text-sky-900 dark:bg-sky-900/40 dark:text-sky-100' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}
+                          className={`min-h-[44px] w-full rounded-md px-3 py-2 text-left text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] ${active ? 'bg-[var(--db-accent-tint)] font-semibold text-[var(--db-text-primary)]' : 'text-[var(--db-text-primary)] hover:bg-[var(--db-depth-1)]'}`}
                         >
                           <span className="block break-words">Question {question.number}: {question.heading}</span>
                         </button>

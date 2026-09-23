@@ -14,4 +14,18 @@ describe('review row and CSV integrity', () => {
   it('rejects invalid aliases even when the other alias is valid', () => { expect(normalizeReviewRows([row({ submitted_at: '2026-09-17T01:02:03Z', submittedAt: 'bad' })], trusted)).toBeNull(); expect(normalizeReviewRows([row({ updated_at: null, updatedAt: 'bad' })], trusted)).toBeNull(); expect(normalizeTimestamp('2026-02-30T01:02:03Z')).toBeNull(); });
   it('accepts the exact M3 text limit and rejects over-limit draft and submitted aliases', () => { const exact = 'x'.repeat(REVIEW_RESPONSE_TEXT_LIMIT); for (const extra of [{ draft_text: exact }, { draft_text: null, draftText: exact }, { submitted_text: exact }, { submitted_text: null, submittedText: exact }]) expect(normalizeReviewRows([row(extra)], trusted)).toHaveLength(1); for (const extra of [{ draft_text: exact + 'x' }, { draft_text: null, draftText: exact + 'x' }, { submitted_text: exact + 'x' }, { submitted_text: null, submittedText: exact + 'x' }]) expect(normalizeReviewRows([row(extra)], trusted)).toBeNull(); });
   it('hardens formula cells with leading whitespace/control, BOM, CRLF, and quotes', () => { const rows = [row({ submitted_text: ' \t=SUM(A1:A2)' }), row({ submitted_text: '\u0000+1' })].map((value) => normalizeReviewRows([value], trusted)![0]); const csv = buildReviewCsv(rows); expect(csv.startsWith('\ufeff')).toBe(true); expect(csv).toContain("' \t=SUM"); expect(csv).toContain("'\u0000+1"); expect(csv).toContain('\r\n'); });
+  it('accepts PostgREST timestamptz output in any zone, normalized to UTC, and rejects zone-less or impossible values', () => {
+    expect(normalizeTimestamp('2026-09-22T12:00:00.123456+00:00')).toBe('2026-09-22T12:00:00.123Z');
+    expect(normalizeTimestamp('2026-09-22T12:00:00+00:00')).toBe('2026-09-22T12:00:00.000Z');
+    expect(normalizeTimestamp('2026-09-22T12:00:00.5Z')).toBe('2026-09-22T12:00:00.500Z');
+    expect(normalizeTimestamp('2026-09-22T12:00:00.123Z')).toBe('2026-09-22T12:00:00.123Z');
+    expect(normalizeTimestamp('2026-09-22T12:00:00.123456-07:00')).toBe('2026-09-22T19:00:00.123Z');
+    expect(normalizeTimestamp('2026-09-22T01:30:00+05:30')).toBe('2026-09-21T20:00:00.000Z');
+    expect(normalizeTimestamp('2026-09-22T12:00:00+15:00')).toBeNull();
+    expect(normalizeTimestamp('2026-09-22T12:00:00+14:00')).toBe('2026-09-21T22:00:00.000Z');
+    expect(normalizeTimestamp('2026-09-22T12:00:00+14:01')).toBeNull();
+    expect(normalizeTimestamp('2026-09-22T12:00:00')).toBeNull();
+    expect(normalizeTimestamp('2026-02-30T12:00:00+00:00')).toBeNull();
+    expect(normalizeTimestamp('2026-09-22 12:00:00+00')).toBeNull();
+  });
 });

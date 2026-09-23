@@ -91,6 +91,35 @@ test.describe('Matrix Options Paper disabled-route regressions', () => {
 });
 
 test.describe('Matrix Options Paper real V16 acceptance', () => {
+  /*
+   * The workspace header controls are server rendered, so being VISIBLE no
+   * longer implies React has hydrated (they used to be portalled in after
+   * mount). A click before hydration is lost. Every navigation in this block
+   * therefore waits for the shell's data-hydrated marker when the page is the
+   * workspace (pages that redirect elsewhere have no shell and are not held).
+   */
+  test.beforeEach(async ({ page }, testInfo) => {
+    // Real-release pages render the whole 534 KB paper server side; against a
+    // cold dev server a single navigation can take most of the default budget.
+    testInfo.setTimeout(Math.max(testInfo.timeout, 240000));
+    const waitForWorkspace = () => page.waitForFunction(() => {
+      const shell = document.querySelector('[data-testid="workspace-shell"]');
+      return !shell || shell.getAttribute('data-hydrated') === 'true';
+    }, null, { timeout: 180000 });
+    const goto = page.goto.bind(page);
+    page.goto = async (...args: Parameters<typeof page.goto>) => {
+      const response = await goto(...args);
+      await waitForWorkspace();
+      return response;
+    };
+    const reload = page.reload.bind(page);
+    page.reload = async (...args: Parameters<typeof page.reload>) => {
+      const response = await reload(...args);
+      await waitForWorkspace();
+      return response;
+    };
+  });
+
   test.setTimeout(120000);
   const workspacePath = `/matrix-options/paper/publication/v/${realVersion}`;
   const canonicalWorkingDraft = `${workspacePath}?mode=working-draft`;
@@ -178,19 +207,22 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
 
     await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
-    const navigationToggle = page.getByTestId('paper-header-actions').getByRole('button', { name: 'Navigation', exact: true });
+    const navigationToggle = page.getByTestId('navigation-toggle');
     await expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
     await expect(page.getByTestId('navigation-rail')).toHaveAttribute('data-state', 'open');
     await expect(page.getByTestId('paper-outline-desktop').getByRole('link').first()).toBeVisible();
     await expect(page.getByTestId('paper-load-progress')).toContainText('of 17 sections', { timeout: 30000 });
-    await expect(page.getByTestId('paper-print-button')).toBeDisabled();
+    // Print is ALWAYS enabled now -- it loads whatever is missing itself.
+    await expect(page.getByTestId('paper-print-button')).toBeEnabled();
 
     await page.getByTestId('paper-load-full-document-button').click();
-    await expect(page.getByTestId('paper-load-full-document-button')).toHaveText('Full document loaded', { timeout: 180000 });
+    await expect(page.getByTestId('paper-load-full-document-button')).toHaveText('Entire paper loaded', { timeout: 180000 });
     const sections = page.locator('[data-testid="paper-document"] section[data-paper-chunk]');
     await expect(sections).toHaveCount(341, { timeout: 30000 });
     await expect(page.locator('[data-paper-section-placeholder]')).toHaveCount(0);
-    await expect(page.getByTestId('paper-find-guidance')).toBeVisible();
+    // paper-find-guidance no longer exists; the same guarantee (browser Find can
+    // now search the whole paper) is announced in the load-progress status line.
+    await expect(page.getByTestId('paper-load-progress')).toContainText('Browser Find (Ctrl+F) searches all of it.');
     await expect(page.getByTestId('paper-print-button')).toBeEnabled();
     // Sections are named groups (M1-09), not region landmarks.
     await expect(page.getByRole('group', { name: 'Technical Appendices Compendium', exact: true })).toHaveCount(1);
@@ -213,6 +245,35 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await expect(page.getByTestId('navigation-rail')).toHaveCSS('display', 'none');
     await expect(page.getByTestId('paper-document')).toBeVisible();
     await page.emulateMedia({ media: 'screen' });
+  });
+
+  test('authenticated real release Print loads the whole paper itself and opens the browser print dialog exactly once', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    test.setTimeout(240000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.addInitScript(() => {
+      (window as typeof window & { __printCalls: number }).__printCalls = 0;
+      window.print = () => {
+        (window as typeof window & { __printCalls: number }).__printCalls += 1;
+      };
+    });
+    await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    const printButton = page.getByTestId('paper-print-button');
+    // Print is ALWAYS enabled -- a reader never needs "Load entire paper for
+    // search" first just to print, and pressing it more than once while it is
+    // working must still print only once.
+    await expect(printButton).toBeEnabled();
+    // Three presses in one task: the second and third arrive while the first is
+    // still loading, which is exactly the duplicate-print case being guarded.
+    await printButton.evaluate((button: HTMLButtonElement) => { button.click(); button.click(); button.click(); });
+    await expect(page.getByTestId('paper-load-progress')).toHaveText(
+      'Entire paper loaded. Browser Find (Ctrl+F) searches all of it.',
+      { timeout: 180000 },
+    );
+    await expect
+      .poll(() => page.evaluate(() => (window as typeof window & { __printCalls: number }).__printCalls), { timeout: 10000 })
+      .toBe(1);
   });
 
   test('authenticated real release lands a navigated unloaded section below the sticky header at 360 and 768', async ({ page }, testInfo) => {
@@ -320,12 +381,63 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? '')).toBe(firstNodeHref ?? '');
   });
 
+  test('authenticated real release Working Draft desktop outline nests Section 7.8 under 7.0 and keeps 8.0 as a sibling', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    // The nearest ancestor <li> of a specific outline link, scoped to the
+    // desktop outline: exactly the entry's own list item, never an outer
+    // ancestor's, so nesting (not merely co-presence) is what is asserted.
+    const outlineItemFor = (label: string) => page.locator(
+      `xpath=//*[@data-testid="paper-outline-desktop"]//a[normalize-space(.)="${label}"]/ancestor::li[1]`,
+    );
+    const topicItem = outlineItemFor('7.0 Phase 2 Research Topics Supporting the Matrix Options Paper');
+    // Chapters (level 2) start collapsed on desktop; open 7.0's own disclosure.
+    const expandTopic = topicItem.getByRole('button', { name: /^Subsections of 7\.0 / });
+    if ((await expandTopic.getAttribute('aria-expanded')) === 'false') await expandTopic.click();
+    await expect(topicItem.getByRole('link', { name: 'Section 7.8: Input Parameter Inventory and Selection Options', exact: true })).toBeVisible();
+    // 8.0 is a sibling topic, not a descendant of 7.0's list item.
+    await expect(topicItem.getByRole('link', { name: '8.0 Evaluation Criteria', exact: true })).toHaveCount(0);
+
+    const sectionItem = outlineItemFor('Section 7.8: Input Parameter Inventory and Selection Options');
+    const expandSection = sectionItem.getByRole('button', { name: /^Subsections of/ });
+    if ((await expandSection.count()) > 0) await expandSection.first().click();
+    await expect(sectionItem.getByRole('link', { name: 'Policy-ready input categories - Phase 2 boundary', exact: true })).toBeVisible();
+  });
+
+  test('authenticated real release Working Draft outline navigation and Jump to topic stay in sync, and Back restores the outline question', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    const outline = page.getByTestId('paper-outline-desktop');
+    const outlineLink = outline.getByRole('link', { name: '7.7 BC Aquatic Database', exact: true });
+    if ((await outlineLink.count()) === 0 || !(await outlineLink.first().isVisible())) {
+      await page.getByRole('button', { name: /^Subsections of 7\.0/ }).first().click();
+    }
+    await outlineLink.first().click();
+    await expect(page.locator('#active-question-heading')).toHaveText(/^Question 12/, { timeout: 30000 });
+
+    await page.getByRole('combobox', { name: 'Jump to topic' }).selectOption('8');
+    await expect
+      .poll(() => new URL(page.url()).searchParams.get('section'), { timeout: 30000 })
+      .toBe('section-78-input-parameter-inventory-and-selection-options');
+
+    await page.goBack();
+    await expect(page.locator('#active-question-heading')).toHaveText(/^Question 12/, { timeout: 30000 });
+  });
+
   test('authenticated real release reports unavailable assignment truthfully', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
-    await expect(page.getByText('Assignment unavailable', { exact: true })).toBeVisible();
-    await expect(page.getByText(/Assignments are not connected for this release\./)).toBeVisible();
+    // The assignment claim now lives inside the "About this draft" popover, not
+    // the main UI (RevisedPaperWorkspace's assignment/status row was removed).
+    await page.getByRole('button', { name: 'About this draft' }).click();
+    const aboutPopover = page.getByTestId('about-draft-popover');
+    await expect(aboutPopover).toBeVisible();
+    await expect(aboutPopover.getByText(/Assignments are not connected for this release\./)).toBeVisible();
     await expect(page.getByText(/synthetic|fixture/i)).toHaveCount(0);
   });
 
@@ -337,8 +449,8 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await expect(page.getByRole('link', { name: 'My Review', exact: true })).toHaveAttribute('aria-current', 'page');
     await expect(page.getByTestId('cohort-portions-unavailable')).toHaveCount(0);
     await expect(page.getByTestId('cohort-paper').first()).toBeVisible();
-    await expect(page.getByRole('navigation', { name: 'Review cohorts' }).getByRole('button', { name: /questions$/ })).toHaveCount(5);
-    await expect(page.getByTestId('paper-header-actions').getByRole('button', { name: 'Review Comments', exact: true })).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByRole('navigation', { name: 'Review topics' }).getByRole('button', { name: /questions$/ })).toHaveCount(5);
+    await expect(page.getByTestId('review-comments-toggle')).toHaveAttribute('aria-expanded', 'true');
     await expect(page.getByTestId('review-comments-rail')).toHaveAttribute('data-state', 'open');
 
     const questionId = `rpq:${realVersion}:q04`;
@@ -358,7 +470,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     requireJourney(testInfo.project.name);
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
-    await expect(page.getByTestId('review-save-status')).not.toHaveText('Loading saved responses...', { timeout: 30000 });
+    await expect(page.getByTestId('review-save-status')).not.toHaveText('Loading your saved responses...', { timeout: 30000 });
 
     const savedQuestions = page.getByTestId('review-saved-questions');
     await expect(savedQuestions.getByRole('button')).toHaveCount(12);
@@ -369,9 +481,14 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     const textarea = page.getByRole('textbox', { name: 'Your response' });
     await textarea.fill('E2E authenticated draft text for question 4.');
     await expect(page.getByTestId('review-comment-char-count')).toHaveText(/^44 \/ 20000$/);
-    await expect(page.getByTestId('review-progress')).toContainText('Question 4 of 12');
-    await expect(page.getByTestId('review-progress')).toContainText('1 drafted');
-    await expect(savedQuestions.getByRole('button', { name: /^Question 4:/ })).toContainText('Drafted');
+    // review-progress no longer names the active question ("N of 12 submitted"
+    // [, drafts] is a whole-review summary); the active question is read from
+    // the question heading and the topic combobox instead.
+    await expect(page.locator('#active-question-heading')).toHaveText(/^Question 4:/);
+    await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
+    await expect(page.getByTestId('review-progress')).toContainText(/^\d+ of 12 submitted/);
+    await expect(page.getByTestId('review-progress')).toContainText(/1 draft\b/);
+    await expect(savedQuestions.getByRole('button', { name: /^Question 4:/ })).toContainText(/Draft in this browser only|Draft saved/);
 
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('E2E authenticated draft text for question 4.');
@@ -381,33 +498,49 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     requireJourney(testInfo.project.name);
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
-    const link = page.getByTestId('cohort-paper-stack').getByRole('link', { name: 'Open in Working Draft' }).first();
+    const link = page.getByTestId('cohort-paper-stack').getByRole('link', { name: /^Open .+ in Working Draft$/ }).first();
     const href = await link.getAttribute('href');
-    expect(href).toMatch(/mode=working-draft&section=/);
+    // The link also carries the active question (q) so the review panel keeps it:
+    // q is REQUIRED, and it survives into the Working Draft URL.
+    const target = new URL(href ?? '', page.url());
+    expect(target.searchParams.get('mode')).toBe('working-draft');
+    const linkedQuestion = target.searchParams.get('q');
+    expect(linkedQuestion).toMatch(/\S/);
+    expect(target.searchParams.get('section')).toMatch(/\S/);
     await link.click();
     await expect.poll(() => new URL(page.url()).searchParams.get('mode'), { timeout: 30000 }).toBe('working-draft');
-    await expect(page.getByRole('link', { name: 'Working Draft', exact: true })).toHaveAttribute('aria-current', 'page', { timeout: 30000 });
+    expect(new URL(page.url()).searchParams.get('q')).toBe(linkedQuestion);
+    await expect(page.getByRole('link', { name: 'Working Draft', exact: true })).toHaveAttribute('aria-current', 'page', { timeout: 90000 });
   });
 
   test('M2: authenticated real release Previous/Next question walk all 12 questions in cohort order, bounded at both ends', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
-    await expect(page.getByTestId('review-save-status')).not.toHaveText('Loading saved responses...', { timeout: 30000 });
+    await expect(page.getByTestId('review-save-status')).not.toHaveText('Loading your saved responses...', { timeout: 30000 });
     const previous = page.getByRole('button', { name: 'Previous question' });
     const next = page.getByRole('button', { name: 'Next question' });
     const select = page.getByRole('combobox', { name: 'Jump to topic' });
+    const activeQuestionHeading = page.locator('#active-question-heading');
 
     await expect(previous).toBeDisabled();
-      for (let step = 0; step < 11; step += 1) {
+      // Prev/Next walk the questions in TOPIC order (cohorts-v1.json), not
+      // numeric order: Inputs and evidence holds 8, 9 and 12, then Methods and
+      // water type holds 10 and 11.
+      const topicOrder = [1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 10, 11];
+      for (let step = 1; step < topicOrder.length; step += 1) {
         await next.click();
-        await expect(page.getByTestId('review-progress')).toContainText(`Question ${step + 2} of 12`);
+        // review-progress is a whole-review summary now, not per-question; which
+        // question is active is read from the heading and the topic combobox.
+        await expect(activeQuestionHeading).toHaveText(new RegExp(`^Question ${topicOrder[step]}:`));
+        await expect(select).toHaveValue(String(topicOrder[step]));
       }
     await expect(next).toBeDisabled();
-    await expect(page.getByTestId('review-progress')).toContainText('Question 12 of 12');
+    await expect(activeQuestionHeading).toHaveText(/^Question 11:/);
+    await expect(select).toHaveValue('11');
     await previous.click();
     await expect(next).toBeEnabled();
-    await expect(select).not.toHaveValue('12');
+    await expect(select).toHaveValue('10');
   });
 
   test('M3: intercepted response save, submit, reload and CAS conflict expose the authenticated workflow', async ({ page }, testInfo) => {
@@ -436,7 +569,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     const textarea = page.getByRole('textbox', { name: 'Your response' });
     await textarea.fill('intercepted M3 response');
     await page.getByRole('button', { name: 'Save draft' }).click();
-    await expect(page.getByTestId('review-save-status')).toContainText('Saved');
+    await expect(page.getByTestId('review-save-status')).toContainText(/Draft saved/);
     await page.getByRole('button', { name: 'Submit response' }).click();
     await expect(page.getByRole('button', { name: 'Re-submit response' })).toBeVisible();
     await page.reload({ waitUntil: 'domcontentloaded' });
@@ -463,7 +596,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
       await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
       failOnLogin(page.url());
       await expect(page.getByTestId('review-comment-draft')).toBeVisible();
-      const reviewComments = page.getByTestId('paper-header-actions').getByRole('button', { name: 'Review Comments', exact: true });
+      const reviewComments = page.getByTestId('review-comments-toggle');
       const downloads = page.getByTestId('workspace-header-controls').getByRole('button', { name: 'Download Files', exact: true });
       await expect(reviewComments).toBeVisible();
       await expect(downloads).toBeVisible();
@@ -577,9 +710,11 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
       };
 
       const panels = [
-        { toggle: page.getByTestId('paper-header-actions').getByRole('button', { name: 'Navigation', exact: true }), heading: page.locator('#paper-navigation-rail-heading'), selector: '#paper-navigation-rail-heading', panel: '#paper-navigation-rail' },
-        { toggle: page.getByTestId('paper-header-actions').getByRole('button', { name: 'Review Comments', exact: true }), heading: page.locator('#paper-review-comments-rail-heading'), selector: '#paper-review-comments-rail-heading', panel: '#paper-review-comments-rail' },
-        { toggle: page.getByTestId('workspace-header-controls').getByRole('button', { name: 'Download Files', exact: true }), heading: page.locator('#paper-download-files-heading'), selector: '#paper-download-files-heading', panel: '#paper-download-files-panel' },
+        { toggle: page.getByTestId('navigation-toggle'), heading: page.locator('#paper-navigation-rail-heading'), selector: '#paper-navigation-rail-heading', panel: '#paper-navigation-rail' },
+        { toggle: page.getByTestId('review-comments-toggle'), heading: page.locator('#paper-review-comments-rail-heading'), selector: '#paper-review-comments-rail-heading', panel: '#paper-review-comments-rail' },
+        // Download Files is no longer an in-flow panel revealed by scrolling: it is
+        // an anchored popover (its focus and Escape contract is covered by the
+        // "Download Files popover closes on Escape" test), so it has no landing.
       ];
       for (const { toggle, heading, selector, panel } of panels) {
         if ((await toggle.getAttribute('aria-expanded')) === 'true') {
@@ -660,11 +795,11 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
 
-    // Open the download files panel and handle React hydration races
+    // Open the download files popover and handle React hydration races
     const downloadToggle = page.getByTestId('workspace-header-controls').getByRole('button', { name: 'Download Files', exact: true });
 
-    // Wait for the client-only Navigation button to become visible as a hydration sentinel
-    const navigationButton = page.getByTestId('paper-header-actions').getByRole('button', { name: 'Navigation', exact: true });
+    // Wait for the client-only Navigation toggle to become visible as a hydration sentinel
+    const navigationButton = page.getByTestId('navigation-toggle');
     await expect(navigationButton).toBeVisible();
 
     // Wait for the button to be interactive and hydrated
@@ -673,30 +808,37 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await downloadToggle.click();
     await expect(downloadToggle).toHaveAttribute('aria-expanded', 'true');
 
-    // Verify the panel opens and the heading is visible
+    // Verify the popover opens with the content-only panel inside it
+    const popover = page.getByTestId('download-files-popover');
+    await expect(popover).toBeVisible();
+    await expect(popover).toHaveAttribute('role', 'dialog');
     const panel = page.getByTestId('download-files-panel');
     await expect(panel).toBeVisible();
 
-    // Verify PDF and DOCX packages are present (2 total packages for the active cohort)
+    // Verify PDF and DOCX packages are present. Both modes now list every topic
+    // with a verified manifest (My Review is no longer filtered to one cohort):
+    // five topics x {PDF, DOCX}. Topic order puts Categories first.
     const packageItems = panel.getByRole('listitem');
-    await expect(packageItems).toHaveCount(2);
+    await expect(packageItems).toHaveCount(10);
 
-    // Verify exact package IDs, metadata, lengths, and hashes rendered in the UI
+    // Package labels are plain "<topic> - <kind>"; file names, byte counts and
+    // SHA-256 hashes are no longer displayed (they still gate the fetch below).
     const pdfItem = packageItems.nth(0);
     const docxItem = packageItems.nth(1);
+    const noPackageInternalsPattern = /sha-?256|bytes|\.pdf|\.docx/i;
 
-    await expect(pdfItem).toContainText('categories PDF');
-    await expect(pdfItem).toContainText('matrix-options-categories-preview.pdf - 110968 bytes - SHA-256 b1cf2731823687c30612fbf56e5b87049b32cd9ec0b4f5dbaf2d9ff06d19ff7f');
+    await expect(pdfItem).toContainText('Categories - PDF');
+    await expect(pdfItem).not.toContainText(noPackageInternalsPattern);
 
-    await expect(docxItem).toContainText('categories DOCX');
-    await expect(docxItem).toContainText('matrix-options-categories-preview.docx - 38137 bytes - SHA-256 7572fae5c934b2da8c6fdc9c37a948f2efd392dde76bb65fbbf07f119f8c93b3');
+    await expect(docxItem).toContainText('Categories - DOCX');
+    await expect(docxItem).not.toContainText(noPackageInternalsPattern);
 
     // The download controls are BUTTONS, not links: the panel fetches and verifies
     // the response before writing anything, so a JSON error can never be saved as
     // a .pdf. There is therefore no href to read - the route URL is derived from
     // the package id, exactly as the manifest builds it.
-    await expect(pdfItem.getByRole('button', { name: 'Download PDF' })).toBeVisible();
-    await expect(docxItem.getByRole('button', { name: 'Download DOCX' })).toBeVisible();
+    await expect(pdfItem.getByRole('button', { name: 'Categories - PDF' })).toBeVisible();
+    await expect(docxItem.getByRole('button', { name: 'Categories - DOCX' })).toBeVisible();
     const pdfHref = '/api/matrix-options/paper/downloads/categories-pdf';
     const docxHref = '/api/matrix-options/paper/downloads/categories-docx';
 
@@ -731,6 +873,91 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     const docxBody = await docxResponse.body();
     const docxHash = crypto.createHash('sha256').update(docxBody).digest('hex');
     expect(docxHash).toBe('7572fae5c934b2da8c6fdc9c37a948f2efd392dde76bb65fbbf07f119f8c93b3');
+  });
+
+  test('M2: authenticated real release Download Files popover closes on Escape with focus return, and becomes a full-width sheet at 360', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    const downloadToggle = page.getByTestId('workspace-header-controls').getByRole('button', { name: 'Download Files', exact: true });
+    await expect(downloadToggle).toBeVisible();
+    await downloadToggle.click();
+    const popover = page.getByTestId('download-files-popover');
+    await expect(popover).toBeVisible();
+
+    await page.keyboard.press('Escape');
+    // The popover stays mounted (hidden, inert) so an in-flight download keeps its status.
+    await expect(popover).toBeHidden();
+    await expect(page.getByRole('dialog', { name: 'Download files' })).toHaveCount(0);
+    await expect(downloadToggle).toBeFocused();
+
+    await page.setViewportSize({ width: 360, height: 800 });
+    await downloadToggle.click();
+    await expect(popover).toBeVisible();
+    await expect(popover).toHaveAttribute('data-sheet', 'true');
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(1);
+  });
+
+  test('M2: authenticated real release the navigation panel resize handle steps by keyboard, persists across reload, and resets', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    const handle = page.getByTestId('paper-resize-left');
+    await expect(handle).toHaveAttribute('aria-valuenow', /^\d+$/);
+    // The width settles once the layout has been measured (preset per layout class).
+    await expect.poll(async () => handle.getAttribute('aria-valuenow'), { timeout: 30000 }).toBe('288');
+    const before = Number(await handle.getAttribute('aria-valuenow'));
+
+    // The hit area must not cover the scrollbar of the column to its LEFT (the
+    // navigation rail and the document column both scroll, with their scrollbars
+    // on their right edges). The rails animate their width (200 ms) while their
+    // presets settle, so geometry is read only from a SETTLED layout: one atomic
+    // snapshot per frame (all boxes in the same frame), accepted once no
+    // animation is running and two consecutive frames report identical boxes.
+    await expect(page.getByTestId('paper-resize-right')).toBeVisible(); // the review-comments rail defaults open at this width
+    type Box = { x: number; width: number };
+    type Geometry = { running: number; rail: Box; left: Box; column: Box; right: Box };
+    const snapshot = () => page.evaluate(() => new Promise<string>((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        const box = (testId: string) => {
+          const rect = document.querySelector(`[data-testid="${testId}"]`)?.getBoundingClientRect();
+          return rect ? { x: rect.x, width: rect.width } : null;
+        };
+        // CSS transitions only (finite): an unrelated infinite animation elsewhere must not block settling.
+        const running = document.getAnimations().filter((animation) => animation.playState === 'running' && animation instanceof CSSTransition).length;
+        resolve(JSON.stringify({ running, rail: box('navigation-rail'), left: box('paper-resize-left'), column: box('paper-document-column'), right: box('paper-resize-right') }));
+      }));
+    }));
+    const firstSnapshot = await snapshot();
+    let previous = '';
+    let settled: Geometry | null = null;
+    for (let frame = 0; frame < 120 && !settled; frame += 1) {
+      const current = await snapshot();
+      if (current === previous && (JSON.parse(current) as Geometry).running === 0) settled = JSON.parse(current) as Geometry;
+      previous = current;
+    }
+    // Diagnostic record: the first (possibly mid-transition) and the settled geometry.
+    await testInfo.attach('panel-geometry', { body: JSON.stringify({ first: JSON.parse(firstSnapshot), settled }, null, 2), contentType: 'application/json' });
+    console.log(`[panel-geometry] first=${firstSnapshot} settled=${JSON.stringify(settled)}`);
+    expect(settled, 'layout never reached two identical animation-free frames').not.toBeNull();
+    const geometry = settled!;
+    expect(geometry.left.x).toBeGreaterThanOrEqual(geometry.rail.x + geometry.rail.width - 1);
+    expect(geometry.left.width).toBeGreaterThanOrEqual(24);
+    // Same for the right handle: the document column to its left scrolls.
+    expect(geometry.right.x).toBeGreaterThanOrEqual(geometry.column.x + geometry.column.width - 1);
+
+    await handle.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(handle).toHaveAttribute('aria-valuenow', String(before + 16));
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('paper-resize-left')).toHaveAttribute('aria-valuenow', String(before + 16), { timeout: 30000 });
+
+    await page.getByTestId('paper-reset-panel-widths').click();
+    await expect(page.getByTestId('paper-resize-left')).toHaveAttribute('aria-valuenow', String(before));
   });
 
   test('unauthenticated and anonymous users are securely denied access to the print package manifest and artifacts', async ({ playwright, baseURL }) => {

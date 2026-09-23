@@ -6,6 +6,7 @@ import {
   sectionAnchorSet,
 } from '@/lib/matrix-options/paper/full-document';
 import type { PaperChunk } from '@/lib/matrix-options/paper/full-document';
+import { buildOutlineHierarchy } from '@/lib/matrix-options/paper/outline-hierarchy';
 import { workingDraftSectionHref } from '@/lib/matrix-options/paper/url-state';
 import type { PaperUrlContext } from '@/lib/matrix-options/paper/url-state';
 import { createWorkspaceModel } from '@/lib/matrix-options/revised-paper-review';
@@ -69,13 +70,19 @@ export function getPaperLegacyAnchorMap(structure: Pick<RevisedPaperStructure, '
 export function getPaperNavOutline(structure: Pick<RevisedPaperStructure, 'nodes'>): readonly PaperOutlineNavEntry[] {
   const cached = outlineCache.get(structure);
   if (cached) return cached;
-  const outline = Object.freeze(buildPaperOutline(structure).map((entry) => Object.freeze({
+  // Reader hierarchy (outline-hierarchy.ts): parent, level and children follow
+  // the paper's section numbering where the authored heading depth contradicts
+  // it. `depth` stays the authored depth, which the section loader groups by.
+  const entries = buildPaperOutline(structure);
+  const hierarchy = buildOutlineHierarchy(entries);
+  const outline = Object.freeze(entries.map((entry, index) => Object.freeze({
     id: entry.id,
     anchor: entry.anchor,
     label: entry.label,
     depth: entry.depth,
-    parentId: entry.parentId,
-    childIds: entry.childIds,
+    level: hierarchy[index].level,
+    parentId: hierarchy[index].parentId,
+    childIds: hierarchy[index].childIds,
   })));
   outlineCache.set(structure, outline);
   return outline;

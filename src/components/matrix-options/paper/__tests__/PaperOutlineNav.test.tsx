@@ -5,13 +5,13 @@ import { outlineAncestorIds, PaperOutlineNav } from '../PaperOutlineNav';
 import type { PaperOutlineNavEntry } from '../PaperOutlineNav';
 
 const outline: readonly PaperOutlineNavEntry[] = [
-  { id: 'a', anchor: 'a', label: 'A', depth: 1, parentId: null, childIds: ['a1'] },
-  { id: 'a1', anchor: 'a1', label: 'A1', depth: 2, parentId: 'a', childIds: ['a1a'] },
-  { id: 'a1a', anchor: 'a1a', label: 'A1a', depth: 3, parentId: 'a1', childIds: ['a1a-i'] },
-  { id: 'a1a-i', anchor: 'a1a-i', label: 'A1a-i', depth: 4, parentId: 'a1a', childIds: [] },
-  { id: 'b', anchor: 'b', label: 'B', depth: 1, parentId: null, childIds: ['b1'] },
-  { id: 'b1', anchor: 'b1', label: 'B1', depth: 2, parentId: 'b', childIds: [] },
-  { id: 'c', anchor: 'c', label: 'C', depth: 1, parentId: null, childIds: [] },
+  { id: 'a', anchor: 'a', label: 'A', depth: 1, level: 1, parentId: null, childIds: ['a1'] },
+  { id: 'a1', anchor: 'a1', label: 'A1', depth: 2, level: 2, parentId: 'a', childIds: ['a1a'] },
+  { id: 'a1a', anchor: 'a1a', label: 'A1a', depth: 3, level: 3, parentId: 'a1', childIds: ['a1a-i'] },
+  { id: 'a1a-i', anchor: 'a1a-i', label: 'A1a-i', depth: 4, level: 4, parentId: 'a1a', childIds: [] },
+  { id: 'b', anchor: 'b', label: 'B', depth: 1, level: 1, parentId: null, childIds: ['b1'] },
+  { id: 'b1', anchor: 'b1', label: 'B1', depth: 2, level: 2, parentId: 'b', childIds: [] },
+  { id: 'c', anchor: 'c', label: 'C', depth: 1, level: 1, parentId: null, childIds: [] },
 ];
 
 function renderNav(props: Partial<Parameters<typeof PaperOutlineNav>[0]> = {}) {

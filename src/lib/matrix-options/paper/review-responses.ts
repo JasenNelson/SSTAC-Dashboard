@@ -11,7 +11,9 @@ export const reviewResponseRequestSchema = z.object({
   action: z.enum(REVIEW_RESPONSE_ACTIONS),
   text: z.string().max(REVIEW_RESPONSE_TEXT_LIMIT),
   expectedRevision: z.number().int().nonnegative().nullable(),
-}).strict();
+  /** The reviewer the page believes is saving; the route refuses a save made under a different session. */
+  expectedUserId: z.string().min(1).max(128).optional(),
+}).strict().refine((value) => value.action !== 'submit' || value.text.trim().length > 0, { message: 'A submission cannot be blank', path: ['text'] });
 
 export type ReviewResponseRequest = z.infer<typeof reviewResponseRequestSchema>;
 
@@ -39,6 +41,9 @@ export type ReviewResponseOutcome =
   | { readonly outcome: 'stale_manifest' }
   | { readonly outcome: 'unauthenticated' }
   | { readonly outcome: 'too_large' }
+  | { readonly outcome: 'rate_limited' }
+  | { readonly outcome: 'blank_submission' }
+  | { readonly outcome: 'identity_changed' }
   | { readonly outcome: 'persistence_unavailable' };
 
 export function reviewResponseOutcomeStatus(outcome: ReviewResponseOutcome['outcome']): number {
@@ -50,6 +55,9 @@ export function reviewResponseOutcomeStatus(outcome: ReviewResponseOutcome['outc
     case 'stale_manifest': return 409;
     case 'unauthenticated': return 401;
     case 'too_large': return 413;
+    case 'rate_limited': return 429;
+    case 'blank_submission': return 422;
+    case 'identity_changed': return 409;
     case 'persistence_unavailable': return 503;
   }
 }

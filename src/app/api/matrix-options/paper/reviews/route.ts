@@ -34,7 +34,8 @@ export async function GET(request: NextRequest) {
 
   const { user, supabase, rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'default');
   if (rateLimitResponse) return rateLimitResponse;
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: noStoreHeaders });
+  // Anonymous Supabase sessions are not reviewers (same rule as the downloads route).
+  if (!user || user.is_anonymous !== false) return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers: noStoreHeaders });
 
   const { data, error } = await supabase
     .from('matrix_paper_review_responses')

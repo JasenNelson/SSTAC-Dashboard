@@ -123,7 +123,8 @@ describe('paper publication V16 route', () => {
     await expectRedirect(() => page({ mode: 'publication' }), `${base}?mode=working-draft`);
     await expectRedirect(() => page({ mode: 'working-draft', section: 'not-a-heading' }), `${base}?mode=working-draft`);
     await expectRedirect(() => page({ section: 'test-3', mode: 'working-draft' }), `${base}?mode=working-draft&section=test-3`);
-    await expectRedirect(() => page({ mode: 'working-draft', cohort: 'categories', q: guideId(1) }), `${base}?mode=working-draft`);
+    // Item 8: in working-draft mode a valid q is KEPT (only cohort is dropped).
+    await expectRedirect(() => page({ mode: 'working-draft', cohort: 'categories', q: guideId(1) }), `${base}?mode=working-draft&q=${encodeURIComponent(guideId(1))}`);
     await expectRedirect(() => page({ mode: ['my-review', 'working-draft'] }), `${base}?mode=my-review`);
     await expectRedirect(() => page({ mode: 'my-review', lens: 'all', page: '1' }), `${base}?mode=my-review`);
     await expectRedirect(() => page({ mode: 'my-review', q: guideId(4) }), `${base}?mode=my-review&cohort=pathway-grid&q=${encodeURIComponent(guideId(4))}`);

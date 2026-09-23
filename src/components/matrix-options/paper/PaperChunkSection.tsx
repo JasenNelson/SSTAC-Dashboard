@@ -33,7 +33,7 @@ export const PAPER_SCROLL_MARGIN_CLASSES = 'scroll-mt-[calc(var(--paper-sticky-h
  * used in RevisedPaperWorkspace. CSS only: no globals.css rule and no script.
  */
 export const PAPER_OVERFLOW_ANCHOR_CLASSES = '[overflow-anchor:auto]';
-export const PAPER_CHUNK_CLASSES = `min-w-0 rounded-sm ${PAPER_SCROLL_MARGIN_CLASSES} ${PAPER_OVERFLOW_ANCHOR_CLASSES} focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600`;
+export const PAPER_CHUNK_CLASSES = `min-w-0 rounded-sm ${PAPER_SCROLL_MARGIN_CLASSES} ${PAPER_OVERFLOW_ANCHOR_CLASSES} focus:outline-none focus-visible:outline-1 focus-visible:outline-offset-8 focus-visible:outline-dashed focus-visible:outline-[var(--db-border-strong)]`;
 
 export type PaperChunkView = Pick<PaperSectionContractChunk, 'id' | 'anchor' | 'depth' | 'label' | 'markdown'>;
 

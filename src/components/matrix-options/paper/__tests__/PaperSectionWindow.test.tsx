@@ -6,7 +6,7 @@ import { PAPER_SECTION_CONTRACT_FAILURE_PREFIX } from '@/lib/matrix-options/pape
 import {
   fetchPaperSection,
   PAPER_SECTION_PREFETCH_ROOT_MARGIN,
-  PaperLoadFullDocumentControl,
+  PaperDocumentToolbar,
   paperSectionRequestUrl,
   PaperSectionWindowView,
   placeholderMinHeight,
@@ -296,7 +296,7 @@ describe('automatic prefetch never retries a failed section (M1R4-01)', () => {
     api = windowApi;
     return (
       <div ref={scrollRootRef} data-testid="scroll-root">
-        <PaperLoadFullDocumentControl api={windowApi} />
+        <PaperDocumentToolbar api={windowApi} />
         <PaperSectionWindowView sectionWindow={prefetchWindow} api={windowApi} scrollRootRef={scrollRootRef}>
           <section id="intro" data-paper-chunk="intro" tabIndex={-1}><h2>1 Introduction body</h2></section>
         </PaperSectionWindowView>
@@ -389,5 +389,124 @@ describe('automatic prefetch never retries a failed section (M1R4-01)', () => {
     act(() => { expect(api?.ensureLoaded(1, true)).toBe(true); });
     await waitFor(() => expect(document.getElementById('methods')).not.toBeNull());
     expect(methodsRequests()).toHaveLength(1);
+  });
+});
+
+/*
+ * PaperDocumentToolbar print orchestration, driven by a hand-built
+ * PaperSectionWindowApi rather than the real loader, so each phase transition
+ * (idle -> loading -> rendering -> idle, and idle -> loading -> failed) can be
+ * exercised directly by re-rendering with a different api snapshot -- exactly
+ * as PaperSectionWindow.tsx's own state-machine diagram describes it.
+ */
+describe('PaperDocumentToolbar print orchestration (fake api)', () => {
+  function makeApi(overrides: Partial<PaperSectionWindowApi> = {}): PaperSectionWindowApi {
+    const statuses = (overrides.snapshot as { statuses?: readonly string[] } | undefined)?.statuses ?? ['loaded', 'idle', 'idle'];
+    const base: PaperSectionWindowApi = {
+      total: 3,
+      loadedCount: 1,
+      complete: false,
+      loadingAll: false,
+      failedCount: 0,
+      snapshot: { statuses, loadedCount: 1, complete: false, loadingAll: false, errors: [null, null, null], results: [undefined, undefined, undefined] } as unknown as PaperSectionWindowApi['snapshot'],
+      loadedKey: statuses.join(','),
+      ensureLoaded: vi.fn(() => true),
+      loadAll: vi.fn(),
+      retry: vi.fn(),
+    };
+    return { ...base, ...overrides };
+  }
+
+  let printSpy: { mockRestore: () => void; mock: { calls: unknown[][] } };
+
+  beforeEach(() => {
+    printSpy = vi.spyOn(window, 'print').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    printSpy.mockRestore();
+  });
+
+  it('an incomplete document: clicking Print loads missing sections and does not print yet', async () => {
+    const api = makeApi({ complete: false, loadingAll: false });
+    render(<PaperDocumentToolbar api={api} />);
+    fireEvent.click(screen.getByTestId('paper-print-button'));
+    await waitFor(() => expect(api.loadAll).toHaveBeenCalledTimes(1));
+    expect(printSpy).not.toHaveBeenCalled();
+  });
+
+  it('repeated clicks while loading do not call loadAll a second time', async () => {
+    const api = makeApi({ complete: false, loadingAll: false });
+    render(<PaperDocumentToolbar api={api} />);
+    const button = screen.getByTestId('paper-print-button');
+    fireEvent.click(button);
+    await waitFor(() => expect(api.loadAll).toHaveBeenCalledTimes(1));
+    fireEvent.click(button);
+    fireEvent.click(button);
+    expect(api.loadAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('once sections finish loading (re-render with complete=true), window.print is called exactly once', async () => {
+    const api = makeApi({ complete: false, loadingAll: false });
+    const { rerender } = render(<PaperDocumentToolbar api={api} />);
+    fireEvent.click(screen.getByTestId('paper-print-button'));
+    await waitFor(() => expect(api.loadAll).toHaveBeenCalledTimes(1));
+
+    const completedApi = makeApi({ complete: true, loadingAll: false, loadedCount: 3, snapshot: { statuses: ['loaded', 'loaded', 'loaded'] } as unknown as PaperSectionWindowApi['snapshot'] });
+    rerender(<PaperDocumentToolbar api={completedApi} />);
+
+    await waitFor(() => expect(printSpy).toHaveBeenCalledTimes(1));
+  });
+
+  it('an already-complete document: clicking Print calls window.print once and never loadAll', async () => {
+    const api = makeApi({ complete: true, loadedCount: 3, snapshot: { statuses: ['loaded', 'loaded', 'loaded'] } as unknown as PaperSectionWindowApi['snapshot'] });
+    render(<PaperDocumentToolbar api={api} />);
+    fireEvent.click(screen.getByTestId('paper-print-button'));
+    await waitFor(() => expect(printSpy).toHaveBeenCalledTimes(1));
+    expect(api.loadAll).not.toHaveBeenCalled();
+  });
+
+  it('a print dialog the browser refuses (window.print throws) is reported, and a retry clears it', async () => {
+    printSpy.mockRestore();
+    let throwOnce = true;
+    let alertPresentAtSecondPrint: boolean | null = null;
+    printSpy = vi.spyOn(window, 'print').mockImplementation(() => {
+      if (throwOnce) { throwOnce = false; throw new Error('blocked'); }
+      alertPresentAtSecondPrint = document.querySelector('[data-testid="paper-print-dialog-failed"]') !== null;
+    });
+    const api = makeApi({ complete: true, loadedCount: 3, snapshot: { statuses: ['loaded', 'loaded', 'loaded'] } as unknown as PaperSectionWindowApi['snapshot'] });
+    render(<PaperDocumentToolbar api={api} />);
+    expect(screen.queryByTestId('paper-print-dialog-failed')).toBeNull();
+    fireEvent.click(screen.getByTestId('paper-print-button'));
+    const alert = await screen.findByTestId('paper-print-dialog-failed');
+    expect(alert).toHaveAttribute('role', 'alert');
+    // Print is usable again (not stuck busy) and a successful retry clears the alert.
+    fireEvent.click(screen.getByTestId('paper-print-button'));
+    await waitFor(() => expect(printSpy.mock.calls.length).toBe(2));
+    // Cleared by the new REQUEST, before the dialog opens (not only on success).
+    expect(alertPresentAtSecondPrint).toBe(false);
+    await waitFor(() => expect(screen.queryByTestId('paper-print-dialog-failed')).toBeNull());
+  });
+
+  it('a load failure shows the print-failed alert (never prints) and "Try printing again" re-issues loadAll', async () => {
+    const api = makeApi({ complete: false, loadingAll: false });
+    const { rerender } = render(<PaperDocumentToolbar api={api} />);
+    fireEvent.click(screen.getByTestId('paper-print-button'));
+    await waitFor(() => expect(api.loadAll).toHaveBeenCalledTimes(1));
+
+    // The loader is now seen working (loadingAll true / a section pending).
+    const workingApi = makeApi({ complete: false, loadingAll: true });
+    rerender(<PaperDocumentToolbar api={workingApi} />);
+
+    // The loader drains with a failure: loadingAll false again, failedCount 1.
+    const failedApi = makeApi({ complete: false, loadingAll: false, failedCount: 1 });
+    rerender(<PaperDocumentToolbar api={failedApi} />);
+
+    const alert = await screen.findByTestId('paper-print-failed');
+    expect(alert).toBeVisible();
+    expect(printSpy).not.toHaveBeenCalled();
+
+    fireEvent.click(within(alert).getByRole('button', { name: 'Try printing again' }));
+    await waitFor(() => expect(failedApi.loadAll).toHaveBeenCalledTimes(1));
   });
 });

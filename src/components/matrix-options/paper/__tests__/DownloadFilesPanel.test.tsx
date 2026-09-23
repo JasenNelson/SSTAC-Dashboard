@@ -1,5 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useRef } from 'react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } from 'vitest';
 
 import { DownloadFilesPanel, safeFileNameFromDisposition, type DownloadCohortGroup } from '../DownloadFilesPanel';
@@ -31,56 +30,54 @@ function groupsFor(cohortIds: readonly string[]): DownloadCohortGroup[] {
 const oneGroup = () => groupsFor(['categories']);
 
 describe('DownloadFilesPanel', () => {
-  it('renders verified package identity and a download control per package', () => {
-    render(<DownloadFilesPanel open groups={oneGroup()} onClose={vi.fn()} />);
-    expect(screen.getByRole('heading', { name: 'Download Files' })).toHaveFocus();
+  it('renders content-only: h2 heading and one button per package labelled "<cohort> - <kind>"', () => {
+    render(<DownloadFilesPanel groups={oneGroup()} />);
+    expect(screen.getByRole('heading', { name: 'Download files', level: 2 })).toBeInTheDocument();
     // Controls are BUTTONS, not anchors: a bare <a download> saved error bodies
     // as .pdf files, which is the defect this panel was rewritten to remove.
-    expect(screen.getByRole('button', { name: 'Download PDF' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Download DOCX' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cohort categories - PDF' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cohort categories - DOCX' })).toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    expect(screen.getByText('categories-review-package.docx - 84 bytes - SHA-256 ' + 'c'.repeat(64))).toBeInTheDocument();
   });
 
-  it('fails closed with pending text when no validated manifest exists', () => {
-    render(<DownloadFilesPanel open groups={null} onClose={vi.fn()} />);
-    expect(screen.getByTestId('download-files-pending')).toHaveTextContent('pending server validation');
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /^Download / })).not.toBeInTheDocument();
-  });
-
-  it('fails closed when the group list is present but empty', () => {
-    render(<DownloadFilesPanel open groups={[]} onClose={vi.fn()} />);
-    expect(screen.getByTestId('download-files-pending')).toHaveTextContent('pending server validation');
-  });
-
-  it('supports Escape close and restores focus', async () => {
-    const onClose = vi.fn();
-    const DummyParent = () => {
-      const ref = useRef<HTMLButtonElement>(null);
-      return <><button data-testid="return-focus" ref={ref}>Open downloads</button><DownloadFilesPanel open groups={null} onClose={onClose} closeFocusRef={ref} /></>;
-    };
-    render(<DummyParent />);
-    fireEvent.keyDown(screen.getByTestId('download-files-panel'), { key: 'Escape' });
-    expect(onClose).toHaveBeenCalledTimes(1);
-    await new Promise<void>((resolve) => queueMicrotask(() => resolve()));
-    expect(screen.getByTestId('return-focus')).toHaveFocus();
-  });
-
-  it('is hidden, inert, and print-hidden when closed', () => {
-    render(<DownloadFilesPanel open={false} groups={null} onClose={vi.fn()} />);
+  it('never displays file names, byte counts, SHA-256 or release-verification text', () => {
+    render(<DownloadFilesPanel groups={oneGroup()} />);
     const panel = screen.getByTestId('download-files-panel');
-    expect(panel).toHaveAttribute('hidden');
-    expect(panel).toHaveAttribute('inert');
-    expect(panel).toHaveClass('print:hidden');
+    expect(panel.textContent).not.toContain('categories-review-package.pdf');
+    expect(panel.textContent).not.toContain('84 bytes');
+    expect(panel.textContent).not.toContain('c'.repeat(64));
+    expect(panel.textContent).not.toMatch(/Verified review packages for release/i);
+  });
+
+  it('shows the pending text when no groups exist', () => {
+    render(<DownloadFilesPanel groups={null} />);
+    expect(screen.getByTestId('download-files-pending')).toHaveTextContent(
+      'Download files are being prepared for this release and are not available yet.',
+    );
+    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Cohort / })).not.toBeInTheDocument();
+  });
+
+  it('shows the pending text when the group list is present but empty', () => {
+    render(<DownloadFilesPanel groups={[]} />);
+    expect(screen.getByTestId('download-files-pending')).toHaveTextContent(
+      'Download files are being prepared for this release and are not available yet.',
+    );
+  });
+
+  it('accepts an explicit headingId so the popover can label itself by this heading', () => {
+    render(<DownloadFilesPanel groups={oneGroup()} headingId="custom-heading-id" />);
+    const heading = screen.getByRole('heading', { name: 'Download files', level: 2 });
+    expect(heading).toHaveAttribute('id', 'custom-heading-id');
+    expect(screen.getByTestId('download-files-panel')).toHaveAttribute('aria-labelledby', 'custom-heading-id');
   });
 });
 
 describe('P1-A: cohort grouping', () => {
   it('renders ALL TEN packages across the five cohorts, none omitted or duplicated', () => {
-    render(<DownloadFilesPanel open groups={groupsFor(ALL_COHORTS)} onClose={vi.fn()} />);
+    render(<DownloadFilesPanel groups={groupsFor(ALL_COHORTS)} />);
 
-    const buttons = screen.getAllByRole('button', { name: /^Download (PDF|DOCX)$/ });
+    const buttons = screen.getAllByRole('button', { name: /^Cohort .* - (PDF|DOCX)$/ });
     expect(buttons).toHaveLength(10);
 
     for (const cohortId of ALL_COHORTS) {
@@ -98,22 +95,23 @@ describe('P1-A: cohort grouping', () => {
   });
 
   it('renders exactly one pair when given a single group (the My Review shape)', () => {
-    // NOTE: this documents the single-group SHAPE. It does NOT falsify P1-A -
-    // that defect lived in the workspace selector, and its falsifying guard is
-    // "Working Draft exposes every cohort package pair" in RevisedPaperWorkspace.test.tsx.
-    render(<DownloadFilesPanel open groups={oneGroup()} onClose={vi.fn()} />);
-    expect(screen.getAllByRole('button', { name: /^Download (PDF|DOCX)$/ })).toHaveLength(2);
+    // NOTE: this documents the single-group SHAPE. Both Working Draft and My
+    // Review now list ALL topics' packages (spec item 2); the caller decides
+    // how many groups to pass.
+    render(<DownloadFilesPanel groups={oneGroup()} />);
+    expect(screen.getAllByRole('button', { name: /^Cohort .* - (PDF|DOCX)$/ })).toHaveLength(2);
     expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(1);
     for (const cohortId of ALL_COHORTS.filter((c) => c !== 'categories')) {
       expect(screen.queryByTestId(`download-cohort-${cohortId}`)).not.toBeInTheDocument();
     }
   });
 
-  it('labels each group so cohort identity is unambiguous', () => {
-    render(<DownloadFilesPanel open groups={groupsFor(['categories', 'pathway-grid'])} onClose={vi.fn()} />);
-    expect(screen.getByRole('heading', { name: 'Cohort categories' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Cohort pathway-grid' })).toBeInTheDocument();
-    expect(screen.getByRole('list', { name: 'Available review packages for Cohort categories' })).toBeInTheDocument();
+  it('labels each package with its cohort name and kind so identity is unambiguous', () => {
+    render(<DownloadFilesPanel groups={groupsFor(['categories', 'pathway-grid'])} />);
+    expect(screen.getByRole('button', { name: 'Cohort categories - PDF' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Cohort pathway-grid - PDF' })).toBeInTheDocument();
+    expect(screen.getByTestId('download-cohort-categories')).toBeInTheDocument();
+    expect(screen.getByTestId('download-cohort-pathway-grid')).toBeInTheDocument();
   });
 });
 
@@ -135,8 +133,8 @@ describe('P1-B: controlled download never saves an error response', () => {
     vi.unstubAllGlobals();
   });
 
-  function renderPanel() {
-    render(<DownloadFilesPanel open groups={oneGroup()} onClose={vi.fn()} />);
+  function renderPanel(props: Partial<{ onAnnounce: (message: string) => void }> = {}) {
+    render(<DownloadFilesPanel groups={oneGroup()} onAnnounce={props.onAnnounce} />);
     return screen.getByTestId('download-button-categories-pdf');
   }
 
@@ -152,17 +150,21 @@ describe('P1-B: controlled download never saves an error response', () => {
     // route answers 503 with a JSON body. The old <a download> wrote that body
     // to disk named .pdf.
     vi.stubGlobal('fetch', respond({ status: 503, type: 'application/json', body: JSON.stringify({ error: 'unavailable', code: 'PRINT_PACKAGE_ARTIFACTS_UNAVAILABLE' }) }));
-    fireEvent.click(renderPanel());
+    const onAnnounce = vi.fn();
+    fireEvent.click(renderPanel({ onAnnounce }));
 
     await waitFor(() => expect(screen.getByTestId('download-status-categories-pdf')).toHaveTextContent(/Not published yet/i));
     expect(clickSpy).not.toHaveBeenCalled();
     expect(createObjectURL).not.toHaveBeenCalled();
-    expect(screen.getByTestId('download-status-categories-pdf')).toHaveAttribute('role', 'status');
     expect(screen.getByTestId('download-button-categories-pdf')).toHaveAttribute('aria-describedby', 'download-status-categories-pdf');
+    // The per-package status span is no longer its own role=status region: the
+    // failure is announced through onAnnounce, which the workspace surfaces as
+    // a single sr-only role=status region outside the popover (spec item 2).
+    expect(onAnnounce).toHaveBeenCalledWith('Cohort categories - PDF: Not published yet. Nothing was saved.');
     // A 503 is a RELEASE state, not a per-file fault: one panel-level notice
     // must say so, otherwise ten unprovisioned packages read as ten broken ones.
     const notice = await screen.findByTestId('download-not-published');
-    expect(notice).toHaveTextContent(/every package in this release/i);
+    expect(notice).toHaveTextContent('These files are not published yet, so downloads are unavailable for now. Nothing was saved.');
     expect(notice).toHaveAttribute('role', 'status');
   });
 
@@ -210,13 +212,72 @@ describe('P1-B: controlled download never saves an error response', () => {
     expect(createObjectURL).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url'));
     expect(document.querySelectorAll('a[download]')).toHaveLength(0);
-    await waitFor(() => expect(screen.getByTestId('download-button-categories-pdf')).not.toBeDisabled());
+    await waitFor(() => expect(screen.getByTestId('download-button-categories-pdf')).not.toHaveAttribute('aria-disabled'));
   });
 
   it('announces success after a completed save', async () => {
     vi.stubGlobal('fetch', respond({ status: 200, type: PDF_TYPE }));
     fireEvent.click(renderPanel());
-    await waitFor(() => expect(screen.getByTestId('download-status-categories-pdf')).toHaveTextContent(/Downloaded categories-review-package\.pdf/));
+    await waitFor(() => expect(screen.getByTestId('download-status-categories-pdf')).toHaveTextContent('Downloaded'));
+  });
+
+  it('two activations before any re-render start exactly ONE fetch (synchronous in-flight guard)', async () => {
+    const fetchMock = respond({ status: 200, type: PDF_TYPE });
+    vi.stubGlobal('fetch', fetchMock);
+    const button = renderPanel();
+    // Both clicks land inside one act, so no re-render happens between them;
+    // a guard that reads render state would let the second one through.
+    act(() => { button.click(); button.click(); });
+    await waitFor(() => expect(clickSpy).toHaveBeenCalledTimes(1));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    // Two-sided: once settled, a new activation downloads again.
+    fireEvent.click(screen.getByTestId('download-button-categories-pdf'));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
+  it('an unexpected throw while saving reports an error and never leaves the button stuck busy', async () => {
+    const fetchMock = respond({ status: 200, type: PDF_TYPE });
+    vi.stubGlobal('fetch', fetchMock);
+    createObjectURL.mockImplementation(() => { throw new Error('blocked'); });
+    const onAnnounce = vi.fn();
+    fireEvent.click(renderPanel({ onAnnounce }));
+    // Announced like every other failure (the status span is not a live region).
+    await waitFor(() => expect(onAnnounce).toHaveBeenCalledWith('Cohort categories - PDF: Download failed. Nothing was saved.'));
+    await waitFor(() => expect(screen.getByTestId('download-status-categories-pdf')).toHaveTextContent('Nothing was saved'));
+    expect(screen.getByTestId('download-button-categories-pdf')).not.toHaveAttribute('aria-disabled');
+    expect(clickSpy).not.toHaveBeenCalled();
+    // The in-flight guard was released: a retry fetches again.
+    fireEvent.click(screen.getByTestId('download-button-categories-pdf'));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  });
+
+  it('a throwing save click still removes the anchor and revokes the blob URL', async () => {
+    vi.stubGlobal('fetch', respond({ status: 200, type: PDF_TYPE }));
+    clickSpy.mockImplementation(() => { throw new Error('save refused'); });
+    fireEvent.click(renderPanel());
+    await waitFor(() => expect(screen.getByTestId('download-status-categories-pdf')).toHaveTextContent('Nothing was saved'));
+    expect(document.querySelectorAll('a[download]')).toHaveLength(0);
+    await waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url'));
+  });
+
+  it('a throw AFTER a completed save never reports "Nothing was saved"', async () => {
+    vi.stubGlobal('fetch', respond({ status: 200, type: PDF_TYPE }));
+    const onAnnounce = vi.fn((message: string) => { if (message.endsWith('downloaded.')) throw new Error('announcer broke'); });
+    fireEvent.click(renderPanel({ onAnnounce }));
+    await waitFor(() => expect(screen.getByTestId('download-status-categories-pdf')).toHaveTextContent('Downloaded'));
+    expect(onAnnounce).not.toHaveBeenCalledWith(expect.stringContaining('Nothing was saved'));
+    expect(screen.getByTestId('download-button-categories-pdf')).not.toHaveAttribute('aria-disabled');
+  });
+
+  // (e) Reverting the onAnnounce wiring on the success path would leave this
+  // spy never called (or called with stale text); reverting it on the 503
+  // path above would do the same for that message -- each direction can only
+  // pass if its own call actually happened with the exact human-readable text.
+  it('(e) calls onAnnounce with a human-readable success message', async () => {
+    const onAnnounce = vi.fn();
+    vi.stubGlobal('fetch', respond({ status: 200, type: PDF_TYPE }));
+    fireEvent.click(renderPanel({ onAnnounce }));
+    await waitFor(() => expect(onAnnounce).toHaveBeenCalledWith('Cohort categories - PDF downloaded.'));
   });
 
   it('does not revoke the blob URL in the same task as the click', async () => {
@@ -226,7 +287,7 @@ describe('P1-B: controlled download never saves an error response', () => {
     let revokedAtClick: boolean | null = null;
     clickSpy.mockImplementation(() => { revokedAtClick = revokeObjectURL.mock.calls.length > 0; });
 
-    render(<DownloadFilesPanel open groups={oneGroup()} onClose={vi.fn()} />);
+    render(<DownloadFilesPanel groups={oneGroup()} />);
     fireEvent.click(screen.getByTestId('download-button-categories-pdf'));
 
     await waitFor(() => expect(clickSpy).toHaveBeenCalledTimes(1));
@@ -237,12 +298,12 @@ describe('P1-B: controlled download never saves an error response', () => {
 
   it('a valid DOCX triggers exactly one download', async () => {
     vi.stubGlobal('fetch', respond({ status: 200, type: DOCX_TYPE }));
-    render(<DownloadFilesPanel open groups={oneGroup()} onClose={vi.fn()} />);
+    render(<DownloadFilesPanel groups={oneGroup()} />);
     fireEvent.click(screen.getByTestId('download-button-categories-docx'));
     await waitFor(() => expect(clickSpy).toHaveBeenCalledTimes(1));
   });
 
-  it('sets a busy state and ignores a duplicate concurrent click', async () => {
+  it('sets a busy (aria-disabled) state and ignores a duplicate concurrent click', async () => {
     let release: (value: Response) => void = () => {};
     const gated = new Promise<Response>((resolve) => { release = resolve; });
     const fetchMock = vi.fn(() => gated);
@@ -250,30 +311,53 @@ describe('P1-B: controlled download never saves an error response', () => {
 
     const button = renderPanel();
     fireEvent.click(button);
-    await waitFor(() => expect(button).toBeDisabled());
-    expect(button).toHaveAttribute('aria-busy', 'true');
+    await waitFor(() => expect(button).toHaveAttribute('aria-disabled', 'true'));
+    expect(screen.getByTestId('download-status-categories-pdf')).toHaveTextContent('Downloading');
 
     fireEvent.click(button);
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     release(new Response(new Blob(['x']), { status: 200, headers: new Headers({ 'content-type': PDF_TYPE }) }));
-    await waitFor(() => expect(button).not.toBeDisabled());
+    await waitFor(() => expect(button).not.toHaveAttribute('aria-disabled'));
   });
 
-  it('offers retry after a failure and can then succeed', async () => {
+  it.each([
+    ['PRIVATE_PACKAGE_INTEGRITY_MISMATCH'],
+    ['INVALID_PRINT_PACKAGE_CATALOG'],
+    ['DOWNLOAD_BOUNDARY_UNAVAILABLE'],
+    [undefined],
+    ['<html>'],
+  ])('a 503 with code %s is reported as a FAILURE, never as "not published"', async (code) => {
+    const body = code === '<html>' ? '<html>Service Unavailable</html>' : JSON.stringify(code ? { code } : {});
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(body, { status: 503, headers: new Headers({ 'content-type': code === '<html>' ? 'text/html' : 'application/json' }) })));
+    fireEvent.click(renderPanel());
+    await waitFor(() => expect(screen.getByTestId('download-status-categories-pdf')).toHaveTextContent('could not be verified'));
+    expect(screen.queryByText(/Not published yet/i)).toBeNull();
+    expect(createObjectURL).not.toHaveBeenCalled();
+  });
+
+  it.each([['PRINT_PACKAGE_ARTIFACTS_UNAVAILABLE'], ['PRINT_PACKAGE_ARTIFACTS_INCOMPLETE']])('a 503 with release-state code %s reads "Not published yet"', async (code) => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ code }), { status: 503, headers: new Headers({ 'content-type': 'application/json' }) })));
+    fireEvent.click(renderPanel());
+    await waitFor(() => expect(screen.getByTestId('download-status-categories-pdf')).toHaveTextContent(/Not published yet/i));
+  });
+
+  it('offers a way to retry after a failure and can then succeed on the same button', async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(new Response('{}', { status: 503, headers: new Headers({ 'content-type': 'application/json' }) }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ code: 'PRINT_PACKAGE_ARTIFACTS_UNAVAILABLE' }), { status: 503, headers: new Headers({ 'content-type': 'application/json' }) }))
       .mockResolvedValueOnce(new Response(new Blob(['x']), { status: 200, headers: new Headers({ 'content-type': PDF_TYPE }) }));
     vi.stubGlobal('fetch', fetchMock);
 
     const button = renderPanel();
     fireEvent.click(button);
-    await waitFor(() => expect(button).toHaveTextContent('Retry PDF'));
+    await waitFor(() => expect(screen.getByTestId('download-status-categories-pdf')).toHaveTextContent(/Not published yet/i));
     expect(clickSpy).not.toHaveBeenCalled();
 
     fireEvent.click(button);
     await waitFor(() => expect(clickSpy).toHaveBeenCalledTimes(1));
+    // The panel-wide "not published" notice does not outlive a delivered package.
+    await waitFor(() => expect(screen.queryByText(/not published yet/i)).toBeNull());
   });
 
   it('sends same-origin credentials so the authenticated route is reached', async () => {
