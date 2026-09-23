@@ -3,6 +3,7 @@
 import type { CohortId, CohortManifest } from '@/lib/matrix-options/cohort-contract';
 import type { CohortPortion } from '@/lib/matrix-options/paper/cohort-portions';
 import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
+import { numberedReviewTopicLabel } from '@/lib/matrix-options/paper/topic-labels';
 
 /*
  * M2 left rail: 5 collapsible cohorts, each listing its authenticated paper
@@ -48,7 +49,8 @@ export function CohortReviewNav({
   return (
     <nav aria-label="Review topics">
       <ul className="space-y-2">
-        {cohortManifest.cohorts.map((cohort) => {
+        {cohortManifest.cohorts.map((cohort, topicIndex) => {
+          const topicLabel = numberedReviewTopicLabel(cohort.id, cohort.name, topicIndex);
           const selected = selectedCohortId === cohort.id;
           const expanded = expandedCohortId === cohort.id;
           const portions = cohortPortions.filter((portion) => portion.cohortId === cohort.id);
@@ -58,13 +60,13 @@ export function CohortReviewNav({
             <li key={cohort.id} className="rounded-md border border-[var(--db-border)] bg-[var(--db-surface)]">
               <button
                 type="button"
-                aria-label={`${cohort.name}, ${cohort.questionNumbers.length} questions`}
+                aria-label={`${topicLabel}, ${cohort.questionNumbers.length} questions`}
                 aria-expanded={expanded}
                 aria-controls={portionsId}
                 onClick={() => onSelectCohort(cohort.id)}
                 className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] ${selected ? 'bg-[var(--db-accent-tint)] font-semibold text-[var(--db-text-primary)]' : 'font-medium text-[var(--db-text-primary)] hover:bg-[var(--db-depth-1)]'}`}
               >
-                <span className="min-w-0 break-words">{cohort.name}</span>
+                <span className="min-w-0 break-words">{topicLabel}</span>
                 <span className="shrink-0 text-xs font-normal text-[var(--db-text-secondary)]">{cohort.questionNumbers.length} questions</span>
               </button>
               <div id={portionsId} hidden={!expanded} className="border-t border-[var(--db-border)] p-2">

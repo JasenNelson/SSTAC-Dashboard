@@ -126,7 +126,7 @@ export function PaperRail({ id, side, open, heading, headingId, headingRef, onEs
       onKeyDown={onKeyDown}
       className={paperRailClassName(side, open)}
     >
-      <div className={cn('w-full min-w-0 p-4 sm:p-5 lg:h-full lg:overflow-y-auto', side === 'left' ? 'lg:w-[var(--paper-left-width)]' : 'lg:w-[var(--paper-right-width)]')}>
+      <div className={cn('relative w-full min-w-0 p-4 sm:p-5 lg:h-full lg:overflow-y-auto', side === 'left' ? 'lg:w-[var(--paper-left-width)]' : 'lg:w-[var(--paper-right-width)]')}>
         <h2
           ref={headingRef}
           id={headingId}

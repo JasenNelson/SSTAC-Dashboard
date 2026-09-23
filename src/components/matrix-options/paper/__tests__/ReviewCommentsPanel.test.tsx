@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { readReviewLocalDraft, writeReviewLocalDraft, writeReviewLocalDraftEntry } from '@/lib/matrix-options/paper/review-local-buffer';
 import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
+import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
+import { buildReviewNavigation } from '@/lib/matrix-options/paper/review-navigation';
 
 import { REVIEW_COMMENTS_TEXT_LIMIT, REVIEW_SAVE_TIMEOUT_MS, ReviewCommentsPanel } from '../ReviewCommentsPanel';
 
@@ -210,14 +212,14 @@ describe('ReviewCommentsPanel', () => {
     await waitFor(() => expect(screen.getByTestId('review-progress')).toHaveTextContent(`0 of ${questions.length} submitted, 2 drafts`));
   });
 
-  it('M2: the saved-questions list has one chip per question, in the given (cohort) order, with a status chip', async () => {
+  it('M2: the question index has one row per question, in the given (cohort) order, with its state', async () => {
     seedDraft(questions[0].id, 'drafted');
     // Server persistence unavailable (503) but the reviewer is verified.
     stubBootstrap({ persistence: 'unavailable', userKey: REVIEWER, rows: [] }, 503);
     renderPanel({ manifestSha256: MANIFEST, cohortId: 'categories' });
-    await waitFor(() => expect(within(screen.getByTestId('review-saved-questions')).getAllByRole('button')[0]).toHaveTextContent('Draft in this browser only'));
-    const list = screen.getByTestId('review-saved-questions');
-    const items = within(list).getAllByRole('button');
+    await waitFor(() => expect(screen.getByTestId(`review-question-toggle-q${questions[0].number}`)).toHaveTextContent('Draft in this browser only'));
+    const list = screen.getByTestId('review-question-index');
+    const items = within(list).getAllByTestId(/^review-question-toggle-q/);
     expect(items).toHaveLength(questions.length);
     // Server persistence is unavailable, so the browser-only draft reports
     // 'Draft in this browser only', not the server-persisted 'Draft saved'.
@@ -225,14 +227,16 @@ describe('ReviewCommentsPanel', () => {
     expect(items[1]).toHaveTextContent('Not started');
   });
 
-  it('M2: a saved-questions chip resumes that question directly via onSelectQuestion, and the active one carries aria-current', () => {
+  it('M2: a question row opens that question via onSelectQuestion; the open row is expanded and carries aria-current', () => {
     const { onSelectQuestion } = renderPanel({ question: questions[0] });
-    const list = screen.getByTestId('review-saved-questions');
-    const activeChip = within(list).getByRole('button', { name: new RegExp(`Question ${questions[0].number}:`) });
-    expect(activeChip).toHaveAttribute('aria-current', 'true');
-    const targetChip = within(list).getByRole('button', { name: new RegExp(`Question ${questions[3].number}:`) });
-    expect(targetChip).not.toHaveAttribute('aria-current');
-    fireEvent.click(targetChip);
+    const list = screen.getByTestId('review-question-index');
+    const activeRow = within(list).getByRole('button', { name: new RegExp(`Question ${questions[0].number}:`) });
+    expect(activeRow).toHaveAttribute('aria-current', 'true');
+    expect(activeRow).toHaveAttribute('aria-expanded', 'true');
+    const targetRow = within(list).getByRole('button', { name: new RegExp(`Question ${questions[3].number}:`) });
+    expect(targetRow).not.toHaveAttribute('aria-current');
+    expect(targetRow).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(targetRow);
     expect(onSelectQuestion).toHaveBeenCalledWith(questions[3].number);
   });
 
@@ -428,10 +432,10 @@ describe('ReviewCommentsPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
     requests[0].resolve(new Response(JSON.stringify({ outcome: 'stale_revision', row: { document_version: version, manifest_sha256: manifestSha256, cohort_id: 'categories', question_id: questions[0].id, draft_text: 'q1 saved', submitted_text: null, revision: 2, submitted_revision: null, submitted_at: null, updated_at: null } }), { status: 409 }));
     await waitFor(() => expect(screen.getByTestId('review-conflict')).toBeInTheDocument());
-    fireEvent.click(within(screen.getByTestId('review-saved-questions')).getByRole('button', { name: new RegExp(`Question ${questions[1].number}:`) }));
+    fireEvent.click(within(screen.getByTestId('review-question-index')).getByRole('button', { name: new RegExp(`Question ${questions[1].number}:`) }));
     rerender(<ReviewCommentsPanel documentVersion={version} manifestSha256={manifestSha256} cohortId="categories" questions={questions} question={questions[1]} responseRef={responseRef} onSelectQuestion={onSelectQuestion} onPreviousQuestion={onPreviousQuestion} onNextQuestion={onNextQuestion} />);
     await waitFor(() => expect(screen.queryByTestId('review-conflict')).not.toBeInTheDocument());
-    fireEvent.click(within(screen.getByTestId('review-saved-questions')).getByRole('button', { name: new RegExp(`Question ${questions[0].number}:`) }));
+    fireEvent.click(within(screen.getByTestId('review-question-index')).getByRole('button', { name: new RegExp(`Question ${questions[0].number}:`) }));
     rerender(<ReviewCommentsPanel documentVersion={version} manifestSha256={manifestSha256} cohortId="categories" questions={questions} question={questions[0]} responseRef={responseRef} onSelectQuestion={onSelectQuestion} onPreviousQuestion={onPreviousQuestion} onNextQuestion={onNextQuestion} />);
     await waitFor(() => expect(screen.getByTestId('review-conflict')).toBeInTheDocument());
     expect(screen.getByText('Saved response: q1 saved')).toBeInTheDocument();
@@ -1108,16 +1112,17 @@ describe('ReviewCommentsPanel: editor expand toggle', () => {
 });
 
 describe('ReviewCommentsPanel: layout order', () => {
-  it('M2: DOM order is progress tracker, Jump to topic, question heading, textarea, Save draft, Previous question, saved-questions list', () => {
+  it('M2: DOM order is progress, Jump to topic, the question index, then inside the open row its heading, textarea, Save draft, Previous question', () => {
     renderPanel();
     const tracker = screen.getByTestId('review-progress-tracker');
     const select = screen.getByRole('combobox', { name: 'Jump to topic' });
+    const index = screen.getByTestId('review-question-index');
     const heading = screen.getByRole('heading', { name: /^Question 1:/ });
     const textarea = screen.getByRole('textbox', { name: 'Your response' });
     const saveButton = screen.getByRole('button', { name: 'Save draft' });
     const previousButton = screen.getByRole('button', { name: 'Previous question' });
-    const savedList = screen.getByTestId('review-saved-questions');
-    const sequence = [tracker, select, heading, textarea, saveButton, previousButton, savedList];
+    expect(within(screen.getByTestId(`review-question-row-q${questions[0].number}`)).getByRole('textbox', { name: 'Your response' })).toBe(textarea);
+    const sequence = [tracker, select, index, heading, textarea, saveButton, previousButton];
     for (let index = 0; index < sequence.length - 1; index += 1) {
       expect(sequence[index].compareDocumentPosition(sequence[index + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     }
@@ -1644,5 +1649,143 @@ describe('ReviewCommentsPanel: text is never attributed to the wrong reviewer (s
     expect(screen.getByRole('button', { name: /save draft/i })).toBeDisabled();
     expect(screen.getByRole('textbox', { name: 'Your response' })).toHaveValue('reviewer a text');
     expect(readReviewLocalDraft({ documentVersion: version, questionId: questions[0].id, userKey: REVIEWER })).toBe('reviewer a text');
+  });
+});
+
+describe('ReviewCommentsPanel: question index (owner-approved correction)', () => {
+  const props = () => ({ documentVersion: version, questions, responseRef: createRef<HTMLElement>(), onSelectQuestion: vi.fn(), onPreviousQuestion: vi.fn(), onNextQuestion: vi.fn(), onCloseQuestion: vi.fn() });
+
+  it('keeps every question row visible with all prompts and editors collapsed when no question is open', () => {
+    render(<ReviewCommentsPanel {...props()} question={undefined} />);
+    const toggles = within(screen.getByTestId('review-question-index')).getAllByTestId(/^review-question-toggle-q/);
+    expect(toggles).toHaveLength(questions.length);
+    for (const toggle of toggles) expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('textbox', { name: 'Your response' })).toBeNull();
+    expect(document.getElementById('active-question-heading')).toBeNull();
+    // Each row names its number, a concise title from its own prompt, and its state.
+    expect(screen.getByTestId(`review-question-toggle-q${questions[0].number}`)).toHaveTextContent(`Q${questions[0].number}`);
+    expect(screen.getByTestId(`review-question-toggle-q${questions[0].number}`)).toHaveTextContent('Not started');
+    // Two-sided: rows are distinguishable although the guide heading repeats per topic.
+    const titles = toggles.map((toggle) => toggle.querySelector('.line-clamp-2')?.textContent);
+    expect(new Set(titles).size).toBe(titles.length);
+  });
+
+  it('opens exactly one question inline: its prompt and editor sit inside its own row', () => {
+    const { rerender } = render(<ReviewCommentsPanel {...props()} question={questions[2]} />);
+    const open = screen.getByTestId(`review-question-row-q${questions[2].number}`);
+    expect(open).toHaveAttribute('data-open', 'true');
+    expect(within(open).getByRole('textbox', { name: 'Your response' })).toBeInTheDocument();
+    expect(screen.getAllByRole('textbox', { name: 'Your response' })).toHaveLength(1);
+    rerender(<ReviewCommentsPanel {...props()} question={questions[1]} />);
+    expect(screen.getByTestId(`review-question-row-q${questions[2].number}`)).toHaveAttribute('data-open', 'false');
+    expect(within(screen.getByTestId(`review-question-row-q${questions[1].number}`)).getByRole('textbox', { name: 'Your response' })).toBeInTheDocument();
+    expect(screen.getAllByRole('textbox', { name: 'Your response' })).toHaveLength(1);
+  });
+
+  it('highlights the paper-related question without opening it', () => {
+    render(<ReviewCommentsPanel {...props()} question={undefined} highlightQuestionNumber={questions[3].number} />);
+    const row = screen.getByTestId(`review-question-row-q${questions[3].number}`);
+    expect(row).toHaveAttribute('data-highlighted', 'true');
+    expect(row).toHaveAttribute('data-open', 'false');
+    expect(screen.getByTestId(`review-question-toggle-q${questions[3].number}`)).toHaveAttribute('aria-current', 'true');
+    expect(screen.queryByRole('textbox', { name: 'Your response' })).toBeNull();
+  });
+
+  it('clicking the open row collapses it; clicking another row asks to open that one', () => {
+    const handlers = props();
+    render(<ReviewCommentsPanel {...handlers} question={questions[0]} />);
+    fireEvent.click(screen.getByTestId(`review-question-toggle-q${questions[0].number}`));
+    expect(handlers.onCloseQuestion).toHaveBeenCalledTimes(1);
+    expect(handlers.onSelectQuestion).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId(`review-question-toggle-q${questions[1].number}`));
+    expect(handlers.onSelectQuestion).toHaveBeenCalledWith(questions[1].number);
+  });
+
+  it('returns the caret after the question is collapsed and reopened', () => {
+    const shared = props();
+    const { rerender } = render(<ReviewCommentsPanel {...shared} question={questions[0]} />);
+    const textarea = () => screen.getByRole('textbox', { name: 'Your response' }) as HTMLTextAreaElement;
+    fireEvent.change(textarea(), { target: { value: 'first question text here', selectionStart: 5, selectionEnd: 5 } });
+    textarea().setSelectionRange(5, 5);
+    fireEvent.select(textarea());
+    rerender(<ReviewCommentsPanel {...shared} question={undefined} />);
+    expect(screen.queryByRole('textbox', { name: 'Your response' })).toBeNull();
+    rerender(<ReviewCommentsPanel {...shared} question={questions[0]} />);
+    expect(textarea()).toHaveValue('first question text here');
+    // Two-sided: the remounted textarea would otherwise put the caret at the end (24).
+    expect(textarea().selectionStart).toBe(5);
+  });
+
+  it('Next reveals the newly opened row and keeps keyboard focus on its Next control', () => {
+    const shared = props();
+    const revealElement = vi.fn();
+    const { rerender } = render(<ReviewCommentsPanel {...shared} revealElement={revealElement} question={questions[0]} />);
+    fireEvent.click(screen.getByRole('button', { name: /Next question/ }));
+    expect(shared.onNextQuestion).toHaveBeenCalledTimes(1);
+    rerender(<ReviewCommentsPanel {...shared} revealElement={revealElement} question={questions[1]} />);
+    const row = screen.getByTestId(`review-question-row-q${questions[1].number}`);
+    // An explicit selection: the workspace reveals it at every width.
+    expect(revealElement).toHaveBeenLastCalledWith(row, 'selection');
+    expect(within(row).getByRole('button', { name: /Next question/ })).toHaveFocus();
+  });
+
+  it('every question row clears the sticky header when revealed below lg (and keeps the rail landing at lg)', () => {
+    render(<ReviewCommentsPanel {...props()} question={questions[0]} />);
+    for (const question of questions) {
+      const row = screen.getByTestId(`review-question-row-q${question.number}`);
+      // Two-sided: rows had no scroll margin, so below lg a revealed row landed
+      // at the top of the viewport with its focused toggle under the header.
+      expect(row.className).toContain('scroll-mt-[calc(var(--paper-sticky-header-height,6rem)+0.5rem)]');
+      expect(row.className).toContain('lg:scroll-mt-0');
+    }
+  });
+
+  it('the question open at mount (a q deep link) is revealed as a url reveal, not as a selection', () => {
+    const revealElement = vi.fn();
+    render(<ReviewCommentsPanel {...props()} revealElement={revealElement} question={questions[1]} />);
+    expect(revealElement).toHaveBeenCalledTimes(1);
+    expect(revealElement).toHaveBeenLastCalledWith(screen.getByTestId(`review-question-row-q${questions[1].number}`), 'url');
+  });
+
+  it('a row the reader clicks is not revealed again (it is already in view)', () => {
+    const shared = props();
+    const revealElement = vi.fn();
+    const { rerender } = render(<ReviewCommentsPanel {...shared} revealElement={revealElement} question={undefined} />);
+    fireEvent.click(screen.getByTestId(`review-question-toggle-q${questions[1].number}`));
+    rerender(<ReviewCommentsPanel {...shared} revealElement={revealElement} question={questions[1]} />);
+    expect(revealElement).not.toHaveBeenCalled();
+  });
+
+  it('labels topics with their numbered presentation names', () => {
+    const topics = buildReviewNavigation(getCohortManifest(), guide).topics;
+    render(<ReviewCommentsPanel {...props()} topics={topics} question={undefined} />);
+    const index = screen.getByTestId('review-question-index');
+    expect(within(index).getByRole('heading', { name: '1. Sediment Uses' })).toBeInTheDocument();
+    expect(within(index).getByRole('heading', { name: '2. Receptors and Pathways' })).toBeInTheDocument();
+    // Two-sided: the manifest name is not shown.
+    expect(within(index).queryByRole('heading', { name: 'Categories' })).toBeNull();
+    const select = screen.getByRole('combobox', { name: 'Jump to topic' });
+    expect(Array.from(select.querySelectorAll('optgroup')).map((group) => group.getAttribute('label'))).toEqual(topics.map((topic) => topic.label));
+  });
+
+  it('Previous at the first question keeps focus inside the newly opened row, never on <body>', () => {
+    const shared = props();
+    const { rerender } = render(<ReviewCommentsPanel {...shared} revealElement={vi.fn()} question={questions[1]} />);
+    fireEvent.click(screen.getByRole('button', { name: /Previous question/ }));
+    rerender(<ReviewCommentsPanel {...shared} revealElement={vi.fn()} question={questions[0]} />);
+    const row = screen.getByTestId(`review-question-row-q${questions[0].number}`);
+    // Its own Previous is disabled at the start: focus falls back to Next.
+    expect(within(row).getByRole('button', { name: /Previous question/ })).toBeDisabled();
+    expect(within(row).getByRole('button', { name: /Next question/ })).toHaveFocus();
+    expect(document.activeElement).not.toBe(document.body);
+  });
+
+  it('with nothing open, Jump to topic offers a neutral first choice, so the highlighted question can still be opened from it', () => {
+    const handlers = props();
+    render(<ReviewCommentsPanel {...handlers} question={undefined} highlightQuestionNumber={questions[0].number} />);
+    const select = screen.getByRole('combobox', { name: 'Jump to topic' }) as HTMLSelectElement;
+    expect(select.value).toBe('');
+    fireEvent.change(select, { target: { value: String(questions[0].number) } });
+    expect(handlers.onSelectQuestion).toHaveBeenCalledWith(questions[0].number);
   });
 });

@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { ChangeEvent, RefObject } from 'react';
-import { ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Maximize2, Minimize2 } from 'lucide-react';
 
 import MathRenderer from '@/components/MathRenderer';
 import { createClient } from '@/lib/supabase/client';
 import { clampReviewText, clearReviewLocalDrafts, clearReviewLocalDraftsForVersion, hasReviewLocalDraftEntry, isReviewDraftDrafted, readReviewLocalDraftEntry, REVIEW_LOCAL_BUFFER_ANONYMOUS_USER_KEY, REVIEW_LOCAL_BUFFER_TEXT_LIMIT, writeReviewLocalDraftEntry } from '@/lib/matrix-options/paper/review-local-buffer';
 import { reviewResponseRowSchema, reviewResponseStatusLabel } from '@/lib/matrix-options/paper/review-responses';
 import type { ReviewResponseRow } from '@/lib/matrix-options/paper/review-responses';
+import { questionPromptSummary } from '@/lib/matrix-options/paper/review-navigation';
 import type { ReviewNavTopic } from '@/lib/matrix-options/paper/review-navigation';
 import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import { cn } from '@/utils/cn';
@@ -36,7 +37,19 @@ export interface ReviewCommentsPanelProps {
   readonly manifestSha256?: string;
   readonly cohortId?: string | null;
   readonly questions: readonly Question[];
+  /**
+   * The OPEN question: its prompt and editor are expanded in the question
+   * index. Undefined when every question is collapsed.
+   */
   readonly question: Question | undefined;
+  /** The question related to what the paper shows (highlighted, never opened by this panel). */
+  readonly highlightQuestionNumber?: number;
+  /** Collapses the open question. */
+  readonly onCloseQuestion?: () => void;
+  /** Brings an element of this panel into view (the workspace owns scrolling). */
+  readonly revealElement?: (element: HTMLElement, cause?: ReviewRevealCause) => void;
+  /** Bumped when the question was opened from OUTSIDE this panel (the navigation): reveal and focus its row. */
+  readonly openRequest?: number;
   readonly responseRef: RefObject<HTMLElement | null>;
   readonly onSelectQuestion: (number: number) => void;
   readonly onPreviousQuestion: () => void;
@@ -70,7 +83,7 @@ function preview(text: string): string {
 }
 /** Groups the flat question list when no topics are supplied (keeps older callers working). */
 function fallbackTopics(questions: readonly Question[]): readonly ReviewNavTopic[] {
-  return [{ id: 'all', name: 'Questions', questions: questions.map((question) => ({ number: question.number, id: question.id, heading: question.heading, title: question.heading, topicId: 'all', citedSections: [] })) }];
+  return [{ id: 'all', name: 'Questions', number: 1, label: 'Questions', questions: questions.map((question) => ({ number: question.number, id: question.id, heading: question.heading, title: question.heading, topicId: 'all', citedSections: [] })) }];
 }
 /** The section citation from a Reviewer's Guide heading ("Section 7.8"), for context under the question. */
 function headingCitation(heading: string): string | null {
@@ -78,7 +91,10 @@ function headingCitation(heading: string): string | null {
   return match ? match[1] : null;
 }
 
-export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', cohortId, questions, question, responseRef, onSelectQuestion, onPreviousQuestion, onNextQuestion, topics, sectionNote = null, cohortForQuestion }: ReviewCommentsPanelProps) {
+/** Why a review row is revealed: an explicit selection, or the q deep link at mount. */
+export type ReviewRevealCause = 'selection' | 'url';
+
+export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', cohortId, questions, question, highlightQuestionNumber, onCloseQuestion, revealElement, openRequest = 0, responseRef, onSelectQuestion, onPreviousQuestion, onNextQuestion, topics, sectionNote = null, cohortForQuestion }: ReviewCommentsPanelProps) {
   /*
    * STATE MODEL -- one source of truth per question.
    *
@@ -520,7 +536,9 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
   // controlled-value update can move the caret afterwards.
   useLayoutEffect(() => {
     const element = textareaRef.current;
-    if (!element || !question || caretQuestionRef.current === question.id) return;
+    // Collapsing unmounts the editor: reopening must restore the caret again.
+    if (!question) { caretQuestionRef.current = undefined; return; }
+    if (!element || caretQuestionRef.current === question.id) return;
     caretQuestionRef.current = question.id;
     const caret = caretRef.current.get(question.id);
     if (caret === undefined) return;
@@ -569,7 +587,51 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
     setPersistence('loading');
     setBootstrapAttempt((attempt) => attempt + 1);
   };
-  const selectQuestionWithSave = (number: number) => { saveDraftNow(); onSelectQuestion(number); };
+  /*
+   * When a question opens from Previous/Next, Jump to topic or the URL, its row
+   * may be off screen and the control that opened it has unmounted with the old
+   * editor: bring the new row into view (the workspace owns scrolling) and keep
+   * keyboard focus on the equivalent control. A row the reader clicked is
+   * already in view and keeps its own focus.
+   */
+  const rowRefs = useRef(new Map<number, HTMLLIElement>());
+  const pendingRevealRef = useRef<'previous' | 'next' | 'jump' | 'url' | null>(question ? 'url' : null);
+  useLayoutEffect(() => {
+    const pending = pendingRevealRef.current;
+    if (!pending || !question) return;
+    pendingRevealRef.current = null;
+    const row = rowRefs.current.get(question.number);
+    if (!row) return;
+    revealElement?.(row, pending === 'url' ? 'url' : 'selection');
+    if (pending === 'previous' || pending === 'next') {
+      // At either end the same control is disabled: keep focus in the row
+      // (the other navigation control, else the row's own toggle), never <body>.
+      const target = row.querySelector<HTMLElement>(`[data-question-nav="${pending}"]:not(:disabled)`)
+        ?? row.querySelector<HTMLElement>('[data-question-nav]:not(:disabled)')
+        ?? row.querySelector<HTMLElement>(`[data-testid="review-question-toggle-q${question.number}"]`);
+      target?.focus({ preventScroll: true });
+    }
+  }, [question, revealElement]);
+  const handledOpenRequestRef = useRef(openRequest);
+  useLayoutEffect(() => {
+    if (openRequest === handledOpenRequestRef.current) return;
+    handledOpenRequestRef.current = openRequest;
+    if (!question) return;
+    const row = rowRefs.current.get(question.number);
+    if (!row || row.closest('[inert]')) return;
+    revealElement?.(row, 'selection');
+    row.querySelector<HTMLElement>(`[data-testid="review-question-toggle-q${question.number}"]`)?.focus({ preventScroll: true });
+  }, [openRequest, question, revealElement]);
+  const selectQuestionWithSave = (number: number, reveal: 'jump' | null = null) => {
+    saveDraftNow();
+    pendingRevealRef.current = reveal;
+    onSelectQuestion(number);
+  };
+  const closeQuestionWithSave = () => {
+    saveDraftNow();
+    pendingRevealRef.current = null;
+    onCloseQuestion?.();
+  };
   const currentIndex = questions.findIndex((candidate) => candidate.number === question?.number);
   const total = questions.length;
   const textFor = (item: Question) => drafts.get(item.id)?.text ?? rowText(rowForQuestion(rows, item.id));
@@ -588,6 +650,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
   const navQuestion = groupedTopics.flatMap((topic) => topic.questions).find((item) => item.number === question?.number);
   const questionTopic = groupedTopics.find((topic) => topic.questions.some((item) => item.number === question?.number));
   const citation = question ? headingCitation(question.heading) : null;
+  const highlightNumber = highlightQuestionNumber ?? question?.number;
   const conflict = question ? conflicts.get(question.id) ?? null : null;
   const hasSubmission = activeRow?.submitted_revision !== null && activeRow?.submitted_revision !== undefined;
   const submitLabel = hasSubmission ? 'Re-submit response' : 'Submit response';
@@ -648,105 +711,138 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
   };
 
   return (
-    <section ref={responseRef} tabIndex={-1} data-testid="active-question-response" aria-labelledby="active-question-heading" className="min-w-0 space-y-5 focus:outline-none focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-dashed focus-visible:outline-[var(--db-border-strong)] print:hidden">
-      <ReviewProgressTracker topics={groupedTopics} stateFor={stateFor} currentQuestionNumber={question?.number} />
+    <section ref={responseRef} tabIndex={-1} data-testid="active-question-response" aria-labelledby="review-questions-heading" className="min-w-0 space-y-4 focus:outline-none focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-dashed focus-visible:outline-[var(--db-border-strong)] print:hidden">
+      <ReviewProgressTracker topics={groupedTopics} stateFor={stateFor} currentQuestionNumber={highlightNumber} />
 
       <div className="min-w-0">
         <label className="block text-sm font-semibold text-[var(--db-text-primary)]" htmlFor="review-jump-to-topic">Jump to topic</label>
-        <select id="review-jump-to-topic" data-testid="question-navigation" value={question?.number ?? ''} onChange={(event) => selectQuestionWithSave(Number(event.target.value))} className="mt-1 block min-h-[44px] w-full min-w-0 rounded-md border border-[var(--db-border-strong)] bg-[var(--db-surface)] px-3 py-2 text-sm text-[var(--db-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]">
+        <select id="review-jump-to-topic" data-testid="question-navigation" value={question?.number ?? ''} onChange={(event) => { if (event.target.value) selectQuestionWithSave(Number(event.target.value), 'jump'); }} className="mt-1 block min-h-[44px] w-full min-w-0 rounded-md border border-[var(--db-border-strong)] bg-[var(--db-surface)] px-3 py-2 text-sm text-[var(--db-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]">
+          {/* Nothing open: a neutral first option, so choosing ANY question (even the highlighted one) is a change. */}
+          {question ? null : <option value="">Choose a question</option>}
           {groupedTopics.map((topic) => (
-            <optgroup key={topic.id} label={topic.name}>
-              {topic.questions.map((item) => <option key={item.id} value={item.number}>Question {item.number}: {item.title}</option>)}
+            <optgroup key={topic.id} label={topic.label}>
+              {topic.questions.map((item) => <option key={item.id} value={item.number}>Question {item.number}: {questionPromptSummary(questions.find((candidate) => candidate.number === item.number)?.prompt ?? item.title)}</option>)}
             </optgroup>
           ))}
         </select>
       </div>
 
-      <div className="min-w-0 border-t border-[var(--db-border)] pt-4">
-        <p data-testid="review-question-context" className="text-xs text-[var(--db-text-secondary)]">{[questionTopic?.name, citation].filter(Boolean).join(' - ') || 'Review question'}</p>
-        <h3 id="active-question-heading" className="mt-0.5 text-base font-semibold leading-snug text-[var(--db-text-primary)]">{question ? `Question ${question.number}: ${navQuestion?.title ?? question.heading}` : 'Active review question'}</h3>
-        {sectionNote ? <p data-testid="review-section-note" role="status" className="mt-2 text-xs text-[var(--db-text-secondary)]">{sectionNote}</p> : null}
-        {question ? <div className="mt-3 text-sm leading-relaxed text-[var(--db-text-primary)]"><MathRenderer content={question.prompt} /></div> : <p className="mt-3 text-sm">No review question is selected.</p>}
-      </div>
+      {sectionNote ? <p data-testid="review-section-note" role="status" className="text-xs text-[var(--db-text-secondary)]">{sectionNote}</p> : null}
 
       <div className="min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <label htmlFor="review-comment-draft" className="text-sm font-semibold text-[var(--db-text-primary)]">Your response</label>
-          <button type="button" data-testid="review-editor-expand" aria-pressed={expanded} aria-controls="review-comment-draft" onClick={() => setExpanded((value) => !value)} className={cn(secondaryButton, 'border-transparent px-2 text-xs')}>
-            {expanded ? <Minimize2 aria-hidden="true" className="h-3.5 w-3.5" /> : <Maximize2 aria-hidden="true" className="h-3.5 w-3.5" />}
-            {expanded ? 'Collapse editor' : 'Expand editor'}
-          </button>
-        </div>
-        <textarea
-          id="review-comment-draft"
-          ref={textareaRef}
-          data-testid="review-comment-draft"
-          data-expanded={expanded ? 'true' : undefined}
-          value={draftText}
-          onChange={handleChange}
-          onSelect={(event) => { if (question) caretRef.current.set(question.id, event.currentTarget.selectionStart ?? 0); }}
-          onBlur={saveDraftNow}
-          disabled={!question}
-          readOnly={persistence === 'loading' || persistence === 'identity-changed'}
-          aria-busy={persistence === 'loading' || undefined}
-          maxLength={REVIEW_COMMENTS_TEXT_LIMIT}
-          aria-describedby="review-save-status"
-          className={cn('mt-1.5 block w-full resize-y rounded-md border border-[var(--db-border-strong)] bg-[var(--db-surface)] p-3 text-sm leading-relaxed text-[var(--db-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]', expanded ? 'h-[min(70vh,44rem)] min-h-80' : 'h-56 min-h-32')}
-        />
-        <div className="mt-1 flex items-start justify-between gap-3">
-          <p data-testid="review-save-status" id="review-save-status" role="status" className="min-w-0 text-xs text-[var(--db-text-secondary)]">{statusText}</p>
-          <p aria-live={REVIEW_COMMENTS_TEXT_LIMIT - draftText.length <= REVIEW_COMMENTS_CHAR_COUNT_LIVE_THRESHOLD ? 'polite' : undefined} data-testid="review-comment-char-count" className="shrink-0 text-xs tabular-nums text-[var(--db-text-muted)]">{draftText.length} / {REVIEW_COMMENTS_TEXT_LIMIT}</p>
-        </div>
-      </div>
+        <h3 id="review-questions-heading" className="text-sm font-semibold text-[var(--db-text-primary)]">Questions</h3>
+        <ol data-testid="review-question-index" className="mt-2 space-y-4">
+          {groupedTopics.map((topic) => (
+            <li key={topic.id} className="min-w-0">
+              <h4 className="text-xs font-semibold text-[var(--db-text-secondary)]">{topic.label}</h4>
+              <ul className="mt-1 space-y-1">
+                {topic.questions.map((item) => {
+                  const guideQuestion = questions.find((candidate) => candidate.number === item.number);
+                  if (!guideQuestion) return null;
+                  const state = stateFor(item.number);
+                  const text = textFor(guideQuestion);
+                  const open = item.number === question?.number;
+                  const highlighted = item.number === highlightNumber;
+                  return (
+                    <li
+                      key={item.id}
+                      ref={(element) => { if (element) rowRefs.current.set(item.number, element); else rowRefs.current.delete(item.number); }}
+                      data-testid={`review-question-row-q${item.number}`}
+                      data-open={open ? 'true' : 'false'}
+                      data-highlighted={highlighted ? 'true' : 'false'}
+                      // Below lg the page scrolls under the sticky header: a revealed row lands
+                      // below it, so its focused toggle is never covered (lg: the rail scrolls itself).
+                      className={cn('min-w-0 scroll-mt-[calc(var(--paper-sticky-header-height,6rem)+0.5rem)] rounded-md lg:scroll-mt-0', open && 'border border-[var(--db-border-strong)] bg-[var(--db-surface)]')}
+                    >
+                      <button
+                        type="button"
+                        data-testid={`review-question-toggle-q${item.number}`}
+                        aria-expanded={open}
+                        aria-controls={open ? `review-question-panel-${item.number}` : undefined}
+                        aria-current={highlighted ? 'true' : undefined}
+                        onClick={() => (open ? closeQuestionWithSave() : selectQuestionWithSave(item.number))}
+                        className={cn('flex min-h-[44px] w-full min-w-0 items-start gap-2 rounded-md px-2 py-2 text-left text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]', highlighted && !open ? 'bg-[var(--db-accent-tint)]' : 'hover:bg-[var(--db-depth-1)]')}
+                      >
+                        <span aria-hidden="true" className="mt-0.5 w-6 shrink-0 text-xs font-semibold tabular-nums text-[var(--db-text-secondary)]">Q{item.number}</span>
+                        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                          <span className="line-clamp-2 min-w-0 font-medium text-[var(--db-text-primary)]"><span className="sr-only">Question {item.number}: </span>{questionPromptSummary(guideQuestion.prompt)}</span>
+                          <span className="text-xs text-[var(--db-text-secondary)]">{REVIEW_PROGRESS_STATE_TEXT[state]}</span>
+                          {!open && text ? <span className="min-w-0 break-words text-xs text-[var(--db-text-muted)]">{preview(text)}</span> : null}
+                        </span>
+                        <ChevronDown aria-hidden="true" className={cn('mt-0.5 h-4 w-4 shrink-0 text-[var(--db-text-secondary)] motion-safe:transition-transform motion-reduce:transition-none', open && 'rotate-180')} />
+                      </button>
+                      {open ? (
+                        <div id={`review-question-panel-${item.number}`} role="region" aria-labelledby="active-question-heading" className="min-w-0 space-y-5 border-t border-[var(--db-border)] px-3 pb-3 pt-3">
+                    <div className="min-w-0">
+                      <p data-testid="review-question-context" className="text-xs text-[var(--db-text-secondary)]">{[questionTopic?.label, citation].filter(Boolean).join(' - ') || 'Review question'}</p>
+                      <h5 id="active-question-heading" className="mt-0.5 text-base font-semibold leading-snug text-[var(--db-text-primary)]">{question ? `Question ${question.number}: ${navQuestion?.title ?? question.heading}` : 'Active review question'}</h5>
+                      {question ? <div className="mt-3 text-sm leading-relaxed text-[var(--db-text-primary)]"><MathRenderer content={question.prompt} /></div> : <p className="mt-3 text-sm">No review question is selected.</p>}
+                    </div>
 
-      {conflict ? <div data-testid="review-conflict" className="rounded-md border border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] p-3 text-sm text-[var(--db-text-primary)]"><p className="font-semibold">This response changed in another tab.</p><p className="mt-2 whitespace-pre-wrap">Saved response: {rowText(conflict.row) || '(empty)'}</p><div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={keepMine} disabled={persistence !== 'available' || pendingMutationQuestionIds.has(conflict.questionId)} className={secondaryButton}>Keep mine</button><button type="button" onClick={useSaved} disabled={persistence !== 'available' || pendingMutationQuestionIds.has(conflict.questionId)} className={primaryButton}>Use saved</button></div></div> : null}
+                    <div className="min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <label htmlFor="review-comment-draft" className="text-sm font-semibold text-[var(--db-text-primary)]">Your response</label>
+                        <button type="button" data-testid="review-editor-expand" aria-pressed={expanded} aria-controls="review-comment-draft" onClick={() => setExpanded((value) => !value)} className={cn(secondaryButton, 'border-transparent px-2 text-xs')}>
+                          {expanded ? <Minimize2 aria-hidden="true" className="h-3.5 w-3.5" /> : <Maximize2 aria-hidden="true" className="h-3.5 w-3.5" />}
+                          {expanded ? 'Collapse editor' : 'Expand editor'}
+                        </button>
+                      </div>
+                      <textarea
+                        id="review-comment-draft"
+                        ref={textareaRef}
+                        data-testid="review-comment-draft"
+                        data-expanded={expanded ? 'true' : undefined}
+                        value={draftText}
+                        onChange={handleChange}
+                        onSelect={(event) => { if (question) caretRef.current.set(question.id, event.currentTarget.selectionStart ?? 0); }}
+                        onBlur={saveDraftNow}
+                        disabled={!question}
+                        readOnly={persistence === 'loading' || persistence === 'identity-changed'}
+                        aria-busy={persistence === 'loading' || undefined}
+                        maxLength={REVIEW_COMMENTS_TEXT_LIMIT}
+                        aria-describedby="review-save-status"
+                        className={cn('mt-1.5 block w-full resize-y rounded-md border border-[var(--db-border-strong)] bg-[var(--db-surface)] p-3 text-sm leading-relaxed text-[var(--db-text-primary)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]', expanded ? 'h-[min(70vh,44rem)] min-h-80' : 'h-56 min-h-32')}
+                      />
+                      <div className="mt-1 flex items-start justify-between gap-3">
+                        <p data-testid="review-save-status" id="review-save-status" role="status" className="min-w-0 text-xs text-[var(--db-text-secondary)]">{statusText}</p>
+                        <p aria-live={REVIEW_COMMENTS_TEXT_LIMIT - draftText.length <= REVIEW_COMMENTS_CHAR_COUNT_LIVE_THRESHOLD ? 'polite' : undefined} data-testid="review-comment-char-count" className="shrink-0 text-xs tabular-nums text-[var(--db-text-muted)]">{draftText.length} / {REVIEW_COMMENTS_TEXT_LIMIT}</p>
+                      </div>
+                    </div>
 
-      <div className="min-w-0 space-y-2">
-        <div className="flex flex-wrap gap-2">
-          <button type="button" data-testid="review-save-draft" disabled={!question || persistence !== 'available' || Boolean(conflict)} aria-describedby={persistenceReason || conflict ? 'review-action-reason' : undefined} onClick={saveDraftNow} className={cn(secondaryButton, 'flex-1')}>Save draft</button>
-          <button type="button" data-testid="review-submit" disabled={!question || persistence !== 'available' || Boolean(conflict) || blankText} aria-describedby={actionReason ? 'review-action-reason' : undefined} onClick={submitResponse} className={cn(primaryButton, 'flex-1')}>{submitLabel}</button>
-        </div>
-        {actionReason ? (
-          <div data-testid="review-action-reason" className="flex flex-wrap items-center gap-2">
-            <p id="review-action-reason" className="min-w-0 flex-1 text-xs text-[var(--db-text-secondary)]">{actionReason}</p>
-            {(persistence === 'unavailable' || persistence === 'unauthenticated') && manifestSha256 ? <button type="button" data-testid="review-persistence-retry" onClick={retryPersistence} className={cn(secondaryButton, 'text-xs')}>Try again</button> : null}
-          </div>
-        ) : null}
-        {hasSubmission && activeRow?.submitted_text && activeState === 'changed' ? (
-          <details data-testid="review-submitted-version" className="rounded-md border border-[var(--db-border)] p-3 text-sm">
-            <summary className="cursor-pointer font-semibold text-[var(--db-text-primary)]">Your submitted response{submittedAt ? ` (${submittedAt})` : ''}</summary>
-            <p className="mt-2 whitespace-pre-wrap text-[var(--db-text-primary)]">{activeRow.submitted_text}</p>
-          </details>
-        ) : null}
-      </div>
+                    {conflict ? <div data-testid="review-conflict" className="rounded-md border border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] p-3 text-sm text-[var(--db-text-primary)]"><p className="font-semibold">This response changed in another tab.</p><p className="mt-2 whitespace-pre-wrap">Saved response: {rowText(conflict.row) || '(empty)'}</p><div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={keepMine} disabled={persistence !== 'available' || pendingMutationQuestionIds.has(conflict.questionId)} className={secondaryButton}>Keep mine</button><button type="button" onClick={useSaved} disabled={persistence !== 'available' || pendingMutationQuestionIds.has(conflict.questionId)} className={primaryButton}>Use saved</button></div></div> : null}
 
-      <div className="grid min-w-0 grid-cols-2 gap-2" data-testid="question-navigation-buttons">
-        <button type="button" disabled={!question || currentIndex <= 0} onClick={() => { saveDraftNow(); onPreviousQuestion(); }} className={secondaryButton}><ChevronLeft aria-hidden="true" className="h-4 w-4" />Previous question</button>
-        <button type="button" disabled={!question || currentIndex < 0 || currentIndex >= total - 1} onClick={() => { saveDraftNow(); onNextQuestion(); }} className={secondaryButton}>Next question<ChevronRight aria-hidden="true" className="h-4 w-4" /></button>
-      </div>
+                    <div className="min-w-0 space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" data-testid="review-save-draft" disabled={!question || persistence !== 'available' || Boolean(conflict)} aria-describedby={persistenceReason || conflict ? 'review-action-reason' : undefined} onClick={saveDraftNow} className={cn(secondaryButton, 'flex-1')}>Save draft</button>
+                        <button type="button" data-testid="review-submit" disabled={!question || persistence !== 'available' || Boolean(conflict) || blankText} aria-describedby={actionReason ? 'review-action-reason' : undefined} onClick={submitResponse} className={cn(primaryButton, 'flex-1')}>{submitLabel}</button>
+                      </div>
+                      {actionReason ? (
+                        <div data-testid="review-action-reason" className="flex flex-wrap items-center gap-2">
+                          <p id="review-action-reason" className="min-w-0 flex-1 text-xs text-[var(--db-text-secondary)]">{actionReason}</p>
+                          {(persistence === 'unavailable' || persistence === 'unauthenticated') && manifestSha256 ? <button type="button" data-testid="review-persistence-retry" onClick={retryPersistence} className={cn(secondaryButton, 'text-xs')}>Try again</button> : null}
+                        </div>
+                      ) : null}
+                      {hasSubmission && activeRow?.submitted_text && activeState === 'changed' ? (
+                        <details data-testid="review-submitted-version" className="rounded-md border border-[var(--db-border)] p-3 text-sm">
+                          <summary className="cursor-pointer font-semibold text-[var(--db-text-primary)]">Your submitted response{submittedAt ? ` (${submittedAt})` : ''}</summary>
+                          <p className="mt-2 whitespace-pre-wrap text-[var(--db-text-primary)]">{activeRow.submitted_text}</p>
+                        </details>
+                      ) : null}
+                    </div>
 
-      <div className="min-w-0 border-t border-[var(--db-border)] pt-4">
-        <h3 className="text-sm font-semibold text-[var(--db-text-primary)]">Your responses</h3>
-        <ul data-testid="review-saved-questions" className="mt-2 space-y-1">
-          {groupedTopics.flatMap((topic) => topic.questions).map((item) => {
-            const guideQuestion = questions.find((candidate) => candidate.number === item.number);
-            if (!guideQuestion) return null;
-            const state = stateFor(item.number);
-            const text = textFor(guideQuestion);
-            const active = item.number === question?.number;
-            return (
-              <li key={item.id}>
-                <button type="button" aria-current={active ? 'true' : undefined} onClick={() => selectQuestionWithSave(item.number)} className={cn('flex min-h-[44px] w-full min-w-0 flex-col items-start gap-0.5 rounded-md px-2 py-2 text-left text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]', active ? 'bg-[var(--db-accent-tint)] text-[var(--db-text-primary)]' : 'hover:bg-[var(--db-depth-1)]')}>
-                  <span className="flex w-full min-w-0 items-baseline justify-between gap-2">
-                    <span className="min-w-0 font-medium">Question {item.number}: {item.title}</span>
-                    <span className="shrink-0 text-xs text-[var(--db-text-secondary)]">{REVIEW_PROGRESS_STATE_TEXT[state]}</span>
-                  </span>
-                  {text ? <span className="w-full min-w-0 break-words text-xs text-[var(--db-text-secondary)]">{preview(text)}</span> : null}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+                    <div className="grid min-w-0 grid-cols-2 gap-2" data-testid="question-navigation-buttons">
+                      <button type="button" data-question-nav="previous" disabled={!question || currentIndex <= 0} onClick={() => { saveDraftNow(); pendingRevealRef.current = 'previous'; onPreviousQuestion(); }} className={secondaryButton}><ChevronLeft aria-hidden="true" className="h-4 w-4" />Previous question</button>
+                      <button type="button" data-question-nav="next" disabled={!question || currentIndex < 0 || currentIndex >= total - 1} onClick={() => { saveDraftNow(); pendingRevealRef.current = 'next'; onNextQuestion(); }} className={secondaryButton}>Next question<ChevronRight aria-hidden="true" className="h-4 w-4" /></button>
+                    </div>
+                        </div>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );

@@ -10,6 +10,7 @@ import type { CohortPortion } from '@/lib/matrix-options/paper/cohort-portions';
 import type { PaperUrlState } from '@/lib/matrix-options/paper/url-state';
 import { getProductionAssignment } from '@/lib/matrix-options/revised-paper-review';
 import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
+import { numberedReviewTopicLabel } from '@/lib/matrix-options/paper/topic-labels';
 import type { PaperOutlineNavEntry } from '../PaperOutlineNav';
 import {
   normalizeReaderTextForDisplay,
@@ -71,6 +72,20 @@ function placeSections(tops: Readonly<Record<string, number>>) {
 
 function activeOutlineLabels(): string[] {
   return Array.from(screen.getByTestId('paper-outline-desktop').querySelectorAll('[aria-current="location"]')).map((link) => link.textContent ?? '');
+}
+
+/**
+ * Paper Navigation's two presentation groups (paper-nav-groups.ts) start
+ * COLLAPSED unless they already contain the URL target or the active section
+ * (item 2). A test that clicks an outline link with neither set must expand
+ * the group first; this is a no-op once the group is already open (deep link,
+ * active section, or an earlier call).
+ */
+function outlineLink(name: string, variant: 'desktop' | 'stacked' = 'desktop') {
+  const root = screen.getByTestId(`paper-outline-${variant}`);
+  const group = within(root).queryByRole('button', { name: 'Main Report' });
+  if (group && group.getAttribute('aria-expanded') !== 'true') fireEvent.click(group);
+  return within(root).getByRole('link', { name });
 }
 
 function state(overrides: Partial<PaperUrlState> = {}): PaperUrlState {
@@ -172,9 +187,12 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     const { container } = renderWorkingDraft();
     const workingDraft = screen.getByRole('link', { name: 'Working Draft' });
     expect(workingDraft).toHaveAttribute('aria-current', 'page');
-    // Header mode links now carry the active question (the reviewer keeps
-    // their place when switching modes): the default active question here is
-    // Question 1, the first question of the first cohort (Categories).
+    // Header mode links carry `q` ONLY for an explicitly opened question: with
+    // nothing open (the default), switching modes must not open an editor.
+    expect(workingDraft).toHaveAttribute('href', `${base}?mode=working-draft`);
+    expect(screen.getByRole('link', { name: 'My Review' })).toHaveAttribute('href', `${base}?mode=my-review&cohort=categories`);
+    // Two-sided: once a question is opened, both links keep it.
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
     expect(workingDraft).toHaveAttribute('href', `${base}?mode=working-draft&q=${encodeURIComponent(questionId(1))}`);
     expect(screen.getByRole('link', { name: 'My Review' })).toHaveAttribute('href', `${base}?mode=my-review&cohort=categories&q=${encodeURIComponent(questionId(1))}`);
     expect(screen.getByRole('link', { name: 'My Review' })).not.toHaveAttribute('aria-current');
@@ -195,7 +213,7 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     expect(rail).toHaveAttribute('data-state', 'open');
     expect(rail).not.toHaveAttribute('inert');
     expect(rail.className).not.toMatch(/max-h-/);
-    expect(within(rail).getByRole('heading', { name: 'Contents', level: 2 })).toBeInTheDocument();
+    expect(within(rail).getByRole('heading', { name: 'Paper Navigation', level: 2 })).toBeInTheDocument();
     expect(within(rail).getByTestId('paper-outline')).toBeInTheDocument();
 
     const download = within(screen.getByTestId('workspace-header-controls')).getByRole('button', { name: 'Download Files' });
@@ -229,7 +247,7 @@ describe('RevisedPaperWorkspace Working Draft', () => {
 
     // Closing from inside the rail with Escape also rescues focus.
     fireEvent.click(toggle);
-    const link = within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' });
+    const link = outlineLink('2 Methods');
     link.focus();
     expect(fireEvent.keyDown(link, { key: 'Escape' })).toBe(false);
     expect(rail).toHaveAttribute('data-state', 'closed');
@@ -244,7 +262,7 @@ describe('RevisedPaperWorkspace Working Draft', () => {
   it('reveals and focuses the opened Contents heading below lg but not at lg', () => {
     renderWorkingDraft();
     const toggle = within(headerHost()).getByRole('button', { name: 'Navigation' });
-    const heading = within(screen.getByTestId('navigation-rail')).getByRole('heading', { name: 'Contents', level: 2 });
+    const heading = within(screen.getByTestId('navigation-rail')).getByRole('heading', { name: 'Paper Navigation', level: 2 });
     expect(heading).toHaveAttribute('tabindex', '-1');
 
     setLgViewport(false);
@@ -312,8 +330,7 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     const pushState = vi.spyOn(window.history, 'pushState');
     const replaceState = vi.spyOn(window.history, 'replaceState');
     renderWorkingDraft();
-    const desktop = screen.getByTestId('paper-outline-desktop');
-    const link = within(desktop).getByRole('link', { name: '2 Methods' });
+    const link = outlineLink('2 Methods');
     expect(link).toHaveAttribute('href', '?mode=working-draft&section=methods');
     expect(fireEvent.click(link)).toBe(false);
     const section = document.getElementById('methods');
@@ -360,9 +377,14 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     expect(document.getElementById('detail')).toHaveFocus();
     expect(scrolledElements()).toContain(document.getElementById('detail'));
     const desktop = screen.getByTestId('paper-outline-desktop');
+    expect(within(desktop).getByRole('button', { name: 'Main Report' })).toHaveAttribute('aria-expanded', 'true');
     expect(within(desktop).getByRole('button', { name: 'Subsections of 1.1 Scope' })).toHaveAttribute('aria-expanded', 'true');
     expect(within(desktop).getByRole('link', { name: '1.1.1 Detail' })).toBeInTheDocument();
-    expect(within(screen.getByTestId('paper-outline-stacked')).getByRole('button', { name: 'Subsections of 1 Introduction' })).toHaveAttribute('aria-expanded', 'true');
+    // The stacked outline's own Main Report group opens too (item 2: navigating
+    // to "detail" opens only its group and its presentation ancestors -- "1
+    // Introduction" is now a leaf row with no disclosure of its own, since its
+    // only child ("1.1 Scope") is promoted to the group's top level).
+    expect(within(screen.getByTestId('paper-outline-stacked')).getByRole('button', { name: 'Main Report' })).toHaveAttribute('aria-expanded', 'true');
     expect(replaceState).not.toHaveBeenCalled();
   });
 
@@ -453,7 +475,7 @@ describe('RevisedPaperWorkspace Working Draft', () => {
 
     it('keeps a navigated section active until the next user scroll intent', () => {
       const observer = renderTracked(true);
-      fireEvent.click(within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' }));
+      fireEvent.click(outlineLink('2 Methods'));
       expect(activeOutlineLabels()).toEqual(['2 Methods']);
       // The last section cannot reach the reading line, so geometry alone would select detail.
       placeSections({ detail: -100, methods: 400 });
@@ -567,7 +589,7 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
     ))}</article>;
   }
 
-  it('(d) Working Draft outline click brings the section\'s question into view and pushes q into the URL; popstate restores it', () => {
+  it('(d) Working Draft outline click highlights the section\'s question WITHOUT writing it to the URL (q names only an opened question); popstate restores the highlight', () => {
     const pushState = vi.spyOn(window.history, 'pushState');
     render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
     const guide = getReviewerGuideContract();
@@ -575,17 +597,21 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
     const question8 = guide.questions.find((candidate) => candidate.number === 8);
     expect(question4 && question8).toBeTruthy();
     if (!question4 || !question8) return;
-    const desktop = screen.getByTestId('paper-outline-desktop');
 
-    fireEvent.click(within(desktop).getByRole('link', { name: '6.0 Framework' }));
-    expect(document.getElementById('active-question-heading')).toHaveTextContent(`Question 4: ${titleWithoutCitation(question4.heading)}`);
-    expect(pushState).toHaveBeenLastCalledWith(null, '', `/?mode=working-draft&q=${encodeURIComponent(question4.id)}&section=sec-60`);
+    fireEvent.click(outlineLink('6.0 Framework'));
+    // Item 3: outline navigation moves only the HIGHLIGHT. The pushed entry
+    // names the section, not the question -- a reload or shared link of it
+    // must not open an editor the reviewer never chose.
+    expect(screen.getByTestId(`review-question-row-q${question4.number}`)).toHaveAttribute('data-highlighted', 'true');
+    expect(screen.getByTestId(`review-question-row-q${question4.number}`)).toHaveAttribute('data-open', 'false');
+    expect(pushState).toHaveBeenLastCalledWith(null, '', '/?mode=working-draft&section=sec-60');
     const urlAfterQ4 = window.location.pathname + window.location.search;
 
     pushState.mockClear();
-    fireEvent.click(within(desktop).getByRole('link', { name: '7.8 Input' }));
-    expect(document.getElementById('active-question-heading')).toHaveTextContent(`Question 8: ${titleWithoutCitation(question8.heading)}`);
-    expect(pushState).toHaveBeenLastCalledWith(null, '', `/?mode=working-draft&q=${encodeURIComponent(question8.id)}&section=sec-78`);
+    fireEvent.click(outlineLink('7.8 Input'));
+    expect(screen.getByTestId(`review-question-row-q${question8.number}`)).toHaveAttribute('data-highlighted', 'true');
+    expect(screen.getByTestId(`review-question-row-q${question8.number}`)).toHaveAttribute('data-open', 'false');
+    expect(pushState).toHaveBeenLastCalledWith(null, '', '/?mode=working-draft&section=sec-78');
 
     // A popstate event restoring the earlier URL restores the earlier
     // question and section identity, but -- unlike a reader's own outline
@@ -597,7 +623,7 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
       window.history.replaceState(null, '', urlAfterQ4);
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
-    expect(document.getElementById('active-question-heading')).toHaveTextContent(`Question 4: ${titleWithoutCitation(question4.heading)}`);
+    expect(screen.getByTestId(`review-question-row-q${question4.number}`)).toHaveAttribute('data-highlighted', 'true');
     expect(pushState).not.toHaveBeenCalled();
     expect(document.getElementById('sec-60')).not.toHaveFocus();
     expect(document.getElementById('sec-78')).toHaveFocus();
@@ -615,9 +641,8 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
     if (!question1) return;
 
     // Navigate away first (to Question 4), so the restored state is not a no-op.
-    const desktop = screen.getByTestId('paper-outline-desktop');
-    fireEvent.click(within(desktop).getByRole('link', { name: '6.0 Framework' }));
-    expect(document.getElementById('active-question-heading')).not.toHaveTextContent(`Question 1: ${titleWithoutCitation(question1.heading)}`);
+    fireEvent.click(outlineLink('6.0 Framework'));
+    expect(screen.getByTestId('review-question-row-q1')).toHaveAttribute('data-highlighted', 'false');
     pushState.mockClear();
 
     // A popstate whose URL carries neither q nor section is the page as first
@@ -627,7 +652,7 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
       window.history.replaceState(null, '', '/?mode=working-draft');
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
-    expect(document.getElementById('active-question-heading')).toHaveTextContent(`Question 1: ${titleWithoutCitation(question1.heading)}`);
+    expect(screen.getByTestId('review-question-row-q1')).toHaveAttribute('data-highlighted', 'true');
     expect(pushState).not.toHaveBeenCalled();
     expect(document.getElementById(questionOutline[0].anchor)).toHaveAttribute('id', questionOutline[0].anchor);
   });
@@ -688,8 +713,11 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
 
     // With rAF made synchronous, any landing check this navigation scheduled
     // would already have run and corrected the far-off geometry above by now.
-    // It must never have been scheduled: no scrollIntoView call resulted.
-    expect(scrollIntoView).not.toHaveBeenCalled();
+    // It must never have been scheduled: the paper section was never scrolled.
+    // The only reveal is the explicitly selected question's own review row
+    // (round 3: selections are revealed at every width).
+    expect(scrolledElements()).not.toContain(document.getElementById('sec-78'));
+    expect(scrolledElements()).toEqual([screen.getByTestId('review-question-row-q8')]);
   });
 
   // (f) Two-sided: a Back/Forward entry that carries `q` but no `section` (an
@@ -706,8 +734,7 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
 
     // Move away from the default question/section first, so the popstate
     // target below is not a no-op.
-    const desktop = screen.getByTestId('paper-outline-desktop');
-    fireEvent.click(within(desktop).getByRole('link', { name: '6.0 Framework' }));
+    fireEvent.click(outlineLink('6.0 Framework'));
     expect(document.getElementById('sec-60')).toHaveFocus();
     pushState.mockClear();
     scrollIntoView.mockClear();
@@ -719,7 +746,7 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
       window.dispatchEvent(new PopStateEvent('popstate'));
     });
 
-    expect(document.getElementById('active-question-heading')).toHaveTextContent(`Question 8: ${titleWithoutCitation(question8.heading)}`);
+    expect(screen.getByTestId(`review-question-row-q${question8.number}`)).toHaveAttribute('data-highlighted', 'true');
     expect(pushState).not.toHaveBeenCalled();
     // The paper itself must follow: sec-78 (Question 8's own section) is
     // scrolled to, exactly as an explicit section= URL would have done.
@@ -735,8 +762,11 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
     try {
       render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
       expect(document.getElementById('sec-78')).toHaveFocus();
-      // Two-sided: before the fix the paper went to 7.8 while the panel stayed on Question 1.
-      expect(document.getElementById('active-question-heading')).toHaveTextContent(`Question 8: ${titleWithoutCitation(question8.heading)}`);
+      // Two-sided: before the fix the paper went to 7.8 while the panel's
+      // highlight stayed on Question 1. Item 3: a hash navigation moves only
+      // the highlight, never opens the editor.
+      expect(screen.getByTestId(`review-question-row-q${question8.number}`)).toHaveAttribute('data-highlighted', 'true');
+      expect(screen.getByTestId(`review-question-row-q${question8.number}`)).toHaveAttribute('data-open', 'false');
     } finally {
       window.history.replaceState(null, '', '/');
     }
@@ -755,6 +785,21 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
     } finally {
       window.history.replaceState(null, '', '/');
     }
+  });
+
+  it('a URL that names a question (q) opens exactly that question; a section-only URL opens none', () => {
+    const guide = getReviewerGuideContract();
+    const question8 = guide.questions.find((candidate) => candidate.number === 8)!;
+    const { unmount } = render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ q: question8.id })} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    expect(screen.getByTestId('review-question-row-q8')).toHaveAttribute('data-open', 'true');
+    expect(document.getElementById('active-question-heading')).toHaveTextContent(/^Question 8:/);
+    expect(document.querySelectorAll('[data-testid^="review-question-row-q"][data-open="true"]')).toHaveLength(1);
+    unmount();
+    // Two-sided: a section deep link syncs (highlights) the related question but opens no editor.
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ section: 'sec-78' })} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    expect(screen.getByTestId('review-question-row-q8')).toHaveAttribute('data-highlighted', 'true');
+    expect(screen.getByTestId('review-question-row-q8')).toHaveAttribute('data-open', 'false');
+    expect(document.getElementById('active-question-heading')).toBeNull();
   });
 });
 
@@ -842,7 +887,7 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
     // pushes a history entry now (see the Working Draft push-navigation test).
     const pushState = vi.spyOn(window.history, 'pushState');
     renderWindow();
-    fireEvent.click(within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' }));
+    fireEvent.click(outlineLink('2 Methods'));
     expect(calls).toHaveLength(1);
     expect(calls[0].url).toBe(`/api/matrix-options/paper/v/${version}/sections/methods?paper=${SHA}`);
     expect(calls[0].init?.credentials).toBe('same-origin');
@@ -923,10 +968,6 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
       return { ok: result.ok, status: result.ok ? 200 : 500, json: async () => methodsContract() } as unknown as Response;
     }));
     return () => { act(() => { release(); }); };
-  }
-
-  function outlineLink(name: string) {
-    return within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name });
   }
 
   /** Lets the post-commit effects of a resolved section run. */
@@ -1041,7 +1082,7 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
       renderWindow();
       expect(trackerFor(['intro', 'scope', 'detail'])).toHaveLength(1);
       expect(trackerFor(['methods'])).toHaveLength(0);
-      fireEvent.click(within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' }));
+      fireEvent.click(outlineLink('2 Methods'));
       await waitFor(() => expect(document.getElementById('methods')).not.toBeNull());
       await waitFor(() => expect(trackerFor(['intro', 'methods']).length).toBeGreaterThan(0));
     });
@@ -1050,7 +1091,7 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
       stubFetch();
       setLgViewport(true);
       renderWindow();
-      fireEvent.click(within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' }));
+      fireEvent.click(outlineLink('2 Methods'));
       await waitFor(() => expect(document.getElementById('methods')).not.toBeNull());
       fireEvent.wheel(window);
       const column = screen.getByTestId('paper-document-column');
@@ -1069,7 +1110,7 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
       stubFetch();
       setLgViewport(false);
       renderWindow();
-      fireEvent.click(within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' }));
+      fireEvent.click(outlineLink('2 Methods'));
       await waitFor(() => expect(document.getElementById('methods')).not.toBeNull());
       fireEvent.wheel(window);
 
@@ -1131,6 +1172,17 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
 });
 
 describe('RevisedPaperWorkspace My Review', () => {
+  /**
+   * Item 3: only one question's editor is ever open at a time, so switching
+   * questions unmounts the previous row's panel (including its own Next/
+   * Previous buttons) and mounts a new one for the row that opens. A button
+   * reference captured before a click is stale for any click after it; this
+   * re-queries "Next question" fresh every time.
+   */
+  function clickNextQuestion() {
+    fireEvent.click(within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' }));
+  }
+
   it('R2-03: renders a truthful unavailable state without cohort portions and the portion with them', () => {
     const { rerender } = renderMyReview({}, 'none');
     const unavailable = screen.getByTestId('cohort-portions-unavailable');
@@ -1151,8 +1203,10 @@ describe('RevisedPaperWorkspace My Review', () => {
     // (built from the existing url-state serializer).
     expect(screen.getAllByTestId('cohort-paper')).toHaveLength(1);
     expect(screen.getByTestId('cohort-paper')).toHaveTextContent('Authenticated bounded excerpt.');
-    // Carries the active question (Question 1, the default here), so the
-    // review panel beside the Working Draft keeps it (spec item 3).
+    // Nothing is open, so the link names only the section (following it must
+    // not open an editor); an opened question travels with it.
+    expect(screen.getByRole('link', { name: /^Open .+ in Working Draft$/ })).toHaveAttribute('href', `${base}?mode=working-draft&section=anchor-categories`);
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
     expect(screen.getByRole('link', { name: /^Open .+ in Working Draft$/ })).toHaveAttribute('href', `${base}?mode=working-draft&q=${encodeURIComponent(questionId(1))}&section=anchor-categories`);
   });
 
@@ -1176,7 +1230,10 @@ describe('RevisedPaperWorkspace My Review', () => {
     expect(within(rail).getByRole('heading', { name: 'Review Comments', level: 2 })).toBeInTheDocument();
     expect(screen.getByTestId('paper-document-column').compareDocumentPosition(rail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
-    const cohortButton = screen.getByRole('button', { name: `${cohort.name}, ${cohort.questionNumbers.length} questions` });
+    // Item 6: the My Review navigation labels each topic with its numbered
+    // presentation label ("2. Receptors and Pathways"), not the raw manifest name.
+    const cohortIndex = getCohortManifest().cohorts.findIndex((candidate) => candidate.id === cohort.id);
+    const cohortButton = screen.getByRole('button', { name: `${numberedReviewTopicLabel(cohort.id, cohort.name, cohortIndex)}, ${cohort.questionNumbers.length} questions` });
     expect(cohortButton).toHaveAttribute('aria-expanded', 'true');
     expect(cohortButton).not.toHaveAttribute('aria-pressed');
     const select = screen.getByRole('combobox', { name: 'Jump to topic' });
@@ -1199,7 +1256,10 @@ describe('RevisedPaperWorkspace My Review', () => {
     const otherNumber = cohort.questionNumbers.find((number) => number !== 4) ?? 4;
     const other = guide.questions.find((candidate) => candidate.number === otherNumber);
     fireEvent.change(select, { target: { value: String(otherNumber) } });
-    expect(screen.getByTestId('active-question-response')).toHaveFocus();
+    // A question chosen in Review Comments opens INLINE in its row and keeps the
+    // reviewer's own focus and view (no jump to the top of the panel).
+    expect(screen.getByTestId('active-question-response')).not.toHaveFocus();
+    expect(screen.getByTestId(`review-question-row-q${otherNumber}`)).toHaveAttribute('data-open', 'true');
     // PLAN-R4 6.C: a question change pushes a new history entry (so Back
     // steps between questions) instead of replacing (old M1 behavior: every
     // My Review URL change, including a question change, used replaceState).
@@ -1213,17 +1273,20 @@ describe('RevisedPaperWorkspace My Review', () => {
     const manifest = getCohortManifest();
     // categories = [1, 2, 3]; the next cohort in manifest order is pathway-grid = [4, 5].
     expect(manifest.cohorts[0]?.questionNumbers).toEqual([1, 2, 3]);
-    const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
-    fireEvent.click(next);
-    fireEvent.click(next);
-    fireEvent.click(next);
+    // Item 3: nothing is open by default (only highlighted); open Question 1
+    // explicitly (a question row toggle) so its Next/Previous controls exist.
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+    clickNextQuestion();
+    clickNextQuestion();
+    clickNextQuestion();
     const question4 = guide.questions.find((candidate) => candidate.number === 4);
     expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
     expect(screen.getByTestId('active-question-response')).toHaveTextContent(`Question 4: ${titleWithoutCitation(question4?.heading ?? '')}`);
-    // Item 5: the citation now lives on its own context line.
-    expect(screen.getByTestId('review-question-context')).toHaveTextContent('Pathway and grid - Sections 4.1 and 6.0');
+    // Item 5/6: the citation lives on its own context line, labelled with the
+    // topic's numbered presentation label.
+    expect(screen.getByTestId('review-question-context')).toHaveTextContent('2. Receptors and Pathways - Sections 4.1 and 6.0');
     // Crossing cohorts also switches the left rail's selected/expanded cohort.
-    expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: '2. Receptors and Pathways, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
   });
 
   /*
@@ -1241,13 +1304,13 @@ describe('RevisedPaperWorkspace My Review', () => {
         window.history.replaceState(null, '', '/?mode=my-review&section=anchor-pathway-grid');
         window.dispatchEvent(new PopStateEvent('popstate'));
       });
-      expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: '2. Receptors and Pathways, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
     });
 
     it('derives cohort from a section-only initial URL', () => {
       const portions = realPortions().map((portion) => ({ ...portion, sectionAnchor: `anchor-${portion.cohortId}` }));
       renderMyReview({ cohort: null, q: null, section: 'anchor-pathway-grid' }, portions);
-      expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: '2. Receptors and Pathways, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
     });
   describe('M2-POPSTATE: Back restores My Review state via a real popstate event', () => {
     function popTo(url: string) {
@@ -1260,10 +1323,11 @@ describe('RevisedPaperWorkspace My Review', () => {
     it('M2-POPSTATE: restores the visible question, cohort disclosure, and progress line', () => {
       renderMyReview();
       const guide = getReviewerGuideContract();
-      const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
-      fireEvent.click(next); // -> q2 (pushState)
+      // Item 3: open Question 1's editor explicitly so Next/Previous exist.
+      fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+      clickNextQuestion(); // -> q2 (pushState)
       const urlAfterQ2 = window.location.pathname + window.location.search;
-      fireEvent.click(next); // -> q3 (pushState)
+      clickNextQuestion(); // -> q3 (pushState)
       expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('3');
 
       popTo(urlAfterQ2);
@@ -1275,24 +1339,24 @@ describe('RevisedPaperWorkspace My Review', () => {
       // total"; the restored current question is marked in the tracker itself.
       expect(screen.getByTestId('review-progress')).toHaveTextContent('0 of 12 submitted');
       expect(screen.getByTestId('review-progress-q2')).toHaveAttribute('aria-current', 'step');
-      expect(screen.getByRole('button', { name: 'Categories, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: '1. Sediment Uses, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
     });
 
     it('M2-POPSTATE: restores state crossing a cohort boundary, without requesting any reveal or scroll', () => {
       renderMyReview();
-      const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
-      fireEvent.click(next);
-      fireEvent.click(next);
+      fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+      clickNextQuestion();
+      clickNextQuestion();
       const urlAfterQ3 = window.location.pathname + window.location.search;
-      fireEvent.click(next); // -> q4, crosses into pathway-grid
-      expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+      clickNextQuestion(); // -> q4, crosses into pathway-grid
+      expect(screen.getByRole('button', { name: '2. Receptors and Pathways, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
 
       scrollIntoView.mockClear();
       scrollBy.mockClear();
       popTo(urlAfterQ3);
 
       expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('3');
-      expect(screen.getByRole('button', { name: 'Categories, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: '1. Sediment Uses, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
       // No reveal/scroll is requested by a Back navigation (popstate is not a
       // scroll-authority activation kind; scroll-authority.ts is unmodified).
       expect(scrollIntoView).not.toHaveBeenCalled();
@@ -1301,10 +1365,10 @@ describe('RevisedPaperWorkspace My Review', () => {
 
     it('M2-POPSTATE: moves focus to the response section on Back only when focus was inside Review Comments', () => {
       renderMyReview();
-      const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
-      fireEvent.click(next); // -> q2 (pushState; this is the URL Back returns to below)
+      fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+      clickNextQuestion(); // -> q2 (pushState; this is the URL Back returns to below)
       const urlAtQ2 = window.location.pathname + window.location.search;
-      fireEvent.click(next); // -> q3
+      clickNextQuestion(); // -> q3
       const select = screen.getByRole('combobox', { name: 'Jump to topic' });
       select.focus();
       expect(select).toHaveFocus();
@@ -1316,11 +1380,11 @@ describe('RevisedPaperWorkspace My Review', () => {
 
     it('M2-POPSTATE: leaves focus alone on Back when it was outside Review Comments beforehand', () => {
       renderMyReview();
-      const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
-      fireEvent.click(next); // -> q2 (pushState; this is the URL Back returns to below)
+      fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+      clickNextQuestion(); // -> q2 (pushState; this is the URL Back returns to below)
       const urlAtQ2 = window.location.pathname + window.location.search;
-      fireEvent.click(next); // -> q3
-      const cohortButton = screen.getByRole('button', { name: 'Categories, 3 questions' });
+      clickNextQuestion(); // -> q3
+      const cohortButton = screen.getByRole('button', { name: '1. Sediment Uses, 3 questions' });
       cohortButton.focus();
       expect(cohortButton).toHaveFocus();
 
@@ -1362,14 +1426,14 @@ describe('RevisedPaperWorkspace My Review', () => {
     const nav = screen.getByRole('navigation', { name: 'Review topics' });
     expect(within(nav).getAllByRole('button', { name: /questions$/ })).toHaveLength(5);
 
-    const categories = within(nav).getByRole('button', { name: 'Categories, 3 questions' });
+    const categories = within(nav).getByRole('button', { name: '1. Sediment Uses, 3 questions' });
     expect(categories).toHaveAttribute('aria-expanded', 'true');
     fireEvent.click(categories);
     expect(categories).toHaveAttribute('aria-expanded', 'false');
     expect(document.getElementById('cohort-categories-portions')).toHaveAttribute('hidden');
     expect(scrollIntoView).not.toHaveBeenCalled();
 
-    fireEvent.click(within(nav).getByRole('button', { name: 'Pathway and grid, 2 questions' }));
+    fireEvent.click(within(nav).getByRole('button', { name: '2. Receptors and Pathways, 2 questions' }));
     // M2: pathway-grid now resolves TWO portions (the fixture's base one plus
     // "second"), stacked together (PLAN-R4 3.B.2) -- so cohort selection
     // focuses the FIRST stacked heading, not a single paginated one.
@@ -1414,10 +1478,19 @@ describe('RevisedPaperWorkspace My Review', () => {
     // cohort and question..." test above for the paired positive assertion).
     expect(pushState).toHaveBeenCalled();
 
+    // A question chosen in the left navigation while the rail is closed never
+    // moves focus into the inert rail either.
+    const navQuestion = (number: number) => within(screen.getByTestId('navigation-rail')).getByRole('button', { name: new RegExp(`^Question ${number}:`) });
+    fireEvent.click(navQuestion(3));
+    expect(toggle).toHaveFocus();
+
     fireEvent.click(toggle);
     expect(screen.getByTestId('review-comments-rail')).not.toHaveAttribute('inert');
-    fireEvent.change(select, { target: { value: '3' } });
-    expect(response).toHaveFocus();
+    // Positive control: with the rail open, a question chosen in the navigation
+    // is revealed and its row takes focus.
+    fireEvent.click(navQuestion(2));
+    expect(screen.getByTestId('review-question-toggle-q2')).toHaveFocus();
+    expect(response).not.toHaveFocus();
   });
 
   it('M1-09: renders one h1 and demotes portion headings below the portion heading', () => {
@@ -1433,13 +1506,13 @@ describe('RevisedPaperWorkspace My Review', () => {
     const portions = realPortions().map((portion) => ({ ...portion, sectionAnchor: `anchor-${portion.cohortId}` }));
     const replaceState = vi.spyOn(window.history, 'replaceState');
     const { unmount } = renderMyReview({ section: 'anchor-pathway-grid' }, portions);
-    expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: '2. Receptors and Pathways, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
     expect(within(screen.getByTestId('cohort-paper')).getByRole('heading', { level: 2 })).toHaveTextContent('Pathway and grid');
     expect(replaceState).not.toHaveBeenCalled();
     unmount();
 
     renderMyReview({ section: 'not-a-portion-anchor' }, portions);
-    expect(screen.getByRole('button', { name: 'Categories, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: '1. Sediment Uses, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
     expect(within(screen.getByTestId('cohort-paper')).getByRole('heading', { level: 2 })).toHaveTextContent('Categories');
     expect(replaceState).not.toHaveBeenCalled();
   });
@@ -1520,8 +1593,8 @@ describe('RevisedPaperWorkspace My Review', () => {
     expect(screen.getByTestId('download-button-cat-docx')).toBeInTheDocument();
     expect(screen.getByTestId('download-button-pg-pdf')).toBeInTheDocument();
     expect(screen.getByTestId('download-button-pg-docx')).toBeInTheDocument();
-    expect(screen.getByText('Categories - PDF')).toBeInTheDocument();
-    expect(screen.getByText('Pathway and grid - PDF')).toBeInTheDocument();
+    expect(screen.getByText('Sediment Uses - PDF')).toBeInTheDocument();
+    expect(screen.getByText('Receptors and Pathways - PDF')).toBeInTheDocument();
     expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(2);
     expect(screen.getAllByRole('button', { name: /^.+ - (PDF|DOCX)$/ })).toHaveLength(4);
 
@@ -1533,7 +1606,7 @@ describe('RevisedPaperWorkspace My Review', () => {
     expect(screen.queryByRole('dialog', { name: 'Download files' })).toBeNull();
 
     // Switch to Pathway and grid cohort in the left rail.
-    fireEvent.click(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' }));
+    fireEvent.click(screen.getByRole('button', { name: '2. Receptors and Pathways, 2 questions' }));
 
     // Reopen Download Files: nothing in it changed -- it was never scoped to
     // the cohort in the first place.
@@ -1650,7 +1723,7 @@ describe('sticky-header reveal and landing corrections (M1R4-02, M1R4-03)', () =
   }
 
   function navigationHeading() {
-    return within(screen.getByTestId('navigation-rail')).getByRole('heading', { name: 'Contents', level: 2 });
+    return within(screen.getByTestId('navigation-rail')).getByRole('heading', { name: 'Paper Navigation', level: 2 });
   }
 
   it('M1R4-02: the reveal delta is measured from the published sticky header, and is 0 once the heading is on the reading line', () => {
@@ -1913,7 +1986,7 @@ describe('sticky-header reveal and landing corrections (M1R4-02, M1R4-03)', () =
     setLgViewport(false);
     runFramesSynchronously();
     renderThreeSectionWindow();
-    fireEvent.click(within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' }));
+    fireEvent.click(outlineLink('2 Methods'));
     await waitFor(() => expect(document.getElementById('methods')).not.toBeNull());
     const target = document.getElementById('methods') as HTMLElement;
     // The state run-002 measured and never recovered from: the target sits above
@@ -2078,7 +2151,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
   }
 
   function navigationRailHeading() {
-    return within(screen.getByTestId('navigation-rail')).getByRole('heading', { name: 'Contents', level: 2 });
+    return within(screen.getByTestId('navigation-rail')).getByRole('heading', { name: 'Paper Navigation', level: 2 });
   }
 
   /*
@@ -3529,7 +3602,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
     }
   });
 
-  it('MIG-4.2.1: a question change during a live Review Comments reveal abandons it, and the response it selects lands', () => {
+  it('MIG-4.2.1: a question change during a live Review Comments reveal abandons it, and the question it selects opens inline', () => {
     const frames = controllableFrames();
     const sticky = mountGrowingStickyHeader(129);
     try {
@@ -3558,9 +3631,11 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
       scrollBy.mockClear();
       scrollIntoView.mockClear();
       fireEvent.change(select, { target: { value: '2' } });
-      expect(response).toHaveFocus();
-      expect(scrolledElements()).toContain(response);
+      // The question opens inline in its row; the panel is not scrolled to its top.
+      expect(screen.getByTestId('review-question-row-q2')).toHaveAttribute('data-open', 'true');
+      expect(scrolledElements()).not.toContain(response);
       drainFrames(frames);
+      // The live reveal was abandoned by that activation: no further correction runs.
       expect(scrollBy).not.toHaveBeenCalled();
     } finally {
       sticky.element.remove();
@@ -3910,4 +3985,142 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
     observe.mockRestore();
   });
 });
+});
+
+describe('RevisedPaperWorkspace: q names only an explicitly opened question', () => {
+  it('reloading the URL that paper navigation produced opens no editor', () => {
+    // What the outline navigation writes now: the section only.
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ section: 'scope' })} assignment={getProductionAssignment()} outline={outline}><FakeDocument /></RevisedPaperWorkspace>);
+    expect(document.querySelectorAll('[data-testid^="review-question-row-q"][data-open="true"]')).toHaveLength(0);
+  });
+
+  it('closing the open question removes q from the URL, so a reload opens nothing', () => {
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ q: questionId(1) })} assignment={getProductionAssignment()} outline={outline}><FakeDocument /></RevisedPaperWorkspace>);
+    expect(screen.getByTestId('review-question-row-q1')).toHaveAttribute('data-open', 'true');
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+    expect(screen.getByTestId('review-question-row-q1')).toHaveAttribute('data-open', 'false');
+    const lastUrl = String(replaceState.mock.calls.at(-1)?.[2] ?? '');
+    expect(lastUrl).not.toContain('q=');
+  });
+});
+
+describe('RevisedPaperWorkspace My Review: topic changes keep the URL canonical', () => {
+  it('choosing a topic that does not hold the open question closes it and drops q; a topic that holds it keeps it', () => {
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    renderMyReview();
+    fireEvent.click(screen.getByTestId('review-question-toggle-q2'));
+    expect(screen.getByTestId('review-question-row-q2')).toHaveAttribute('data-open', 'true');
+    // Question 2 is a Sediment Uses question; Exposure Assumptions does not hold it.
+    fireEvent.click(within(screen.getByTestId('navigation-rail')).getByRole('button', { name: /^3\. Exposure Assumptions, / }));
+    expect(screen.getByTestId('review-question-row-q2')).toHaveAttribute('data-open', 'false');
+    const url = String(replaceState.mock.calls.at(-1)?.[2] ?? '');
+    expect(url).toContain('cohort=exposure-assumptions');
+    // Two-sided: the old correction kept q=Q2 next to another topic (a non-canonical URL).
+    expect(url).not.toContain('q=');
+  });
+});
+
+describe('Round 3: explicitly selected questions are revealed at every width', () => {
+  function rowScrolls(number: number) {
+    return scrolledElements().filter((element) => element === screen.getByTestId(`review-question-row-q${number}`)).length;
+  }
+  function expectOnlyReviewRailScrolled() {
+    const rail = screen.getByTestId('review-comments-rail');
+    for (const element of scrolledElements()) expect(rail.contains(element as Node)).toBe(true);
+  }
+
+  it('below lg, a question chosen in the left navigation is revealed and focused; the paper is not scrolled', () => {
+    setLgViewport(false);
+    renderMyReview();
+    scrollIntoView.mockClear();
+    fireEvent.click(within(screen.getByTestId('navigation-rail')).getByRole('button', { name: /^Question 2:/ }));
+    // Two-sided: the lg-only reveal left this row off-screen below lg (0 scrolls).
+    expect(rowScrolls(2)).toBe(1);
+    expect(screen.getByTestId('review-question-toggle-q2')).toHaveFocus();
+    expectOnlyReviewRailScrolled();
+  });
+
+  it('below lg, Next, Previous and Jump reveal the question they open', () => {
+    setLgViewport(false);
+    renderMyReview();
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+    scrollIntoView.mockClear();
+    fireEvent.click(within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' }));
+    expect(rowScrolls(2)).toBe(1);
+    fireEvent.click(within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Previous question' }));
+    expect(rowScrolls(1)).toBe(1);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Jump to topic' }), { target: { value: '3' } });
+    expect(rowScrolls(3)).toBe(1);
+    expectOnlyReviewRailScrolled();
+  });
+
+  it('a closed (inert) rail is never scrolled, at any width', () => {
+    setLgViewport(false);
+    renderMyReview();
+    fireEvent.click(within(headerHost()).getByRole('button', { name: 'Review Comments' }));
+    expect(screen.getByTestId('review-comments-rail')).toHaveAttribute('inert');
+    scrollIntoView.mockClear();
+    fireEvent.click(within(screen.getByTestId('navigation-rail')).getByRole('button', { name: /^Question 2:/ }));
+    expect(rowScrolls(2)).toBe(0);
+  });
+
+  it('below lg, a q deep link opens its question without pulling the page away from the paper at load', () => {
+    setLgViewport(false);
+    renderMyReview({ q: questionId(2) });
+    expect(screen.getByTestId('review-question-row-q2')).toHaveAttribute('data-open', 'true');
+    expect(rowScrolls(2)).toBe(0);
+  });
+});
+
+describe('Round 3: Back/Forward make the open editor agree with the restored URL', () => {
+  function popTo(url: string) {
+    act(() => {
+      window.history.replaceState(null, '', url);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+  }
+  function openRows() {
+    return Array.from(document.querySelectorAll('[data-testid^="review-question-row-q"][data-open="true"]')).map((row) => row.getAttribute('data-testid'));
+  }
+
+  it('Working Draft: close, then Back to an entry naming a question reopens it; an entry without q restores the closed state; no history is written', () => {
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={outline}><FakeDocument /></RevisedPaperWorkspace>);
+    const closedUrl = window.location.pathname + window.location.search;
+    fireEvent.click(screen.getByTestId('review-question-toggle-q3'));
+    const q3Url = window.location.pathname + window.location.search;
+    expect(new URLSearchParams(window.location.search).get('q')).toBe(questionId(3));
+    fireEvent.click(screen.getByTestId('review-question-toggle-q4'));
+    fireEvent.click(screen.getByTestId('review-question-toggle-q4'));
+    expect(openRows()).toEqual([]);
+    const pushState = vi.spyOn(window.history, 'pushState');
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+
+    popTo(q3Url);
+    // Two-sided: the previous handler kept a closed editor closed, so the URL
+    // named Question 3 while no editor was open.
+    expect(openRows()).toEqual(['review-question-row-q3']);
+    popTo(closedUrl.includes('?') ? closedUrl : `${closedUrl}?mode=working-draft`);
+    expect(openRows()).toEqual([]);
+    // Only the test's own replaceState calls (one per popTo); the handler wrote nothing.
+    expect(pushState).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenCalledTimes(2);
+  });
+
+  it('My Review: close, then Back to an entry naming a question reopens it with its saved draft; an entry without q closes it', () => {
+    renderMyReview();
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+    const q1Url = window.location.pathname + window.location.search;
+    fireEvent.change(screen.getByTestId('review-comment-draft'), { target: { value: 'Draft kept across history' } });
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+    expect(openRows()).toEqual([]);
+    const pushState = vi.spyOn(window.history, 'pushState');
+
+    popTo(q1Url);
+    expect(openRows()).toEqual(['review-question-row-q1']);
+    expect(screen.getByTestId('review-comment-draft')).toHaveValue('Draft kept across history');
+    popTo(`${window.location.pathname}?mode=my-review&cohort=${new URLSearchParams(q1Url.split('?')[1]).get('cohort') ?? ''}`);
+    expect(openRows()).toEqual([]);
+    expect(pushState).not.toHaveBeenCalled();
+  });
 });

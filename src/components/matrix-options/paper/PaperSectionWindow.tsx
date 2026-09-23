@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode, RefObject } from 'react';
 import { Printer } from 'lucide-react';
 
+import { sectionRegion } from '@/lib/matrix-options/paper/contents-heading';
+import { APPENDIX_BOUNDARY_LABEL } from '@/lib/matrix-options/paper/outline-hierarchy';
 import { createSectionLoader } from '@/lib/matrix-options/paper/section-loader';
 import type { SectionLoaderSnapshot, SectionLoadStatus } from '@/lib/matrix-options/paper/section-loader';
 import { validatePaperSectionContract } from '@/lib/matrix-options/paper/section-window';
@@ -223,6 +225,7 @@ export function PaperSectionWindowView({ sectionWindow, api, scrollRootRef, chil
     return () => observer.disconnect();
   }, [ensureLoaded, scrollRootRef, loadedKey]);
 
+  const sectionLabels = sectionWindow.sections.map((section) => section.label);
   return (
     <article data-testid="paper-document" aria-label="Working Draft paper" className={PAPER_DOCUMENT_ARTICLE_CLASSES}>
       {api.complete ? null : (
@@ -238,7 +241,7 @@ export function PaperSectionWindowView({ sectionWindow, api, scrollRootRef, chil
         if (contract) {
           return (
             <div key={section.anchor} data-paper-section={section.anchor} className="min-w-0 space-y-2">
-              {contract.chunks.map((chunk) => <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={sectionWindow.linkMap} />)}
+              {contract.chunks.map((chunk) => <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={sectionWindow.linkMap} region={sectionRegion(sectionLabels, section.index, APPENDIX_BOUNDARY_LABEL)} />)}
             </div>
           );
         }

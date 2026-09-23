@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
 import type { ReviewNavTopic } from '@/lib/matrix-options/paper/review-navigation';
@@ -10,6 +10,8 @@ function topic(id: string, name: string, questionNumbers: readonly number[]): Re
   return {
     id,
     name,
+    number: 1,
+    label: name,
     questions: questionNumbers.map((number) => ({
       number,
       id: `q${number}`,
@@ -37,8 +39,27 @@ const STATE_BY_NUMBER: Readonly<Record<number, ReviewProgressState>> = {
 const stateFor = (number: number): ReviewProgressState => STATE_BY_NUMBER[number];
 
 describe('ReviewProgressTracker', () => {
-  it('groups questions by topic, one row/list per topic', () => {
+  it('is collapsed by default: one plain count and one bar, no per-question rows, legend or patterns on show', () => {
     render(<ReviewProgressTracker topics={topics} stateFor={stateFor} currentQuestionNumber={undefined} />);
+    const toggle = screen.getByTestId('review-progress-toggle');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByTestId('review-progress-count')).toHaveTextContent('2 of 5 complete');
+    const bar = screen.getByRole('progressbar', { name: 'Review progress' });
+    expect(bar).toHaveAttribute('aria-valuenow', '2');
+    expect(bar).toHaveAttribute('aria-valuemax', '5');
+    expect(bar).toHaveAttribute('aria-valuetext', '2 of 5 complete');
+    // Two-sided: the previous tracker showed the per-topic rows and the legend immediately.
+    expect(screen.getByTestId('review-progress-detail')).toHaveAttribute('hidden');
+    expect(screen.queryByRole('list', { name: 'Topic A' })).toBeNull();
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('review-progress-detail')).not.toHaveAttribute('hidden');
+    expect(screen.getByRole('list', { name: 'Topic A' })).toBeInTheDocument();
+  });
+
+  it('groups questions by topic, one row/list per topic (expanded)', () => {
+    render(<ReviewProgressTracker topics={topics} stateFor={stateFor} currentQuestionNumber={undefined} />);
+    fireEvent.click(screen.getByTestId('review-progress-toggle'));
     const topicARow = screen.getByRole('list', { name: 'Topic A' });
     const topicBRow = screen.getByRole('list', { name: 'Topic B' });
     expect(within(topicARow).getAllByTestId(/^review-progress-q/)).toHaveLength(2);
@@ -116,7 +137,7 @@ describe('ReviewProgressTracker', () => {
   });
 
   it('gives draft-page its own DOTTED shape (not colour alone), distinct from draft-local', () => {
-    render(<ReviewProgressTracker topics={[{ id: 't', name: 'Topic', questions: [{ number: 1, id: 'q1', heading: 'Q1', title: 'Q1', topicId: 't', citedSections: [] }, { number: 2, id: 'q2', heading: 'Q2', title: 'Q2', topicId: 't', citedSections: [] }] }]} stateFor={(n) => (n === 1 ? 'draft-page' : 'draft-local')} currentQuestionNumber={1} />);
+    render(<ReviewProgressTracker topics={[{ id: 't', name: 'Topic', number: 1, label: 'Topic', questions: [{ number: 1, id: 'q1', heading: 'Q1', title: 'Q1', topicId: 't', citedSections: [] }, { number: 2, id: 'q2', heading: 'Q2', title: 'Q2', topicId: 't', citedSections: [] }] }]} stateFor={(n) => (n === 1 ? 'draft-page' : 'draft-local')} currentQuestionNumber={1} />);
     const page = screen.getByTestId('review-progress-q1').querySelector('[data-state="draft-page"]');
     const local = screen.getByTestId('review-progress-q2').querySelector('[data-state="draft-local"]');
     expect(page?.className).toMatch(/border-dotted/);

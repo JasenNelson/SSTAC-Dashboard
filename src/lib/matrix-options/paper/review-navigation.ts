@@ -2,6 +2,7 @@ import type { CohortManifest } from '../cohort-contract';
 import type { ReviewerGuideContract } from '../reviewer-guide';
 import { sectionNumbersFromLocator } from './cohort-portions';
 import { APPENDIX_BOUNDARY_LABEL, outlineSectionNumber } from './outline-hierarchy';
+import { numberedReviewTopicLabel, reviewTopicLabel } from './topic-labels';
 
 /*
  * The ONE navigation model shared by the paper outline, the review topics, the
@@ -43,7 +44,12 @@ export interface ReviewNavQuestion {
 
 export interface ReviewNavTopic {
   readonly id: string;
+  /** Presentation name (topic-labels.ts); the id stays the stable cohort id. */
   readonly name: string;
+  /** 1-based position in the cohort manifest. */
+  readonly number: number;
+  /** "1. Sediment Uses". */
+  readonly label: string;
   readonly questions: readonly ReviewNavQuestion[];
 }
 
@@ -96,12 +102,29 @@ export function questionTitle(heading: string): string {
   return heading.replace(HEADING_CITATION, '').trim();
 }
 
+/**
+ * A concise, distinguishing title for a question row: the first sentence of
+ * the question's own prompt as plain text (the Reviewer's Guide headings are
+ * per topic, so several questions share one heading). Inline maths becomes
+ * readable text ("$4 \\times 4 = 16$" -> "4 x 4 = 16"); markdown emphasis
+ * markers are dropped.
+ */
+export function questionPromptSummary(prompt: string): string {
+  const plain = prompt
+    .replace(/\$([^$]*)\$/g, (_match, math: string) => math.replace(/\\times/g, 'x').replace(/\\[a-zA-Z]+/g, '').replace(/[{}]/g, '').replace(/\s+/g, ' ').trim())
+    .replace(/\*\*|__|[*_`]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const sentence = /^(.+?[?.!])(?:\s|$)/.exec(plain);
+  return (sentence ? sentence[1] : plain).trim();
+}
+
 export function buildReviewNavigation(
   cohortManifest: Pick<CohortManifest, 'cohorts'>,
   reviewerGuide: Pick<ReviewerGuideContract, 'questions'>,
   outline: readonly ReviewNavOutlineEntry[] = [],
 ): ReviewNavigationModel {
-  const topics: ReviewNavTopic[] = cohortManifest.cohorts.map((cohort) => {
+  const topics: ReviewNavTopic[] = cohortManifest.cohorts.map((cohort, topicIndex) => {
     const guideQuestions = cohort.questionNumbers
       .map((number) => reviewerGuide.questions.find((question) => question.number === number))
       .filter((question): question is ReviewerGuideContract['questions'][number] => question !== undefined);
@@ -118,7 +141,8 @@ export function buildReviewNavigation(
       topicId: cohort.id,
       citedSections: Object.freeze(explicit[index].length > 0 ? explicit[index] : fallback),
     }));
-    return Object.freeze({ id: cohort.id, name: cohort.name, questions: Object.freeze(questions) });
+    const name = reviewTopicLabel(cohort.id, cohort.name);
+    return Object.freeze({ id: cohort.id, name, number: topicIndex + 1, label: numberedReviewTopicLabel(cohort.id, cohort.name, topicIndex), questions: Object.freeze(questions) });
   });
   const questions = Object.freeze(topics.flatMap((topic) => topic.questions));
 

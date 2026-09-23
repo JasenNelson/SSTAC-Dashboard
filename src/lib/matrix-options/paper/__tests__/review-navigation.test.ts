@@ -13,10 +13,12 @@ describe('shared review navigation model on the authenticated release', () => {
   const model = buildReviewNavigation(getCohortManifest(), getReviewerGuideContract(), outline);
   const anchorOf = (label: string) => outline.find((entry) => entry.label === label)!.anchor;
 
-  it('groups all 12 questions under the paper topics, Question 8 under Inputs and evidence', () => {
-    expect(model.topics.map((topic) => topic.name)).toEqual(['Categories', 'Pathway and grid', 'Exposure assumptions', 'Inputs and evidence', 'Methods and water type']);
+  it('groups all 12 questions under the paper topics (presentation labels, stable ids), Question 8 under Inputs and Evidence', () => {
+    expect(model.topics.map((topic) => topic.id)).toEqual(['categories', 'pathway-grid', 'exposure-assumptions', 'inputs-evidence', 'methods-water-type']);
+    expect(model.topics.map((topic) => topic.name)).toEqual(['Sediment Uses', 'Receptors and Pathways', 'Exposure Assumptions', 'Inputs and Evidence', 'Methods and Water Types']);
+    expect(model.topics.map((topic) => topic.label)).toEqual(['1. Sediment Uses', '2. Receptors and Pathways', '3. Exposure Assumptions', '4. Inputs and Evidence', '5. Methods and Water Types']);
     expect(model.questions).toHaveLength(12);
-    expect(model.topicForQuestion(8)?.name).toBe('Inputs and evidence');
+    expect(model.topicForQuestion(8)?.name).toBe('Inputs and Evidence');
     expect(model.topics.find((topic) => topic.id === 'inputs-evidence')?.questions.map((question) => question.number)).toEqual([8, 9, 12]);
   });
 

@@ -6,7 +6,8 @@ import {
   sectionAnchorSet,
 } from '@/lib/matrix-options/paper/full-document';
 import type { PaperChunk } from '@/lib/matrix-options/paper/full-document';
-import { buildOutlineHierarchy } from '@/lib/matrix-options/paper/outline-hierarchy';
+import { APPENDIX_BOUNDARY_LABEL, buildOutlineHierarchy } from '@/lib/matrix-options/paper/outline-hierarchy';
+import type { PaperRegion } from '@/lib/matrix-options/paper/contents-heading';
 import { workingDraftSectionHref } from '@/lib/matrix-options/paper/url-state';
 import type { PaperUrlContext } from '@/lib/matrix-options/paper/url-state';
 import { createWorkspaceModel } from '@/lib/matrix-options/revised-paper-review';
@@ -188,8 +189,14 @@ export function resolveLegacySectionAnchor(structure: Pick<RevisedPaperStructure
  * client section window can place the server-rendered initial section inside its
  * own ordered article next to placeholders and client-loaded sections (S1).
  */
-export function PaperDocument({ model, layout = 'article' }: { readonly model: PaperDocumentModel; readonly layout?: 'article' | 'chunks' }) {
-  const chunks = model.chunks.map((chunk) => <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={model.linkMap} />);
+export function PaperDocument({ model, layout = 'article', region = 'main' }: { readonly model: PaperDocumentModel; readonly layout?: 'article' | 'chunks'; readonly region?: PaperRegion }) {
+  // The region starts where the caller says (the initial section's) and turns
+  // to 'appendix' at the appendix boundary heading.
+  let current: PaperRegion = region;
+  const chunks = model.chunks.map((chunk) => {
+    if (chunk.depth === 1 && chunk.label?.trim() === APPENDIX_BOUNDARY_LABEL) current = 'appendix';
+    return <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={model.linkMap} region={current} />;
+  });
   if (layout === 'chunks') return <>{chunks}</>;
   return (
     <article data-testid="paper-document" aria-label="Working Draft paper" className={PAPER_DOCUMENT_ARTICLE_CLASSES}>

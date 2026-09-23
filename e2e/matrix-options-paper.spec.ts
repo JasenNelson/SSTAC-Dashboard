@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import type { Page } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -123,6 +124,32 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
   test.setTimeout(120000);
   const workspacePath = `/matrix-options/paper/publication/v/${realVersion}`;
   const canonicalWorkingDraft = `${workspacePath}?mode=working-draft`;
+  /**
+   * Paper Navigation groups start collapsed unless they hold the URL target or
+   * the section in view, which opens them shortly after load. Wait briefly for
+   * that, then open the group explicitly -- never toggling an already-open one.
+   */
+  const openOutlineGroup = async (page: Page, name: 'Main Report' | 'Appendices') => {
+    const button = page.getByTestId('paper-outline-desktop').getByRole('button', { name, exact: true });
+    await expect(button).toBeVisible({ timeout: 30000 });
+    await expect.poll(() => button.getAttribute('aria-expanded'), { timeout: 3000 }).toBe('true').catch(() => undefined);
+    if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+  };
+  /** Below lg: open the stacked Appendices group (never toggling it closed). */
+  const openStackedAppendices = async (page: Page) => {
+    const button = page.getByTestId('paper-outline-stacked').getByRole('button', { name: 'Appendices', exact: true });
+    await expect(button).toBeVisible({ timeout: 30000 });
+    if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+    await expect(button).toHaveAttribute('aria-expanded', 'true');
+  };
+  /** Review questions start collapsed: open one explicitly (its row toggle). */
+  const openQuestion = async (page: Page, number: number) => {
+    const toggle = page.getByTestId(`review-question-toggle-q${number}`);
+    await expect(toggle).toBeVisible({ timeout: 30000 });
+    if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  };
   const pathAndQuery = (url: string) => {
     const parsed = new URL(url);
     return `${parsed.pathname}${parsed.search}`;
@@ -210,6 +237,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     const navigationToggle = page.getByTestId('navigation-toggle');
     await expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
     await expect(page.getByTestId('navigation-rail')).toHaveAttribute('data-state', 'open');
+    await openOutlineGroup(page, 'Main Report');
     await expect(page.getByTestId('paper-outline-desktop').getByRole('link').first()).toBeVisible();
     await expect(page.getByTestId('paper-load-progress')).toContainText('of 17 sections', { timeout: 30000 });
     // Print is ALWAYS enabled now -- it loads whatever is missing itself.
@@ -282,9 +310,11 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
       await page.setViewportSize({ width, height: 800 });
       await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
       failOnLogin(page.url());
-      // Below lg the stacked outline lists the depth-1 sections; the last one is
-      // never part of the initial window, so this navigates into a placeholder.
-      const entries = page.getByTestId('paper-outline-stacked').getByRole('link');
+      // Below lg the stacked Paper Navigation groups start collapsed; the last
+      // appendix row is a depth-1 section that is never part of the initial
+      // window, so this navigates into a placeholder.
+      await openStackedAppendices(page);
+      const entries = page.locator('[data-testid="paper-outline-stacked"] li[data-appendix] > div > a');
       const target = entries.nth((await entries.count()) - 1);
       const href = await target.getAttribute('href');
       const anchor = new URLSearchParams((href ?? '').replace(/^\?/, '')).get('section') ?? '';
@@ -312,7 +342,8 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
       // `working-draft.deep-link` check.
       await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
       failOnLogin(page.url());
-      const entries = page.getByTestId('paper-outline-stacked').getByRole('link');
+      await openStackedAppendices(page);
+      const entries = page.locator('[data-testid="paper-outline-stacked"] li[data-appendix] > div > a');
       const href = await entries.nth((await entries.count()) - 1).getAttribute('href');
       const anchor = new URLSearchParams((href ?? '').replace(/^\?/, '')).get('section') ?? '';
       expect(anchor.length).toBeGreaterThan(0);
@@ -360,6 +391,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
     const outline = page.getByTestId('paper-outline-desktop');
+    await openOutlineGroup(page, 'Main Report');
     const entry = outline.getByRole('link').nth(5);
     // Outline hrefs are the canonical Working Draft section query (M1-04).
     const sectionOf = (href: string | null) => new URLSearchParams((href ?? '').replace(/^\?/, '')).get('section') ?? '';
@@ -392,6 +424,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     const outlineItemFor = (label: string) => page.locator(
       `xpath=//*[@data-testid="paper-outline-desktop"]//a[normalize-space(.)="${label}"]/ancestor::li[1]`,
     );
+    await openOutlineGroup(page, 'Main Report');
     const topicItem = outlineItemFor('7.0 Phase 2 Research Topics Supporting the Matrix Options Paper');
     // Chapters (level 2) start collapsed on desktop; open 7.0's own disclosure.
     const expandTopic = topicItem.getByRole('button', { name: /^Subsections of 7\.0 / });
@@ -412,20 +445,30 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
     const outline = page.getByTestId('paper-outline-desktop');
+    await openOutlineGroup(page, 'Main Report');
     const outlineLink = outline.getByRole('link', { name: '7.7 BC Aquatic Database', exact: true });
     if ((await outlineLink.count()) === 0 || !(await outlineLink.first().isVisible())) {
       await page.getByRole('button', { name: /^Subsections of 7\.0/ }).first().click();
     }
     await outlineLink.first().click();
-    await expect(page.locator('#active-question-heading')).toHaveText(/^Question 12/, { timeout: 30000 });
+    // Paper navigation HIGHLIGHTS the related question; it never opens an editor.
+    await expect(page.getByTestId('review-question-row-q12')).toHaveAttribute('data-highlighted', 'true', { timeout: 30000 });
+    await expect(page.getByTestId('review-question-row-q12')).toHaveAttribute('data-open', 'false');
+    await expect(page.locator('#active-question-heading')).toHaveCount(0);
 
+    // An explicit choice opens the question.
     await page.getByRole('combobox', { name: 'Jump to topic' }).selectOption('8');
+    await expect(page.locator('#active-question-heading')).toHaveText(/^Question 8/, { timeout: 30000 });
     await expect
       .poll(() => new URL(page.url()).searchParams.get('section'), { timeout: 30000 })
       .toBe('section-78-input-parameter-inventory-and-selection-options');
 
+    // Back returns to the outline entry, which names a SECTION, not a question:
+    // the explicitly opened editor closes and Question 12 is highlighted again.
     await page.goBack();
-    await expect(page.locator('#active-question-heading')).toHaveText(/^Question 12/, { timeout: 30000 });
+    await expect(page.getByTestId('review-question-row-q12')).toHaveAttribute('data-highlighted', 'true', { timeout: 30000 });
+    await expect(page.locator('[data-testid^="review-question-row-q"][data-open="true"]')).toHaveCount(0);
+    expect(new URL(page.url()).searchParams.get('q')).toBeNull();
   });
 
   test('authenticated real release reports unavailable assignment truthfully', async ({ page }, testInfo) => {
@@ -466,15 +509,15 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
    * M2 (PLAN-R4 3.B.3): local-buffer-only draft text, the saved-questions
    * resume chip, and Prev/Next spanning all 12 questions in cohort order.
    */
-  test('M2: authenticated real release saved-questions chip resumes a question, a typed draft survives a reload, and the char count/progress line update', async ({ page }, testInfo) => {
+  test('M2: authenticated real release question index opens a question, a typed draft survives a reload, and the char count/progress update', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
-    await expect(page.getByTestId('review-save-status')).not.toHaveText('Loading your saved responses...', { timeout: 30000 });
 
-    const savedQuestions = page.getByTestId('review-saved-questions');
-    await expect(savedQuestions.getByRole('button')).toHaveCount(12);
-    await savedQuestions.getByRole('button', { name: /^Question 4:/ }).click();
+    const questionIndex = page.getByTestId('review-question-index');
+    await expect(questionIndex.getByTestId(/^review-question-toggle-q/)).toHaveCount(12);
+    await openQuestion(page, 4);
+    await expect(page.getByTestId('review-save-status')).not.toHaveText('Loading your saved responses...', { timeout: 30000 });
     await expect.poll(() => new URL(page.url()).searchParams.get('q')).toBe(`rpq:${realVersion}:q04`);
     await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
 
@@ -486,9 +529,11 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     // the question heading and the topic combobox instead.
     await expect(page.locator('#active-question-heading')).toHaveText(/^Question 4:/);
     await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
+    await expect(page.getByTestId('review-progress-count')).toHaveText(/^\d+ of 12 complete$/);
+    await page.getByTestId('review-progress-toggle').click();
     await expect(page.getByTestId('review-progress')).toContainText(/^\d+ of 12 submitted/);
     await expect(page.getByTestId('review-progress')).toContainText(/1 draft\b/);
-    await expect(savedQuestions.getByRole('button', { name: /^Question 4:/ })).toContainText(/Draft in this browser only|Draft saved/);
+    await expect(questionIndex.getByTestId('review-question-toggle-q4')).toContainText(/Draft in this browser only|Draft saved|Unsaved changes/);
 
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('E2E authenticated draft text for question 4.');
@@ -499,6 +544,9 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
     const link = page.getByTestId('cohort-paper-stack').getByRole('link', { name: /^Open .+ in Working Draft$/ }).first();
+    // With nothing open the link names only the section (following it opens no editor).
+    expect(new URL((await link.getAttribute('href')) ?? '', page.url()).searchParams.get('q')).toBeNull();
+    await openQuestion(page, 1);
     const href = await link.getAttribute('href');
     // The link also carries the active question (q) so the review panel keeps it:
     // q is REQUIRED, and it survives into the Working Draft URL.
@@ -517,6 +565,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     requireJourney(testInfo.project.name);
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
+    await openQuestion(page, 1);
     await expect(page.getByTestId('review-save-status')).not.toHaveText('Loading your saved responses...', { timeout: 30000 });
     const previous = page.getByRole('button', { name: 'Previous question' });
     const next = page.getByRole('button', { name: 'Next question' });
@@ -546,12 +595,20 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
   test('M3: intercepted response save, submit, reload and CAS conflict expose the authenticated workflow', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
     const questionId = `rpq:${realVersion}:q01`;
-    const userKey = '11111111-1111-4111-8111-111111111111';
+    // The signed-in E2E reviewer's own id, read from the real route (which names
+    // it even while persistence is unavailable): a made-up id would be a
+    // different reviewer, and the page's identity guard would rightly stop saving.
+    let userKey = '';
     let reviewManifestSha256 = '';
     let savedRow: Record<string, unknown> | null = null;
     let forceConflict = false;
     await page.route('**/api/matrix-options/paper/reviews?*', async (route) => {
       reviewManifestSha256 = new URL(route.request().url()).searchParams.get('manifestSha256') ?? '';
+      if (!userKey) {
+        const real = await route.fetch();
+        userKey = String(((await real.json().catch(() => ({}))) as { userKey?: unknown }).userKey ?? '');
+        expect(userKey).toMatch(/\S/);
+      }
       await route.fulfill({ status: 200, headers: { 'Cache-Control': 'no-store' }, contentType: 'application/json', body: JSON.stringify({ persistence: 'available', userKey, rows: savedRow ? [savedRow] : [] }) });
     });
     await page.route('**/api/matrix-options/paper/reviews/**', async (route) => {
@@ -566,6 +623,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     });
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
+    await openQuestion(page, 1);
     const textarea = page.getByRole('textbox', { name: 'Your response' });
     await textarea.fill('intercepted M3 response');
     await page.getByRole('button', { name: 'Save draft' }).click();
@@ -595,6 +653,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
       await page.setViewportSize({ width, height: 800 });
       await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
       failOnLogin(page.url());
+      await openQuestion(page, 1);
       await expect(page.getByTestId('review-comment-draft')).toBeVisible();
       const reviewComments = page.getByTestId('review-comments-toggle');
       const downloads = page.getByTestId('workspace-header-controls').getByRole('button', { name: 'Download Files', exact: true });
@@ -827,18 +886,18 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     const docxItem = packageItems.nth(1);
     const noPackageInternalsPattern = /sha-?256|bytes|\.pdf|\.docx/i;
 
-    await expect(pdfItem).toContainText('Categories - PDF');
+    await expect(pdfItem).toContainText('Sediment Uses - PDF');
     await expect(pdfItem).not.toContainText(noPackageInternalsPattern);
 
-    await expect(docxItem).toContainText('Categories - DOCX');
+    await expect(docxItem).toContainText('Sediment Uses - DOCX');
     await expect(docxItem).not.toContainText(noPackageInternalsPattern);
 
     // The download controls are BUTTONS, not links: the panel fetches and verifies
     // the response before writing anything, so a JSON error can never be saved as
     // a .pdf. There is therefore no href to read - the route URL is derived from
     // the package id, exactly as the manifest builds it.
-    await expect(pdfItem.getByRole('button', { name: 'Categories - PDF' })).toBeVisible();
-    await expect(docxItem.getByRole('button', { name: 'Categories - DOCX' })).toBeVisible();
+    await expect(pdfItem.getByRole('button', { name: 'Sediment Uses - PDF' })).toBeVisible();
+    await expect(docxItem.getByRole('button', { name: 'Sediment Uses - DOCX' })).toBeVisible();
     const pdfHref = '/api/matrix-options/paper/downloads/categories-pdf';
     const docxHref = '/api/matrix-options/paper/downloads/categories-docx';
 
@@ -898,6 +957,82 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await expect(popover).toHaveAttribute('data-sheet', 'true');
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(1);
+  });
+
+  test('M2: authenticated real release adaptive reading measure follows the document column, Wide persists, and tables use the full frame', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`${canonicalWorkingDraft}&section=section-78-input-parameter-inventory-and-selection-options`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    const frame = page.getByTestId('paper-reading-frame');
+    const measure = () => frame.evaluate((element) => getComputedStyle(element).getPropertyValue('--paper-measure').trim());
+    const handle = page.getByTestId('paper-resize-left');
+    await expect.poll(async () => handle.getAttribute('aria-valuenow'), { timeout: 30000 }).toBe('288');
+    // Laptop-width document column (both panels open): the comfortable laptop tier.
+    await expect.poll(measure).toBe('67ch');
+    // Widening the navigation panel narrows the document column below the first
+    // tier: the measure follows the COLUMN at once (fluid), not the viewport.
+    await handle.focus();
+    for (let step = 0; step < 8; step += 1) await page.keyboard.press('ArrowRight');
+    await expect.poll(measure).toBe('100%');
+    await page.getByTestId('paper-reset-panel-widths').click();
+    await expect.poll(measure).toBe('67ch');
+    // The Wide preference scales the same adaptive tier and persists per device.
+    await page.getByTestId('reader-width-wide').click();
+    await expect(frame).toHaveAttribute('data-reader-width', 'wide');
+    await expect.poll(measure).toBe('75ch');
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('paper-reading-frame')).toHaveAttribute('data-reader-width', 'wide', { timeout: 30000 });
+    await page.getByTestId('reader-width-comfortable').click();
+    await expect(page.getByTestId('paper-reading-frame')).toHaveAttribute('data-reader-width', 'comfortable');
+    // Desktop column: tables break out of the prose measure to the full frame.
+    await page.setViewportSize({ width: 1920, height: 1080 });
+    await expect.poll(measure).toBe('78ch');
+    const table = page.locator('[data-testid="paper-document"] .reader-prose table').first();
+    await expect(table).toBeAttached({ timeout: 30000 });
+    const paragraph = page.locator('[data-testid="paper-document"] .reader-prose .math-renderer > p').first();
+    const widths = await Promise.all([table.evaluate((element) => element.getBoundingClientRect().width), paragraph.evaluate((element) => element.getBoundingClientRect().width)]);
+    expect(widths[0]).toBeGreaterThan(widths[1] + 100);
+  });
+
+  test('M2: authenticated real release Paper Navigation groups start collapsed, list every appendix but no contents heading, and the paper relabels its contents headings', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    await expect(page.getByTestId('navigation-rail').getByRole('heading', { name: 'Paper Navigation' })).toBeVisible();
+    const outline = page.getByTestId('paper-outline-desktop');
+    // Nothing on screen is in the appendices, so that group stays collapsed.
+    await expect(outline.getByRole('button', { name: 'Appendices', exact: true })).toHaveAttribute('aria-expanded', 'false');
+    await openOutlineGroup(page, 'Main Report');
+    await openOutlineGroup(page, 'Appendices');
+    for (const letter of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L']) {
+      await expect(outline.getByRole('link', { name: new RegExp(`^Appendix ${letter}: `) }).first()).toBeVisible();
+    }
+    await expect(outline.getByRole('link', { name: 'Master Table of Contents', exact: true })).toHaveCount(0);
+    const paper = page.getByTestId('paper-document');
+    await expect(paper.getByRole('heading', { name: 'Paper contents', exact: true })).toBeVisible({ timeout: 60000 });
+    await expect(paper.getByRole('heading', { name: 'Master Table of Contents', exact: true })).toHaveCount(0);
+    // An appendix's own contents heading, reached by its stable anchor.
+    await page.goto(`${canonicalWorkingDraft}&section=master-table-of-contents-1`, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('paper-document').getByRole('heading', { name: 'Appendix contents', exact: true }).first()).toBeVisible({ timeout: 60000 });
+  });
+
+  test('M2: authenticated real release a question deep link opens that question; without one every question starts collapsed', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.goto(`${canonicalWorkingDraft}&q=${encodeURIComponent(`rpq:${realVersion}:q08`)}`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    await expect(page.getByTestId('review-question-row-q8')).toHaveAttribute('data-open', 'true', { timeout: 30000 });
+    await expect(page.locator('#active-question-heading')).toHaveText(/^Question 8:/);
+    await expect(page.locator('[data-testid^="review-question-row-q"][data-open="true"]')).toHaveCount(1);
+
+    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('review-question-index')).toBeVisible();
+    await expect(page.locator('[data-testid^="review-question-row-q"][data-open="true"]')).toHaveCount(0);
+    await expect(page.getByTestId('review-progress-toggle')).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.getByTestId('review-progress-count')).toHaveText(/^\d+ of 12 complete$/);
+    await expect(page.getByRole('navigation', { name: 'Review topics' }).getByRole('button', { name: '1. Sediment Uses, 3 questions' })).toBeVisible();
+    await expect(page.getByTestId('review-question-index').getByRole('heading', { name: '4. Inputs and Evidence' })).toBeVisible();
   });
 
   test('M2: authenticated real release the navigation panel resize handle steps by keyboard, persists across reload, and resets', async ({ page }, testInfo) => {
@@ -1011,7 +1146,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     });
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
-    await expect(page.getByRole('textbox', { name: 'Your response' })).toBeVisible();
+    await expect(page.getByTestId('review-question-index')).toBeVisible();
     await page.getByRole('button', { name: 'Logout' }).click();
     await expect(page).toHaveURL(/\/login/);
     // The app asked GoTrue to end the session, exactly once, with GLOBAL scope.
