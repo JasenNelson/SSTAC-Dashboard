@@ -1,0 +1,22 @@
+WORKTREE=C:/Projects/SSTAC-Dashboard-worktrees/wavea-20260816
+FROZEN_HEAD=c41f1463c8bb91ef2a3687e5d82040cef1b14f8d
+DIRTY_FILES_AT_START=0
+PLAYWRIGHT_TEST_PORT=3320
+MODE=full
+=== LINT ===
+LINT_EXIT=0
+LINT_ERRORS=0 errors
+=== TSC ===
+TSC_EXIT=0
+TSC_LOG_BYTES=0
+=== UNIT ===
+UNIT_EXIT=0
+UNIT_SUMMARY=
+UNIT_FILES=
+=== BUILD ===
+BUILD_EXIT=0
+BUILD_MARKERS route_table=1 static_pages=5 first_load_js=2
+BUILD_CORROBORATION=OK
+=== E2E ===
+E2E_EXIT=0
+C:/Users/jasen/AppData/Local/Temp/claude/C--Projects-SSTAC-Dashboard-worktrees-triage-20260816/88224782-37b1-4ba9-a570-5a2948a009e7/scratchpad/gates.sh: line 78: unexpected EOF while looking for matching `"'

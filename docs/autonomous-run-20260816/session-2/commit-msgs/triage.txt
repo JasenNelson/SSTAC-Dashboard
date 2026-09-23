@@ -1,0 +1,31 @@
+fix(print): de-clip the cross-pathway audit list, and stop the guards claiming more than they check
+
+A reviewer found a value-bearing container the print work had missed:
+EvidenceLibrary.tsx rendered the cross-pathway audit list inside max-h-64 overflow-y-auto with no
+print reset, around rows printing entry.value and entry.unit. The runtime print sweep could never
+have caught it for two independent reasons -- that sweep is scoped to elements containing a
+<table> and this is a div list, AND the spec that runs it never reaches this panel at all.
+
+Fixed here:
+- print:max-h-none print:overflow-visible on that list.
+- print:overflow-visible print:whitespace-normal print:text-clip on {row.substance_label} inside
+  it, which was still ellipsised on paper. De-clipping only the list would have corrected how
+  MANY rows print while still clipping WHICH substance each row is about.
+- The truncation notice and the slice now read one constant instead of two copies of 50.
+
+Guards added, with their limits stated rather than implied:
+- printCapSweep.test.ts: every vertical cap in the two value-bearing components must reset for
+  print or be a named exception. Its docstring says plainly that it is a source-text check that
+  will pass on a file that does not typecheck, that it is blind to caps composed through cn()
+  (and fails OPEN there), and that it does not look at the horizontal axis at all.
+- demotedDocumentTabsDrift.test.ts: one DEMOTED_DOCUMENT_TABS member per demoteLeadingH1 call
+  site. It states that it checks cardinality and membership but NOT correspondence -- a drift
+  alarm, not a proof.
+- The runtime print sweep in e2e/ssd-workbench.spec.ts gains an EXISTENCE half. It was
+  offenders-only, so it reported green on a view where it found nothing to measure. It now counts
+  only laid-out containers, because a container inside a closed <details> is in the DOM and would
+  otherwise pad the count while being incapable of ever failing.
+
+docs/PRINT_CLIPPING_BACKLOG_2026_08_16.md records what is NOT fixed: 49 un-reset vertical caps
+and 91 horizontal clips repo-wide, of which 9 and 5 are verified high-severity and OPEN. The scan
+excludes comment lines, because a count that changes when you write about it is not reproducible.
