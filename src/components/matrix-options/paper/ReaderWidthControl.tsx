@@ -13,8 +13,8 @@ const OPTIONS: readonly { readonly value: ReaderWidth; readonly label: string }[
 
 /**
  * Reading width preference: a two-option radio group (roving focus, arrow keys
- * move and select). It scales the ADAPTIVE prose measure; it never fixes a
- * viewport layout.
+ * move and select). It sets the reading frame's maximum width; below that the
+ * frame stays fluid, so it never fixes a viewport layout.
  */
 export function ReaderWidthControl({ value, onChange }: { readonly value: ReaderWidth; readonly onChange: (value: ReaderWidth) => void }) {
   const buttons = useRef<(HTMLButtonElement | null)[]>([]);

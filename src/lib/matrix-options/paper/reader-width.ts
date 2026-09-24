@@ -1,9 +1,9 @@
 /*
- * Reader width preference (owner-approved). The paper's prose measure is
- * ADAPTIVE: it follows the width of the document column (a CSS container
- * query in globals.css, so resizing either side panel changes it at once).
- * This preference only chooses which measure scale the adaptive tiers use:
- * "comfortable" (default) or "wide". It never fixes a viewport layout.
+ * Reader width preference (owner-approved). It sets the paper reading frame's
+ * maximum width (globals.css): "comfortable" (default, about 80rem) or "wide"
+ * (about 96rem). Below that maximum the frame is fluid, so it follows the width
+ * the side panels leave; body text fills the frame. It never fixes a viewport
+ * layout.
  * Stored per device; unavailable storage falls back to the default.
  */
 export type ReaderWidth = 'comfortable' | 'wide';

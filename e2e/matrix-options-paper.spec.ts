@@ -54,25 +54,40 @@ test.describe('Matrix Options Paper disabled-route regressions', () => {
     await expect(status.getByRole('heading', { name: 'Revised Matrix Options Paper', exact: true })).toBeVisible();
   });
 
-  test('flags-off direct paper routes fail closed before follow-up paper requests', async ({ page }, testInfo) => {
-    test.skip(paperWorkspaceEnabled, 'This regression requires both paper flags to be off.');
-    for (const path of ['/matrix-options/paper', legacySectionPath, `/matrix-options/paper/v/${legacyFixtureVersion}/missing-section`]) {
+  // One independent test per flags-off path, each with its own normal test budget: a
+  // landing page that hydrates slowly under a loaded full suite then costs one path's
+  // budget, not all three.
+  for (const [pathName, path] of [
+    ['paper root', '/matrix-options/paper'],
+    ['legacy section', legacySectionPath],
+    ['missing section', `/matrix-options/paper/v/${legacyFixtureVersion}/missing-section`],
+  ] as const) {
+    test(`flags-off direct paper routes fail closed before follow-up paper requests: ${pathName}`, async ({ page }, testInfo) => {
+      test.skip(paperWorkspaceEnabled, 'This regression requires both paper flags to be off.');
       const paperRequests: string[] = [];
       const listener = (request: { url(): string }) => {
         if (new URL(request.url()).pathname.startsWith('/matrix-options/paper')) paperRequests.push(request.url());
       };
       page.on('request', listener);
-      await page.goto(path, { waitUntil: 'networkidle' });
+      // Neither 'networkidle' nor the 'load' event: under a loaded full suite the landing page
+      // can stay pending (slow hydration, a remote session check), so both can stay unmet past
+      // the test budget although the redirect has already landed. The fail-closed contract is
+      // asserted directly instead: the redirect target renders and HYDRATES (the primary
+      // tablist's mount-only ready marker, see e2e/fixtures/matrix-options-nav.ts), then a
+      // 1000ms quiet window follows in which no further /matrix-options/paper request may start.
+      await page.goto(path, { waitUntil: 'domcontentloaded' });
       if (page.url().includes('/login')) {
         page.off('request', listener);
         test.skip(testInfo.project.name !== 'chromium-auth', 'Authenticated dashboard coverage runs in chromium-auth.');
       }
-      page.off('request', listener);
       await expect(page).toHaveURL(/\/matrix-options\?view=TWG(?:%20|\+)Review$/);
       await expect(page.getByTestId('revised-paper-status')).toBeVisible();
+      await expect(page.locator('[role="tablist"][data-primary-tablist-ready="true"]')).toBeVisible({ timeout: 30000 });
+      await page.waitForTimeout(1000);
+      page.off('request', listener);
       expect(paperRequests).toHaveLength(1);
-    }
-  });
+    });
+  }
 
   test('flags-off non-paper destinations retain their selected tab', async ({ page }, testInfo) => {
     test.skip(paperWorkspaceEnabled, 'This regression requires both paper flags to be off.');
@@ -959,40 +974,86 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     expect(overflow).toBeLessThanOrEqual(1);
   });
 
-  test('M2: authenticated real release adaptive reading measure follows the document column, Wide persists, and tables use the full frame', async ({ page }, testInfo) => {
+  test('M2: authenticated real release body text fills the reading frame, Comfortable/Wide set the frame maximum, and the frame follows the panels', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto(`${canonicalWorkingDraft}&section=section-78-input-parameter-inventory-and-selection-options`, { waitUntil: 'domcontentloaded' });
+    await page.setViewportSize({ width: 2523, height: 1294 });
+    await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
     const frame = page.getByTestId('paper-reading-frame');
-    const measure = () => frame.evaluate((element) => getComputedStyle(element).getPropertyValue('--paper-measure').trim());
     const handle = page.getByTestId('paper-resize-left');
-    await expect.poll(async () => handle.getAttribute('aria-valuenow'), { timeout: 30000 }).toBe('288');
-    // Laptop-width document column (both panels open): the comfortable laptop tier.
-    await expect.poll(measure).toBe('67ch');
-    // Widening the navigation panel narrows the document column below the first
-    // tier: the measure follows the COLUMN at once (fluid), not the viewport.
-    await handle.focus();
-    for (let step = 0; step < 8; step += 1) await page.keyboard.press('ArrowRight');
-    await expect.poll(measure).toBe('100%');
-    await page.getByTestId('paper-reset-panel-widths').click();
-    await expect.poll(measure).toBe('67ch');
-    // The Wide preference scales the same adaptive tier and persists per device.
+    // Both panels open at their screen-size preset (the preset depends on the viewport).
+    await expect.poll(async () => Number(await handle.getAttribute('aria-valuenow')), { timeout: 30000 }).toBeGreaterThan(0);
+    // Geometry of the frame, its content box, and the long paragraphs and headings of the paper.
+    const geometry = () => page.evaluate(() => {
+      const frameElement = document.querySelector('[data-testid="paper-reading-frame"]') as HTMLElement;
+      const box = frameElement.getBoundingClientRect();
+      const style = getComputedStyle(frameElement);
+      const contentLeft = box.left + parseFloat(style.paddingLeft);
+      const contentRight = box.right - parseFloat(style.paddingRight);
+      const prose = Array.from(document.querySelectorAll('[data-testid="paper-document"] .reader-prose .math-renderer > p'))
+        .filter((element) => (element.textContent ?? '').length > 150 && element.getClientRects().length > 0).slice(0, 4)
+        .map((element) => { const rect = element.getBoundingClientRect(); return { left: rect.left, right: rect.right, maxWidth: getComputedStyle(element).maxWidth, marginLeft: getComputedStyle(element).marginLeft }; });
+      const headings = Array.from(document.querySelectorAll('[data-testid="paper-document"] .reader-prose .math-renderer > :is(h2, h3, h4)'))
+        .filter((element) => element.getClientRects().length > 0).slice(0, 4)
+        .map((element) => element.getBoundingClientRect().left);
+      // Every body block type (headings, lists, quotes, rules, paragraphs): its BOX, not its text.
+      const blocks = Array.from(document.querySelectorAll('[data-testid="paper-document"] .reader-prose .math-renderer > :is(h2, h3, h4, p, ul, ol, dl, blockquote, hr)'))
+        .filter((element) => element.getClientRects().length > 0).slice(0, 40)
+        .map((element) => { const rect = element.getBoundingClientRect(); return { tag: element.tagName, width: rect.width, card: (element.closest('.reader-prose') as HTMLElement).getBoundingClientRect().width }; });
+      return { width: box.width, maxWidth: style.maxWidth, contentLeft, contentRight, prose, headings, blocks, overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth };
+    });
+    await expect.poll(async () => (await geometry()).prose.length, { timeout: 30000 }).toBeGreaterThan(0);
+    // The owner's viewport, both panels open: Comfortable caps the FRAME at 80rem, and
+    // every long paragraph shares its first line's left edge with the headings and runs
+    // to (near) the frame's right edge -- no narrow centred island inside the frame.
+    let g = await geometry();
+    expect(g.maxWidth).toBe('1280px');
+    expect(g.width).toBeLessThanOrEqual(1280.5);
+    expect(g.overflow).toBeLessThanOrEqual(1);
+    // Headings and paragraphs share one left edge (the previous ch measure staggered each level).
+    expect(g.headings.length).toBeGreaterThan(0);
+    // Every body block's box spans its prose container: no heading, list, quote or rule is capped.
+    const tags = new Set(g.blocks.map((block) => block.tag));
+    for (const tag of ['H2', 'P', 'UL']) expect(tags.has(tag)).toBe(true);
+    for (const block of g.blocks) expect({ tag: block.tag, spans: block.width >= block.card - 1 }).toEqual({ tag: block.tag, spans: true });
+    const edges = [...g.headings, ...g.prose.map((item) => item.left)];
+    expect(Math.max(...edges) - Math.min(...edges)).toBeLessThanOrEqual(1);
+    for (const item of g.prose) {
+      expect(item.maxWidth).toBe('none');
+      expect(item.marginLeft).toBe('0px');
+      // Two-sided: the previous per-block measure left ~300px free on each side at this width.
+      expect(item.right - item.left).toBeGreaterThan((g.contentRight - g.contentLeft) * 0.85);
+    }
+    // Wide raises the frame maximum and persists per device.
     await page.getByTestId('reader-width-wide').click();
     await expect(frame).toHaveAttribute('data-reader-width', 'wide');
-    await expect.poll(measure).toBe('75ch');
+    await expect.poll(async () => (await geometry()).maxWidth).toBe('1536px');
+    g = await geometry();
+    expect(g.width).toBeGreaterThan(1280.5);
+    for (const item of g.prose) expect(item.right - item.left).toBeGreaterThan((g.contentRight - g.contentLeft) * 0.85);
     await page.reload({ waitUntil: 'domcontentloaded' });
     await expect(page.getByTestId('paper-reading-frame')).toHaveAttribute('data-reader-width', 'wide', { timeout: 30000 });
+    // Below its maximum the frame is fluid: widening the navigation panel narrows it at once.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect.poll(async () => handle.getAttribute('aria-valuenow'), { timeout: 30000 }).toBe('288');
+    // The rails animate their width after a viewport change: take the baseline once it has settled.
+    let before = -1;
+    await expect.poll(async () => { const width = Math.round((await geometry()).width); const settled = width === before; before = width; return settled; }, { timeout: 30000 }).toBe(true);
+    expect(before).toBeLessThan(1280);
+    await handle.focus();
+    for (let step = 0; step < 4; step += 1) await page.keyboard.press('ArrowRight');
+    await expect.poll(async () => (await geometry()).width).toBeLessThan(before - 20);
+    await page.getByTestId('paper-reset-panel-widths').click();
+    await expect.poll(async () => Math.round((await geometry()).width)).toBe(before);
+    // Print is uncapped in both preferences.
+    await page.emulateMedia({ media: 'print' });
+    await expect.poll(async () => (await geometry()).maxWidth).toBe('none');
+    await page.emulateMedia({ media: 'screen' });
     await page.getByTestId('reader-width-comfortable').click();
     await expect(page.getByTestId('paper-reading-frame')).toHaveAttribute('data-reader-width', 'comfortable');
-    // Desktop column: tables break out of the prose measure to the full frame.
-    await page.setViewportSize({ width: 1920, height: 1080 });
-    await expect.poll(measure).toBe('78ch');
-    const table = page.locator('[data-testid="paper-document"] .reader-prose table').first();
-    await expect(table).toBeAttached({ timeout: 30000 });
-    const paragraph = page.locator('[data-testid="paper-document"] .reader-prose .math-renderer > p').first();
-    const widths = await Promise.all([table.evaluate((element) => element.getBoundingClientRect().width), paragraph.evaluate((element) => element.getBoundingClientRect().width)]);
-    expect(widths[0]).toBeGreaterThan(widths[1] + 100);
+    await page.emulateMedia({ media: 'print' });
+    await expect.poll(async () => (await geometry()).maxWidth).toBe('none');
+    await page.emulateMedia({ media: 'screen' });
   });
 
   test('M2: authenticated real release Paper Navigation groups start collapsed, list every appendix but no contents heading, and the paper relabels its contents headings', async ({ page }, testInfo) => {

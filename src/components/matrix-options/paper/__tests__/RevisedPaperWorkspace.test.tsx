@@ -4124,3 +4124,16 @@ describe('Round 3: Back/Forward make the open editor agree with the restored URL
     expect(pushState).not.toHaveBeenCalled();
   });
 });
+
+describe('Preview correction: the reading frame width is set by the Comfortable/Wide preference', () => {
+  it('the frame carries no screen max-width utility (a utility would outrank the Comfortable/Wide frame rules) and keeps the print override', () => {
+    renderWorkingDraft();
+    const frame = screen.getByTestId('paper-reading-frame');
+    const classes = frame.className.split(/\s+/);
+    // Two-sided: the previous frame hard-coded max-w-[96rem] for both preferences.
+    expect(classes.filter((name) => /^max-w-/.test(name))).toEqual([]);
+    expect(classes).toContain('print:max-w-none');
+    expect(classes).toContain('paper-reading-frame');
+    expect(frame).toHaveAttribute('data-reader-width', 'comfortable');
+  });
+});

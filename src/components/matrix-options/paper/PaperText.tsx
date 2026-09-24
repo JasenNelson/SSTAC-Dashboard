@@ -83,7 +83,7 @@ export interface PaperTextProps {
  */
 export function PaperText({ markdown, linkMap, className, headingOffset = 0, headingVariant }: PaperTextProps) {
   return (
-    // The prose measure is adaptive (globals.css .paper-reading-frame); wide blocks use the full frame.
+    // Inside the reading frame, body text and wide blocks share the frame's full width (globals.css .paper-reading-frame).
     <div className={cn('reader-prose min-w-0 max-w-none', paperHeadingClasses(headingOffset, headingVariant), className)}>
       <MathRenderer content={demoteMarkdownHeadings(markdown, headingOffset)} internalLinkMap={linkMap} />
     </div>

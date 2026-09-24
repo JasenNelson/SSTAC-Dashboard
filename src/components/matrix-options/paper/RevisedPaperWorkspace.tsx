@@ -522,7 +522,7 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
     currentUrlStateRef.current = urlState;
   }, [urlState]);
 
-  // Reading width preference for this device (adaptive measure scale).
+  // Reading width preference for this device: the reading frame's maximum (fluid below it).
   const [readerWidth, setReaderWidth] = useState<ReaderWidth>(DEFAULT_READER_WIDTH);
   useEffect(() => { setReaderWidth(readReaderWidth()); }, []);
   const changeReaderWidth = (value: ReaderWidth) => {
@@ -1355,9 +1355,9 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
         </PaperRail>
         {navigationOpen ? <PanelResizeHandle side="left" label="Resize navigation panel" controls={PAPER_NAVIGATION_RAIL_ID} width={panelWidths.left} max={panelMax('left')} onResize={(width) => resizePanel('left', width)} onCommit={(width) => commitPanel('left', width)} onReset={() => resetPanel('left')} onDragChange={setResizing} /> : null}
 
-        <div ref={documentColumnRef} id={PAPER_DOCUMENT_COLUMN_ID} data-testid="paper-document-column" tabIndex={-1} onClick={onDocumentClick} className="paper-reading-column relative min-w-0 flex-1 bg-[var(--db-surface)] focus:outline-none lg:overflow-y-auto print:overflow-visible print:bg-white">
-          {/* The reading frame: prose follows an adaptive measure (globals.css); wide blocks use the whole frame. */}
-          <div data-testid="paper-reading-frame" data-reader-width={readerWidth} className="paper-reading-frame mx-auto min-w-0 max-w-[96rem] space-y-5 px-4 py-5 sm:px-8 print:max-w-none print:p-0">
+        <div ref={documentColumnRef} id={PAPER_DOCUMENT_COLUMN_ID} data-testid="paper-document-column" tabIndex={-1} onClick={onDocumentClick} className="relative min-w-0 flex-1 bg-[var(--db-surface)] focus:outline-none lg:overflow-y-auto print:overflow-visible print:bg-white">
+          {/* The reading frame: body text and wide blocks share its full width; Comfortable/Wide set its maximum (globals.css). */}
+          <div data-testid="paper-reading-frame" data-reader-width={readerWidth} className="paper-reading-frame mx-auto min-w-0 space-y-5 px-4 py-5 sm:px-8 print:max-w-none print:p-0">
             <div data-testid={isMyReview ? 'my-review-toolbar' : 'working-draft-toolbar'} className="flex min-w-0 flex-wrap items-center justify-between gap-3 border-b border-[var(--db-border)] pb-3 print:hidden">
               <ReaderWidthControl value={readerWidth} onChange={changeReaderWidth} />
               {!isMyReview && sectionWindow ? <PaperDocumentToolbar api={sectionApi} /> : null}

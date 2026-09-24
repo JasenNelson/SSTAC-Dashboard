@@ -729,47 +729,31 @@ html.dark ::-webkit-scrollbar-thumb:hover,
 }
 
 /*
- * Matrix Options Paper: adaptive reading measure (owner-approved correction).
- * The document column is an inline-size container, so the prose measure follows
- * the width the side panels leave (resizing either panel changes it at once),
- * not the viewport. Tiers are calibrated in real characters per line for the
- * paper's body text (about 1.19 characters per ch): comfortable ~80 / ~92 /
- * ~102, wide ~90 / ~105 / ~115. Below the first tier the measure is fluid.
- * Prose (paragraphs, lists, quotes, headings, rules) sits in a centred
- * measure; tables, code, display maths and other wide blocks break out to the
- * full reading frame. Print always uses the full page width.
+ * Matrix Options Paper: reading frame width (owner-approved preview correction).
+ * Body text fills the reading frame: paragraphs, lists and headings share the
+ * frame's left and right edges with tables and other wide blocks, with no inner
+ * per-block measure and no per-block centring. The reader's Comfortable/Wide
+ * preference sets the FRAME maximum (about 80rem / 96rem); below that maximum
+ * the frame is fluid, so it follows the width the side panels leave. Print
+ * always uses the full page width.
  */
 @layer components {
-  .paper-reading-column {
-    container: paper-column / inline-size;
-  }
   .paper-reading-frame {
-    --paper-measure: 100%;
+    width: 100%;
+    max-width: 80rem;
+  }
+  .paper-reading-frame[data-reader-width='wide'] {
+    max-width: 96rem;
   }
   /* Outside the reading frame, prose keeps the previous fixed measure. */
   .reader-prose .math-renderer > :where(p, ul, ol, blockquote) {
     max-width: 84ch;
   }
-  .paper-reading-frame .reader-prose .math-renderer > :where(p, ul, ol, dl, blockquote, h1, h2, h3, h4, h5, h6, hr) {
-    max-width: var(--paper-measure);
-    margin-inline: auto;
-  }
-  @container paper-column (min-width: 44rem) {
-    .paper-reading-frame { --paper-measure: 67ch; }
-    .paper-reading-frame[data-reader-width='wide'] { --paper-measure: 75ch; }
-  }
-  @container paper-column (min-width: 64rem) {
-    .paper-reading-frame { --paper-measure: 78ch; }
-    .paper-reading-frame[data-reader-width='wide'] { --paper-measure: 88ch; }
-  }
-  @container paper-column (min-width: 104rem) {
-    .paper-reading-frame { --paper-measure: 85ch; }
-    .paper-reading-frame[data-reader-width='wide'] { --paper-measure: 96ch; }
+  .paper-reading-frame .reader-prose .math-renderer > :where(p, ul, ol, dl, blockquote) {
+    max-width: none;
   }
   @media print {
-    /* Matches every preference at the specificity of the Wide tier rules, so
-       print always uses the full page width. */
     .paper-reading-frame,
-    .paper-reading-frame[data-reader-width] { --paper-measure: none; }
+    .paper-reading-frame[data-reader-width] { max-width: none; }
   }
 }
