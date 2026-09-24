@@ -1,0 +1,394 @@
+{
+  "schema_version": "wiki-graph-product-cases-v1",
+  "description": "Compact literal product-acceptance cases for the read-only wiki_graph MCP stdio adapter. Every expected value is a hand-written literal derived from wiki_graph_synthetic_v1.json; nothing here is generated or refreshed by the code under test.",
+  "graph": {
+    "fixture": "wiki_graph_synthetic_v1.json",
+    "graph_sha256": "bd1a2efec3ee741617aac853e5f0ed0160ce1f0faf625f0e1e6b6b4d4be535d8",
+    "source_oid": "0123456789abcdef0123456789abcdef01234567"
+  },
+  "cases": [
+    {
+      "id": "CAP-INITIALIZE",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "wiki-graph-product-tests", "version": "1"}}},
+          "expect": {"id": 1, "result": {"capabilities": {"tools": {}}, "protocolVersion": "2025-06-18", "serverInfo": {"name": "wiki_graph", "version": "r2"}}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "method": "notifications/initialized"},
+          "expect": null
+        }
+      ]
+    },
+    {
+      "id": "CAP-TOOLS-EXACT-SEVEN",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+          "expect": {"id": 2, "result": {"tools": [
+            {"name": "graph_stats", "description": "Return graph identity and counts.", "inputSchema": {"type": "object", "properties": {}, "additionalProperties": false}},
+            {"name": "query_graph", "description": "Search graph nodes.", "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 50}}, "required": ["query"], "additionalProperties": false}},
+            {"name": "get_node", "description": "Fetch a node by identity or selector.", "inputSchema": {"type": "object", "properties": {"node_id": {"type": "string"}, "selector": {"type": "string"}}, "oneOf": [{"required": ["node_id"]}, {"required": ["selector"]}], "additionalProperties": false}},
+            {"name": "get_neighbors", "description": "Traverse graph neighbors.", "inputSchema": {"type": "object", "properties": {"node_id": {"type": "string"}, "direction": {"type": "string", "enum": ["out", "in", "both"], "default": "both"}, "depth": {"type": "integer", "minimum": 1, "maximum": 3, "default": 1}, "limit": {"type": "integer", "minimum": 1, "maximum": 50, "default": 20}}, "required": ["node_id"], "additionalProperties": false}},
+            {"name": "shortest_path", "description": "Find a shortest path.", "inputSchema": {"type": "object", "properties": {"source_id": {"type": "string"}, "target_id": {"type": "string"}, "mode": {"type": "string", "enum": ["directed", "undirected"], "default": "directed"}, "max_depth": {"type": "integer", "minimum": 1, "maximum": 8, "default": 6}}, "required": ["source_id", "target_id"], "additionalProperties": false}},
+            {"name": "get_community", "description": "Fetch community members.", "inputSchema": {"type": "object", "properties": {"community_id": {"type": "string"}, "limit": {"type": "integer", "minimum": 1, "maximum": 50, "default": 50}}, "required": ["community_id"], "additionalProperties": false}},
+            {"name": "god_nodes", "description": "Rank high-degree nodes.", "inputSchema": {"type": "object", "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 50, "default": 10}}, "additionalProperties": false}}
+          ]}}
+        }
+      ]
+    },
+    {
+      "id": "T-STATS-OK",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "graph_stats", "arguments": {}}},
+          "expect": {"id": 3, "tool_result": {"community_count": 3, "edge_count": 64, "graph_sha256": "bd1a2efec3ee741617aac853e5f0ed0160ce1f0faf625f0e1e6b6b4d4be535d8", "input_directed": false, "node_count": 68, "source_oid": "0123456789abcdef0123456789abcdef01234567", "source_oid_basis": "controller_envelope", "status": "ok", "traversal_orientation": "source_to_target"}}
+        }
+      ]
+    },
+    {
+      "id": "T-QUERY-OK",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 4, "method": "tools/call", "params": {"name": "query_graph", "arguments": {"query": "pkg"}}},
+          "expect": {"id": 4, "tool_result": {"status": "ok",
+            "nodes": [
+              {"community_id": "1", "kind": "class", "label": "Alpha", "node_id": "a", "qualified_name": "pkg.Alpha", "source_file": "docs/a.md", "source_location": {"end_line": 1, "start_line": 1}},
+              {"community_id": "1", "kind": "function_kind", "label": "Beta", "node_id": "b", "qualified_name": "pkg.Beta", "source_file": "docs/a.md", "source_location": {"end_line": 2, "start_line": 2}},
+              {"community_id": "1", "kind": "class", "label": "Loop", "node_id": "f", "qualified_name": "pkg.Loop", "source_file": "docs/a.md", "source_location": {"end_line": 6, "start_line": 6}},
+              {"community_id": "1", "kind": "function", "label": "Zeta", "node_id": "z", "qualified_name": "pkg.Zeta", "source_file": "docs/c.md", "source_location": {"end_line": 1, "start_line": 1}}
+            ],
+            "edges": [
+              {"relation": "CALLS", "source_file": "docs/a.md", "source_id": "a", "source_location": {"end_line": 2, "start_line": 2}, "target_id": "b"},
+              {"relation": "IMPORTS", "source_file": "docs/a.md", "source_id": "a", "source_location": {"end_line": 2, "start_line": 2}, "target_id": "b"},
+              {"relation": "CALLS", "source_file": "docs/a.md", "source_id": "b", "source_location": {"end_line": 5, "start_line": 5}, "target_id": "z"},
+              {"relation": "SELF_LOOP", "source_file": "docs/a.md", "source_id": "f", "source_location": {"end_line": 6, "start_line": 6}, "target_id": "f"}
+            ]}}
+        }
+      ]
+    },
+    {
+      "id": "T-NODE-ID",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 5, "method": "tools/call", "params": {"name": "get_node", "arguments": {"node_id": "a"}}},
+          "expect": {"id": 5, "tool_result": {"status": "ok", "node": {"community_id": "1", "kind": "class", "label": "Alpha", "node_id": "a", "qualified_name": "pkg.Alpha", "source_file": "docs/a.md", "source_location": {"end_line": 1, "start_line": 1}}}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "id": 6, "method": "tools/call", "params": {"name": "get_node", "arguments": {"node_id": "A"}}},
+          "expect": {"id": 6, "tool_result": {"status": "not_found"}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "id": 7, "method": "tools/call", "params": {"name": "get_node", "arguments": {"selector": "shared"}}},
+          "expect": {"id": 7, "tool_result": {"status": "ambiguous", "candidates": [
+            {"community_id": "1", "kind": "typescript_function", "label": "Gamma", "node_id": "c", "qualified_name": "Shared", "source_file": "docs/b.md", "source_location": {"end_line": 1, "start_line": 1}},
+            {"community_id": "1", "kind": "markdown", "label": "Delta", "node_id": "d", "qualified_name": "Shared", "source_file": "docs/b.md", "source_location": null}
+          ]}}
+        }
+      ]
+    },
+    {
+      "id": "T-NEIGHBORS-BOTH",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 8, "method": "tools/call", "params": {"name": "get_neighbors", "arguments": {"node_id": "d", "direction": "both", "depth": 2}}},
+          "expect": {"id": 8, "tool_result": {"status": "ok",
+            "root": {"community_id": "1", "kind": "markdown", "label": "Delta", "node_id": "d", "qualified_name": "Shared", "source_file": "docs/b.md", "source_location": null},
+            "nodes": [
+              {"community_id": "1", "kind": "class", "label": "Alpha", "node_id": "a", "qualified_name": "pkg.Alpha", "source_file": "docs/a.md", "source_location": {"end_line": 1, "start_line": 1}},
+              {"community_id": "1", "kind": "function_kind", "label": "Beta", "node_id": "b", "qualified_name": "pkg.Beta", "source_file": "docs/a.md", "source_location": {"end_line": 2, "start_line": 2}},
+              {"community_id": "1", "kind": "typescript_function", "label": "Gamma", "node_id": "c", "qualified_name": "Shared", "source_file": "docs/b.md", "source_location": {"end_line": 1, "start_line": 1}},
+              {"community_id": "1", "kind": "other_thing", "label": "Epsilon", "node_id": "e", "qualified_name": "Epsilon", "source_file": null, "source_location": {"end_line": 5, "start_line": 5}},
+              {"community_id": "1", "kind": "class", "label": "Loop", "node_id": "f", "qualified_name": "pkg.Loop", "source_file": "docs/a.md", "source_location": {"end_line": 6, "start_line": 6}}
+            ],
+            "edges": [
+              {"relation": "CALLS", "source_file": "docs/a.md", "source_id": "a", "source_location": {"end_line": 2, "start_line": 2}, "target_id": "b"},
+              {"relation": "IMPORTS", "source_file": "docs/a.md", "source_id": "a", "source_location": {"end_line": 2, "start_line": 2}, "target_id": "b"},
+              {"relation": "RELATES_TO", "source_file": "docs/a.md", "source_id": "a", "source_location": {"end_line": 3, "start_line": 3}, "target_id": "c"},
+              {"relation": "RELATES_TO", "source_file": "docs/a.md", "source_id": "a", "source_location": {"end_line": 4, "start_line": 4}, "target_id": "d"},
+              {"relation": "SUPPORTS", "source_file": "docs/b.md", "source_id": "d", "source_location": {"end_line": 3, "start_line": 3}, "target_id": "e"},
+              {"relation": "DOCUMENTS", "source_file": null, "source_id": "e", "source_location": null, "target_id": "f"},
+              {"relation": "SELF_LOOP", "source_file": "docs/a.md", "source_id": "f", "source_location": {"end_line": 6, "start_line": 6}, "target_id": "f"}
+            ]}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "id": 9, "method": "tools/call", "params": {"name": "get_neighbors", "arguments": {"node_id": "hub", "direction": "out", "limit": 1}}},
+          "expect": {"id": 9, "tool_result": {"status": "truncated", "total_nodes": 55,
+            "root": {"community_id": "2", "kind": "hub", "label": "Hub", "node_id": "hub", "qualified_name": "large.Hub", "source_file": "docs/large.md", "source_location": {"end_line": 1, "start_line": 1}},
+            "nodes": [
+              {"community_id": "2", "kind": "synthetic_node", "label": "Node 01", "node_id": "L01", "qualified_name": "large.Node01", "source_file": "docs/large.md", "source_location": {"end_line": 2, "start_line": 2}}
+            ],
+            "edges": [
+              {"relation": "CONTAINS", "source_file": "docs/large.md", "source_id": "hub", "source_location": {"end_line": 2, "start_line": 2}, "target_id": "L01"}
+            ]}}
+        }
+      ]
+    },
+    {
+      "id": "T-PATH-DIRECTED",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 10, "method": "tools/call", "params": {"name": "shortest_path", "arguments": {"source_id": "a", "target_id": "z"}}},
+          "expect": {"id": 10, "tool_result": {"status": "ok",
+            "nodes": [
+              {"community_id": "1", "kind": "class", "label": "Alpha", "node_id": "a", "qualified_name": "pkg.Alpha", "source_file": "docs/a.md", "source_location": {"end_line": 1, "start_line": 1}},
+              {"community_id": "1", "kind": "function_kind", "label": "Beta", "node_id": "b", "qualified_name": "pkg.Beta", "source_file": "docs/a.md", "source_location": {"end_line": 2, "start_line": 2}},
+              {"community_id": "1", "kind": "function", "label": "Zeta", "node_id": "z", "qualified_name": "pkg.Zeta", "source_file": "docs/c.md", "source_location": {"end_line": 1, "start_line": 1}}
+            ],
+            "edges": [
+              {"relation": "CALLS", "source_file": "docs/a.md", "source_id": "a", "source_location": {"end_line": 2, "start_line": 2}, "target_id": "b"},
+              {"relation": "CALLS", "source_file": "docs/a.md", "source_id": "b", "source_location": {"end_line": 5, "start_line": 5}, "target_id": "z"}
+            ]}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "id": 11, "method": "tools/call", "params": {"name": "shortest_path", "arguments": {"source_id": "z", "target_id": "a", "mode": "directed"}}},
+          "expect": {"id": 11, "tool_result": {"status": "not_found"}}
+        }
+      ]
+    },
+    {
+      "id": "T-COMMUNITY-OK",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 12, "method": "tools/call", "params": {"name": "get_community", "arguments": {"community_id": "extra"}}},
+          "expect": {"id": 12, "tool_result": {"status": "ok",
+            "members": [
+              {"community_id": "extra", "kind": "markdown", "label": "Twin", "node_id": "t1", "qualified_name": "docs/b.md::Twin", "source_file": "docs/b.md", "source_location": null},
+              {"community_id": "extra", "kind": "markdown", "label": "Twin", "node_id": "t2", "qualified_name": "docs/b.md::Twin", "source_file": "docs/b.md", "source_location": null}
+            ],
+            "edges": []}}
+        }
+      ]
+    },
+    {
+      "id": "T-GOD-OK",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 13, "method": "tools/call", "params": {"name": "god_nodes", "arguments": {"limit": 3}}},
+          "expect": {"id": 13, "tool_result": {"status": "truncated", "total_nodes": 68,
+            "nodes": [
+              {"in_degree": 0, "out_degree": 55, "total_degree": 55, "node": {"community_id": "2", "kind": "hub", "label": "Hub", "node_id": "hub", "qualified_name": "large.Hub", "source_file": "docs/large.md", "source_location": {"end_line": 1, "start_line": 1}}},
+              {"in_degree": 0, "out_degree": 3, "total_degree": 3, "node": {"community_id": "1", "kind": "class", "label": "Alpha", "node_id": "a", "qualified_name": "pkg.Alpha", "source_file": "docs/a.md", "source_location": {"end_line": 1, "start_line": 1}}},
+              {"in_degree": 2, "out_degree": 1, "total_degree": 3, "node": {"community_id": "1", "kind": "class", "label": "Loop", "node_id": "f", "qualified_name": "pkg.Loop", "source_file": "docs/a.md", "source_location": {"end_line": 6, "start_line": 6}}}
+            ]}}
+        }
+      ]
+    },
+    {
+      "id": "E-UNKNOWN-METHOD",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 20, "method": "sampling/createMessage", "params": {}},
+          "expect": {"id": 20, "error": {"code": -32601, "message": "METHOD_NOT_FOUND"}}
+        }
+      ]
+    },
+    {
+      "id": "E-UNKNOWN-TOOL",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 21, "method": "tools/call", "params": {"name": "write_graph", "arguments": {}}},
+          "expect": {"id": 21, "error": {"code": -32602, "message": "UNKNOWN_TOOL"}}
+        }
+      ]
+    },
+    {
+      "id": "E-EXTRA-PROPERTY",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 22, "method": "tools/call", "params": {"name": "graph_stats", "arguments": {"verbose": true}}},
+          "expect": {"id": 22, "error": {"code": -32602, "message": "EXTRA_PROPERTY"}}
+        }
+      ]
+    },
+    {
+      "id": "E-NFC-257",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 23, "method": "tools/call", "params": {"name": "query_graph", "arguments": {"query": "REPLACED_BY_REPEAT_QUERY"}}},
+          "repeat_query": {"unit_codepoints": [101, 769], "count": 256, "pre_nfc_scalars": 512, "post_nfc_scalars": 256},
+          "expect": {"id": 23, "tool_result": {"edges": [], "nodes": [], "status": "not_found"}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "id": 24, "method": "tools/call", "params": {"name": "query_graph", "arguments": {"query": "REPLACED_BY_REPEAT_QUERY"}}},
+          "repeat_query": {"unit_codepoints": [101, 769], "count": 257, "pre_nfc_scalars": 514, "post_nfc_scalars": 257},
+          "expect": {"id": 24, "error": {"code": -32602, "message": "INVALID_query"}}
+        }
+      ]
+    },
+    {
+      "id": "E-WRONG-GRAPH-HASH",
+      "kind": "exchange",
+      "launch": {"graph_sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+      "expect_returncode": 2,
+      "expect_stderr": "GRAPH_INPUT_REFUSED:graph_hash_mismatch\n",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 25, "method": "initialize", "params": {}},
+          "expect": null
+        }
+      ]
+    },
+    {
+      "id": "E-FRAME-OVERSIZE",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 26, "method": "resources/list", "params": {}},
+          "pad_to_bytes": 1048576,
+          "expect": {"id": 26, "result": {"resources": []}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "id": 27, "method": "resources/list", "params": {}},
+          "pad_to_bytes": 1048577,
+          "expect": {"id": null, "error": {"code": -32600, "message": "FRAME_TOO_LARGE"}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "id": 28, "method": "tools/list", "params": {}},
+          "expect": null
+        }
+      ]
+    },
+    {
+      "id": "E-RESULT-OVERSIZE",
+      "kind": "exchange",
+      "graph_spec": {"node_id_prefix": "n", "node_count": 40, "label_prefix": "big", "label_fill": "x", "label_fill_count": 1000, "file_type": "Synthetic Node"},
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 29, "method": "tools/call", "params": {"name": "query_graph", "arguments": {"query": "big", "limit": 50}}},
+          "expect": {"id": 29, "tool_result": {"code": "RESULT_TOO_LARGE", "message": "result exceeds 32000 UTF-8 bytes", "status": "refused"}}
+        }
+      ]
+    },
+    {
+      "id": "IO-EMPTY-SURFACES",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 30, "method": "resources/list", "params": {}},
+          "expect": {"id": 30, "result": {"resources": []}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "id": 31, "method": "resources/templates/list", "params": {}},
+          "expect": {"id": 31, "result": {"resourceTemplates": []}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "id": 32, "method": "prompts/list", "params": {}},
+          "expect": {"id": 32, "result": {"prompts": []}}
+        }
+      ]
+    },
+    {
+      "id": "IO-REPEATED-CALLS",
+      "kind": "exchange",
+      "fresh_process_repeat": true,
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 33, "method": "tools/call", "params": {"name": "get_node", "arguments": {"node_id": "z"}}},
+          "expect": {"id": 33, "tool_result": {"status": "ok", "node": {"community_id": "1", "kind": "function", "label": "Zeta", "node_id": "z", "qualified_name": "pkg.Zeta", "source_file": "docs/c.md", "source_location": {"end_line": 1, "start_line": 1}}}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "id": 34, "method": "tools/call", "params": {"name": "get_node", "arguments": {"node_id": "z"}}},
+          "expect": {"id": 34, "tool_result": {"status": "ok", "node": {"community_id": "1", "kind": "function", "label": "Zeta", "node_id": "z", "qualified_name": "pkg.Zeta", "source_file": "docs/c.md", "source_location": {"end_line": 1, "start_line": 1}}}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "id": 35, "method": "tools/call", "params": {"name": "get_community", "arguments": {"community_id": "extra", "limit": 1}}},
+          "expect": {"id": 35, "tool_result": {"status": "truncated", "total_members": 2,
+            "members": [
+              {"community_id": "extra", "kind": "markdown", "label": "Twin", "node_id": "t1", "qualified_name": "docs/b.md::Twin", "source_file": "docs/b.md", "source_location": null}
+            ],
+            "edges": []}}
+        },
+        {
+          "request": {"jsonrpc": "2.0", "id": 36, "method": "tools/call", "params": {"name": "get_community", "arguments": {"community_id": "extra", "limit": 1}}},
+          "expect": {"id": 36, "tool_result": {"status": "truncated", "total_members": 2,
+            "members": [
+              {"community_id": "extra", "kind": "markdown", "label": "Twin", "node_id": "t1", "qualified_name": "docs/b.md::Twin", "source_file": "docs/b.md", "source_location": null}
+            ],
+            "edges": []}}
+        }
+      ]
+    },
+    {
+      "id": "IO-CLEAN-EOF",
+      "kind": "exchange",
+      "frames": [
+        {
+          "request": {"jsonrpc": "2.0", "id": 37, "method": "initialize", "params": {}},
+          "expect": {"id": 37, "result": {"capabilities": {"tools": {}}, "protocolVersion": "2025-06-18", "serverInfo": {"name": "wiki_graph", "version": "r2"}}}
+        },
+        {
+          "raw": "",
+          "expect": null
+        },
+        {
+          "raw": "{\"jsonrpc\":\"2.0\",\"id\":38,\"method\":\"prompts/list\",\"params\":{}}\r",
+          "expect": {"id": 38, "result": {"prompts": []}}
+        }
+      ]
+    },
+    {
+      "id": "SFX-SOCKET",
+      "kind": "side_effect",
+      "operation": "socket",
+      "target_state": "none",
+      "expect_refusal": "SIDE_EFFECT_REFUSED"
+    },
+    {
+      "id": "SFX-SUBPROCESS",
+      "kind": "side_effect",
+      "operation": "subprocess",
+      "target_state": "absent",
+      "expect_refusal": "SIDE_EFFECT_REFUSED"
+    },
+    {
+      "id": "SFX-BUILTINS-OPEN-W",
+      "kind": "side_effect",
+      "operation": "builtins_open_w",
+      "target_state": "present",
+      "expect_refusal": "WRITE_REFUSED"
+    },
+    {
+      "id": "SFX-OS-OPEN-W",
+      "kind": "side_effect",
+      "operation": "os_open_w",
+      "target_state": "absent",
+      "expect_refusal": "WRITE_REFUSED"
+    },
+    {
+      "id": "SFX-REMOVE",
+      "kind": "side_effect",
+      "operation": "remove",
+      "target_state": "present",
+      "expect_refusal": "SIDE_EFFECT_REFUSED"
+    },
+    {
+      "id": "SFX-RENAME",
+      "kind": "side_effect",
+      "operation": "rename",
+      "target_state": "present",
+      "other_state": "absent",
+      "expect_refusal": "SIDE_EFFECT_REFUSED"
+    },
+    {
+      "id": "SFX-MKDIR",
+      "kind": "side_effect",
+      "operation": "mkdir",
+      "target_state": "absent",
+      "expect_refusal": "SIDE_EFFECT_REFUSED"
+    }
+  ]
+}

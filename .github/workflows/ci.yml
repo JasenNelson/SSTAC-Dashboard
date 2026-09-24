@@ -358,7 +358,7 @@ jobs:
   status-check:
     name: CI Status Check
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, unit-tests, build, e2e-tests, performance-analysis]
+    needs: [lint-and-typecheck, unit-tests, build, e2e-tests, performance-analysis, wiki-graph-product-tests-windows]
     if: always()
     steps:
       - name: Check build status
@@ -366,7 +366,8 @@ jobs:
           if [ "${{ needs.lint-and-typecheck.result }}" != "success" ] || \
              [ "${{ needs.unit-tests.result }}" != "success" ] || \
              [ "${{ needs.build.result }}" != "success" ] || \
-             [ "${{ needs.e2e-tests.result }}" != "success" ]; then
+             [ "${{ needs.e2e-tests.result }}" != "success" ] || \
+             [ "${{ needs.wiki-graph-product-tests-windows.result }}" != "success" ]; then
             echo "❌ CI Pipeline Failed"
             exit 1
           else
@@ -385,6 +386,139 @@ jobs:
           echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| E2E Tests | ${{ needs.e2e-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Performance Analysis | ${{ needs.performance-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Wiki Graph Product Tests | ${{ needs.wiki-graph-product-tests-windows.result }} |" >> $GITHUB_STEP_SUMMARY
+
+  # ---------------------------------------------------------------------------------------------
+  # Wiki Graph product tests on Windows / Python 3.11.
+  #
+  # Runs ONLY the two product test files for the inactive, unregistered, read-only wiki_graph MCP
+  # product (docs/design/wiki/WIKI_GRAPH_READONLY_PRODUCT.md) against synthetic fixtures. It does
+  # no graph build, no network call from the product, no model call, no registration, no runtime
+  # mutation, and no real-data access.
+  #
+  # A zero exit code is not evidence on its own (unittest exits 0 on a fully skipped run). Each
+  # test file prints exactly one WIKI_GRAPH_PRODUCT_SUMMARY JSON line; this job re-checks it, and
+  # compares the executed case IDs against the fixture file read directly. The job is listed in
+  # status-check.needs and required to succeed there, so it is aggregate-blocking.
+  # ---------------------------------------------------------------------------------------------
+  wiki-graph-product-tests-windows:
+    name: Wiki Graph Product Tests
+    runs-on: windows-2025
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Run Wiki Graph product tests
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $ev = Join-Path $env:RUNNER_TEMP 'wiki-graph-product-evidence'
+          New-Item -ItemType Directory -Path $ev -Force | Out-Null
+          $failed = $false
+          function Fail([string]$m) { Write-Host "ASSERTION FAILED: $m"; $script:failed = $true }
+          function Key($items) { (@($items | Sort-Object) -join ',') }
+
+          # Bind the exact interpreter setup-python provisioned; bare `python` is never executed.
+          $loc = $env:pythonLocation
+          if ([string]::IsNullOrWhiteSpace($loc) -or -not (Test-Path -LiteralPath $loc -PathType Container)) {
+            Write-Host "FAIL: pythonLocation is not an existing directory: '$loc'"; exit 1
+          }
+          $cands = @(Get-ChildItem -LiteralPath $loc -Filter 'python.exe' -File -ErrorAction SilentlyContinue)
+          if ($cands.Count -ne 1) { Write-Host "FAIL: expected exactly one python.exe under '$loc', found $($cands.Count)"; exit 1 }
+          $py = $cands[0].FullName
+          $verRaw = & $py -I -B -c "import sys; print('{}.{}'.format(*sys.version_info[:2]))" 2>&1
+          $verRc = $LASTEXITCODE
+          if ($verRc -ne 0) { Write-Host "FAIL: bound python did not execute (exit $verRc)"; exit 1 }
+          $ver = "$(@($verRaw) | Select-Object -Last 1)".Trim()
+          if ($ver -ne '3.11') { Write-Host "FAIL: bound python reports '$ver', expected exactly '3.11'"; exit 1 }
+          Write-Host "Authenticated Python 3.11: $py"
+
+          $requiredTools = @('graph_stats','query_graph','get_node','get_neighbors','shortest_path','get_community','god_nodes')
+          $requiredSfx = @('SFX-SOCKET','SFX-SUBPROCESS','SFX-BUILTINS-OPEN-W','SFX-OS-OPEN-W','SFX-REMOVE','SFX-RENAME','SFX-MKDIR')
+          $fixturePath = 'tooling\wiki\tests\fixtures\wiki_graph_product_cases_v1.json'
+          $fixtureIds = @()
+          try { $fixtureIds = @((Get-Content -LiteralPath $fixturePath -Raw | ConvertFrom-Json).cases | ForEach-Object { $_.id }) }
+          catch { Fail "fixture file is missing or malformed: $fixturePath" }
+          if ($fixtureIds.Count -ne 26 -or @($fixtureIds | Sort-Object -Unique).Count -ne 26) {
+            Fail "fixture file must hold exactly 26 unique case IDs, found $($fixtureIds.Count)"
+          }
+
+          $prefix = 'WIKI_GRAPH_PRODUCT_SUMMARY '
+          foreach ($suite in @('core', 'mcp')) {
+            $outFile = Join-Path $ev "$suite.stdout.txt"
+            $errFile = Join-Path $ev "$suite.stderr.txt"
+            $pyArgs = @('-I', '-B', "tooling\wiki\tests\test_wiki_graph_$suite.py")
+            $proc = Start-Process -FilePath $py -ArgumentList $pyArgs -NoNewWindow -Wait -PassThru `
+                      -RedirectStandardOutput $outFile -RedirectStandardError $errFile
+            $exit = if ($null -eq $proc) { $null } else { $proc.ExitCode }
+            foreach ($f in @($errFile, $outFile)) {
+              if (Test-Path -LiteralPath $f) { Get-Content -LiteralPath $f | ForEach-Object { Write-Host $_ } }
+            }
+            if ($null -eq $exit) { Fail "$suite tests failed to launch"; continue }
+            if ($exit -ne 0) { Fail "$suite tests exited $exit" }
+
+            $lines = @()
+            if (Test-Path -LiteralPath $outFile) { $lines = @(Get-Content -LiteralPath $outFile | Where-Object { $_.StartsWith($prefix) }) }
+            if ($lines.Count -ne 1) { Fail "$suite printed $($lines.Count) summary lines, expected exactly 1"; continue }
+            $s = $null
+            try { $s = $lines[0].Substring($prefix.Length) | ConvertFrom-Json } catch { $s = $null }
+            if ($null -eq $s) { Fail "$suite summary is not valid JSON"; continue }
+            if ($s.suite -ne $suite) { Fail "$suite summary names suite '$($s.suite)'" }
+            if (-not ($s.tests_run -gt 0)) { Fail "$suite discovered zero tests" }
+            if ($s.failures -ne 0 -or $s.errors -ne 0) { Fail "$suite reported failures=$($s.failures) errors=$($s.errors)" }
+            if ($s.skipped -ne 0) { Fail "$suite reported skipped=$($s.skipped)" }
+            if ($s.ok -ne $true) { Fail "$suite summary ok is not true" }
+            "WGP_$($suite.ToUpper())_TESTS=$($s.tests_run)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+            if ($suite -eq 'mcp') {
+              $req = @($s.required_ids); $fix = @($s.fixture_ids); $exe = @($s.executed_ids)
+              if ($s.required_count -ne 26 -or $req.Count -ne 26 -or @($req | Sort-Object -Unique).Count -ne 26) {
+                Fail "required ID count is not exactly 26"
+              }
+              if ($exe.Count -ne @($exe | Sort-Object -Unique).Count) { Fail "executed IDs contain duplicates" }
+              if ((Key $req) -cne (Key $fix) -or (Key $fix) -cne (Key $exe) -or (Key $fixtureIds) -cne (Key $exe)) {
+                Fail "required, fixture, and executed case IDs differ"
+              }
+              if ((Key @($s.tools_executed)) -cne (Key $requiredTools)) { Fail "executed tools are not exactly the seven product tools: $(Key @($s.tools_executed))" }
+              if ((Key @($s.side_effect_ids_executed)) -cne (Key $requiredSfx)) { Fail "not every side-effect case executed" }
+              "WGP_CASE_IDS=$($exe.Count)/26" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              "WGP_TOOLS=$(@($s.tools_executed).Count)/7" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            }
+          }
+          if ($failed) { Write-Host "RESULT: FAIL"; exit 1 }
+          Write-Host "RESULT: PASS"
+
+      - name: Job summary
+        if: always()
+        shell: powershell
+        run: |
+          function V($x) { if ([string]::IsNullOrWhiteSpace($x)) { '(not reached)' } else { $x } }
+          @(
+            "## Wiki Graph Product Tests",
+            "",
+            "| Item | Value |",
+            "|---|---|",
+            "| Core tests run | $(V $env:WGP_CORE_TESTS) |",
+            "| MCP tests run | $(V $env:WGP_MCP_TESTS) |",
+            "| Case IDs executed | $(V $env:WGP_CASE_IDS) |",
+            "| Tools executed | $(V $env:WGP_TOOLS) |"
+          ) | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+      - name: Upload Wiki Graph product logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wiki-graph-product-logs
+          path: ${{ runner.temp }}/wiki-graph-product-evidence
+          retention-days: 14
+          if-no-files-found: ignore
 
   # ---------------------------------------------------------------------------------------------
   # Guardrail tests on Windows PowerShell 5.1.
