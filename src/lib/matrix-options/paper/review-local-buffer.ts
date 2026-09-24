@@ -15,8 +15,9 @@
  * Key scheme: `mtwg-paper-review:<userKey>:<documentVersion>:<questionId>`.
  * PLAN-R4 6.A's M3 key is `<userId>:<version>:<questionId>`, keyed by the
  * authenticated identity returned by the server bootstrap. The anonymous
- * `local` namespace is retained only for pre-authentication crash recovery and
- * is migrated only after an authenticated write succeeds.
+ * `local` namespace is legacy: ReviewCommentsPanel no longer writes, reads or
+ * migrates it (text of an unverified reviewer stays on the page), and only
+ * sign-out cleanup removes what older versions left there.
  */
 
 export const REVIEW_LOCAL_BUFFER_ANONYMOUS_USER_KEY = 'local';
@@ -34,6 +35,18 @@ const knownReviewLocalBufferKeys = new Set<string>();
  */
 export const REVIEW_LOCAL_BUFFER_TEXT_LIMIT = 20000;
 
+/**
+ * Clamps text to `limit` UTF-16 code units without leaving half of a surrogate
+ * pair at the end (an unpaired high surrogate renders as a replacement
+ * character and is not valid text to store or send).
+ */
+export function clampReviewText(text: string, limit: number = REVIEW_LOCAL_BUFFER_TEXT_LIMIT): string {
+  if (text.length <= limit) return text;
+  const clipped = text.slice(0, limit);
+  const last = clipped.charCodeAt(clipped.length - 1);
+  return last >= 0xd800 && last <= 0xdbff ? clipped.slice(0, -1) : clipped;
+}
+
 export interface ReviewLocalBufferIdentity {
   readonly documentVersion: string;
   readonly questionId: string;
@@ -47,14 +60,84 @@ export function reviewLocalBufferKey({ documentVersion, questionId, userKey }: R
   return `${REVIEW_LOCAL_BUFFER_PREFIX}:${resolvedUserKey}:${documentVersion}:${questionId}`;
 }
 
+/**
+ * A buffered draft plus the server revision it was typed against. The base
+ * revision is what makes a restored buffer safe: text based on revision 5 is
+ * resumed only while the server row is still at 5; once another save moved the
+ * row on, the buffer is a CONFLICT to resolve, never an automatic overwrite.
+ * `baseRevision` is null when no server row existed, and undefined for a
+ * legacy buffer (plain text, written before base revisions were recorded).
+ */
+export interface ReviewLocalDraftEntry {
+  readonly text: string;
+  readonly baseRevision: number | null | undefined;
+  /** Epoch ms of the write (versioned entries only); undefined for legacy text. */
+  readonly writtenAt?: number;
+}
+
+/** Versioned entries are stored as this prefix + JSON; anything else is legacy plain text. */
+const REVIEW_LOCAL_ENTRY_PREFIX = 'mtwg-draft-v1:';
+
+function decodeEntry(raw: string): ReviewLocalDraftEntry {
+  if (raw.startsWith(REVIEW_LOCAL_ENTRY_PREFIX)) {
+    try {
+      const parsed: unknown = JSON.parse(raw.slice(REVIEW_LOCAL_ENTRY_PREFIX.length));
+      if (parsed && typeof parsed === 'object' && typeof (parsed as { t?: unknown }).t === 'string') {
+        const base = (parsed as { b?: unknown }).b;
+        const written = (parsed as { u?: unknown }).u;
+        return { text: clampReviewText((parsed as { t: string }).t), baseRevision: typeof base === 'number' && Number.isInteger(base) && base >= 0 ? base : null, writtenAt: typeof written === 'number' && Number.isFinite(written) ? written : undefined };
+      }
+    } catch {
+      // A corrupt entry reads as legacy text rather than being lost.
+    }
+  }
+  return { text: clampReviewText(raw), baseRevision: undefined };
+}
+
+/** Reads one question's buffered draft (text and base revision). Unavailable storage reads as empty. */
+export function readReviewLocalDraftEntry(identity: ReviewLocalBufferIdentity): ReviewLocalDraftEntry {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return { text: '', baseRevision: undefined };
+    const value = window.localStorage.getItem(reviewLocalBufferKey(identity));
+    return typeof value === 'string' ? decodeEntry(value) : { text: '', baseRevision: undefined };
+  } catch {
+    return { text: '', baseRevision: undefined };
+  }
+}
+
+/**
+ * True when a buffered entry exists for this question -- including an explicit
+ * EMPTY draft (the reviewer cleared a saved response), which reads as '' but is
+ * not the same as "nothing buffered". Unavailable storage reads as false.
+ */
+export function hasReviewLocalDraftEntry(identity: ReviewLocalBufferIdentity): boolean {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage) return false;
+    return window.localStorage.getItem(reviewLocalBufferKey(identity)) !== null;
+  } catch {
+    return false;
+  }
+}
+
 /** Reads one question's buffered draft text. Unavailable storage reads as ''. */
 export function readReviewLocalDraft(identity: ReviewLocalBufferIdentity): string {
+  return readReviewLocalDraftEntry(identity).text;
+}
+
+/**
+ * Writes one question's draft with the revision it is based on. `null` removes
+ * the key (no draft); '' is kept as an explicit empty draft, so clearing a saved
+ * response survives a reload. Never throws.
+ */
+export function writeReviewLocalDraftEntry(identity: ReviewLocalBufferIdentity, text: string | null, baseRevision: number | null): boolean {
   try {
-    if (typeof window === 'undefined' || !window.localStorage) return '';
-    const value = window.localStorage.getItem(reviewLocalBufferKey(identity));
-    return typeof value === 'string' ? value.slice(0, REVIEW_LOCAL_BUFFER_TEXT_LIMIT) : '';
+    if (typeof window === 'undefined' || !window.localStorage) return false;
+    const key = reviewLocalBufferKey(identity);
+    if (text === null) { window.localStorage.removeItem(key); knownReviewLocalBufferKeys.delete(key); }
+    else { window.localStorage.setItem(key, `${REVIEW_LOCAL_ENTRY_PREFIX}${JSON.stringify({ b: baseRevision, t: text, u: Date.now() })}`); knownReviewLocalBufferKeys.add(key); }
+    return true;
   } catch {
-    return '';
+    return false;
   }
 }
 
@@ -113,14 +196,28 @@ function removeReviewLocalBufferKeys(predicate: (key: string) => boolean): void 
   }
 }
 
-/** Moves a pre-authentication crash draft into the authenticated namespace. */
+/**
+ * Moves a pre-authentication crash draft into the authenticated namespace.
+ * NOT called by ReviewCommentsPanel (2026-09-22): the panel never writes text
+ * of an unverified reviewer to the shared anonymous slot and never adopts it
+ * automatically, because on a shared browser the next signer need not be the
+ * typist. Kept for callers that can prove the typist's identity.
+ */
 export function migrateAnonymousReviewDraft(identity: Omit<ReviewLocalBufferIdentity, 'userKey'> & { readonly userKey: string }): boolean {
   try {
     if (typeof window === 'undefined' || !window.localStorage || !identity.userKey) return false;
-    const anonymous = readReviewLocalDraft({ documentVersion: identity.documentVersion, questionId: identity.questionId });
-    if (!anonymous) return true;
-    const authenticated = readReviewLocalDraft(identity);
-    if (!authenticated && !writeReviewLocalDraft(identity, anonymous)) return false;
+    const anonymous = readReviewLocalDraftEntry({ documentVersion: identity.documentVersion, questionId: identity.questionId });
+    if (!anonymous.text) return true;
+    const authenticatedEntry = readReviewLocalDraftEntry(identity);
+    const authenticated = authenticatedEntry.text;
+    // Both exist: the newer write wins (text typed while the user was unknown
+    // is newer than an older signed-in copy); an undated (legacy) copy is older.
+    const anonymousIsNewer = Boolean(authenticated) && (anonymous.writtenAt ?? -1) > (authenticatedEntry.writtenAt ?? -1);
+    if (!authenticated || anonymousIsNewer) {
+      // The base revision travels with the text (a legacy entry stays legacy).
+      const written = anonymous.baseRevision === undefined ? writeReviewLocalDraft(identity, anonymous.text) : writeReviewLocalDraftEntry(identity, anonymous.text, anonymous.baseRevision);
+      if (!written) return false;
+    }
     return writeReviewLocalDraft({ documentVersion: identity.documentVersion, questionId: identity.questionId }, '');
   } catch {
     // Storage failure is a normal degraded mode for the crash buffer.

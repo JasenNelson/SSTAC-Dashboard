@@ -727,3 +727,33 @@ html.dark ::-webkit-scrollbar-thumb:hover,
     color: #1f2937 !important;
   }
 }
+
+/*
+ * Matrix Options Paper: reading frame width (owner-approved preview correction).
+ * Body text fills the reading frame: paragraphs, lists and headings share the
+ * frame's left and right edges with tables and other wide blocks, with no inner
+ * per-block measure and no per-block centring. The reader's Comfortable/Wide
+ * preference sets the FRAME maximum (about 80rem / 96rem); below that maximum
+ * the frame is fluid, so it follows the width the side panels leave. Print
+ * always uses the full page width.
+ */
+@layer components {
+  .paper-reading-frame {
+    width: 100%;
+    max-width: 80rem;
+  }
+  .paper-reading-frame[data-reader-width='wide'] {
+    max-width: 96rem;
+  }
+  /* Outside the reading frame, prose keeps the previous fixed measure. */
+  .reader-prose .math-renderer > :where(p, ul, ol, blockquote) {
+    max-width: 84ch;
+  }
+  .paper-reading-frame .reader-prose .math-renderer > :where(p, ul, ol, dl, blockquote) {
+    max-width: none;
+  }
+  @media print {
+    .paper-reading-frame,
+    .paper-reading-frame[data-reader-width] { max-width: none; }
+  }
+}

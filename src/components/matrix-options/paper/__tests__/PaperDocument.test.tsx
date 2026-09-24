@@ -122,7 +122,7 @@ describe('PaperDocument', () => {
     expect(getPaperDocumentModel(structure)).not.toBe(getPaperDocumentModel(syntheticStructure(false)));
     const outline = getPaperNavOutline(structure);
     expect(getPaperNavOutline(structure)).toBe(outline);
-    expect(outline.map((entry) => Object.keys(entry).sort())).toEqual(Array(3).fill(['anchor', 'childIds', 'depth', 'id', 'label', 'parentId']));
+    expect(outline.map((entry) => Object.keys(entry).sort())).toEqual(Array(3).fill(['anchor', 'childIds', 'depth', 'id', 'label', 'level', 'parentId']));
     expect(outline[0].childIds).toEqual(['node:scope']);
     expect(getPaperDocumentModel(structure).chunks[0].startByte).toBe(0);
   });

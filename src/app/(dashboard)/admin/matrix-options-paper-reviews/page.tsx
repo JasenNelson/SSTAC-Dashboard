@@ -1,9 +1,10 @@
+import { fetchTrustedReviewRows } from '@/lib/matrix-options/paper/review-admin-query';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import AdminReviewsClient from './AdminReviewsClient';
 import { getPaperAdminAccess, getTrustedPaperReviewIdentity, validateTrustedReviewFilters } from '@/lib/matrix-options/paper-admin-guard';
-import { normalizeReviewRows, REVIEW_RESPONSE_SELECT } from '@/lib/matrix-options/paper/review-csv';
+import { normalizeReviewRows } from '@/lib/matrix-options/paper/review-csv';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 const keys = ['documentVersion', 'manifestSha256', 'cohortId', 'questionId', 'userId', 'status'] as const;
@@ -26,16 +27,12 @@ export default async function MatrixOptionsPaperReviewsPage({ searchParams }: { 
   const identityFilters = { documentVersion: initialFilters.documentVersion || undefined, manifestSha256: initialFilters.manifestSha256 || undefined, cohortId: initialFilters.cohortId || undefined, questionId: initialFilters.questionId || undefined };
   if ((identityFilters.manifestSha256 && !/^[0-9a-f]{64}$/i.test(identityFilters.manifestSha256)) || !validateTrustedReviewFilters(identityFilters, trusted)) return <AdminReviewsClient rows={[]} state={{ kind: 'integrity-error' }} initialFilters={initialFilters} />;
   if (initialFilters.status && !STATUSES.has(initialFilters.status)) return <AdminReviewsClient rows={[]} state={{ kind: 'integrity-error' }} initialFilters={initialFilters} />;
-  let query: any;
+  let result: Awaited<ReturnType<typeof fetchTrustedReviewRows>>;
   try {
-    query = supabase.from('matrix_paper_review_responses').select(REVIEW_RESPONSE_SELECT);
-    const databaseFilters = [['documentVersion', 'document_version'], ['manifestSha256', 'manifest_sha256'], ['cohortId', 'cohort_id'], ['questionId', 'question_id'], ['userId', 'user_id']] as const;
-    for (const [key, column] of databaseFilters) if (initialFilters[key]) query = query.eq(column, initialFilters[key]);
+    result = await fetchTrustedReviewRows(supabase as unknown as Parameters<typeof fetchTrustedReviewRows>[0], trusted, { cohortId: initialFilters.cohortId || undefined, questionId: initialFilters.questionId || undefined, userId: initialFilters.userId || undefined });
   } catch { return <AdminReviewsClient rows={[]} state={{ kind: 'query-error' }} initialFilters={initialFilters} />; }
-  let result: { data?: unknown; error?: unknown };
-  try { result = await query; } catch { return <AdminReviewsClient rows={[]} state={{ kind: 'query-error' }} initialFilters={initialFilters} />; }
-  if (result.error || !Array.isArray(result.data)) return <AdminReviewsClient rows={[]} state={{ kind: 'query-error' }} initialFilters={initialFilters} />;
-  const rows = normalizeReviewRows(result.data, trusted);
+  if ('error' in result) return <AdminReviewsClient rows={[]} state={{ kind: 'query-error' }} initialFilters={initialFilters} />;
+  const rows = normalizeReviewRows(result.rows, trusted);
   if (rows === null) return <AdminReviewsClient rows={[]} state={{ kind: 'integrity-error' }} initialFilters={initialFilters} />;
   const filtered = initialFilters.status ? rows.filter((row) => row.status === initialFilters.status) : rows;
   return <AdminReviewsClient rows={filtered} state={{ kind: filtered.length ? 'ready' : 'empty' }} initialFilters={initialFilters} />;

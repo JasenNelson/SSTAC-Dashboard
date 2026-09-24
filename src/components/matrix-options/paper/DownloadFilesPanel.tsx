@@ -1,6 +1,7 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type RefObject } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Download } from 'lucide-react';
 
 import type { DownloadManifestPackage, VerifiedDownloadManifest } from '../../../lib/matrix-options/paper/download-manifest';
 
@@ -22,14 +23,19 @@ export interface DownloadCohortGroup {
 }
 
 export interface DownloadFilesPanelProps {
-  readonly open: boolean;
   readonly groups: readonly DownloadCohortGroup[] | null;
-  readonly onClose: () => void;
-  readonly closeFocusRef?: RefObject<HTMLElement | null>;
-  readonly panelId?: string;
   readonly headingId?: string;
+  /** Receives a short result message (saved or failed) to announce outside the popover. */
+  readonly onAnnounce?: (message: string) => void;
 }
 
+/**
+ * Download-boundary codes that mean the release has no verified package yet.
+ * Known residual (server side, owner follow-up): the boundary also answers
+ * PRINT_PACKAGE_ARTIFACTS_UNAVAILABLE for some storage faults (e.g. a denied
+ * or failed storage read), which therefore still read as "not published".
+ */
+const NOT_PUBLISHED_CODES: ReadonlySet<string> = new Set(['PRINT_PACKAGE_ARTIFACTS_UNAVAILABLE', 'PRINT_PACKAGE_ARTIFACTS_INCOMPLETE']);
 /** Exactly the two content types the catalog permits. */
 const PDF_TYPE = 'application/pdf';
 const DOCX_TYPE = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
@@ -66,24 +72,29 @@ type PackageState =
   | { readonly status: 'saved'; readonly fileName: string }
   | { readonly status: 'error'; readonly message: string };
 
-export function DownloadFilesPanel({
-  open,
-  groups,
-  onClose,
-  closeFocusRef,
-  panelId = PAPER_DOWNLOAD_FILES_PANEL_ID,
-  headingId = PAPER_DOWNLOAD_FILES_HEADING_ID,
-}: DownloadFilesPanelProps) {
-  const headingRef = useRef<HTMLHeadingElement>(null);
+/**
+ * Download Files content, shown inside the header popover (PaperPopover).
+ *
+ * The reader sees only what they are choosing: the review topic and the file
+ * type ("Categories - PDF"). Package ids, file names, byte counts, hashes and
+ * release identity stay internal -- they still bind every download through the
+ * validated manifest and the controlled fetch below, they are just not
+ * presentation.
+ */
+export function DownloadFilesPanel({ groups, headingId = PAPER_DOWNLOAD_FILES_HEADING_ID, onAnnounce }: DownloadFilesPanelProps) {
+  const labelFor = (packageEntry: DownloadManifestPackage) => {
+    const group = groups?.find((candidate) => candidate.manifest.packages.some((entry) => entry.packageId === packageEntry.packageId));
+    return group ? `${group.cohortName} - ${packageEntry.kind}` : packageEntry.kind;
+  };
   const [states, setStates] = useState<Readonly<Record<string, PackageState>>>({});
   /** True once any package reports the release-level "not published yet" state. */
   const [notPublished, setNotPublished] = useState(false);
+  /** Packages with a download in flight (synchronous guard against double activation). */
+  const inFlightRef = useRef(new Set<string>());
+  /** Packages whose save completed in the current attempt (a later throw must not report "Nothing was saved"). */
+  const savedRef = useRef(new Set<string>());
   /** Blob URLs created by this panel, revoked on unmount so nothing leaks. */
   const objectUrls = useRef<string[]>([]);
-
-  useEffect(() => {
-    if (open) headingRef.current?.focus({ preventScroll: true });
-  }, [open]);
 
   useEffect(() => () => {
     // Read the ref AT CLEANUP TIME. Capturing the array once made this safety
@@ -91,19 +102,6 @@ export function DownloadFilesPanel({
     for (const url of objectUrls.current) URL.revokeObjectURL(url);
     objectUrls.current = [];
   }, []);
-
-  const close = useCallback(() => {
-    onClose();
-    queueMicrotask(() => closeFocusRef?.current?.focus({ preventScroll: true }));
-  }, [closeFocusRef, onClose]);
-
-  const onKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (event.key !== 'Escape' || event.defaultPrevented) return;
-    const target = event.target as Element | null;
-    if (target?.closest('select')) return;
-    event.preventDefault();
-    close();
-  };
 
   /**
    * Controlled download.
@@ -114,13 +112,39 @@ export function DownloadFilesPanel({
    * shown anywhere. Nothing is written to disk here until the response is known
    * to be a successful package of the expected type.
    */
-  const startDownload = useCallback(async (packageEntry: DownloadManifestPackage) => {
+  const startDownload = async (packageEntry: DownloadManifestPackage) => {
     const id = packageEntry.packageId;
     // One in-flight download per package; a second click is ignored while busy.
-    if (states[id]?.status === 'busy') return;
+    // A ref, not render state: two clicks before a re-render must not both start.
+    if (inFlightRef.current.has(id)) return;
+    inFlightRef.current.add(id);
+    try {
+      await runDownload(packageEntry);
+    } catch {
+      // Anything unexpected (e.g. the browser refusing the save) must not leave
+      // the button stuck busy: report it -- visibly AND to the live region,
+      // like every other failure -- unless the save had already completed.
+      setStates((prev) => {
+        if (prev[id]?.status === 'saved') return prev;
+        return { ...prev, [id]: { status: 'error', message: 'Download failed. Nothing was saved.' } };
+      });
+      if (!savedRef.current.has(id)) {
+        try { onAnnounce?.(`${labelFor(packageEntry)}: Download failed. Nothing was saved.`); } catch { /* announcer is best-effort */ }
+      }
+    } finally {
+      savedRef.current.delete(id);
+      inFlightRef.current.delete(id);
+    }
+  };
+
+  const runDownload = async (packageEntry: DownloadManifestPackage) => {
+    const id = packageEntry.packageId;
     setStates((prev) => ({ ...prev, [id]: { status: 'busy' } }));
 
-    const failWith = (message: string) => setStates((prev) => ({ ...prev, [id]: { status: 'error', message } }));
+    const failWith = (message: string) => {
+      setStates((prev) => ({ ...prev, [id]: { status: 'error', message } }));
+      try { onAnnounce?.(`${labelFor(packageEntry)}: ${message}`); } catch { /* announcer is best-effort */ }
+    };
 
     let response: Response;
     try {
@@ -136,12 +160,19 @@ export function DownloadFilesPanel({
 
     if (!response.ok) {
       if (response.status === 503) {
-        // 503 from this boundary means the verified package is not published
-        // yet - a release state, not a fault with this one file. Surfacing it
-        // per-package made ten unprovisioned packages read as ten broken ones,
-        // so it also raises a single panel-level notice.
-        setNotPublished(true);
-        failWith('Not published yet. Nothing was saved.');
+        const code = await response.json().then((body: unknown) => (body && typeof body === 'object' ? (body as { code?: unknown }).code : undefined)).catch(() => undefined);
+        if (typeof code === 'string' && NOT_PUBLISHED_CODES.has(code)) {
+          // The verified package is not published yet - a release state, not a
+          // fault with this one file. Surfacing it per-package made ten
+          // unprovisioned packages read as ten broken ones, so it also raises a
+          // single panel-level notice.
+          setNotPublished(true);
+          failWith('Not published yet. Nothing was saved.');
+          return;
+        }
+        // Any other 503 (integrity mismatch, invalid catalog, boundary failure,
+        // unreadable body) is a real failure and must not pass as a release state.
+        failWith('Download failed: the package could not be verified right now. Nothing was saved.');
         return;
       }
       const detail = response.status === 401 || response.status === 403
@@ -179,110 +210,74 @@ export function DownloadFilesPanel({
       document.body.appendChild(anchor);
       anchor.click();
     } finally {
-      // finally, so a throwing click cannot leave the hidden anchor in the DOM.
+      // finally, so a throwing click can leave neither the hidden anchor in the
+      // DOM nor the blob URL allocated.
       anchor.remove();
+      // Revoke on a LATER task. Firefox and WebKit can abort the save if the blob
+      // URL is revoked in the same task as the click, and this panel exists to
+      // stop silent save failures, not introduce a new one. The unmount cleanup
+      // above still revokes anything outstanding.
+      setTimeout(() => {
+        URL.revokeObjectURL(url);
+        objectUrls.current = objectUrls.current.filter((candidate) => candidate !== url);
+      }, 0);
     }
-    // Revoke on a LATER task. Firefox and WebKit can abort the save if the blob
-    // URL is revoked in the same task as the click, and this panel exists to
-    // stop silent save failures, not introduce a new one. The unmount cleanup
-    // above still revokes anything outstanding.
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-      objectUrls.current = objectUrls.current.filter((candidate) => candidate !== url);
-    }, 0);
+    savedRef.current.add(id);
     setStates((prev) => ({ ...prev, [id]: { status: 'saved', fileName } }));
-  }, [states]);
+    // A package was just delivered, so the panel-wide "not published" notice is no longer true.
+    setNotPublished(false);
+    onAnnounce?.(`${labelFor(packageEntry)} downloaded.`);
+  };
 
   const hasPackages = Boolean(groups && groups.length > 0);
 
   return (
-    <section
-      id={panelId}
-      data-testid="download-files-panel"
-      hidden={!open}
-      inert={!open ? true : undefined}
-      aria-labelledby={headingId}
-      onKeyDown={onKeyDown}
-      className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 print:hidden"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <h2 ref={headingRef} tabIndex={-1} id={headingId} className="scroll-mt-[calc(var(--paper-sticky-header-height,6rem)+0.5rem)] text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600">
-          Download Files
-        </h2>
-        <button type="button" onClick={close} className="inline-flex min-h-[44px] items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
-          Hide Download Files
-        </button>
-      </div>
+    <section data-testid="download-files-panel" aria-labelledby={headingId} className="min-w-0">
+      <h2 id={headingId} className="px-2 pb-1 pt-1 text-sm font-semibold text-[var(--db-text-primary)]">Download files</h2>
       {hasPackages ? (
         <>
-          <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-            Verified review packages for release {groups![0].manifest.releaseIdentity} ({groups![0].manifest.documentVersion}).
-          </p>
           {notPublished ? (
-            <p
-              data-testid="download-not-published"
-              role="status"
-              aria-live="polite"
-              className="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm font-semibold text-amber-900 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
-            >
-              These review packages are listed but not published yet, so downloads are unavailable for now.
-              Nothing has been saved to your computer. This affects every package in this release, not just one.
+            <p data-testid="download-not-published" role="status" aria-live="polite" className="mx-2 mb-2 rounded-md border border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] p-2 text-sm text-[var(--db-text-primary)]">
+              These files are not published yet, so downloads are unavailable for now. Nothing was saved.
             </p>
           ) : null}
           {groups!.map((group) => (
-            <section key={group.cohortId} data-testid={`download-cohort-${group.cohortId}`} aria-label={`${group.cohortName} packages`} className="mt-4">
-              <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">{group.cohortName}</h3>
-              <ul aria-label={`Available review packages for ${group.cohortName}`} className="mt-2 space-y-2">
-                {group.manifest.packages.map((packageEntry) => {
-                  const state = states[packageEntry.packageId] ?? { status: 'idle' };
-                  const busy = state.status === 'busy';
-                  return (
-                    <li key={packageEntry.packageId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 p-3 dark:border-slate-700">
-                      <div className="min-w-0">
-                        <p className="font-semibold">{packageEntry.label}</p>
-                        <p className="break-words font-mono text-xs text-slate-500 dark:text-slate-400">{packageEntry.fileName} - {packageEntry.byteLength} bytes - SHA-256 {packageEntry.sha256}</p>
-                        <p
-                          data-testid={`download-status-${packageEntry.packageId}`}
-                          role="status"
-                          aria-live="polite"
-                          className={
-                            state.status === 'error'
-                              ? 'mt-1 text-xs font-semibold text-red-700 dark:text-red-400'
-                              : state.status === 'saved'
-                                ? 'mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400'
-                                : 'sr-only'
-                          }
-                        >
-                          {state.status === 'error'
-                            ? state.message
-                            : state.status === 'saved'
-                              ? `Downloaded ${state.fileName}`
-                              : busy
-                                ? 'Downloading'
-                                : ''}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        data-testid={`download-button-${packageEntry.packageId}`}
-                        onClick={() => { void startDownload(packageEntry); }}
-                        disabled={busy}
-                        aria-busy={busy}
-                        aria-describedby={`download-status-${packageEntry.packageId}`}
-                        className="inline-flex min-h-[44px] items-center rounded-lg bg-sky-700 px-3 py-2 text-sm font-semibold text-white hover:bg-sky-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {busy ? 'Downloading...' : state.status === 'error' ? `Retry ${packageEntry.kind}` : `Download ${packageEntry.kind}`}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </section>
+            <ul key={group.cohortId} data-testid={`download-cohort-${group.cohortId}`} aria-label={`${group.cohortName} files`} className="border-t border-[var(--db-border)] py-1 first-of-type:border-t-0">
+              {group.manifest.packages.map((packageEntry) => {
+                const state = states[packageEntry.packageId] ?? { status: 'idle' };
+                const busy = state.status === 'busy';
+                const name = `${group.cohortName} - ${packageEntry.kind}`;
+                const statusText = state.status === 'error' ? state.message : state.status === 'saved' ? 'Downloaded' : busy ? 'Downloading' : '';
+                return (
+                  <li key={packageEntry.packageId} className="flex min-w-0 flex-col">
+                    <button
+                      type="button"
+                      data-testid={`download-button-${packageEntry.packageId}`}
+                      onClick={() => { void startDownload(packageEntry); }}
+                      aria-disabled={busy || undefined}
+                      aria-describedby={`download-status-${packageEntry.packageId}`}
+                      className="flex min-h-[44px] w-full items-center gap-3 rounded-md px-2 py-2 text-left text-sm text-[var(--db-text-primary)] hover:bg-[var(--db-depth-1)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] aria-disabled:cursor-progress"
+                    >
+                      <Download aria-hidden="true" className="h-4 w-4 shrink-0 text-[var(--db-text-secondary)]" />
+                      <span className="min-w-0 flex-1">{name}</span>
+                    </button>
+                    {/* Outside the button, so the button's name stays "<Topic> - <kind>" and the status is read once. */}
+                    <span
+                      id={`download-status-${packageEntry.packageId}`}
+                      data-testid={`download-status-${packageEntry.packageId}`}
+                      className={statusText ? (state.status === 'error' ? 'px-9 pb-1 text-xs font-semibold text-[var(--db-fail)]' : 'px-9 pb-1 text-xs text-[var(--db-text-secondary)]') : 'sr-only'}
+                    >
+                      {statusText}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
           ))}
         </>
       ) : (
-        <p data-testid="reading-materials-content" className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-          <span data-testid="download-files-pending">Verified PDF and DOCX files will be downloaded when ready; review package files are pending server validation.</span>
+        <p data-testid="reading-materials-content" className="px-2 pb-2 text-sm text-[var(--db-text-secondary)]">
+          <span data-testid="download-files-pending">Download files are being prepared for this release and are not available yet.</span>
         </p>
       )}
     </section>

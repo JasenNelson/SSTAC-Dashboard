@@ -2,11 +2,16 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode, RefObject } from 'react';
+import { Printer } from 'lucide-react';
 
+import { sectionRegion } from '@/lib/matrix-options/paper/contents-heading';
+import { APPENDIX_BOUNDARY_LABEL } from '@/lib/matrix-options/paper/outline-hierarchy';
 import { createSectionLoader } from '@/lib/matrix-options/paper/section-loader';
 import type { SectionLoaderSnapshot, SectionLoadStatus } from '@/lib/matrix-options/paper/section-loader';
 import { validatePaperSectionContract } from '@/lib/matrix-options/paper/section-window';
 import type { PaperSectionContract, PaperSectionSummary } from '@/lib/matrix-options/paper/section-window';
+import { advancePrint, cancelPrint, INITIAL_PRINT_STATE, isPrintBusy, printStatusMessage, requestPrint } from '@/lib/matrix-options/paper/print-orchestrator';
+import type { PrintLoaderView, PrintState } from '@/lib/matrix-options/paper/print-orchestrator';
 import { cn } from '@/utils/cn';
 
 import { PAPER_DOCUMENT_ARTICLE_CLASSES, PAPER_OVERFLOW_ANCHOR_CLASSES, PAPER_SCROLL_MARGIN_CLASSES, PaperChunkSection } from './PaperChunkSection';
@@ -24,8 +29,8 @@ import { isLgViewport } from './paper-viewport';
  *
  * Loading triggers: a placeholder coming within about one viewport of the
  * scrollport, navigation to an anchor owned by an unloaded section (handled by
- * RevisedPaperWorkspace through ensureLoaded), and the "Load full document"
- * control. The queue keeps at most two requests in flight and yields between
+ * RevisedPaperWorkspace through ensureLoaded), and the toolbar's Print and
+ * "Load entire paper" actions. The queue keeps at most two requests in flight and yields between
  * completions (section-loader.ts).
  */
 
@@ -207,7 +212,7 @@ export function PaperSectionWindowView({ sectionWindow, api, scrollRootRef, chil
          * so an on-screen failing section retried without bound and its error
          * text and Retry button never stayed visible. Skipping status `error`
          * here leaves retries to explicit user action ONLY: the Retry button
-         * (loader.retry), Load full document (loader.loadAll, which
+         * (loader.retry), Load entire paper / Print (loader.loadAll, which
          * deliberately re-queues errors) and navigation (ensureLoaded with
          * priority) are all untouched.
          */
@@ -220,11 +225,12 @@ export function PaperSectionWindowView({ sectionWindow, api, scrollRootRef, chil
     return () => observer.disconnect();
   }, [ensureLoaded, scrollRootRef, loadedKey]);
 
+  const sectionLabels = sectionWindow.sections.map((section) => section.label);
   return (
     <article data-testid="paper-document" aria-label="Working Draft paper" className={PAPER_DOCUMENT_ARTICLE_CLASSES}>
       {api.complete ? null : (
         <p data-testid="paper-partial-print-notice" className="hidden text-sm print:block">
-          This printout contains only the sections loaded so far. Use Load full document before printing to include the whole paper.
+          This printout contains only the sections loaded so far. Use the Print button in the Working Draft to print the whole paper.
         </p>
       )}
       {sectionWindow.sections.map((section) => {
@@ -235,7 +241,7 @@ export function PaperSectionWindowView({ sectionWindow, api, scrollRootRef, chil
         if (contract) {
           return (
             <div key={section.anchor} data-paper-section={section.anchor} className="min-w-0 space-y-2">
-              {contract.chunks.map((chunk) => <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={sectionWindow.linkMap} />)}
+              {contract.chunks.map((chunk) => <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={sectionWindow.linkMap} region={sectionRegion(sectionLabels, section.index, APPENDIX_BOUNDARY_LABEL)} />)}
             </div>
           );
         }
@@ -257,37 +263,128 @@ export function PaperSectionWindowView({ sectionWindow, api, scrollRootRef, chil
   );
 }
 
-export function PaperLoadFullDocumentControl({ api }: { readonly api: PaperSectionWindowApi }) {
+/**
+ * Print orchestration for the Working Draft (print-orchestrator.ts). Print is a
+ * single action: missing sections are loaded first, the page is given two
+ * frames (and web fonts) to render them, and only then is the browser print
+ * dialog opened -- once, however many times the button is pressed.
+ */
+export function usePaperPrint(api: PaperSectionWindowApi) {
+  const [state, setState] = useState<PrintState>(INITIAL_PRINT_STATE);
+  /** The browser's print dialog could not be opened (window.print threw). */
+  const [dialogFailed, setDialogFailed] = useState(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const pending = api.snapshot.statuses.some((status) => status === 'queued' || status === 'loading');
+  const view = useMemo<PrintLoaderView>(() => ({ complete: api.complete, loadingAll: api.loadingAll, pending, failedCount: api.failedCount }), [api.complete, api.loadingAll, pending, api.failedCount]);
+  const viewRef = useRef(view);
+  viewRef.current = view;
+  const { loadAll } = api;
+
+  const request = useCallback(() => {
+    setDialogFailed(false);
+    const { state: next, shouldLoadAll } = requestPrint(stateRef.current, viewRef.current);
+    if (next === stateRef.current) return;
+    stateRef.current = next;
+    setState(next);
+    if (shouldLoadAll) loadAll();
+  }, [loadAll]);
+  const cancel = useCallback(() => setState((current) => cancelPrint(current)), []);
+
+  useEffect(() => {
+    setState((current) => advancePrint(current, view));
+  }, [view]);
+
+  useEffect(() => {
+    if (state.phase !== 'rendering' || typeof window === 'undefined') return undefined;
+    let cancelled = false;
+    const nextFrame = () => new Promise<void>((resolve) => {
+      if (typeof window.requestAnimationFrame === 'function') window.requestAnimationFrame(() => resolve());
+      else setTimeout(resolve, 16);
+    });
+    void (async () => {
+      await nextFrame();
+      await nextFrame();
+      try {
+        await (document as Document & { fonts?: { ready?: Promise<unknown> } }).fonts?.ready;
+      } catch {
+        // Fonts failing to load never blocks printing.
+      }
+      if (cancelled) return;
+      try {
+        window.print();
+        if (!cancelled) setDialogFailed(false);
+      } catch {
+        // The browser refused to open its print dialog: say so, never silently.
+        if (!cancelled) setDialogFailed(true);
+      } finally {
+        if (!cancelled) setState(INITIAL_PRINT_STATE);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [state.phase]);
+
+  return { state, request, cancel, dialogFailed };
+}
+
+/**
+ * Working Draft toolbar: Print (one step) and loading the entire paper for
+ * browser Find. Progress is announced politely; a failure is an alert that
+ * names what happened and offers the retry.
+ */
+export function PaperDocumentToolbar({ api }: { readonly api: PaperSectionWindowApi }) {
   const { complete, loadedCount, loadingAll, total, failedCount } = api;
+  const print = usePaperPrint(api);
+  const busy = isPrintBusy(print.state);
+  const message = printStatusMessage(print.state, loadedCount, total, failedCount);
+  const buttonClasses = 'inline-flex min-h-[44px] items-center gap-2 rounded-md border px-3 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]';
   return (
     <div data-testid="paper-load-full-document" className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 print:hidden">
       <button
         type="button"
-        data-testid="paper-load-full-document-button"
-        onClick={api.loadAll}
-        disabled={complete || loadingAll}
-        className="inline-flex min-h-[44px] items-center rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600"
-      >
-        {complete ? 'Full document loaded' : loadingAll ? 'Loading full document' : 'Load full document'}
-      </button>
-      <span data-testid="paper-load-progress" aria-live="polite" className="text-sm font-semibold">Loaded {loadedCount} of {total} sections</span>
-      <progress data-testid="paper-load-progress-bar" aria-label="Sections loaded" value={loadedCount} max={total} className="h-2 w-40" />
-      <button
-        type="button"
         data-testid="paper-print-button"
-        disabled={!complete}
-        aria-describedby={complete ? undefined : 'paper-print-availability'}
-        onClick={() => {
-          if (typeof window !== 'undefined') window.print();
-        }}
-        className="inline-flex min-h-[44px] items-center rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600"
+        aria-disabled={busy || undefined}
+        aria-describedby="paper-print-status"
+        onClick={print.request}
+        className={cn(buttonClasses, 'border-[var(--db-accent)] bg-[var(--db-accent)] text-[var(--db-text-on-accent)] hover:bg-[var(--db-accent-strong)] aria-disabled:cursor-progress aria-disabled:opacity-80')}
       >
-        Print
+        <Printer aria-hidden="true" className="h-4 w-4" />
+        {print.state.phase === 'loading' ? 'Preparing print' : print.state.phase === 'rendering' ? 'Opening print' : 'Print'}
       </button>
-      {complete
-        ? <p data-testid="paper-find-guidance" className="text-sm text-slate-700 dark:text-slate-200">Use browser Find (Ctrl+F) to search the whole paper.</p>
-        : <p id="paper-print-availability" data-testid="paper-print-unavailable" className="text-sm text-slate-700 dark:text-slate-200">Printing and browser Find cover only the sections loaded so far. Load the full document first.</p>}
-      {failedCount > 0 ? <p role="alert" className="text-sm text-amber-900 dark:text-amber-200">{failedCount} section(s) did not load. Retry them from the section, or load the full document again.</p> : null}
+      {print.state.phase === 'idle' || print.state.phase === 'failed' ? (
+        <button
+          type="button"
+          data-testid="paper-load-full-document-button"
+          onClick={api.loadAll}
+          disabled={complete || loadingAll}
+          className={cn(buttonClasses, 'border-[var(--db-border-strong)] text-[var(--db-text-primary)] hover:bg-[var(--db-depth-1)] disabled:cursor-not-allowed disabled:opacity-60')}
+        >
+          {complete ? 'Entire paper loaded' : loadingAll ? 'Loading entire paper' : 'Load entire paper for search'}
+        </button>
+      ) : (
+        <button type="button" data-testid="paper-print-cancel" onClick={print.cancel} disabled={print.state.phase !== 'loading'} className={cn(buttonClasses, 'border-[var(--db-border-strong)] text-[var(--db-text-primary)] hover:bg-[var(--db-depth-1)] disabled:opacity-60')}>
+          Cancel
+        </button>
+      )}
+      {(loadingAll || busy) && !complete ? (
+        <progress data-testid="paper-load-progress-bar" aria-label="Sections loaded" value={loadedCount} max={total} className="h-2 w-32 accent-[var(--db-accent)]" />
+      ) : null}
+      <p id="paper-print-status" data-testid="paper-load-progress" role="status" aria-live="polite" className="min-w-0 text-sm text-[var(--db-text-secondary)]">
+        {print.state.phase === 'failed' ? null : message ?? (complete ? 'Entire paper loaded. Browser Find (Ctrl+F) searches all of it.' : `${loadedCount} of ${total} sections loaded. Print loads the rest automatically.`)}
+      </p>
+      {print.dialogFailed ? (
+        <p role="alert" data-testid="paper-print-dialog-failed" className="text-sm text-[var(--db-text-primary)]">The browser could not open its print dialog. Try again, or use the browser&apos;s own Print command (Ctrl+P).</p>
+      ) : null}
+      {print.state.phase === 'failed' ? (
+        <div role="alert" data-testid="paper-print-failed" className="flex min-w-0 flex-wrap items-center gap-2 text-sm text-[var(--db-text-primary)]">
+          <span>{message}</span>
+          <button type="button" onClick={print.request} className={cn(buttonClasses, 'border-[var(--db-border-strong)] hover:bg-[var(--db-depth-1)]')}>Try printing again</button>
+        </div>
+      ) : failedCount > 0 && !busy ? (
+        <p role="alert" className="text-sm text-[var(--db-text-primary)]">{failedCount} {failedCount === 1 ? 'section' : 'sections'} did not load. Retry from the section, or press Print to try again.</p>
+      ) : null}
     </div>
   );
 }

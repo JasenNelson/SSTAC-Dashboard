@@ -6,6 +6,9 @@ import {
 } from '@/lib/matrix-options/navigation';
 import { REVISED_PAPER_ROUTE, REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
 import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
+import { sectionRegion } from '@/lib/matrix-options/paper/contents-heading';
+import type { PaperRegion } from '@/lib/matrix-options/paper/contents-heading';
+import { APPENDIX_BOUNDARY_LABEL } from '@/lib/matrix-options/paper/outline-hierarchy';
 import type { RevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
 import { authenticateReviewerGuideAgainstPaper, getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
@@ -196,12 +199,14 @@ export default async function PublicationPage({
   // offsets) and is fetched from the guarded per-section route on demand.
   let documentModel: PaperDocumentModel;
   let sectionWindow: PaperSectionWindowData;
+  let initialRegion: PaperRegion = 'main';
   try {
     const fullModel = getPaperDocumentModel(structure);
     const { chunks, groups } = getPaperSectionWindowModel(structure);
     const identity = paperSectionIdentity(structure, documentVersion);
     const initialIndex = (state.section === null ? null : owningSectionIndex(groups, state.section)) ?? 0;
     const initialGroup = groups[initialIndex];
+    initialRegion = sectionRegion(groups.map((group) => group.label), initialIndex, APPENDIX_BOUNDARY_LABEL);
     documentModel = { chunks: chunks.slice(initialGroup.chunkStart, initialGroup.chunkEnd), linkMap: fullModel.linkMap };
     sectionWindow = {
       paperSha256: identity.paperSha256,
@@ -215,7 +220,7 @@ export default async function PublicationPage({
   }
   return (
     <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} outline={getPaperNavOutline(structure)} sectionWindow={sectionWindow} downloadManifests={downloadManifests}>
-      <PaperDocument model={documentModel} layout="chunks" />
+      <PaperDocument model={documentModel} layout="chunks" region={initialRegion} />
     </RevisedPaperWorkspace>
   );
 }

@@ -1,7 +1,8 @@
+import { fetchTrustedReviewRows } from '@/lib/matrix-options/paper/review-admin-query';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { getPaperAdminAccess, getTrustedPaperReviewIdentity, validateTrustedReviewFilters } from '@/lib/matrix-options/paper-admin-guard';
-import { buildReviewCsv, normalizeReviewRows, REVIEW_RESPONSE_SELECT } from '@/lib/matrix-options/paper/review-csv';
+import { buildReviewCsv, normalizeReviewRows } from '@/lib/matrix-options/paper/review-csv';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,16 +33,12 @@ export async function GET(request: Request) {
   if (filters.manifestSha256 && !/^[0-9a-f]{64}$/i.test(filters.manifestSha256)) return Response.json({ error: 'Invalid manifestSha256' }, { status: 400 });
   if (status && !STATUSES.has(status)) return Response.json({ error: 'Invalid status' }, { status: 400 });
   if (!validateTrustedReviewFilters(filters, trusted)) return Response.json({ error: 'Incompatible review identity filter' }, { status: 409 });
-  let query: any;
+  let result: Awaited<ReturnType<typeof fetchTrustedReviewRows>>;
   try {
-    query = supabase.from('matrix_paper_review_responses').select(REVIEW_RESPONSE_SELECT);
-    const databaseFilters = [['documentVersion', 'document_version'], ['manifestSha256', 'manifest_sha256'], ['cohortId', 'cohort_id'], ['questionId', 'question_id'], ['userId', 'user_id']] as const;
-    for (const [key, column] of databaseFilters) { const value = url.searchParams.get(key); if (value) query = query.eq(column, value); }
+    result = await fetchTrustedReviewRows(supabase as unknown as Parameters<typeof fetchTrustedReviewRows>[0], trusted, { cohortId: filters.cohortId, questionId: filters.questionId, userId: url.searchParams.get('userId') || undefined });
   } catch { return Response.json({ error: 'Unable to query reviews' }, { status: 500 }); }
-  let result: { data?: unknown; error?: unknown };
-  try { result = await query; } catch { return Response.json({ error: 'Unable to query reviews' }, { status: 500 }); }
-  if (result.error || !Array.isArray(result.data)) return Response.json({ error: 'Unable to query reviews' }, { status: 500 });
-  const rows = normalizeReviewRows(result.data, trusted);
+  if ('error' in result) return Response.json({ error: 'Unable to query reviews' }, { status: 500 });
+  const rows = normalizeReviewRows(result.rows, trusted);
   if (rows === null) return Response.json({ error: 'Review data failed release integrity validation' }, { status: 500 });
   const filtered = status ? rows.filter((row) => row.status === status) : rows;
   return new Response(buildReviewCsv(filtered), { status: 200, headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="matrix-paper-reviews.csv"', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });

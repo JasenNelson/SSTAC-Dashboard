@@ -1,3 +1,5 @@
+import { presentChunkLabel, presentChunkMarkdown } from '@/lib/matrix-options/paper/contents-heading';
+import type { PaperRegion } from '@/lib/matrix-options/paper/contents-heading';
 import type { PaperSectionContractChunk } from '@/lib/matrix-options/paper/section-window';
 
 import { PAPER_DOCUMENT_HEADING_OFFSET, PaperText } from './PaperText';
@@ -33,7 +35,7 @@ export const PAPER_SCROLL_MARGIN_CLASSES = 'scroll-mt-[calc(var(--paper-sticky-h
  * used in RevisedPaperWorkspace. CSS only: no globals.css rule and no script.
  */
 export const PAPER_OVERFLOW_ANCHOR_CLASSES = '[overflow-anchor:auto]';
-export const PAPER_CHUNK_CLASSES = `min-w-0 rounded-sm ${PAPER_SCROLL_MARGIN_CLASSES} ${PAPER_OVERFLOW_ANCHOR_CLASSES} focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600`;
+export const PAPER_CHUNK_CLASSES = `min-w-0 rounded-sm ${PAPER_SCROLL_MARGIN_CLASSES} ${PAPER_OVERFLOW_ANCHOR_CLASSES} focus:outline-none focus-visible:outline-1 focus-visible:outline-offset-8 focus-visible:outline-dashed focus-visible:outline-[var(--db-border-strong)]`;
 
 export type PaperChunkView = Pick<PaperSectionContractChunk, 'id' | 'anchor' | 'depth' | 'label' | 'markdown'>;
 
@@ -41,11 +43,18 @@ export function paperSectionLabelId(anchor: string): string {
   return `paper-section-label-${anchor}`;
 }
 
-export function PaperChunkSection({ chunk, linkMap }: { readonly chunk: PaperChunkView; readonly linkMap?: Readonly<Record<string, string>> }) {
+/**
+ * `region` says whether the chunk is in the main report or after the appendix
+ * boundary; it only changes how an exact "Master Table of Contents" heading is
+ * SHOWN ("Paper contents" / "Appendix contents"). The paper bytes and the
+ * anchor (the section id) are unchanged.
+ */
+export function PaperChunkSection({ chunk, linkMap, region = 'main' }: { readonly chunk: PaperChunkView; readonly linkMap?: Readonly<Record<string, string>>; readonly region?: PaperRegion }) {
+  const markdown = presentChunkMarkdown(chunk.markdown, chunk.label, region);
   if (chunk.anchor === null) {
     return (
       <section data-paper-preamble="" className={PAPER_CHUNK_CLASSES}>
-        <PaperText markdown={chunk.markdown} linkMap={linkMap} headingOffset={PAPER_DOCUMENT_HEADING_OFFSET} />
+        <PaperText markdown={markdown} linkMap={linkMap} headingOffset={PAPER_DOCUMENT_HEADING_OFFSET} />
       </section>
     );
   }
@@ -60,8 +69,8 @@ export function PaperChunkSection({ chunk, linkMap }: { readonly chunk: PaperChu
       aria-labelledby={labelId}
       className={PAPER_CHUNK_CLASSES}
     >
-      <span id={labelId} hidden>{chunk.label}</span>
-      <PaperText markdown={chunk.markdown} linkMap={linkMap} headingOffset={PAPER_DOCUMENT_HEADING_OFFSET} />
+      <span id={labelId} hidden>{presentChunkLabel(chunk.label, region)}</span>
+      <PaperText markdown={markdown} linkMap={linkMap} headingOffset={PAPER_DOCUMENT_HEADING_OFFSET} />
     </section>
   );
 }

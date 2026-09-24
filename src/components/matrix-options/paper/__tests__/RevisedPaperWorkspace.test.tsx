@@ -10,6 +10,7 @@ import type { CohortPortion } from '@/lib/matrix-options/paper/cohort-portions';
 import type { PaperUrlState } from '@/lib/matrix-options/paper/url-state';
 import { getProductionAssignment } from '@/lib/matrix-options/revised-paper-review';
 import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
+import { numberedReviewTopicLabel } from '@/lib/matrix-options/paper/topic-labels';
 import type { PaperOutlineNavEntry } from '../PaperOutlineNav';
 import {
   normalizeReaderTextForDisplay,
@@ -33,10 +34,10 @@ let scrollIntoView: ReturnType<typeof vi.fn>;
 let scrollBy: ReturnType<typeof vi.fn>;
 
 const outline: readonly PaperOutlineNavEntry[] = [
-  { id: 'n1', anchor: 'intro', label: '1 Introduction', depth: 1, parentId: null, childIds: ['n2'] },
-  { id: 'n2', anchor: 'scope', label: '1.1 Scope', depth: 2, parentId: 'n1', childIds: ['n3'] },
-  { id: 'n3', anchor: 'detail', label: '1.1.1 Detail', depth: 3, parentId: 'n2', childIds: [] },
-  { id: 'n4', anchor: 'methods', label: '2 Methods', depth: 1, parentId: null, childIds: [] },
+  { id: 'n1', anchor: 'intro', label: '1 Introduction', depth: 1, level: 1, parentId: null, childIds: ['n2'] },
+  { id: 'n2', anchor: 'scope', label: '1.1 Scope', depth: 2, level: 2, parentId: 'n1', childIds: ['n3'] },
+  { id: 'n3', anchor: 'detail', label: '1.1.1 Detail', depth: 3, level: 3, parentId: 'n2', childIds: [] },
+  { id: 'n4', anchor: 'methods', label: '2 Methods', depth: 1, level: 1, parentId: null, childIds: [] },
 ];
 
 function FakeDocument() {
@@ -73,8 +74,40 @@ function activeOutlineLabels(): string[] {
   return Array.from(screen.getByTestId('paper-outline-desktop').querySelectorAll('[aria-current="location"]')).map((link) => link.textContent ?? '');
 }
 
+/**
+ * Paper Navigation's two presentation groups (paper-nav-groups.ts) start
+ * COLLAPSED unless they already contain the URL target or the active section
+ * (item 2). A test that clicks an outline link with neither set must expand
+ * the group first; this is a no-op once the group is already open (deep link,
+ * active section, or an earlier call).
+ */
+function outlineLink(name: string, variant: 'desktop' | 'stacked' = 'desktop') {
+  const root = screen.getByTestId(`paper-outline-${variant}`);
+  const group = within(root).queryByRole('button', { name: 'Main Report' });
+  if (group && group.getAttribute('aria-expanded') !== 'true') fireEvent.click(group);
+  return within(root).getByRole('link', { name });
+}
+
 function state(overrides: Partial<PaperUrlState> = {}): PaperUrlState {
   return { mode: 'working-draft', cohort: null, q: null, section: null, ...overrides };
+}
+
+/**
+ * Item 5: the active-question h3 shows the navigation title, which is the
+ * reviewer-guide heading with its trailing "(Section ...)" citation stripped
+ * (the citation moves to its own review-question-context line instead).
+ */
+function titleWithoutCitation(heading: string): string {
+  return heading.replace(/\s*\(Sections?\s[^)]*\)\s*$/, '');
+}
+
+/**
+ * The Reviewer's Guide question id for a question number, in the same
+ * `rpq:<release identity>:q<NN>` shape reviewer-guide.ts stamps and verifies
+ * (REVIEW_GUIDE_RELEASE_IDENTITY equals this file's `version` constant).
+ */
+function questionId(number: number): string {
+  return `rpq:${version}:q${String(number).padStart(2, '0')}`;
 }
 
 function renderWorkingDraft(section: string | null = null, children: ReactNode = <FakeDocument />) {
@@ -107,8 +140,13 @@ function setLgViewport(matches: boolean) {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches, media: query, onchange: null, addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(), removeEventListener: vi.fn(), dispatchEvent: vi.fn() })) as unknown as typeof window.matchMedia;
 }
 
+/**
+ * Panel toggles (Navigation, Review Comments) render INSIDE the workspace
+ * header's own panel-controls group now, not portalled into
+ * #matrix-options-paper-header-actions (2026-09-22 UX brief item 1).
+ */
 function headerHost() {
-  return screen.getByTestId('paper-header-actions');
+  return screen.getByTestId('workspace-panel-controls');
 }
 
 function scrolledElements(): unknown[] {
@@ -149,8 +187,14 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     const { container } = renderWorkingDraft();
     const workingDraft = screen.getByRole('link', { name: 'Working Draft' });
     expect(workingDraft).toHaveAttribute('aria-current', 'page');
+    // Header mode links carry `q` ONLY for an explicitly opened question: with
+    // nothing open (the default), switching modes must not open an editor.
     expect(workingDraft).toHaveAttribute('href', `${base}?mode=working-draft`);
-    expect(screen.getByRole('link', { name: 'My Review' })).toHaveAttribute('href', `${base}?mode=my-review`);
+    expect(screen.getByRole('link', { name: 'My Review' })).toHaveAttribute('href', `${base}?mode=my-review&cohort=categories`);
+    // Two-sided: once a question is opened, both links keep it.
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+    expect(workingDraft).toHaveAttribute('href', `${base}?mode=working-draft&q=${encodeURIComponent(questionId(1))}`);
+    expect(screen.getByRole('link', { name: 'My Review' })).toHaveAttribute('href', `${base}?mode=my-review&cohort=categories&q=${encodeURIComponent(questionId(1))}`);
     expect(screen.getByRole('link', { name: 'My Review' })).not.toHaveAttribute('aria-current');
     expect(screen.queryByRole('link', { name: 'Publication' })).toBeNull();
     expect(container.textContent).not.toMatch(/Publication Atlas|Publication cockpit|Canonical reader/);
@@ -159,29 +203,34 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     const navigation = within(headerHost()).getByRole('button', { name: 'Navigation' });
     expect(navigation).toHaveAttribute('aria-expanded', 'true');
     expect(navigation).toHaveAttribute('aria-controls', 'paper-navigation-rail');
-    expect(navigation).toHaveClass('min-h-[44px]', 'bg-sky-50', 'text-sky-700');
     expect(navigation).not.toHaveAttribute('aria-pressed');
-    expect(within(headerHost()).queryByRole('button', { name: 'Review Comments' })).toBeNull();
+    // Both toggles now render inside the workspace header's own panel-controls
+    // group (item 1): Review Comments is present alongside Navigation, not
+    // absent from it.
+    expect(within(headerHost()).getByRole('button', { name: 'Review Comments' })).toBeInTheDocument();
     const rail = screen.getByTestId('navigation-rail');
     expect(rail).toHaveAttribute('id', 'paper-navigation-rail');
     expect(rail).toHaveAttribute('data-state', 'open');
     expect(rail).not.toHaveAttribute('inert');
-    expect(rail).toHaveClass('w-full', 'p-6', 'lg:w-80', 'print:hidden');
     expect(rail.className).not.toMatch(/max-h-/);
+    expect(within(rail).getByRole('heading', { name: 'Paper Navigation', level: 2 })).toBeInTheDocument();
     expect(within(rail).getByTestId('paper-outline')).toBeInTheDocument();
 
     const download = within(screen.getByTestId('workspace-header-controls')).getByRole('button', { name: 'Download Files' });
     expect(download).toHaveAttribute('aria-expanded', 'false');
-    expect(download).toHaveClass('min-h-[44px]');
-    expect(screen.getByTestId('download-files-panel')).toHaveAttribute('hidden');
+    expect(download).toHaveAttribute('aria-haspopup', 'dialog');
+    // keepMounted: the popover element stays in the DOM while closed (hidden,
+    // inert), so it carries no dialog role and is not reachable as one.
+    expect(screen.queryByRole('dialog', { name: 'Download files' })).toBeNull();
 
     const column = screen.getByTestId('paper-document-column');
     expect(within(column).getByTestId('fake-document')).toBeInTheDocument();
     expect(screen.getByTestId('workspace-layout')).toHaveClass('flex', 'flex-col', 'lg:flex-row', 'overflow-y-auto', 'lg:overflow-hidden');
     expect(rail.compareDocumentPosition(column) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // Popovers portal to document.body, outside this render's own container, so
+    // the container itself carries none of that markup while every panel here
+    // is closed.
     expect(container.querySelector('[role="dialog"]')).toBeNull();
-    expect(container.querySelector('.fixed')).toBeNull();
-    expect(container.querySelector('.absolute')).toBeNull();
   });
 
   it('collapses Navigation to an inert closed rail and returns focus to its toggle at every width', () => {
@@ -191,15 +240,14 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     fireEvent.click(toggle);
     expect(rail).toHaveAttribute('data-state', 'closed');
     expect(rail).toHaveAttribute('inert');
-    expect(rail).toHaveClass('max-h-0', 'w-full', 'border-b-0', 'p-0', 'lg:max-h-none', 'lg:w-0');
-    expect(rail).not.toHaveClass('p-6', 'lg:w-80');
+    expect(rail).toHaveClass('max-h-0', 'w-full', 'border-0', 'lg:max-h-none', 'lg:w-0');
+    expect(rail).not.toHaveClass('lg:w-[var(--paper-left-width)]');
     expect(toggle).toHaveAttribute('aria-expanded', 'false');
-    expect(toggle).toHaveClass('border', 'bg-white', 'text-slate-700');
     expect(toggle).toHaveFocus();
 
     // Closing from inside the rail with Escape also rescues focus.
     fireEvent.click(toggle);
-    const link = within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' });
+    const link = outlineLink('2 Methods');
     link.focus();
     expect(fireEvent.keyDown(link, { key: 'Escape' })).toBe(false);
     expect(rail).toHaveAttribute('data-state', 'closed');
@@ -211,10 +259,10 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     expect(toggle).toHaveFocus();
   });
 
-  it('reveals and focuses the opened Navigation heading below lg but not at lg', () => {
+  it('reveals and focuses the opened Contents heading below lg but not at lg', () => {
     renderWorkingDraft();
     const toggle = within(headerHost()).getByRole('button', { name: 'Navigation' });
-    const heading = within(screen.getByTestId('navigation-rail')).getByRole('heading', { name: 'Navigation', level: 2 });
+    const heading = within(screen.getByTestId('navigation-rail')).getByRole('heading', { name: 'Paper Navigation', level: 2 });
     expect(heading).toHaveAttribute('tabindex', '-1');
 
     setLgViewport(false);
@@ -232,34 +280,35 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     expect(scrolledElements()).not.toContain(heading);
   });
 
-  it('keeps Download Files in the document column, reveals it below lg, and closes it with focus rescue', () => {
+  /*
+   * Download Files is now a non-modal popover, portalled to document.body and
+   * anchored to its own toggle (item 2), never inserted in the document column
+   * and never a scroll-authority reveal target (see the (c) tests below for its
+   * own toggle/dialog/Escape contract). This keeps the still-true protective
+   * property: its content is the honest pending state, not a fabricated list.
+   */
+  it('opens Download Files as a portalled popover showing the honest pending state, and closes on Escape', () => {
     renderWorkingDraft();
     const toggle = within(screen.getByTestId('workspace-header-controls')).getByRole('button', { name: 'Download Files' });
-    const panel = screen.getByTestId('download-files-panel');
-    expect(toggle).toHaveAttribute('aria-controls', panel.id);
+    expect(screen.queryByRole('dialog', { name: 'Download files' })).toBeNull();
     fireEvent.click(toggle);
-    expect(panel).not.toHaveAttribute('hidden');
+    const popover = screen.getByTestId('download-files-popover');
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByTestId('paper-document-column')).toContainElement(panel);
-    expect(panel.compareDocumentPosition(screen.getByTestId('fake-document')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    const heading = within(panel).getByRole('heading', { name: 'Download Files', level: 2 });
-    expect(heading).toHaveFocus();
-    expect(scrolledElements()).toContain(heading);
-    // The revealed panel heading clears the measured sticky header, not a fixed 6rem.
-    expect(heading).toHaveClass('scroll-mt-[calc(var(--paper-sticky-header-height,6rem)+0.5rem)]');
-    expect(heading.className).not.toMatch(/scroll-mt-24/);
+    expect(popover.parentElement).toBe(document.body);
+    expect(within(popover).getByRole('heading', { name: 'Download files', level: 2 })).toBeInTheDocument();
     const content = screen.getByTestId('reading-materials-content');
-    expect(content).toHaveTextContent('will be downloaded when ready');
-    expect(content).toHaveTextContent('review package files are pending server validation');
-    expect(within(panel).queryByRole('link')).toBeNull();
+    expect(content).toHaveTextContent('Download files are being prepared for this release and are not available yet.');
+    expect(within(popover).queryByRole('link')).toBeNull();
 
-    fireEvent.click(within(panel).getByRole('button', { name: 'Hide Download Files' }));
-    expect(panel).toHaveAttribute('hidden');
-    expect(toggle).toHaveFocus();
-
-    fireEvent.click(toggle);
-    expect(fireEvent.keyDown(heading, { key: 'Escape' })).toBe(false);
-    expect(panel).toHaveAttribute('hidden');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    // keepMounted: the element stays in the DOM but is hidden/inert and no
+    // longer a dialog, rather than being removed outright.
+    expect(screen.queryByRole('dialog', { name: 'Download files' })).toBeNull();
+    const closedPopover = screen.getByTestId('download-files-popover');
+    expect(closedPopover).toHaveAttribute('hidden');
+    expect(closedPopover).toHaveAttribute('inert');
+    expect(closedPopover).toHaveAttribute('aria-hidden', 'true');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
     expect(toggle).toHaveFocus();
   });
 
@@ -274,33 +323,37 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     expect(fireEvent.keyDown(document.body, { key: 'Enter' })).toBe(true);
   });
 
-  it('navigates from the outline and in-paper links by scrolling, focusing the section, and replacing section in the URL (M1-04 canonical hrefs)', () => {
+  it('navigates from the outline and in-paper links by scrolling, focusing the section, and pushing section into the URL (item 8: reader navigation pushes)', () => {
+    // Item 8: outline click and in-paper link navigation PUSH a history entry
+    // (so Back steps between visited sections), unlike a hash change (still
+    // replace, below) or a question-driven navigation.
+    const pushState = vi.spyOn(window.history, 'pushState');
     const replaceState = vi.spyOn(window.history, 'replaceState');
     renderWorkingDraft();
-    const desktop = screen.getByTestId('paper-outline-desktop');
-    const link = within(desktop).getByRole('link', { name: '2 Methods' });
+    const link = outlineLink('2 Methods');
     expect(link).toHaveAttribute('href', '?mode=working-draft&section=methods');
     expect(fireEvent.click(link)).toBe(false);
     const section = document.getElementById('methods');
     expect(section).toHaveFocus();
     expect(scrolledElements()).toContain(section);
-    expect(replaceState).toHaveBeenLastCalledWith(null, '', '/?mode=working-draft&section=methods');
+    expect(pushState).toHaveBeenLastCalledWith(null, '', '/?mode=working-draft&section=methods');
+    expect(replaceState).not.toHaveBeenCalled();
     expect(link).toHaveAttribute('aria-current', 'location');
 
-    replaceState.mockClear();
+    pushState.mockClear();
     const intro = document.getElementById('intro') as HTMLElement;
     expect(fireEvent.click(within(intro).getByRole('link', { name: 'Go to methods' }))).toBe(false);
-    expect(replaceState).toHaveBeenCalledWith(null, '', '/?mode=working-draft&section=methods');
+    expect(pushState).toHaveBeenCalledWith(null, '', '/?mode=working-draft&section=methods');
 
-    replaceState.mockClear();
+    pushState.mockClear();
     expect(fireEvent.click(within(intro).getByRole('link', { name: 'Hash to scope' }))).toBe(false);
     expect(document.getElementById('scope')).toHaveFocus();
-    expect(replaceState).toHaveBeenCalledWith(null, '', '/?mode=working-draft&section=scope');
+    expect(pushState).toHaveBeenCalledWith(null, '', '/?mode=working-draft&section=scope');
 
-    replaceState.mockClear();
+    pushState.mockClear();
     expect(fireEvent.click(within(intro).getByRole('link', { name: 'Unknown reference' }))).toBe(true);
     expect(fireEvent.click(within(intro).getByRole('link', { name: 'Go to methods' }), { ctrlKey: true })).toBe(true);
-    expect(replaceState).not.toHaveBeenCalled();
+    expect(pushState).not.toHaveBeenCalled();
   });
 
   it('M1-04: a known #anchor that conflicts with a stale section wins and replaces section; a matching hash does not rewrite', () => {
@@ -324,9 +377,14 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     expect(document.getElementById('detail')).toHaveFocus();
     expect(scrolledElements()).toContain(document.getElementById('detail'));
     const desktop = screen.getByTestId('paper-outline-desktop');
+    expect(within(desktop).getByRole('button', { name: 'Main Report' })).toHaveAttribute('aria-expanded', 'true');
     expect(within(desktop).getByRole('button', { name: 'Subsections of 1.1 Scope' })).toHaveAttribute('aria-expanded', 'true');
     expect(within(desktop).getByRole('link', { name: '1.1.1 Detail' })).toBeInTheDocument();
-    expect(within(screen.getByTestId('paper-outline-stacked')).getByRole('button', { name: 'Subsections of 1 Introduction' })).toHaveAttribute('aria-expanded', 'true');
+    // The stacked outline's own Main Report group opens too (item 2: navigating
+    // to "detail" opens only its group and its presentation ancestors -- "1
+    // Introduction" is now a leaf row with no disclosure of its own, since its
+    // only child ("1.1 Scope") is promoted to the group's top level).
+    expect(within(screen.getByTestId('paper-outline-stacked')).getByRole('button', { name: 'Main Report' })).toHaveAttribute('aria-expanded', 'true');
     expect(replaceState).not.toHaveBeenCalled();
   });
 
@@ -417,7 +475,7 @@ describe('RevisedPaperWorkspace Working Draft', () => {
 
     it('keeps a navigated section active until the next user scroll intent', () => {
       const observer = renderTracked(true);
-      fireEvent.click(within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' }));
+      fireEvent.click(outlineLink('2 Methods'));
       expect(activeOutlineLabels()).toEqual(['2 Methods']);
       // The last section cannot reach the reading line, so geometry alone would select detail.
       placeSections({ detail: -100, methods: 400 });
@@ -438,8 +496,310 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     renderMyReview();
     expect(screen.getByTestId('navigation-rail')).toHaveClass('print:hidden');
     expect(screen.getByTestId('review-comments-rail')).toHaveClass('print:hidden');
-    expect(screen.getByRole('banner')).toHaveClass('print:hidden');
+    // Queried by testid rather than role: My Review's rendered portion also
+    // carries its own (unrelated) <header>, nested inside a labelled <section>,
+    // which makes "banner" ambiguous here -- the workspace's own header is the
+    // one under test.
+    expect(screen.getByTestId('workspace-header')).toHaveClass('print:hidden');
     expect(screen.getByTestId('paper-document-column')).not.toHaveClass('print:hidden');
+  });
+});
+
+/*
+ * Focused regression coverage for the 2026-09-22 owner-approved UX brief
+ * (TEST_UPDATE_SPEC.md), added alongside the updates above rather than folded
+ * into them so each is easy to find and each fails on its own if the
+ * corresponding behaviour is reverted.
+ */
+describe('2026-09-22 UX brief: focused regression coverage', () => {
+  it('(a) Working Draft renders the Review Comments rail and toggle (previously My Review only)', () => {
+    renderWorkingDraft();
+    const toggle = within(headerHost()).getByRole('button', { name: 'Review Comments' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    expect(toggle).toHaveAttribute('aria-controls', 'paper-review-comments-rail');
+    const rail = screen.getByTestId('review-comments-rail');
+    expect(rail).toHaveAttribute('data-state', 'open');
+    expect(within(rail).getByRole('heading', { name: 'Review Comments', level: 2 })).toBeInTheDocument();
+    expect(within(rail).getByTestId('active-question-response')).toBeInTheDocument();
+  });
+
+  it('(b) header: exactly one h1, no noncanonical-preview-banner, documentVersion hidden until About this draft opens', () => {
+    renderWorkingDraft();
+    const headings = screen.getAllByRole('heading', { level: 1 });
+    expect(headings).toHaveLength(1);
+    expect(headings[0]).toHaveTextContent('Matrix Options Paper - Review Workspace');
+    expect(screen.queryByTestId('noncanonical-preview-banner')).toBeNull();
+    // documentVersion is not visible anywhere until the popover is opened.
+    expect(screen.queryByText(version)).toBeNull();
+    expect(screen.queryByTestId('about-draft-version')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'About this draft' }));
+    const versionEl = screen.getByTestId('about-draft-version');
+    expect(versionEl).toHaveTextContent(version);
+  });
+
+  it('(c) Download Files popover: toggle attributes, dialog role/name, Escape closes and returns focus', () => {
+    renderWorkingDraft();
+    const toggle = within(screen.getByTestId('workspace-header-controls')).getByRole('button', { name: 'Download Files' });
+    expect(toggle).toHaveAttribute('aria-haspopup', 'dialog');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('dialog', { name: 'Download files' })).toBeNull();
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    const popover = screen.getByTestId('download-files-popover');
+    // Portalled to document.body, not inserted into the paper document column.
+    expect(popover.parentElement).toBe(document.body);
+    expect(screen.getByRole('dialog', { name: 'Download files' })).toBe(popover);
+
+    fireEvent.keyDown(document, { key: 'Escape' });
+    // keepMounted: the element stays in the DOM (hidden/inert) rather than
+    // being removed; it just no longer answers to the dialog role.
+    expect(screen.getByTestId('download-files-popover')).toHaveAttribute('hidden');
+    expect(screen.queryByRole('dialog', { name: 'Download files' })).toBeNull();
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveFocus();
+  });
+
+  /*
+   * (d) The shared outline used elsewhere in this file has no numbered labels
+   * a real review question cites, so this constructs a small outline whose
+   * labels match real Reviewer's Guide citations. "6.0 Framework" resolves to
+   * Question 4 ("On receptors and pathways", cites Sections 4.1 and 6.0): the
+   * primary-question rule (review-navigation.ts) ranks by longest matching
+   * citation, then fewest sections cited, then question number, and "4.1"
+   * alone would actually resolve to Question 1 (it also cites Section 4.1,
+   * with only one citation to Q4's two -- a real tie this test must not get
+   * wrong), so "6.0" is used instead: only Q4 and Q10 cite it, both with two
+   * citations each, and Q4 (the lower number) wins outright. "7.8 Input"
+   * resolves to Question 8, review-navigation.ts's own documented example for
+   * that exact citation. Both are drawn from the real cohort manifest and
+   * reviewer guide the component itself loads, not a mock.
+   */
+  const questionOutline: readonly PaperOutlineNavEntry[] = [
+    { id: 'qn1', anchor: 'sec-60', label: '6.0 Framework', depth: 1, level: 1, parentId: null, childIds: [] },
+    { id: 'qn2', anchor: 'sec-78', label: '7.8 Input', depth: 1, level: 1, parentId: null, childIds: [] },
+  ];
+
+  function QuestionOutlineDocument() {
+    return <article data-testid="fake-document">{questionOutline.map((entry) => (
+      <section key={entry.id} id={entry.anchor} data-paper-chunk={entry.anchor} tabIndex={-1} style={{ scrollMarginTop: '16px' }}>
+        <h2>{entry.label} body</h2>
+      </section>
+    ))}</article>;
+  }
+
+  it('(d) Working Draft outline click highlights the section\'s question WITHOUT writing it to the URL (q names only an opened question); popstate restores the highlight', () => {
+    const pushState = vi.spyOn(window.history, 'pushState');
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    const guide = getReviewerGuideContract();
+    const question4 = guide.questions.find((candidate) => candidate.number === 4);
+    const question8 = guide.questions.find((candidate) => candidate.number === 8);
+    expect(question4 && question8).toBeTruthy();
+    if (!question4 || !question8) return;
+
+    fireEvent.click(outlineLink('6.0 Framework'));
+    // Item 3: outline navigation moves only the HIGHLIGHT. The pushed entry
+    // names the section, not the question -- a reload or shared link of it
+    // must not open an editor the reviewer never chose.
+    expect(screen.getByTestId(`review-question-row-q${question4.number}`)).toHaveAttribute('data-highlighted', 'true');
+    expect(screen.getByTestId(`review-question-row-q${question4.number}`)).toHaveAttribute('data-open', 'false');
+    expect(pushState).toHaveBeenLastCalledWith(null, '', '/?mode=working-draft&section=sec-60');
+    const urlAfterQ4 = window.location.pathname + window.location.search;
+
+    pushState.mockClear();
+    fireEvent.click(outlineLink('7.8 Input'));
+    expect(screen.getByTestId(`review-question-row-q${question8.number}`)).toHaveAttribute('data-highlighted', 'true');
+    expect(screen.getByTestId(`review-question-row-q${question8.number}`)).toHaveAttribute('data-open', 'false');
+    expect(pushState).toHaveBeenLastCalledWith(null, '', '/?mode=working-draft&section=sec-78');
+
+    // A popstate event restoring the earlier URL restores the earlier
+    // question and section identity, but -- unlike a reader's own outline
+    // navigation above -- never pushes a new history entry and never moves
+    // focus into the paper (spec item 5): focus stays exactly where it
+    // already was (still sec-78, from the click above).
+    pushState.mockClear();
+    act(() => {
+      window.history.replaceState(null, '', urlAfterQ4);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(screen.getByTestId(`review-question-row-q${question4.number}`)).toHaveAttribute('data-highlighted', 'true');
+    expect(pushState).not.toHaveBeenCalled();
+    expect(document.getElementById('sec-60')).not.toHaveFocus();
+    expect(document.getElementById('sec-78')).toHaveFocus();
+  });
+
+  // (c) Two-sided: if the "no q, no section" branch stopped restoring the
+  // first question (or restored whatever the last-active question happened
+  // to be instead), this would show something other than "Question 1: ...".
+  it('(c) a Working Draft popstate with neither q nor section restores the first question', () => {
+    const pushState = vi.spyOn(window.history, 'pushState');
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    const guide = getReviewerGuideContract();
+    const question1 = guide.questions.find((candidate) => candidate.number === 1);
+    expect(question1).toBeTruthy();
+    if (!question1) return;
+
+    // Navigate away first (to Question 4), so the restored state is not a no-op.
+    fireEvent.click(outlineLink('6.0 Framework'));
+    expect(screen.getByTestId('review-question-row-q1')).toHaveAttribute('data-highlighted', 'false');
+    pushState.mockClear();
+
+    // A popstate whose URL carries neither q nor section is the page as first
+    // opened: it restores the first question and navigates to the first
+    // outline anchor, without pushing a new history entry (spec item 5).
+    act(() => {
+      window.history.replaceState(null, '', '/?mode=working-draft');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(screen.getByTestId('review-question-row-q1')).toHaveAttribute('data-highlighted', 'true');
+    expect(pushState).not.toHaveBeenCalled();
+    expect(document.getElementById(questionOutline[0].anchor)).toHaveAttribute('id', questionOutline[0].anchor);
+  });
+
+  // (d) Two-sided: if the `scroll` flag were dropped (or inverted), this
+  // would either call scrollIntoView on sec-78 below lg, or the URL would be
+  // missing q/section because the navigation never happened at all.
+  it('(d) below lg, selecting a question in "Jump to topic" updates identity and the URL without scrolling the paper', () => {
+    const pushState = vi.spyOn(window.history, 'pushState');
+    setLgViewport(false);
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    const guide = getReviewerGuideContract();
+    const question8 = guide.questions.find((candidate) => candidate.number === 8);
+    expect(question8).toBeTruthy();
+    if (!question8) return;
+
+    const select = within(screen.getByTestId('review-comments-rail')).getByRole('combobox', { name: 'Jump to topic' });
+    scrollIntoView.mockClear();
+    fireEvent.change(select, { target: { value: '8' } });
+
+    // Identity and the URL still update...
+    expect(document.getElementById('active-question-heading')).toHaveTextContent(`Question 8: ${titleWithoutCitation(question8.heading)}`);
+    expect(pushState).toHaveBeenLastCalledWith(null, '', `/?mode=working-draft&q=${encodeURIComponent(question8.id)}&section=sec-78`);
+    // ...but below lg a question-driven navigation must not scroll the paper:
+    // the reader is working in the review panel, not the document column.
+    expect(scrolledElements()).not.toContain(document.getElementById('sec-78'));
+  });
+
+  // (e) Two-sided (regression): below lg, "Jump to topic" must be
+  // IDENTITY-ONLY -- it must not PIN the section either, or a later landing
+  // check (a header resize, another section load) would re-land on it and
+  // drag the reader's scroll position away from the review panel they are
+  // typing in. The synchronous branch of navigateToAnchor already schedules a
+  // landing check immediately when `authority.pinnedAnchor() === anchor`, so
+  // with rAF made synchronous and the target's geometry stubbed far from the
+  // reading line (a correction that WOULD fire if anything schedules it),
+  // this test proves no landing check is ever scheduled for a scroll:false
+  // navigation.
+  it('(e) below lg, selecting a question in "Jump to topic" does not pin the section, so no landing check ever scrolls to it', () => {
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback: FrameRequestCallback) => {
+      callback(0);
+      return 0;
+    });
+    setLgViewport(false);
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    const guide = getReviewerGuideContract();
+    const question8 = guide.questions.find((candidate) => candidate.number === 8);
+    expect(question8).toBeTruthy();
+    if (!question8) return;
+
+    // A landing correction WOULD be needed here: the target sits far (600px)
+    // from the reading line, well past the 2px tolerance.
+    (document.getElementById('sec-78') as HTMLElement).getBoundingClientRect = () => rect(600, 40);
+
+    const select = within(screen.getByTestId('review-comments-rail')).getByRole('combobox', { name: 'Jump to topic' });
+    scrollIntoView.mockClear();
+    fireEvent.change(select, { target: { value: '8' } });
+
+    // With rAF made synchronous, any landing check this navigation scheduled
+    // would already have run and corrected the far-off geometry above by now.
+    // It must never have been scheduled: the paper section was never scrolled.
+    // The only reveal is the explicitly selected question's own review row
+    // (round 3: selections are revealed at every width).
+    expect(scrolledElements()).not.toContain(document.getElementById('sec-78'));
+    expect(scrolledElements()).toEqual([screen.getByTestId('review-question-row-q8')]);
+  });
+
+  // (f) Two-sided: a Back/Forward entry that carries `q` but no `section` (an
+  // entry pushed by a My Review question change, or hand-edited) must still
+  // move the Working Draft's paper to that question's own section -- not just
+  // update the review panel's identity and leave the paper wherever it was.
+  it('(f) a Working Draft popstate with q but no section navigates the paper to that question\'s section', () => {
+    const pushState = vi.spyOn(window.history, 'pushState');
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    const guide = getReviewerGuideContract();
+    const question8 = guide.questions.find((candidate) => candidate.number === 8);
+    expect(question8).toBeTruthy();
+    if (!question8) return;
+
+    // Move away from the default question/section first, so the popstate
+    // target below is not a no-op.
+    fireEvent.click(outlineLink('6.0 Framework'));
+    expect(document.getElementById('sec-60')).toHaveFocus();
+    pushState.mockClear();
+    scrollIntoView.mockClear();
+
+    // A popstate whose URL carries q but NO section: the section must be
+    // inferred from the question's own primary anchor (navigation.anchorForQuestion).
+    act(() => {
+      window.history.replaceState(null, '', `/?mode=working-draft&q=${encodeURIComponent(question8.id)}`);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    expect(screen.getByTestId(`review-question-row-q${question8.number}`)).toHaveAttribute('data-highlighted', 'true');
+    expect(pushState).not.toHaveBeenCalled();
+    // The paper itself must follow: sec-78 (Question 8's own section) is
+    // scrolled to, exactly as an explicit section= URL would have done.
+    expect(scrolledElements()).toContain(document.getElementById('sec-78'));
+  });
+
+  it("an initial #section fragment (which the server never sees) syncs Review Comments to that section's question", () => {
+    const guide = getReviewerGuideContract();
+    const question8 = guide.questions.find((candidate) => candidate.number === 8);
+    expect(question8).toBeTruthy();
+    if (!question8) return;
+    window.history.replaceState(null, '', '/#sec-78');
+    try {
+      render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+      expect(document.getElementById('sec-78')).toHaveFocus();
+      // Two-sided: before the fix the paper went to 7.8 while the panel's
+      // highlight stayed on Question 1. Item 3: a hash navigation moves only
+      // the highlight, never opens the editor.
+      expect(screen.getByTestId(`review-question-row-q${question8.number}`)).toHaveAttribute('data-highlighted', 'true');
+      expect(screen.getByTestId(`review-question-row-q${question8.number}`)).toHaveAttribute('data-open', 'false');
+    } finally {
+      window.history.replaceState(null, '', '/');
+    }
+  });
+
+  it('an initial #section fragment with an explicit q keeps that question (the fragment moves only the paper)', () => {
+    const guide = getReviewerGuideContract();
+    const question4 = guide.questions.find((candidate) => candidate.number === 4);
+    expect(question4).toBeTruthy();
+    if (!question4) return;
+    window.history.replaceState(null, '', `/?mode=working-draft&q=${encodeURIComponent(question4.id)}#sec-78`);
+    try {
+      render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ q: question4.id })} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+      expect(document.getElementById('sec-78')).toHaveFocus();
+      expect(document.getElementById('active-question-heading')).toHaveTextContent(`Question 4: ${titleWithoutCitation(question4.heading)}`);
+    } finally {
+      window.history.replaceState(null, '', '/');
+    }
+  });
+
+  it('a URL that names a question (q) opens exactly that question; a section-only URL opens none', () => {
+    const guide = getReviewerGuideContract();
+    const question8 = guide.questions.find((candidate) => candidate.number === 8)!;
+    const { unmount } = render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ q: question8.id })} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    expect(screen.getByTestId('review-question-row-q8')).toHaveAttribute('data-open', 'true');
+    expect(document.getElementById('active-question-heading')).toHaveTextContent(/^Question 8:/);
+    expect(document.querySelectorAll('[data-testid^="review-question-row-q"][data-open="true"]')).toHaveLength(1);
+    unmount();
+    // Two-sided: a section deep link syncs (highlights) the related question but opens no editor.
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ section: 'sec-78' })} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    expect(screen.getByTestId('review-question-row-q8')).toHaveAttribute('data-highlighted', 'true');
+    expect(screen.getByTestId('review-question-row-q8')).toHaveAttribute('data-open', 'false');
+    expect(document.getElementById('active-question-heading')).toBeNull();
   });
 });
 
@@ -518,21 +878,23 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
     // clears the measured sticky header when it is a navigation target.
     expect(placeholder).toHaveClass('[overflow-anchor:auto]');
     expect(placeholder).toHaveClass('scroll-mt-[calc(var(--paper-sticky-header-height,6rem)+0.5rem)]');
-    expect(screen.getByTestId('paper-load-progress')).toHaveTextContent('Loaded 1 of 2 sections');
+    expect(screen.getByTestId('paper-load-progress')).toHaveTextContent('1 of 2 sections loaded. Print loads the rest automatically.');
   });
 
   it('loads the owning section from an outline click, then focuses the target once it has mounted', async () => {
     const calls = stubFetch();
-    const replaceState = vi.spyOn(window.history, 'replaceState');
+    // Item 8: an outline click is reader navigation, and reader navigation
+    // pushes a history entry now (see the Working Draft push-navigation test).
+    const pushState = vi.spyOn(window.history, 'pushState');
     renderWindow();
-    fireEvent.click(within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' }));
+    fireEvent.click(outlineLink('2 Methods'));
     expect(calls).toHaveLength(1);
     expect(calls[0].url).toBe(`/api/matrix-options/paper/v/${version}/sections/methods?paper=${SHA}`);
     expect(calls[0].init?.credentials).toBe('same-origin');
     await waitFor(() => expect(document.getElementById('methods')).not.toBeNull());
     await waitFor(() => expect(document.getElementById('methods')).toHaveFocus());
     expect(scrolledElements()).toContain(document.getElementById('methods'));
-    expect(replaceState).toHaveBeenLastCalledWith(null, '', '/?mode=working-draft&section=methods');
+    expect(pushState).toHaveBeenLastCalledWith(null, '', '/?mode=working-draft&section=methods');
     expect(activeOutlineLabels()).toEqual(['2 Methods']);
   });
 
@@ -543,26 +905,38 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
     await waitFor(() => expect(document.getElementById('methods')).toHaveFocus());
   });
 
-  it('gates print and find guidance on a complete document and reports progress', async () => {
+  /*
+   * Item 4: Print is ALWAYS enabled (aria-disabled only while busy) -- it loads
+   * missing sections itself, so it is never gated on completeness, and
+   * paper-print-unavailable / paper-find-guidance no longer exist. This still
+   * proves the same protective property the old "gates print" test did: the
+   * progress text is honest, and pressing Print calls window.print() exactly
+   * once (here against an already-complete document, so Print's own auto-load
+   * step has nothing to do and the assertion is about the print call itself).
+   */
+  it('reports honest load progress, and Print prints exactly once', async () => {
     stubFetch();
     const print = vi.fn();
     vi.stubGlobal('print', print);
     renderWindow();
     const printButton = screen.getByTestId('paper-print-button');
-    expect(printButton).toBeDisabled();
-    expect(screen.getByTestId('paper-print-unavailable')).toBeInTheDocument();
+    expect(printButton).toBeEnabled();
+    expect(printButton).not.toHaveAttribute('aria-disabled');
+    expect(screen.queryByTestId('paper-print-unavailable')).toBeNull();
     expect(screen.queryByTestId('paper-find-guidance')).toBeNull();
     expect(screen.getByTestId('paper-partial-print-notice')).toBeInTheDocument();
-    expect(screen.getByTestId('paper-load-progress-bar')).toHaveAttribute('value', '1');
+    // The progress bar itself only renders while a load is actively in flight.
+    expect(screen.queryByTestId('paper-load-progress-bar')).toBeNull();
+    expect(screen.getByTestId('paper-load-progress')).toHaveTextContent('1 of 2 sections loaded. Print loads the rest automatically.');
 
     fireEvent.click(screen.getByTestId('paper-load-full-document-button'));
-    await waitFor(() => expect(screen.getByTestId('paper-load-full-document-button')).toHaveTextContent('Full document loaded'));
-    expect(screen.getByTestId('paper-load-progress')).toHaveTextContent('Loaded 2 of 2 sections');
-    expect(screen.getByTestId('paper-find-guidance')).toHaveTextContent('Ctrl+F');
+    await waitFor(() => expect(screen.getByTestId('paper-load-full-document-button')).toHaveTextContent('Entire paper loaded'));
+    expect(screen.getByTestId('paper-load-progress')).toHaveTextContent('Entire paper loaded. Browser Find (Ctrl+F) searches all of it.');
     expect(screen.queryByTestId('paper-partial-print-notice')).toBeNull();
-    expect(screen.getByTestId('paper-print-button')).toBeEnabled();
-    fireEvent.click(screen.getByTestId('paper-print-button'));
-    expect(print).toHaveBeenCalledTimes(1);
+    expect(printButton).toBeEnabled();
+
+    fireEvent.click(printButton);
+    await waitFor(() => expect(print).toHaveBeenCalledTimes(1));
   });
 
   it('surfaces a failed section and recovers on retry', async () => {
@@ -572,11 +946,11 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
     const retry = await screen.findByRole('button', { name: 'Retry section' });
     const placeholder = screen.getByTestId('paper-document').querySelector('[data-paper-section-placeholder="methods"]') as HTMLElement;
     expect(within(placeholder).getByRole('alert')).toHaveTextContent('Paper section request failed: 500');
-    expect(within(screen.getByTestId('paper-load-full-document')).getByRole('alert')).toHaveTextContent('1 section(s) did not load');
+    expect(within(screen.getByTestId('paper-load-full-document')).getByRole('alert')).toHaveTextContent('1 section did not load');
     stubFetch({ ok: true });
     fireEvent.click(retry);
     await waitFor(() => expect(document.getElementById('methods')).not.toBeNull());
-    expect(screen.getByTestId('paper-load-progress')).toHaveTextContent('Loaded 2 of 2 sections');
+    expect(screen.getByTestId('paper-load-progress')).toHaveTextContent('Entire paper loaded. Browser Find (Ctrl+F) searches all of it.');
   });
 
   /*
@@ -594,10 +968,6 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
       return { ok: result.ok, status: result.ok ? 200 : 500, json: async () => methodsContract() } as unknown as Response;
     }));
     return () => { act(() => { release(); }); };
-  }
-
-  function outlineLink(name: string) {
-    return within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name });
   }
 
   /** Lets the post-commit effects of a resolved section run. */
@@ -712,7 +1082,7 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
       renderWindow();
       expect(trackerFor(['intro', 'scope', 'detail'])).toHaveLength(1);
       expect(trackerFor(['methods'])).toHaveLength(0);
-      fireEvent.click(within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' }));
+      fireEvent.click(outlineLink('2 Methods'));
       await waitFor(() => expect(document.getElementById('methods')).not.toBeNull());
       await waitFor(() => expect(trackerFor(['intro', 'methods']).length).toBeGreaterThan(0));
     });
@@ -721,7 +1091,7 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
       stubFetch();
       setLgViewport(true);
       renderWindow();
-      fireEvent.click(within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' }));
+      fireEvent.click(outlineLink('2 Methods'));
       await waitFor(() => expect(document.getElementById('methods')).not.toBeNull());
       fireEvent.wheel(window);
       const column = screen.getByTestId('paper-document-column');
@@ -740,7 +1110,7 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
       stubFetch();
       setLgViewport(false);
       renderWindow();
-      fireEvent.click(within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' }));
+      fireEvent.click(outlineLink('2 Methods'));
       await waitFor(() => expect(document.getElementById('methods')).not.toBeNull());
       fireEvent.wheel(window);
 
@@ -802,10 +1172,21 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
 });
 
 describe('RevisedPaperWorkspace My Review', () => {
+  /**
+   * Item 3: only one question's editor is ever open at a time, so switching
+   * questions unmounts the previous row's panel (including its own Next/
+   * Previous buttons) and mounts a new one for the row that opens. A button
+   * reference captured before a click is stale for any click after it; this
+   * re-queries "Next question" fresh every time.
+   */
+  function clickNextQuestion() {
+    fireEvent.click(within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' }));
+  }
+
   it('R2-03: renders a truthful unavailable state without cohort portions and the portion with them', () => {
     const { rerender } = renderMyReview({}, 'none');
     const unavailable = screen.getByTestId('cohort-portions-unavailable');
-    expect(within(unavailable).getByRole('heading', { name: 'Cohort paper portions unavailable' })).toBeInTheDocument();
+    expect(within(unavailable).getByRole('heading', { name: 'Review sections unavailable' })).toBeInTheDocument();
     expect(within(unavailable).getByRole('status')).toHaveTextContent('My Review shows no paper text');
     expect(within(unavailable).getByRole('link', { name: 'Open the Working Draft' })).toHaveAttribute('href', `${base}?mode=working-draft`);
     expect(screen.queryByTestId('cohort-paper')).toBeNull();
@@ -822,7 +1203,11 @@ describe('RevisedPaperWorkspace My Review', () => {
     // (built from the existing url-state serializer).
     expect(screen.getAllByTestId('cohort-paper')).toHaveLength(1);
     expect(screen.getByTestId('cohort-paper')).toHaveTextContent('Authenticated bounded excerpt.');
-    expect(screen.getByRole('link', { name: 'Open in Working Draft' })).toHaveAttribute('href', `${base}?mode=working-draft&section=anchor-categories`);
+    // Nothing is open, so the link names only the section (following it must
+    // not open an editor); an opened question travels with it.
+    expect(screen.getByRole('link', { name: /^Open .+ in Working Draft$/ })).toHaveAttribute('href', `${base}?mode=working-draft&section=anchor-categories`);
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+    expect(screen.getByRole('link', { name: /^Open .+ in Working Draft$/ })).toHaveAttribute('href', `${base}?mode=working-draft&q=${encodeURIComponent(questionId(1))}&section=anchor-categories`);
   });
 
   it('restores cohort and question from URL state with Review Comments open in the right rail', () => {
@@ -841,11 +1226,14 @@ describe('RevisedPaperWorkspace My Review', () => {
     expect(reviewToggle).toHaveAttribute('aria-controls', 'paper-review-comments-rail');
     const rail = screen.getByTestId('review-comments-rail');
     expect(rail).toHaveAttribute('data-state', 'open');
-    expect(rail).toHaveClass('w-full', 'lg:w-96', 'border-t', 'lg:border-l');
+    expect(rail).toHaveClass('w-full', 'lg:w-[var(--paper-right-width)]', 'border-t', 'lg:border-l');
     expect(within(rail).getByRole('heading', { name: 'Review Comments', level: 2 })).toBeInTheDocument();
     expect(screen.getByTestId('paper-document-column').compareDocumentPosition(rail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
-    const cohortButton = screen.getByRole('button', { name: `${cohort.name}, ${cohort.questionNumbers.length} questions` });
+    // Item 6: the My Review navigation labels each topic with its numbered
+    // presentation label ("2. Receptors and Pathways"), not the raw manifest name.
+    const cohortIndex = getCohortManifest().cohorts.findIndex((candidate) => candidate.id === cohort.id);
+    const cohortButton = screen.getByRole('button', { name: `${numberedReviewTopicLabel(cohort.id, cohort.name, cohortIndex)}, ${cohort.questionNumbers.length} questions` });
     expect(cohortButton).toHaveAttribute('aria-expanded', 'true');
     expect(cohortButton).not.toHaveAttribute('aria-pressed');
     const select = screen.getByRole('combobox', { name: 'Jump to topic' });
@@ -868,12 +1256,15 @@ describe('RevisedPaperWorkspace My Review', () => {
     const otherNumber = cohort.questionNumbers.find((number) => number !== 4) ?? 4;
     const other = guide.questions.find((candidate) => candidate.number === otherNumber);
     fireEvent.change(select, { target: { value: String(otherNumber) } });
-    expect(screen.getByTestId('active-question-response')).toHaveFocus();
+    // A question chosen in Review Comments opens INLINE in its row and keeps the
+    // reviewer's own focus and view (no jump to the top of the panel).
+    expect(screen.getByTestId('active-question-response')).not.toHaveFocus();
+    expect(screen.getByTestId(`review-question-row-q${otherNumber}`)).toHaveAttribute('data-open', 'true');
     // PLAN-R4 6.C: a question change pushes a new history entry (so Back
     // steps between questions) instead of replacing (old M1 behavior: every
     // My Review URL change, including a question change, used replaceState).
-    expect(pushState).toHaveBeenLastCalledWith(null, '',`/?mode=my-review&cohort=${cohort.id}&q=${encodeURIComponent(other?.id ?? '')}`);
-    expect(replaceState).not.toHaveBeenCalledWith(null, '',`/?mode=my-review&cohort=${cohort.id}&q=${encodeURIComponent(other?.id ?? '')}`);
+    expect(pushState).toHaveBeenLastCalledWith(null, '',`/?mode=my-review&cohort=${cohort.id}&q=${encodeURIComponent(other?.id ?? '')}&section=anchor-${cohort.id}`);
+    expect(replaceState).not.toHaveBeenCalledWith(null, '',`/?mode=my-review&cohort=${cohort.id}&q=${encodeURIComponent(other?.id ?? '')}&section=anchor-${cohort.id}`);
   });
 
   it('M2: Next question walks all 12 questions in cohort order, crossing from one cohort to the next', () => {
@@ -882,15 +1273,20 @@ describe('RevisedPaperWorkspace My Review', () => {
     const manifest = getCohortManifest();
     // categories = [1, 2, 3]; the next cohort in manifest order is pathway-grid = [4, 5].
     expect(manifest.cohorts[0]?.questionNumbers).toEqual([1, 2, 3]);
-    const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
-    fireEvent.click(next);
-    fireEvent.click(next);
-    fireEvent.click(next);
+    // Item 3: nothing is open by default (only highlighted); open Question 1
+    // explicitly (a question row toggle) so its Next/Previous controls exist.
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+    clickNextQuestion();
+    clickNextQuestion();
+    clickNextQuestion();
     const question4 = guide.questions.find((candidate) => candidate.number === 4);
     expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
-    expect(screen.getByTestId('active-question-response')).toHaveTextContent(`Question 4: ${question4?.heading}`);
+    expect(screen.getByTestId('active-question-response')).toHaveTextContent(`Question 4: ${titleWithoutCitation(question4?.heading ?? '')}`);
+    // Item 5/6: the citation lives on its own context line, labelled with the
+    // topic's numbered presentation label.
+    expect(screen.getByTestId('review-question-context')).toHaveTextContent('2. Receptors and Pathways - Sections 4.1 and 6.0');
     // Crossing cohorts also switches the left rail's selected/expanded cohort.
-    expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: '2. Receptors and Pathways, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
   });
 
   /*
@@ -908,13 +1304,13 @@ describe('RevisedPaperWorkspace My Review', () => {
         window.history.replaceState(null, '', '/?mode=my-review&section=anchor-pathway-grid');
         window.dispatchEvent(new PopStateEvent('popstate'));
       });
-      expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: '2. Receptors and Pathways, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
     });
 
     it('derives cohort from a section-only initial URL', () => {
       const portions = realPortions().map((portion) => ({ ...portion, sectionAnchor: `anchor-${portion.cohortId}` }));
       renderMyReview({ cohort: null, q: null, section: 'anchor-pathway-grid' }, portions);
-      expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: '2. Receptors and Pathways, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
     });
   describe('M2-POPSTATE: Back restores My Review state via a real popstate event', () => {
     function popTo(url: string) {
@@ -927,36 +1323,40 @@ describe('RevisedPaperWorkspace My Review', () => {
     it('M2-POPSTATE: restores the visible question, cohort disclosure, and progress line', () => {
       renderMyReview();
       const guide = getReviewerGuideContract();
-      const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
-      fireEvent.click(next); // -> q2 (pushState)
+      // Item 3: open Question 1's editor explicitly so Next/Previous exist.
+      fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+      clickNextQuestion(); // -> q2 (pushState)
       const urlAfterQ2 = window.location.pathname + window.location.search;
-      fireEvent.click(next); // -> q3 (pushState)
+      clickNextQuestion(); // -> q3 (pushState)
       expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('3');
 
       popTo(urlAfterQ2);
 
       expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('2');
       const question2 = guide.questions.find((candidate) => candidate.number === 2);
-      expect(screen.getByTestId('active-question-response')).toHaveTextContent(`Question 2: ${question2?.heading}`);
-      expect(screen.getByTestId('review-progress')).toHaveTextContent('Question 2 of 12');
-      expect(screen.getByRole('button', { name: 'Categories, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByTestId('active-question-response')).toHaveTextContent(`Question 2: ${titleWithoutCitation(question2?.heading ?? '')}`);
+      // Item 5: the progress line summarises submissions, not "current of
+      // total"; the restored current question is marked in the tracker itself.
+      expect(screen.getByTestId('review-progress')).toHaveTextContent('0 of 12 submitted');
+      expect(screen.getByTestId('review-progress-q2')).toHaveAttribute('aria-current', 'step');
+      expect(screen.getByRole('button', { name: '1. Sediment Uses, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
     });
 
     it('M2-POPSTATE: restores state crossing a cohort boundary, without requesting any reveal or scroll', () => {
       renderMyReview();
-      const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
-      fireEvent.click(next);
-      fireEvent.click(next);
+      fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+      clickNextQuestion();
+      clickNextQuestion();
       const urlAfterQ3 = window.location.pathname + window.location.search;
-      fireEvent.click(next); // -> q4, crosses into pathway-grid
-      expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+      clickNextQuestion(); // -> q4, crosses into pathway-grid
+      expect(screen.getByRole('button', { name: '2. Receptors and Pathways, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
 
       scrollIntoView.mockClear();
       scrollBy.mockClear();
       popTo(urlAfterQ3);
 
       expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('3');
-      expect(screen.getByRole('button', { name: 'Categories, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
+      expect(screen.getByRole('button', { name: '1. Sediment Uses, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
       // No reveal/scroll is requested by a Back navigation (popstate is not a
       // scroll-authority activation kind; scroll-authority.ts is unmodified).
       expect(scrollIntoView).not.toHaveBeenCalled();
@@ -965,10 +1365,10 @@ describe('RevisedPaperWorkspace My Review', () => {
 
     it('M2-POPSTATE: moves focus to the response section on Back only when focus was inside Review Comments', () => {
       renderMyReview();
-      const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
-      fireEvent.click(next); // -> q2 (pushState; this is the URL Back returns to below)
+      fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+      clickNextQuestion(); // -> q2 (pushState; this is the URL Back returns to below)
       const urlAtQ2 = window.location.pathname + window.location.search;
-      fireEvent.click(next); // -> q3
+      clickNextQuestion(); // -> q3
       const select = screen.getByRole('combobox', { name: 'Jump to topic' });
       select.focus();
       expect(select).toHaveFocus();
@@ -980,11 +1380,11 @@ describe('RevisedPaperWorkspace My Review', () => {
 
     it('M2-POPSTATE: leaves focus alone on Back when it was outside Review Comments beforehand', () => {
       renderMyReview();
-      const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
-      fireEvent.click(next); // -> q2 (pushState; this is the URL Back returns to below)
+      fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+      clickNextQuestion(); // -> q2 (pushState; this is the URL Back returns to below)
       const urlAtQ2 = window.location.pathname + window.location.search;
-      fireEvent.click(next); // -> q3
-      const cohortButton = screen.getByRole('button', { name: 'Categories, 3 questions' });
+      clickNextQuestion(); // -> q3
+      const cohortButton = screen.getByRole('button', { name: '1. Sediment Uses, 3 questions' });
       cohortButton.focus();
       expect(cohortButton).toHaveFocus();
 
@@ -1008,7 +1408,7 @@ describe('RevisedPaperWorkspace My Review', () => {
     const rail = screen.getByTestId('review-comments-rail');
     fireEvent.click(toggle);
     expect(rail).toHaveAttribute('inert');
-    expect(rail).toHaveClass('max-h-0', 'border-t-0', 'lg:w-0');
+    expect(rail).toHaveClass('max-h-0', 'border-0', 'lg:max-h-none', 'lg:w-0');
     expect(toggle).toHaveFocus();
     fireEvent.click(toggle);
     const heading = within(rail).getByRole('heading', { name: 'Review Comments', level: 2 });
@@ -1023,17 +1423,17 @@ describe('RevisedPaperWorkspace My Review', () => {
     if (!target) return;
     const second = { ...target, id: 'pathway-grid:second', sectionLabel: 'Pathway second portion', text: '# Pathway second portion\n\nSecond authenticated bounded excerpt.' };
     renderMyReview({}, [...basePortions, second]);
-    const nav = screen.getByRole('navigation', { name: 'Review cohorts' });
+    const nav = screen.getByRole('navigation', { name: 'Review topics' });
     expect(within(nav).getAllByRole('button', { name: /questions$/ })).toHaveLength(5);
 
-    const categories = within(nav).getByRole('button', { name: 'Categories, 3 questions' });
+    const categories = within(nav).getByRole('button', { name: '1. Sediment Uses, 3 questions' });
     expect(categories).toHaveAttribute('aria-expanded', 'true');
     fireEvent.click(categories);
     expect(categories).toHaveAttribute('aria-expanded', 'false');
     expect(document.getElementById('cohort-categories-portions')).toHaveAttribute('hidden');
     expect(scrollIntoView).not.toHaveBeenCalled();
 
-    fireEvent.click(within(nav).getByRole('button', { name: 'Pathway and grid, 2 questions' }));
+    fireEvent.click(within(nav).getByRole('button', { name: '2. Receptors and Pathways, 2 questions' }));
     // M2: pathway-grid now resolves TWO portions (the fixture's base one plus
     // "second"), stacked together (PLAN-R4 3.B.2) -- so cohort selection
     // focuses the FIRST stacked heading, not a single paginated one.
@@ -1078,16 +1478,25 @@ describe('RevisedPaperWorkspace My Review', () => {
     // cohort and question..." test above for the paired positive assertion).
     expect(pushState).toHaveBeenCalled();
 
+    // A question chosen in the left navigation while the rail is closed never
+    // moves focus into the inert rail either.
+    const navQuestion = (number: number) => within(screen.getByTestId('navigation-rail')).getByRole('button', { name: new RegExp(`^Question ${number}:`) });
+    fireEvent.click(navQuestion(3));
+    expect(toggle).toHaveFocus();
+
     fireEvent.click(toggle);
     expect(screen.getByTestId('review-comments-rail')).not.toHaveAttribute('inert');
-    fireEvent.change(select, { target: { value: '3' } });
-    expect(response).toHaveFocus();
+    // Positive control: with the rail open, a question chosen in the navigation
+    // is revealed and its row takes focus.
+    fireEvent.click(navQuestion(2));
+    expect(screen.getByTestId('review-question-toggle-q2')).toHaveFocus();
+    expect(response).not.toHaveFocus();
   });
 
   it('M1-09: renders one h1 and demotes portion headings below the portion heading', () => {
     renderMyReview();
     expect(document.querySelectorAll('h1')).toHaveLength(1);
-    expect(document.querySelector('h1')).toHaveTextContent('Review workspace');
+    expect(document.querySelector('h1')).toHaveTextContent('Matrix Options Paper - Review Workspace');
     const paper = screen.getByTestId('cohort-paper');
     expect(within(paper).getByRole('heading', { level: 3, name: 'Categories source context' })).toBeInTheDocument();
     expect(within(paper).getAllByRole('heading', { level: 2 })).toHaveLength(1);
@@ -1097,13 +1506,13 @@ describe('RevisedPaperWorkspace My Review', () => {
     const portions = realPortions().map((portion) => ({ ...portion, sectionAnchor: `anchor-${portion.cohortId}` }));
     const replaceState = vi.spyOn(window.history, 'replaceState');
     const { unmount } = renderMyReview({ section: 'anchor-pathway-grid' }, portions);
-    expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: '2. Receptors and Pathways, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
     expect(within(screen.getByTestId('cohort-paper')).getByRole('heading', { level: 2 })).toHaveTextContent('Pathway and grid');
     expect(replaceState).not.toHaveBeenCalled();
     unmount();
 
     renderMyReview({ section: 'not-a-portion-anchor' }, portions);
-    expect(screen.getByRole('button', { name: 'Categories, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('button', { name: '1. Sediment Uses, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
     expect(within(screen.getByTestId('cohort-paper')).getByRole('heading', { level: 2 })).toHaveTextContent('Categories');
     expect(replaceState).not.toHaveBeenCalled();
   });
@@ -1111,11 +1520,10 @@ describe('RevisedPaperWorkspace My Review', () => {
   it('renders an unavailable referenced section without paper bytes', () => {
     const unavailable: CohortPortion = { id: 'categories:section-7.8', cohortId: 'categories', name: 'Categories', status: 'unavailable', sectionNumber: '7.8', sourceLocator: 'Section 7.8', sectionLabel: 'Section 7.8' };
     renderMyReview({}, [unavailable]);
-    expect(screen.getByText('Section 7.8 is referenced by this review cohort but is not present as a section in this release.')).toBeInTheDocument();
-    expect(screen.getByTestId('cohort-paper')).toHaveTextContent('No paper bytes are attached.');
+    expect(screen.getByText('Section 7.8 is referenced by this review topic but is not part of this draft.')).toBeInTheDocument();
     // M2: unavailable portions never get an "Open in Working Draft" link (no
     // resolved section anchor to link to) -- truthful, per PLAN-R4 3.B.2.
-    expect(screen.queryByRole('link', { name: 'Open in Working Draft' })).toBeNull();
+    expect(screen.queryByRole('link', { name: /Open .* in Working Draft/ })).toBeNull();
     // FIX CYCLE 1 / F3 + E13: the C1 scaffold rendered this exact case (a
     // single portion, unavailable or not) inside a "Paper portion 1 of 1"
     // pager (data-testid=paper-portion-navigation); M2 stacks portions with
@@ -1131,11 +1539,21 @@ describe('RevisedPaperWorkspace My Review', () => {
     expect(screen.queryByTestId('trust-strip')).toBeNull();
     expect(screen.queryByText('Device-local note')).toBeNull();
     expect(screen.queryByText('Review ledger')).toBeNull();
-    expect(screen.getByText('Assignment unavailable')).toBeInTheDocument();
+    // Item 1: the assignment claim no longer sits in the primary UI; it lives
+    // only inside the "About this draft" popover.
+    expect(screen.queryByText(/Assignments are not connected for this release\./)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'About this draft' }));
     expect(screen.getByText(/Assignments are not connected for this release\./)).toBeInTheDocument();
   });
 
-  it('supplies distinguishable download manifests and switches cohorts, updating the download links dynamically', () => {
+  /*
+   * Item 2: "Both modes list ALL topics' packages (My Review is no longer
+   * filtered to one cohort)." Distinct, attributable manifests for two topics
+   * must both appear together in My Review, and switching the active cohort in
+   * the left rail must NOT change what Download Files shows -- the previous
+   * per-cohort filtering is gone.
+   */
+  it('supplies distinguishable download manifests for every topic in My Review, unaffected by cohort selection', () => {
     const downloadManifests = {
       'categories': {
         schemaVersion: 'matrix-paper-download-manifest-v1' as const,
@@ -1170,25 +1588,35 @@ describe('RevisedPaperWorkspace My Review', () => {
     const downloadBtn = screen.getByRole('button', { name: 'Download Files' });
     fireEvent.click(downloadBtn);
 
-    // My Review shows EXACTLY the selected cohort's pair - one group, two
-    // packages. Controls are buttons now, not anchors: the panel fetches and
-    // verifies before writing anything to disk.
+    // BOTH topics' pairs are present at once, each labelled by topic name.
     expect(screen.getByTestId('download-button-cat-pdf')).toBeInTheDocument();
     expect(screen.getByTestId('download-button-cat-docx')).toBeInTheDocument();
-    expect(screen.getByText('Categories PDF')).toBeInTheDocument();
-    expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(1);
-    expect(screen.getAllByRole('button', { name: /^Download (PDF|DOCX)$/ })).toHaveLength(2);
-
-    // Switch to Pathway and grid cohort.
-    fireEvent.click(screen.getByRole('button', { name: /Pathway and grid/ }));
-
-    // ONLY the pair shown changes; it is still exactly one cohort's two packages.
     expect(screen.getByTestId('download-button-pg-pdf')).toBeInTheDocument();
     expect(screen.getByTestId('download-button-pg-docx')).toBeInTheDocument();
-    expect(screen.getByText('Pathway Grid PDF')).toBeInTheDocument();
-    expect(screen.queryByTestId('download-button-cat-pdf')).not.toBeInTheDocument();
-    expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(1);
-    expect(screen.getAllByRole('button', { name: /^Download (PDF|DOCX)$/ })).toHaveLength(2);
+    expect(screen.getByText('Sediment Uses - PDF')).toBeInTheDocument();
+    expect(screen.getByText('Receptors and Pathways - PDF')).toBeInTheDocument();
+    expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /^.+ - (PDF|DOCX)$/ })).toHaveLength(4);
+
+    // Close the popover before switching cohorts: selecting a cohort moves
+    // focus to its revealed portion heading, which -- correctly, for a
+    // non-modal popover -- closes Download Files via its own blur handling.
+    // That is a separate, unrelated interaction from what this test checks.
+    fireEvent.click(downloadBtn);
+    expect(screen.queryByRole('dialog', { name: 'Download files' })).toBeNull();
+
+    // Switch to Pathway and grid cohort in the left rail.
+    fireEvent.click(screen.getByRole('button', { name: '2. Receptors and Pathways, 2 questions' }));
+
+    // Reopen Download Files: nothing in it changed -- it was never scoped to
+    // the cohort in the first place.
+    fireEvent.click(screen.getByRole('button', { name: 'Download Files' }));
+    expect(screen.getByTestId('download-button-cat-pdf')).toBeInTheDocument();
+    expect(screen.getByTestId('download-button-cat-docx')).toBeInTheDocument();
+    expect(screen.getByTestId('download-button-pg-pdf')).toBeInTheDocument();
+    expect(screen.getByTestId('download-button-pg-docx')).toBeInTheDocument();
+    expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /^.+ - (PDF|DOCX)$/ })).toHaveLength(4);
   });
 
   it('P1-A: Working Draft exposes every cohort package pair, not just the first', () => {
@@ -1218,7 +1646,7 @@ describe('RevisedPaperWorkspace My Review', () => {
     // Every cohort is present exactly once, and all ten packages are reachable.
     expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(cohortIds.length);
     for (const id of cohortIds) expect(screen.getByTestId(`download-cohort-${id}`)).toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /^Download (PDF|DOCX)$/ })).toHaveLength(cohortIds.length * 2);
+    expect(screen.getAllByRole('button', { name: /^.+ - (PDF|DOCX)$/ })).toHaveLength(cohortIds.length * 2);
     cohortIds.forEach((_id, index) => {
       expect(screen.getByTestId(`download-button-c${index}-pdf`)).toBeInTheDocument();
       expect(screen.getByTestId(`download-button-c${index}-docx`)).toBeInTheDocument();
@@ -1247,7 +1675,7 @@ describe('RevisedPaperWorkspace My Review', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Download Files' }));
     expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(1);
-    expect(screen.getAllByRole('button', { name: /^Download (PDF|DOCX)$/ })).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: /^.+ - (PDF|DOCX)$/ })).toHaveLength(2);
   });
 
   it('P1-A: an entirely absent manifest map still fails closed to pending', () => {
@@ -1255,8 +1683,8 @@ describe('RevisedPaperWorkspace My Review', () => {
       <RevisedPaperWorkspace documentVersion={version} urlState={state({ mode: 'working-draft' })} assignment={getProductionAssignment()} outline={[]} downloadManifests={null} />
     );
     fireEvent.click(screen.getByRole('button', { name: 'Download Files' }));
-    expect(screen.getByTestId('download-files-pending')).toHaveTextContent('pending server validation');
-    expect(screen.queryByRole('button', { name: /^Download (PDF|DOCX)$/ })).not.toBeInTheDocument();
+    expect(screen.getByTestId('download-files-pending')).toHaveTextContent('Download files are being prepared for this release and are not available yet.');
+    expect(screen.queryByRole('button', { name: /^.+ - (PDF|DOCX)$/ })).not.toBeInTheDocument();
   });
 });
 
@@ -1295,7 +1723,7 @@ describe('sticky-header reveal and landing corrections (M1R4-02, M1R4-03)', () =
   }
 
   function navigationHeading() {
-    return within(screen.getByTestId('navigation-rail')).getByRole('heading', { name: 'Navigation', level: 2 });
+    return within(screen.getByTestId('navigation-rail')).getByRole('heading', { name: 'Paper Navigation', level: 2 });
   }
 
   it('M1R4-02: the reveal delta is measured from the published sticky header, and is 0 once the heading is on the reading line', () => {
@@ -1420,21 +1848,25 @@ describe('sticky-header reveal and landing corrections (M1R4-02, M1R4-03)', () =
     }
   });
 
-  it('M1R6-01: a panel with no expansion at all -- Download Files -- settles on its second sample and is never scrolled', () => {
+  /*
+   * Download Files is now a portalled popover, decoupled from the scroll
+   * authority entirely (item 2) -- it is not a reveal target any more (see the
+   * (c) tests below for its own toggle/dialog contract). Review Comments is
+   * used here instead to exercise the same still-true protective property: a
+   * heading whose geometry never moves settles immediately and is never
+   * scrolled, even across the multi-sample settle loop.
+   */
+  it('M1R6-01: a heading that never moves settles on its first sample and is never scrolled', () => {
     const header = mountStickyHeader(129);
     try {
       runFramesSynchronously();
       setLgViewport(false);
       renderWorkingDraft();
-      // The panel is `hidden` until it is opened, so it is out of the
-      // accessibility tree and has to be reached by its own id to be stubbed.
-      const heading = document.getElementById('paper-download-files-heading') as HTMLElement;
-      expect(heading).not.toBeNull();
-      // run-004 section 7.1: Download Files is a `hidden` section with no 300ms
-      // expansion, and it landed and STAYED at delta 0 in every trace. A
-      // motion-reduce rail behaves the same way -- it never moves either.
+      const heading = within(screen.getByTestId('review-comments-rail')).getByRole('heading', { name: 'Review Comments', level: 2 });
+      // Already on the reading line, and stays there for every sample.
       replayHeadingTops(heading, [137]);
-      const toggle = within(screen.getByTestId('workspace-header-controls')).getByRole('button', { name: 'Download Files' });
+      const toggle = within(headerHost()).getByRole('button', { name: 'Review Comments' });
+      fireEvent.click(toggle);
       scrollBy.mockClear();
       fireEvent.click(toggle);
       expect(heading).toHaveFocus();
@@ -1501,9 +1933,9 @@ describe('sticky-header reveal and landing corrections (M1R4-02, M1R4-03)', () =
    * A third section exists here purely so a LATER load can be driven.
    */
   const threeSectionOutline: readonly PaperOutlineNavEntry[] = [
-    { id: 'n1', anchor: 'intro', label: '1 Introduction', depth: 1, parentId: null, childIds: [] },
-    { id: 'n2', anchor: 'methods', label: '2 Methods', depth: 1, parentId: null, childIds: [] },
-    { id: 'n3', anchor: 'results', label: '3 Results', depth: 1, parentId: null, childIds: [] },
+    { id: 'n1', anchor: 'intro', label: '1 Introduction', depth: 1, level: 1, parentId: null, childIds: [] },
+    { id: 'n2', anchor: 'methods', label: '2 Methods', depth: 1, level: 1, parentId: null, childIds: [] },
+    { id: 'n3', anchor: 'results', label: '3 Results', depth: 1, level: 1, parentId: null, childIds: [] },
   ];
   const THREE_SHA = 'c'.repeat(64);
   const threeSectionWindow = {
@@ -1554,7 +1986,7 @@ describe('sticky-header reveal and landing corrections (M1R4-02, M1R4-03)', () =
     setLgViewport(false);
     runFramesSynchronously();
     renderThreeSectionWindow();
-    fireEvent.click(within(screen.getByTestId('paper-outline-desktop')).getByRole('link', { name: '2 Methods' }));
+    fireEvent.click(outlineLink('2 Methods'));
     await waitFor(() => expect(document.getElementById('methods')).not.toBeNull());
     const target = document.getElementById('methods') as HTMLElement;
     // The state run-002 measured and never recovered from: the target sits above
@@ -1662,9 +2094,9 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
   }
 
   const mountOutline: readonly PaperOutlineNavEntry[] = [
-    { id: 'm1', anchor: 'intro', label: '1 Introduction', depth: 1, parentId: null, childIds: [] },
-    { id: 'm2', anchor: 'methods', label: '2 Methods', depth: 1, parentId: null, childIds: [] },
-    { id: 'm3', anchor: 'results', label: '3 Results', depth: 1, parentId: null, childIds: [] },
+    { id: 'm1', anchor: 'intro', label: '1 Introduction', depth: 1, level: 1, parentId: null, childIds: [] },
+    { id: 'm2', anchor: 'methods', label: '2 Methods', depth: 1, level: 1, parentId: null, childIds: [] },
+    { id: 'm3', anchor: 'results', label: '3 Results', depth: 1, level: 1, parentId: null, childIds: [] },
   ];
   const MOUNT_SHA = 'e'.repeat(64);
   /*
@@ -1719,15 +2151,30 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
   }
 
   function navigationRailHeading() {
-    return within(screen.getByTestId('navigation-rail')).getByRole('heading', { name: 'Navigation', level: 2 });
+    return within(screen.getByTestId('navigation-rail')).getByRole('heading', { name: 'Paper Navigation', level: 2 });
   }
 
-  function downloadToggle() {
-    return within(screen.getByTestId('workspace-header-controls')).getByRole('button', { name: 'Download Files' });
+  /*
+   * Download Files is a portalled popover now, decoupled from the scroll
+   * authority (item 2): it never claims the scrollport, so it can no longer
+   * stand in as "a second, independent panel" for these reveal-arbitration
+   * tests. Review Comments -- the other remaining PanelKey -- takes its place
+   * throughout this describe block.
+   */
+  function reviewCommentsToggle() {
+    return within(headerHost()).getByRole('button', { name: 'Review Comments' });
   }
 
-  function downloadHeading() {
-    return document.getElementById('paper-download-files-heading') as HTMLElement;
+  function reviewCommentsRailHeading() {
+    return within(screen.getByTestId('review-comments-rail')).getByRole('heading', { name: 'Review Comments', level: 2 });
+  }
+
+  /** Opens the Review Comments rail from its default-open state (close, then open); mirrors reopenNavigation for a second, independent panel. */
+  function reopenReviewComments() {
+    const toggle = reviewCommentsToggle();
+    fireEvent.click(toggle);
+    fireEvent.click(toggle);
+    return reviewCommentsRailHeading();
   }
 
   /*
@@ -2271,10 +2718,10 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
        */
       const timers = recordRevealTimers();
       try {
-        // Sequence A: Download Files. A heading at 0 is corrected by -137, which
+        // Sequence A: Review Comments. A heading at 0 is corrected by -137, which
         // no other sequence here can produce.
-        const aTimer = timers.during(() => { fireEvent.click(downloadToggle()); });
-        downloadHeading().getBoundingClientRect = () => rect(0, 40);
+        const aTimer = timers.during(() => { reopenReviewComments(); });
+        reviewCommentsRailHeading().getBoundingClientRect = () => rect(0, 40);
         const aDelta = expectedDelta(0, 129);
 
         // Sequence B: Navigation, opened by LATER distinct activations, with a
@@ -2543,9 +2990,13 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
       expect(runFramesUntil(frames, () => scrollBy.mock.calls.length > 0)).toBe(true);
       expect(scrollBy).toHaveBeenCalledWith(0, navigationDelta);
 
-      downloadHeading().getBoundingClientRect = () => rect(200, 40);
+      reviewCommentsRailHeading().getBoundingClientRect = () => rect(200, 40);
       scrollBy.mockClear();
-      act(() => { downloadToggle().click(); });
+      // Review Comments starts open, so two bare clicks are the AT-style open:
+      // the first (closing) already abandons Navigation's reveal via rule 4,
+      // the second (reopening) starts Review Comments' own.
+      act(() => { reviewCommentsToggle().click(); });
+      act(() => { reviewCommentsToggle().click(); });
       drainFrames(frames);
 
       // The first reveal abandoned: no further correction of ITS heading.
@@ -2604,7 +3055,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
 
       /*
        * Sequence A, OLDER: Navigation, a heading that never stops moving.
-       * Sequence B, NEWER: Download Files, stable on its second sample. Its
+       * Sequence B, NEWER: Review Comments, stable on its second sample. Its
        * correction is -137, which A cannot produce. Both opened inside ONE task.
        *
        * CONTRACT CHANGE (declared in the migration receipt). Rounds 8-9 required
@@ -2622,8 +3073,8 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
         top += 1;
         return rect(top, 40);
       };
-      fireEvent.click(downloadToggle());
-      downloadHeading().getBoundingClientRect = () => rect(0, 40);
+      reopenReviewComments();
+      reviewCommentsRailHeading().getBoundingClientRect = () => rect(0, 40);
       const bDelta = expectedDelta(0, 129);
       const bCorrections = () => scrollBy.mock.calls.filter(([, delta]) => delta === bDelta).length;
 
@@ -2800,7 +3251,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
       // queued ahead of everything the opening activation's effects queue.
       window.queueMicrotask(() => {
         order.push('queued-click-ran');
-        downloadToggle().click();
+        reviewCommentsToggle().click();
       });
     };
     window.addEventListener('click', hook, { capture: true });
@@ -2809,10 +3260,14 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
       frames.flush();
       const navigation = navigationRailHeading();
       fireEvent.click(navigationToggle());
+      // Review Comments starts open; close it once up front so the hook's
+      // single queued click below is itself an OPENING activation (matching
+      // the "queued click's own reveal ... corrects" assertion further down).
+      fireEvent.click(reviewCommentsToggle());
       drainFrames(frames);
       navigation.getBoundingClientRect = () => rect(400, 40);
       const navigationDelta = expectedDelta(400, 129);
-      downloadHeading().getBoundingClientRect = () => rect(200, 40);
+      reviewCommentsRailHeading().getBoundingClientRect = () => rect(200, 40);
       const downloadDelta = expectedDelta(200, 129);
 
       /*
@@ -3092,7 +3547,14 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
     }
   });
 
-  it('MIG-4.2.4: a bare click on "Hide Download Files" drops the section pin, exactly as a rail toggle does, while a bare Load section click does not', () => {
+  /*
+   * Download Files no longer has an in-panel "Hide" button and never touches
+   * the section pin at all (item 2: it is a portalled popover, decoupled from
+   * this mechanism). Review Comments -- the SECOND rail toggle, distinct from
+   * the one M1R9-02 already exercises -- proves the same policy: EVERY rail
+   * toggle's bare click goes through it, not just Navigation's.
+   */
+  it('MIG-4.2.4: a bare click on the Review Comments toggle drops the section pin, exactly as the Navigation toggle does, while a bare Load section click does not', () => {
     const frames = controllableFrames();
     const sticky = mountGrowingStickyHeader(73);
     try {
@@ -3100,8 +3562,9 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
       target.getBoundingClientRect = () => rect(81, 100);
       frames.flush();
 
-      // Open Download Files, let its reveal finish, and re-pin without an activation.
-      act(() => { downloadToggle().click(); });
+      // Review Comments starts open; close then reopen it so its own reveal
+      // fires, let that reveal finish, and re-pin without an activation.
+      reopenReviewComments();
       drainFrames(frames);
       redeliverDeepLink();
       drainFrames(frames);
@@ -3115,9 +3578,10 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
       drainFrames(frames);
       expect(scrolledElements()).toContain(target);
 
-      // The fix: "Hide Download Files" goes through the one pin policy.
-      act(() => { within(screen.getByTestId('download-files-panel')).getByRole('button', { name: 'Hide Download Files' }).click(); });
-      expect(screen.getByTestId('download-files-panel')).toHaveAttribute('hidden');
+      // The policy: a bare click on the Review Comments toggle (closing it,
+      // since it opened above) goes through the one pin policy too.
+      act(() => { reviewCommentsToggle().click(); });
+      expect(screen.getByTestId('review-comments-rail')).toHaveAttribute('data-state', 'closed');
       drainFrames(frames);
       scrollIntoView.mockClear();
       target.style.scrollMarginTop = '213px';
@@ -3138,7 +3602,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
     }
   });
 
-  it('MIG-4.2.1: a question change during a live Review Comments reveal abandons it, and the response it selects lands', () => {
+  it('MIG-4.2.1: a question change during a live Review Comments reveal abandons it, and the question it selects opens inline', () => {
     const frames = controllableFrames();
     const sticky = mountGrowingStickyHeader(129);
     try {
@@ -3167,9 +3631,11 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
       scrollBy.mockClear();
       scrollIntoView.mockClear();
       fireEvent.change(select, { target: { value: '2' } });
-      expect(response).toHaveFocus();
-      expect(scrolledElements()).toContain(response);
+      // The question opens inline in its row; the panel is not scrolled to its top.
+      expect(screen.getByTestId('review-question-row-q2')).toHaveAttribute('data-open', 'true');
+      expect(scrolledElements()).not.toContain(response);
       drainFrames(frames);
+      // The live reveal was abandoned by that activation: no further correction runs.
       expect(scrollBy).not.toHaveBeenCalled();
     } finally {
       sticky.element.remove();
@@ -3196,7 +3662,8 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
     const frames = controllableFrames();
     const sticky = mountGrowingStickyHeader(129);
     try {
-      const replaceState = vi.spyOn(window.history, 'replaceState');
+      // Item 8: an outline click is reader navigation, which pushes now.
+      const pushState = vi.spyOn(window.history, 'pushState');
       renderMountJourney('137px');
       frames.flush();
 
@@ -3223,11 +3690,11 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
       navigationRailHeading().getBoundingClientRect = () => rect(400, 40);
       expect(runFramesUntil(frames, () => scrollBy.mock.calls.length > 0)).toBe(true);
       scrollIntoView.mockClear();
-      replaceState.mockClear();
+      pushState.mockClear();
       release();
       await waitFor(() => expect(document.getElementById('results')).toHaveFocus());
       const results = document.getElementById('results');
-      expect(replaceState).toHaveBeenLastCalledWith(null, '', '/?mode=working-draft&section=results');
+      expect(pushState).toHaveBeenLastCalledWith(null, '', '/?mode=working-draft&section=results');
       expect(scrolledElements()).not.toContain(results);
     } finally {
       sticky.element.remove();
@@ -3265,7 +3732,10 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
     // The ordinary case, and the control for the two below: opening a CLOSED
     // panel below lg still requests its reveal. Without this, the assertions
     // that follow would pass against a helper that returned null for anything.
-    expect(pendingRevealForOpenRequest('download', false, false)).toBe('download');
+    // PanelKey is 'navigation' | 'review-comments' now (item 2: Download Files
+    // is no longer a reveal target at all, so 'download' is not a valid value
+    // any more), exercised here with both remaining panels.
+    expect(pendingRevealForOpenRequest('review-comments', false, false)).toBe('review-comments');
     expect(pendingRevealForOpenRequest('navigation', false, false)).toBe('navigation');
     /*
      * The defect: openPanel set the pending reveal unconditionally and then
@@ -3273,13 +3743,13 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
      * bails out of that update, the reveal effect never re-runs, and the pending
      * reveal stays set -- so the next time any OTHER panel's open state changes,
      * the effect reads the stale value, finds that panel open and reveals it. A
-     * reader who opens Download Files is scrolled to the Navigation heading.
+     * reader who opens Review Comments is scrolled to the Navigation heading.
      */
-    expect(pendingRevealForOpenRequest('download', true, false)).toBeNull();
+    expect(pendingRevealForOpenRequest('review-comments', true, false)).toBeNull();
     expect(pendingRevealForOpenRequest('navigation', true, false)).toBeNull();
     // At lg there is no reveal at all, already-open or not.
-    expect(pendingRevealForOpenRequest('download', false, true)).toBeNull();
-    expect(pendingRevealForOpenRequest('download', true, true)).toBeNull();
+    expect(pendingRevealForOpenRequest('review-comments', false, true)).toBeNull();
+    expect(pendingRevealForOpenRequest('review-comments', true, true)).toBeNull();
   });
 
   it('M1R5-04: at maximum scroll the contract is visible-and-below-the-header, everywhere else the reading line', () => {
@@ -3338,14 +3808,24 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
      * authority.observe(window), installed via useLayoutEffect at
      * RevisedPaperWorkspace.tsx:337-339. If observe() ran in a passive effect
      * instead, it would not yet be attached when a click dispatches in the gap
-     * before commit 1's passive effects, and currentActivationId() would fall
-     * back to latestActivationId, still its initial 0 -- the cause would be
-     * born activation: 0, indistinguishable from an activation nobody ever
-     * saw. Installed via useLayoutEffect (the current product), the gap click
-     * is captured while it is still dispatching and the cause carries a real,
-     * nonzero activation id. Downstream "was the reveal abandoned" behaviour
-     * (scrollBy/scrollIntoView) does NOT discriminate this defect -- see the
-     * recipe -- so the spy reads the cause's own activation id directly.
+     * before commit 1's passive effects, and that click would never increment
+     * the activation counter at all -- it would be as if it never happened.
+     *
+     * ADAPTED 2026-09-22 (UX brief item 1: Navigation AND Review Comments both
+     * default OPEN now in every mode; Download Files, the old default-closed
+     * panel this test used to open with one gap click, no longer goes through
+     * openPanel/requestRevealCause at all -- item 2). Neither remaining panel
+     * can be opened by a single click at mount, so the gap click below CLOSES
+     * Navigation instead (requesting no reveal) and a second, POST-SETTLE
+     * click reopens it (the one that calls requestRevealCause). If the gap
+     * click were silently dropped (the regression this test guards against),
+     * that reopening click would be the FIRST click the authority ever counted
+     * and would carry activation 1; because the gap click IS counted, it
+     * carries activation 2. The CONTROL repeats the identical close-then-open
+     * pair entirely after settling (no gap click at all) and gets the same
+     * activation 2 for its own opening click, establishing that a two-click
+     * sequence ending in "open" is unremarkably activation 2 whenever both
+     * clicks are counted -- exactly what the gap run must also be, and is.
      */
     const requestRevealCauseSpy = vi.spyOn(PaperScrollAuthority.prototype, 'requestRevealCause');
 
@@ -3361,7 +3841,9 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
             gapAsserted = true;
             // Still before commit 1's passive effects -- the gap this test exists for.
             expect(passiveEffectsFlushed).toBe(false);
-            act(() => { downloadToggle().click(); });
+            // Closes Navigation (default open); requests no reveal itself, but
+            // must still be counted as an activation for the assertion below.
+            act(() => { navigationToggle().click(); });
           }} />
         </>
       );
@@ -3370,19 +3852,17 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
 
       expect(gapAsserted).toBe(true);
       expect(passiveEffectsFlushed).toBe(true);
+      expect(requestRevealCauseSpy).not.toHaveBeenCalled();
+
+      // The reopening click, made after the component has fully settled.
+      act(() => { navigationToggle().click(); });
       expect(requestRevealCauseSpy).toHaveBeenCalledTimes(1);
-      expect(requestRevealCauseSpy.mock.results[0]!.value.activation).toBe(1);
+      expect(requestRevealCauseSpy.mock.results[0]!.value.activation).toBe(2);
 
       /*
-       * CONTROL, in this same test: the identical click, made after the
-       * component (and every one of its own effects) has fully settled, is
-       * captured by the very same listener and gets a real activation id too.
-       * This isolates WHEN the click happens relative to observe()'s
-       * installation as the thing being measured -- not an artifact of the
-       * spy or of PaperScrollAuthority's own defaults. (It does not, by
-       * itself, discriminate correct from precorrection bytes: by the time of
-       * a post-settle click, observe() has already run in both. Only the GAP
-       * assertion above does that -- see the recipe section 2.)
+       * CONTROL, in this same test: the identical close-then-open pair, made
+       * entirely after the component has fully settled (no gap click at all),
+       * lands on the same activation number for its own opening click.
        */
       requestRevealCauseSpy.mockClear();
       cleanup();
@@ -3390,10 +3870,11 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
 
       render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} />);
       await act(async () => { await Promise.resolve(); });
-      act(() => { downloadToggle().click(); });
+      act(() => { navigationToggle().click(); });
+      act(() => { navigationToggle().click(); });
 
       expect(requestRevealCauseSpy).toHaveBeenCalledTimes(1);
-      expect(requestRevealCauseSpy.mock.results[0]!.value.activation).toBe(1);
+      expect(requestRevealCauseSpy.mock.results[0]!.value.activation).toBe(2);
     } finally {
       requestRevealCauseSpy.mockRestore();
     }
@@ -3504,4 +3985,155 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
     observe.mockRestore();
   });
 });
+});
+
+describe('RevisedPaperWorkspace: q names only an explicitly opened question', () => {
+  it('reloading the URL that paper navigation produced opens no editor', () => {
+    // What the outline navigation writes now: the section only.
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ section: 'scope' })} assignment={getProductionAssignment()} outline={outline}><FakeDocument /></RevisedPaperWorkspace>);
+    expect(document.querySelectorAll('[data-testid^="review-question-row-q"][data-open="true"]')).toHaveLength(0);
+  });
+
+  it('closing the open question removes q from the URL, so a reload opens nothing', () => {
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ q: questionId(1) })} assignment={getProductionAssignment()} outline={outline}><FakeDocument /></RevisedPaperWorkspace>);
+    expect(screen.getByTestId('review-question-row-q1')).toHaveAttribute('data-open', 'true');
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+    expect(screen.getByTestId('review-question-row-q1')).toHaveAttribute('data-open', 'false');
+    const lastUrl = String(replaceState.mock.calls.at(-1)?.[2] ?? '');
+    expect(lastUrl).not.toContain('q=');
+  });
+});
+
+describe('RevisedPaperWorkspace My Review: topic changes keep the URL canonical', () => {
+  it('choosing a topic that does not hold the open question closes it and drops q; a topic that holds it keeps it', () => {
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+    renderMyReview();
+    fireEvent.click(screen.getByTestId('review-question-toggle-q2'));
+    expect(screen.getByTestId('review-question-row-q2')).toHaveAttribute('data-open', 'true');
+    // Question 2 is a Sediment Uses question; Exposure Assumptions does not hold it.
+    fireEvent.click(within(screen.getByTestId('navigation-rail')).getByRole('button', { name: /^3\. Exposure Assumptions, / }));
+    expect(screen.getByTestId('review-question-row-q2')).toHaveAttribute('data-open', 'false');
+    const url = String(replaceState.mock.calls.at(-1)?.[2] ?? '');
+    expect(url).toContain('cohort=exposure-assumptions');
+    // Two-sided: the old correction kept q=Q2 next to another topic (a non-canonical URL).
+    expect(url).not.toContain('q=');
+  });
+});
+
+describe('Round 3: explicitly selected questions are revealed at every width', () => {
+  function rowScrolls(number: number) {
+    return scrolledElements().filter((element) => element === screen.getByTestId(`review-question-row-q${number}`)).length;
+  }
+  function expectOnlyReviewRailScrolled() {
+    const rail = screen.getByTestId('review-comments-rail');
+    for (const element of scrolledElements()) expect(rail.contains(element as Node)).toBe(true);
+  }
+
+  it('below lg, a question chosen in the left navigation is revealed and focused; the paper is not scrolled', () => {
+    setLgViewport(false);
+    renderMyReview();
+    scrollIntoView.mockClear();
+    fireEvent.click(within(screen.getByTestId('navigation-rail')).getByRole('button', { name: /^Question 2:/ }));
+    // Two-sided: the lg-only reveal left this row off-screen below lg (0 scrolls).
+    expect(rowScrolls(2)).toBe(1);
+    expect(screen.getByTestId('review-question-toggle-q2')).toHaveFocus();
+    expectOnlyReviewRailScrolled();
+  });
+
+  it('below lg, Next, Previous and Jump reveal the question they open', () => {
+    setLgViewport(false);
+    renderMyReview();
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+    scrollIntoView.mockClear();
+    fireEvent.click(within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' }));
+    expect(rowScrolls(2)).toBe(1);
+    fireEvent.click(within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Previous question' }));
+    expect(rowScrolls(1)).toBe(1);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Jump to topic' }), { target: { value: '3' } });
+    expect(rowScrolls(3)).toBe(1);
+    expectOnlyReviewRailScrolled();
+  });
+
+  it('a closed (inert) rail is never scrolled, at any width', () => {
+    setLgViewport(false);
+    renderMyReview();
+    fireEvent.click(within(headerHost()).getByRole('button', { name: 'Review Comments' }));
+    expect(screen.getByTestId('review-comments-rail')).toHaveAttribute('inert');
+    scrollIntoView.mockClear();
+    fireEvent.click(within(screen.getByTestId('navigation-rail')).getByRole('button', { name: /^Question 2:/ }));
+    expect(rowScrolls(2)).toBe(0);
+  });
+
+  it('below lg, a q deep link opens its question without pulling the page away from the paper at load', () => {
+    setLgViewport(false);
+    renderMyReview({ q: questionId(2) });
+    expect(screen.getByTestId('review-question-row-q2')).toHaveAttribute('data-open', 'true');
+    expect(rowScrolls(2)).toBe(0);
+  });
+});
+
+describe('Round 3: Back/Forward make the open editor agree with the restored URL', () => {
+  function popTo(url: string) {
+    act(() => {
+      window.history.replaceState(null, '', url);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+  }
+  function openRows() {
+    return Array.from(document.querySelectorAll('[data-testid^="review-question-row-q"][data-open="true"]')).map((row) => row.getAttribute('data-testid'));
+  }
+
+  it('Working Draft: close, then Back to an entry naming a question reopens it; an entry without q restores the closed state; no history is written', () => {
+    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={outline}><FakeDocument /></RevisedPaperWorkspace>);
+    const closedUrl = window.location.pathname + window.location.search;
+    fireEvent.click(screen.getByTestId('review-question-toggle-q3'));
+    const q3Url = window.location.pathname + window.location.search;
+    expect(new URLSearchParams(window.location.search).get('q')).toBe(questionId(3));
+    fireEvent.click(screen.getByTestId('review-question-toggle-q4'));
+    fireEvent.click(screen.getByTestId('review-question-toggle-q4'));
+    expect(openRows()).toEqual([]);
+    const pushState = vi.spyOn(window.history, 'pushState');
+    const replaceState = vi.spyOn(window.history, 'replaceState');
+
+    popTo(q3Url);
+    // Two-sided: the previous handler kept a closed editor closed, so the URL
+    // named Question 3 while no editor was open.
+    expect(openRows()).toEqual(['review-question-row-q3']);
+    popTo(closedUrl.includes('?') ? closedUrl : `${closedUrl}?mode=working-draft`);
+    expect(openRows()).toEqual([]);
+    // Only the test's own replaceState calls (one per popTo); the handler wrote nothing.
+    expect(pushState).not.toHaveBeenCalled();
+    expect(replaceState).toHaveBeenCalledTimes(2);
+  });
+
+  it('My Review: close, then Back to an entry naming a question reopens it with its saved draft; an entry without q closes it', () => {
+    renderMyReview();
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+    const q1Url = window.location.pathname + window.location.search;
+    fireEvent.change(screen.getByTestId('review-comment-draft'), { target: { value: 'Draft kept across history' } });
+    fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
+    expect(openRows()).toEqual([]);
+    const pushState = vi.spyOn(window.history, 'pushState');
+
+    popTo(q1Url);
+    expect(openRows()).toEqual(['review-question-row-q1']);
+    expect(screen.getByTestId('review-comment-draft')).toHaveValue('Draft kept across history');
+    popTo(`${window.location.pathname}?mode=my-review&cohort=${new URLSearchParams(q1Url.split('?')[1]).get('cohort') ?? ''}`);
+    expect(openRows()).toEqual([]);
+    expect(pushState).not.toHaveBeenCalled();
+  });
+});
+
+describe('Preview correction: the reading frame width is set by the Comfortable/Wide preference', () => {
+  it('the frame carries no screen max-width utility (a utility would outrank the Comfortable/Wide frame rules) and keeps the print override', () => {
+    renderWorkingDraft();
+    const frame = screen.getByTestId('paper-reading-frame');
+    const classes = frame.className.split(/\s+/);
+    // Two-sided: the previous frame hard-coded max-w-[96rem] for both preferences.
+    expect(classes.filter((name) => /^max-w-/.test(name))).toEqual([]);
+    expect(classes).toContain('print:max-w-none');
+    expect(classes).toContain('paper-reading-frame');
+    expect(frame).toHaveAttribute('data-reader-width', 'comfortable');
+  });
 });

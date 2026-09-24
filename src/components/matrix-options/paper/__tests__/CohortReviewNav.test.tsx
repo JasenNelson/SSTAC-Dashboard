@@ -55,7 +55,7 @@ function renderNav(overrides: Partial<Parameters<typeof CohortReviewNav>[0]> = {
 describe('CohortReviewNav', () => {
   it('M2: renders exactly 5 collapsible cohort disclosures with aria-expanded and aria-controls', () => {
     renderNav();
-    const nav = screen.getByRole('navigation', { name: 'Review cohorts' });
+    const nav = screen.getByRole('navigation', { name: 'Review topics' });
     const buttons = within(nav).getAllByRole('button', { name: /questions$/ });
     expect(buttons).toHaveLength(5);
     for (const button of buttons) {
@@ -98,7 +98,7 @@ describe('CohortReviewNav', () => {
 
   it('M2: question buttons are plain <button> elements -- never select, checkbox, radio or label (gesture-grouping safety)', () => {
     renderNav();
-    const nav = screen.getByRole('navigation', { name: 'Review cohorts' });
+    const nav = screen.getByRole('navigation', { name: 'Review topics' });
     expect(within(nav).queryAllByRole('checkbox')).toHaveLength(0);
     expect(within(nav).queryAllByRole('radio')).toHaveLength(0);
     expect(within(nav).queryAllByRole('combobox')).toHaveLength(0);
@@ -115,7 +115,7 @@ describe('CohortReviewNav', () => {
   it('M2: an empty portion list still shows the truthful "no portion" message alongside its questions', () => {
     renderNav({ expandedCohortId: 'exposure-assumptions', cohortPortions: [portionFor('categories')] });
     const disclosure = document.getElementById('cohort-exposure-assumptions-portions');
-    expect(disclosure).toHaveTextContent('No authenticated paper portion is available for this cohort.');
+    expect(disclosure).toHaveTextContent('No paper section is linked to this topic yet.');
     expect(within(disclosure as HTMLElement).getAllByRole('button', { name: /^Question \d+:/ }).length).toBeGreaterThan(0);
   });
 });

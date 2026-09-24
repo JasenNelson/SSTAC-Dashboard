@@ -22,7 +22,7 @@ function normalizeRpcData(data: unknown, expected: { documentVersion: string; ma
   if (!value || typeof value !== 'object') return { outcome: 'persistence_unavailable' };
   const record = value as Record<string, unknown>;
   const rawOutcome = record.outcome;
-  const supported = rawOutcome === 'ok' || rawOutcome === 'noop_already_submitted' || rawOutcome === 'stale_revision' || rawOutcome === 'unknown_identity' || rawOutcome === 'stale_manifest' || rawOutcome === 'unauthenticated' || rawOutcome === 'too_large' || rawOutcome === 'persistence_unavailable';
+  const supported = rawOutcome === 'ok' || rawOutcome === 'noop_already_submitted' || rawOutcome === 'stale_revision' || rawOutcome === 'unknown_identity' || rawOutcome === 'stale_manifest' || rawOutcome === 'unauthenticated' || rawOutcome === 'too_large' || rawOutcome === 'rate_limited' || rawOutcome === 'blank_submission' || rawOutcome === 'persistence_unavailable';
   if (!supported) return { outcome: 'persistence_unavailable' };
   const parsedRow = record.row === null || record.row === undefined ? null : reviewResponseRowSchema.safeParse(record.row);
   const row = parsedRow?.success ? parsedRow.data : null;
@@ -31,8 +31,12 @@ function normalizeRpcData(data: unknown, expected: { documentVersion: string; ma
     && row.manifest_sha256 === expected.manifestSha256
     && row.cohort_id === expected.cohortId
     && row.question_id === expected.questionId;
+  // A stale_revision WITHOUT a row means the row the client's base revision
+  // named no longer exists (deleted, or a new manifest): a 409 the client can
+  // recover from by re-basing, never a 503 it can only retry forever.
+  if (rawOutcome === 'stale_revision' && (record.row === null || record.row === undefined)) return { outcome: 'stale_revision' };
   if ((rawOutcome === 'ok' || rawOutcome === 'noop_already_submitted' || rawOutcome === 'stale_revision') && !rowMatchesRequest) return { outcome: 'persistence_unavailable' };
-  if (record.row !== null && record.row !== undefined && !rowMatchesRequest && rawOutcome !== 'unknown_identity' && rawOutcome !== 'stale_manifest' && rawOutcome !== 'unauthenticated' && rawOutcome !== 'too_large') return { outcome: 'persistence_unavailable' };
+  if (record.row !== null && record.row !== undefined && !rowMatchesRequest && rawOutcome !== 'unknown_identity' && rawOutcome !== 'stale_manifest' && rawOutcome !== 'unauthenticated' && rawOutcome !== 'too_large' && rawOutcome !== 'rate_limited' && rawOutcome !== 'blank_submission') return { outcome: 'persistence_unavailable' };
   const rowBearingOutcome = rawOutcome === 'ok' || rawOutcome === 'noop_already_submitted' || rawOutcome === 'stale_revision';
   return rowBearingOutcome && rowMatchesRequest ? { outcome: rawOutcome, row } as ReviewResponseOutcome : { outcome: rawOutcome } as ReviewResponseOutcome;
 }
@@ -46,12 +50,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   if (resolveMatrixOptionsPaperReviewNavigationGate(process.env.MATRIX_OPTIONS_PAPER_WORKSPACE, process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION) !== 'REVIEW_NAVIGATION') return NextResponse.json({ error: 'Not found' }, { status: 404, headers: noStoreHeaders });
   const { user, supabase, rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'default');
   if (rateLimitResponse) return rateLimitResponse;
-  if (!user) return NextResponse.json({ outcome: 'unauthenticated' }, { status: 401, headers: noStoreHeaders });
+  // Anonymous Supabase sessions are not reviewers (same rule as the downloads route).
+  if (!user || user.is_anonymous !== false) return NextResponse.json({ outcome: 'unauthenticated' }, { status: 401, headers: noStoreHeaders });
 
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400, headers: noStoreHeaders }); }
   const parsed = reviewResponseRequestSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: 'Invalid review response' }, { status: 400, headers: noStoreHeaders });
+  // Identity pin: a page opened by one reviewer never writes as another who has
+  // since signed in on the same browser (the cookie is shared by every tab).
+  if (parsed.data.expectedUserId !== undefined && parsed.data.expectedUserId !== user.id) return NextResponse.json({ outcome: 'identity_changed' }, { status: reviewResponseOutcomeStatus('identity_changed'), headers: { ...noStoreHeaders, ...rateLimitHeaders } });
   const { questionId: encodedQuestionId } = await params;
   let questionId: string;
   try { questionId = decodeURIComponent(encodedQuestionId); } catch { return NextResponse.json({ error: 'Invalid question id' }, { status: 400, headers: { ...noStoreHeaders, ...rateLimitHeaders } }); }
