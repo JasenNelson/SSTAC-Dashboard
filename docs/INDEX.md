@@ -26,6 +26,12 @@ This file is the **single canonical entrypoint** for project documentation.
    untracked pilot output, read-only from worktrees via the absolute path) before repo-wide
    searches. Operations: `docs/WIKI_KB_OPERATIONS_2026_07.md`.
 
+### Wiki Graph read-only product
+
+- `docs/design/wiki/WIKI_GRAPH_READONLY_PRODUCT.md` - `AUTHORITATIVE` contract for the inactive,
+  unregistered, seven-tool read-only Wiki Graph MCP stdio product. Synthetic conformance only; no
+  usefulness, real-data, runtime, registration, or activation claim.
+
 ### Wiki / Graphify recovery reference packets
 
 - `docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md` - `CANDIDATE_UNVERIFIED`,

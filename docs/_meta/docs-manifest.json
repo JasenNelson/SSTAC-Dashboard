@@ -1832,6 +1832,18 @@
       "notes": "CANDIDATE_UNVERIFIED and non-authoritative. Semantic baseline and promotion readiness packet; status NOT_READY_FOR_SEMANTIC_OR_GRADUATION and grants no Ollama, seed, scheduler, or runtime authority. A short section 10a was added 2026-08-10 recording only that the failed Graphify MCP proof attempt R13 ran no Ollama, no semantic extraction, no promotion seed, and no contradiction write, is neither a deterministic night nor semantic progress, resolves none of the section 9 owner decisions, and leaves every verdict and gate in this packet unchanged."
     },
     {
+      "id": "wiki.wiki_graph_readonly_product",
+      "path": "docs/design/wiki/WIKI_GRAPH_READONLY_PRODUCT.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "wiki",
+        "graphify",
+        "mcp",
+        "product"
+      ],
+      "notes": "Canonical contract for the inactive, unregistered seven-tool read-only Wiki Graph product. Synthetic conformance only; no usefulness, real-data, provider-neutral, runtime, registration, promotion, or autolearning claim."
+    },
+    {
       "id": "governance.agy_usage",
       "path": "docs/AGY_USAGE.md",
       "lifecycle": "AUTHORITATIVE",
