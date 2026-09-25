@@ -757,3 +757,553 @@ html.dark ::-webkit-scrollbar-thumb:hover,
     .paper-reading-frame[data-reader-width] { max-width: none; }
   }
 }
+
+/*
+ * Matrix Options Paper: figures, tables and quotations (PDF parity, 2026-09-24).
+ * Scoped to the paper prose wrapper (.reader-prose, PaperText). This block sits in
+ * the utilities layer so the table and blockquote rules (specificity 0-2-1)
+ * out-rank MathRenderer's own utility classes (0-1-1) without editing the shared
+ * renderer. Colours come from the --db tokens only; the few paper roles are
+ * named once below and re-pointed for dark and for print.
+ */
+@layer utilities {
+  .reader-prose {
+    --paper-table-head-bg: var(--db-accent-strong);
+    --paper-table-head-fg: var(--db-text-on-accent);
+    /* a faint wash of the text colour: visible on either theme's article surface */
+    --paper-table-band: color-mix(in srgb, var(--db-text-primary) 5%, transparent);
+    --paper-figure-line: var(--db-text-secondary);
+  }
+  .dark .reader-prose {
+    /* accent-strong under white text is 4.1:1 in dark; the raised depth keeps 9.9:1 */
+    --paper-table-head-bg: var(--db-depth-3);
+    --paper-table-head-fg: var(--db-text-primary);
+  }
+
+  /* ---- Figures ------------------------------------------------------------ */
+  .paper-figure {
+    container: paper-figure / inline-size;
+    margin: 2rem 0;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .paper-figure__canvas {
+    border: 1px solid var(--db-border);
+    border-radius: 12px;
+    background: var(--db-depth-0);
+    padding: 1.25rem;
+    color: var(--db-text-primary);
+    font-family: var(--db-font-ui);
+    font-size: 0.875rem;
+    line-height: 1.45;
+  }
+  @container paper-figure (max-width: 30rem) {
+    .paper-figure__canvas { padding: 0.875rem; }
+  }
+  .paper-figure__title {
+    margin: 0 0 1.125rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--db-border);
+    text-align: center;
+    text-wrap: balance;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    color: var(--db-text-secondary);
+  }
+  /* zero specificity, so the figure's own list classes below set their spacing */
+  :where(.paper-figure) :where(ul, ol) { list-style: none; margin: 0; padding: 0; }
+  .paper-figure sub { font-size: 0.75em; line-height: 0; vertical-align: -0.25em; }
+  .paper-figure__node {
+    position: relative;
+    min-width: 0;
+    background: var(--db-surface);
+    border: 1px solid var(--db-border-strong);
+    border-radius: 6px;
+    padding: 0.625rem 0.75rem;
+    text-align: left;
+    overflow-wrap: break-word;
+  }
+  /* A figure that is not final says so in words, inside the figure, before its content. */
+  .paper-figure__status {
+    margin: 0 0 1rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--db-review-tint-border);
+    border-radius: 6px;
+    background: var(--db-review-tint);
+    color: var(--db-text-primary);
+    font-size: 0.8125rem;
+    line-height: 1.45;
+  }
+  /* Candidate status text embeds a full 64-char hex sha256; only this status wraps it (tokens-only change). */
+  .paper-figure__status[data-status='candidate-nonfinal'] { overflow-wrap: anywhere; }
+  .paper-figure__status[data-status='proposed'] {
+    border-color: var(--db-accent-tint-border);
+    background: var(--db-accent-tint);
+  }
+  .paper-figure sup { font-size: 0.75em; line-height: 0; vertical-align: 0.4em; }
+  .paper-figure__node-label { margin: 0; font-weight: 600; color: var(--db-text-primary); }
+  .paper-figure__node-head { margin: 0.125rem 0 0; color: var(--db-text-secondary); }
+  .paper-figure__bullets { display: grid; gap: 0.1875rem; margin-top: 0.375rem !important; }
+  .paper-figure__bullets > li { position: relative; padding-left: 0.875rem; font-size: 0.8125rem; }
+  .paper-figure__bullets > li::before {
+    content: '';
+    position: absolute;
+    left: 0.25rem;
+    top: 0.62em;
+    width: 0.25rem;
+    height: 0.25rem;
+    border-radius: 50%;
+    background: var(--db-text-muted);
+  }
+  .paper-figure__edge-label {
+    margin: 0 0 0.25rem;
+    font-size: 0.75rem;
+    font-style: italic;
+    color: var(--db-text-secondary);
+    /* TREE_FIT_FIX Revision 3 (2026-09-24) correction: an absolutely positioned label with only
+       `left` set still shrink-to-fits within the remaining width of its containing block and
+       wraps normal text there; `right` (chain/tree branch rules below) narrows that box further,
+       it does not create wrapping that would not otherwise happen. What actually stops a single
+       UNBREAKABLE word (e.g. "THERMODYNAMIC") from running past its box on one line is this
+       overflow-wrap: anywhere -- ordinary text already wraps at spaces without it. */
+    overflow-wrap: anywhere;
+  }
+  .paper-figure__caption {
+    margin-top: 0.625rem;
+    font-family: var(--db-font-ui);
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--db-text-secondary);
+    text-align: left;
+  }
+  .paper-figure__number { font-weight: 600; color: var(--db-text-primary); }
+  .paper-figure__note { margin: 0.75rem 0 0; font-size: 0.8125rem; color: var(--db-text-secondary); }
+
+  /*
+   * Chains (flow, stack): one column of steps joined by downward arrows.
+   *
+   * TREE_FIT_FIX Revision 5 (2026-09-24), P2-3: a labelled step used to reserve a
+   * fixed 2.25rem (one line) for its absolutely positioned edge label, the same
+   * defect class as the tree branch's Round 9 occlusion (P2-1) -- Figures 7-4 and
+   * F-1's "(If unavailable or outdated)" wraps to two lines and ran under the next
+   * step's node. Fixed the same way: the label is a normal, static, in-flow
+   * paragraph that carries the connecting stem itself (border-left), so however
+   * many lines it wraps to, the node after it is always pushed down clear of it,
+   * and the line stays continuous down to the node's own top edge, where the
+   * unconditional, unchanged arrowhead begins. Unlike a branch, a step has no
+   * left/right padding, so its content-box centre and its own left:50% (used by
+   * the connecting ::before above) are already the same point -- no symmetric-
+   * padding trick needed here.
+   */
+  .paper-figure__chain { display: grid; max-width: 44rem; margin-inline: auto !important; }
+  .paper-figure__step { position: relative; }
+  .paper-figure__step + .paper-figure__step { padding-top: 1.75rem; }
+  .paper-figure__step + .paper-figure__step::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    height: 1.75rem;
+    border-left: 1px solid var(--paper-figure-line);
+  }
+  .paper-figure__step > .paper-figure__edge-label {
+    position: static;
+    margin: 0 0.5rem 0 50%;
+    padding: 0 0 0.375rem 0.5rem;
+    border-left: 1px solid var(--paper-figure-line);
+  }
+  /* Arrowhead: a small downward triangle whose tip meets the box it points to. */
+  .paper-figure__step + .paper-figure__step > .paper-figure__node::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: calc(50% - 5px);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid var(--paper-figure-line);
+  }
+
+  /*
+   * Trees (tree, grid). Default: an indented outline -- each branch hangs off a
+   * spine with a tick, so the figure reads correctly at any width. From 36rem
+   * of figure width ('normal') or 38.5rem ('normal-deep') it draws instead
+   * (container queries below): each parent centred over a bracket, with an
+   * arrow down to every child, as in the reference PDF.
+   *
+   * TREE_FIT_FIX Revision 2 (2026-09-24): that threshold is only safe for a
+   * tree whose narrowest leaf keeps a large enough share of the container -- each
+   * level splits ITS OWN share evenly among its children (that is what the flex
+   * layout below actually does), so a leaf nested inside two branching levels
+   * (e.g. Figure A-3's sed -> {avs, sem, disp}, then disp -> {case1, case2}) can
+   * end up far narrower than its total sibling count alone would suggest, however
+   * shallow the tree looks. PaperFigure computes this (figures.ts treeFit) and
+   * emits the result as data-fit on .paper-figure__tree. See
+   * TREE_FIT_FIX_RECEIPT.md for the per-figure numbers and why a leaves/depth pair
+   * (Revision 1) could not generalise to a differently-shaped future tree.
+   *
+   * Revision 4 (2026-09-24), P2-2: the plain per-leaf model (9rem/share) put the
+   * 'normal' entry point at 36rem, which is E-1's own exact boundary with zero
+   * margin for anything else -- live measurement (a 690-1440px viewport sweep the
+   * original QA widths skip entirely) found Figure 7-6 drawing as narrow as 106px
+   * and a Figure A-4 node clipping by up to 5px inside the 36.0-37.4rem band,
+   * both below the 110px QA floor, on the default-on inline paper at ordinary
+   * desktop/tablet widths. Raised uniformly to 38.5rem for every tree Revision 4's
+   * plain model called 'normal'.
+   *
+   * Revision 5b (2026-09-24), owner-approved content-driven thresholds: the
+   * uniform 38.5rem raise gave every shallow tree (Figures 6-1/A-1/A-2/E-1/7-5)
+   * more margin than they need, at the cost of a wider laptop-viewport outline
+   * band for them too. figures.ts treeFit now computes a depth-aware
+   * requiredRem (the plain 9rem/share value plus 1.25rem per extra level of the
+   * deepest branching node) and reports THREE buckets instead of two: 'normal'
+   * (36rem -- a shallow tree, branchDepth 1), 'normal-deep' (38.5rem -- Figure
+   * A-4 at ~37.25rem, Figure 7-6 at exactly 38.5rem), and 'wide' (54rem,
+   * unchanged -- Figure A-3). The 'normal' and 'normal-deep' blocks below are
+   * otherwise byte-identical (same technique as the existing 'wide' block: CSS
+   * container queries cannot parameterise a length by an attribute value, so
+   * the ruleset is duplicated a second time rather than shared).
+   */
+  .paper-figure__branch { position: relative; }
+  .paper-figure__children { position: relative; display: grid; gap: 0.75rem; margin-top: 0.75rem !important; padding-left: 1.5rem !important; }
+  .paper-figure__children > .paper-figure__branch::before {
+    content: '';
+    position: absolute;
+    left: -0.875rem;
+    top: -0.75rem;
+    bottom: 0;
+    border-left: 1px solid var(--paper-figure-line);
+  }
+  .paper-figure__children > .paper-figure__branch:last-child::before { bottom: auto; height: 1.8125rem; }
+  .paper-figure__children > .paper-figure__branch::after {
+    content: '';
+    position: absolute;
+    left: -0.875rem;
+    top: 1.0625rem;
+    width: 0.875rem;
+    border-top: 1px solid var(--paper-figure-line);
+  }
+  /* Several boxes with no connection between them: a board (grid) or a layer stack (stack). */
+  .paper-figure__tree[data-roots='many'] { display: grid; gap: 0.75rem; }
+  .paper-figure[data-layout='grid'] .paper-figure__tree[data-roots='many'] { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); align-items: start; }
+  /* a layer stack keeps a readable measure on wide screens, like a chain */
+  .paper-figure[data-layout='stack'] .paper-figure__tree[data-roots='many'] { max-width: 44rem; margin-inline: auto !important; }
+  .paper-figure__children > .paper-figure__branch[data-labelled]::after { top: 0.5625rem; }
+  .paper-figure__children > .paper-figure__branch[data-labelled]:last-child::before { height: 1.3125rem; }
+
+  @container paper-figure (min-width: 36rem) {
+    .paper-figure__tree[data-fit='normal'] .paper-figure__branch:has(> .paper-figure__children) > .paper-figure__node { max-width: 30rem; margin-inline: auto; }
+    .paper-figure__tree[data-fit='normal'] .paper-figure__children { display: flex; gap: 0; margin-top: 0 !important; padding-left: 0 !important; padding-top: 1rem; }
+    /* stem from the parent down to the bracket */
+    .paper-figure__tree[data-fit='normal'] .paper-figure__children::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      height: 1rem;
+      border-left: 1px solid var(--paper-figure-line);
+    }
+    .paper-figure__tree[data-fit='normal'] .paper-figure__children > .paper-figure__branch { flex: 1 1 0; min-width: 0; padding: 1rem 0.375rem 0; }
+    /* bracket segment: first and last children stop at their own centre */
+    .paper-figure__tree[data-fit='normal'] .paper-figure__children > .paper-figure__branch::before {
+      left: 0 !important;
+      right: 0;
+      top: 0 !important;
+      bottom: auto !important;
+      height: 0 !important;
+      border-left: 0;
+      border-top: 1px solid var(--paper-figure-line);
+    }
+    .paper-figure__tree[data-fit='normal'] .paper-figure__children > .paper-figure__branch:first-child::before { left: 50% !important; }
+    .paper-figure__tree[data-fit='normal'] .paper-figure__children > .paper-figure__branch:last-child::before { right: 50%; }
+    .paper-figure__tree[data-fit='normal'] .paper-figure__children > .paper-figure__branch:only-child::before { display: none; }
+    /* drop from the bracket to the child, ending in an arrowhead */
+    .paper-figure__tree[data-fit='normal'] .paper-figure__children > .paper-figure__branch::after {
+      left: 50% !important;
+      top: 0 !important;
+      width: 0;
+      height: 1rem;
+      border-top: 0;
+      border-left: 1px solid var(--paper-figure-line);
+    }
+    .paper-figure__tree[data-fit='normal'] .paper-figure__children > .paper-figure__branch > .paper-figure__node::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: calc(50% - 5px);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--paper-figure-line);
+    }
+    /* P2-1 fix (2026-09-24 Revision 3, restyled Revision 4 per leg1a_r10 P2-1 / leg1b_situation_r6
+       P2-1): the label is a normal, static, in-flow paragraph -- CSS guarantees a static block's
+       margin box never overlaps its next sibling's, so however many lines it wraps to, the node
+       below is always pushed down clear of it (Revision 3's fix for occlusion, kept). Revision 3
+       left the connecting stem as a fixed 1rem .branch::after ending at the label's own top, which
+       disconnected the visible line from the arrowhead by however tall the label rendered (a
+       regression on every labelled branch, e.g. Figures A-2 and A-4, caught live in Round 10).
+       Revision 4: the label itself now carries the stem onward -- margin-left 50% (of the branch's
+       CONTENT box) lands its border-box left edge at the same x the branch's own centred drop line
+       uses (the branch's 0.375rem left/right padding is symmetric, so the content-box centre and
+       the padding-box centre the absolute-positioned drop line measures against are the same point),
+       padding-left 0.4375rem keeps the text where it always sat, and border-left continues the
+       1px line down through however many lines the label takes. margin-bottom: 0 (no gap before the
+       node) plus padding-bottom 0.375rem means the border reaches all the way to the node's own top
+       edge, exactly where the arrowhead (.node::before, unconditional, unchanged) begins -- the same
+       zero-gap, 6px-overlap relationship an unlabelled branch's plain .branch::after already had
+       with its own arrowhead. */
+    .paper-figure__tree[data-fit='normal'] .paper-figure__children > .paper-figure__branch > .paper-figure__edge-label {
+      position: static;
+      margin: 0 0.375rem 0 50%;
+      padding: 0 0 0.375rem 0.4375rem;
+      border-left: 1px solid var(--paper-figure-line);
+    }
+  }
+
+  /*
+   * A tree whose deepest branching node pushes its requiredRem past 36rem but not
+   * past 38.5rem (figures.ts treeFit: data-fit='normal-deep' -- Figure A-4 at
+   * ~37.25rem, Figure 7-6 at exactly 38.5rem, Revision 5b) keeps the indented
+   * outline above until 38.5rem, then draws with the exact same rules as the
+   * 'normal' block above -- CSS container queries cannot parameterise a length by
+   * an attribute value, so the ruleset below is a duplicate, gated at the wider
+   * threshold and a different data-fit value, not a genuinely different layout.
+   * (Checked before duplicating, same reasoning as the 'wide' block below: a
+   * comma-separated list of container conditions cannot express two DIFFERENT
+   * thresholds for two different selectors in one block, and CSS Container Style
+   * Queries are not yet supported in Safari, which this reader must support.)
+   */
+  @container paper-figure (min-width: 38.5rem) {
+    .paper-figure__tree[data-fit='normal-deep'] .paper-figure__branch:has(> .paper-figure__children) > .paper-figure__node { max-width: 30rem; margin-inline: auto; }
+    .paper-figure__tree[data-fit='normal-deep'] .paper-figure__children { display: flex; gap: 0; margin-top: 0 !important; padding-left: 0 !important; padding-top: 1rem; }
+    .paper-figure__tree[data-fit='normal-deep'] .paper-figure__children::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      height: 1rem;
+      border-left: 1px solid var(--paper-figure-line);
+    }
+    .paper-figure__tree[data-fit='normal-deep'] .paper-figure__children > .paper-figure__branch { flex: 1 1 0; min-width: 0; padding: 1rem 0.375rem 0; }
+    .paper-figure__tree[data-fit='normal-deep'] .paper-figure__children > .paper-figure__branch::before {
+      left: 0 !important;
+      right: 0;
+      top: 0 !important;
+      bottom: auto !important;
+      height: 0 !important;
+      border-left: 0;
+      border-top: 1px solid var(--paper-figure-line);
+    }
+    .paper-figure__tree[data-fit='normal-deep'] .paper-figure__children > .paper-figure__branch:first-child::before { left: 50% !important; }
+    .paper-figure__tree[data-fit='normal-deep'] .paper-figure__children > .paper-figure__branch:last-child::before { right: 50%; }
+    .paper-figure__tree[data-fit='normal-deep'] .paper-figure__children > .paper-figure__branch:only-child::before { display: none; }
+    .paper-figure__tree[data-fit='normal-deep'] .paper-figure__children > .paper-figure__branch::after {
+      left: 50% !important;
+      top: 0 !important;
+      width: 0;
+      height: 1rem;
+      border-top: 0;
+      border-left: 1px solid var(--paper-figure-line);
+    }
+    .paper-figure__tree[data-fit='normal-deep'] .paper-figure__children > .paper-figure__branch > .paper-figure__node::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: calc(50% - 5px);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--paper-figure-line);
+    }
+    .paper-figure__tree[data-fit='normal-deep'] .paper-figure__children > .paper-figure__branch > .paper-figure__edge-label {
+      position: static;
+      margin: 0 0.375rem 0 50%;
+      padding: 0 0 0.375rem 0.4375rem;
+      border-left: 1px solid var(--paper-figure-line);
+    }
+  }
+
+  /*
+   * A tree whose narrowest leaf needs more than a 54rem container (figures.ts
+   * treeFit: data-fit='wide') keeps the indented outline above until 54rem, then
+   * draws with the exact same rules -- CSS container queries cannot parameterise
+   * a length by an attribute value, so the ruleset below is a duplicate of the one
+   * above, gated at the wider threshold and a different data-fit value, not a
+   * genuinely different layout. (Checked before duplicating: a comma-separated
+   * list of container conditions cannot express two DIFFERENT thresholds for two
+   * different selectors in one block -- the widest condition alone would apply to
+   * both; CSS Container Style Queries, e.g. `@container style(--fit: wide)`, would
+   * avoid the duplication but are not yet supported in Safari, which this reader
+   * must support -- so a size-only query with one duplicate block is the
+   * cross-browser-safe choice here.)
+   */
+  @container paper-figure (min-width: 54rem) {
+    .paper-figure__tree[data-fit='wide'] .paper-figure__branch:has(> .paper-figure__children) > .paper-figure__node { max-width: 30rem; margin-inline: auto; }
+    .paper-figure__tree[data-fit='wide'] .paper-figure__children { display: flex; gap: 0; margin-top: 0 !important; padding-left: 0 !important; padding-top: 1rem; }
+    .paper-figure__tree[data-fit='wide'] .paper-figure__children::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      height: 1rem;
+      border-left: 1px solid var(--paper-figure-line);
+    }
+    .paper-figure__tree[data-fit='wide'] .paper-figure__children > .paper-figure__branch { flex: 1 1 0; min-width: 0; padding: 1rem 0.375rem 0; }
+    .paper-figure__tree[data-fit='wide'] .paper-figure__children > .paper-figure__branch::before {
+      left: 0 !important;
+      right: 0;
+      top: 0 !important;
+      bottom: auto !important;
+      height: 0 !important;
+      border-left: 0;
+      border-top: 1px solid var(--paper-figure-line);
+    }
+    .paper-figure__tree[data-fit='wide'] .paper-figure__children > .paper-figure__branch:first-child::before { left: 50% !important; }
+    .paper-figure__tree[data-fit='wide'] .paper-figure__children > .paper-figure__branch:last-child::before { right: 50%; }
+    .paper-figure__tree[data-fit='wide'] .paper-figure__children > .paper-figure__branch:only-child::before { display: none; }
+    .paper-figure__tree[data-fit='wide'] .paper-figure__children > .paper-figure__branch::after {
+      left: 50% !important;
+      top: 0 !important;
+      width: 0;
+      height: 1rem;
+      border-top: 0;
+      border-left: 1px solid var(--paper-figure-line);
+    }
+    .paper-figure__tree[data-fit='wide'] .paper-figure__children > .paper-figure__branch > .paper-figure__node::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: calc(50% - 5px);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--paper-figure-line);
+    }
+    /* P2-1 fix (2026-09-24 Revision 3, restyled Revision 4 -- see the 'normal' block above for the
+       full explanation, identical here): the label is a normal, static, in-flow paragraph whose
+       own border-left continues the stem from the bracket, through however many lines it wraps to,
+       down to the node's own top edge, where the unconditional, unchanged arrowhead
+       (.node::before) begins. */
+    .paper-figure__tree[data-fit='wide'] .paper-figure__children > .paper-figure__branch > .paper-figure__edge-label {
+      position: static;
+      margin: 0 0.375rem 0 50%;
+      padding: 0 0 0.375rem 0.4375rem;
+      border-left: 1px solid var(--paper-figure-line);
+    }
+  }
+
+  /* ---- Tables --------------------------------------------------------------
+   * The reference PDF's hierarchy: a strong header row, compact cells, banded
+   * body rows, a row-label column that is not starved by auto layout, and
+   * tabular numerals. The scroll-fade wrapper still handles wide tables. */
+  .reader-prose .math-renderer table {
+    font-size: 0.875rem;
+    line-height: 1.45;
+    font-variant-numeric: tabular-nums;
+  }
+  .reader-prose .math-renderer th {
+    background: var(--paper-table-head-bg);
+    color: var(--paper-table-head-fg);
+    border-color: var(--paper-table-head-bg);
+    padding: 0.5rem 0.75rem;
+    font-weight: 600;
+    vertical-align: bottom;
+    text-align: left;
+  }
+  .reader-prose .math-renderer th :is(strong, em, a, code) {
+    color: inherit;
+    background: transparent;
+  }
+  .reader-prose .math-renderer td {
+    padding: 0.5rem 0.75rem;
+    border-color: var(--db-border-strong);
+    vertical-align: top;
+  }
+  .reader-prose .math-renderer tbody > tr:nth-child(even) { background: var(--paper-table-band); }
+  .reader-prose .math-renderer :is(th, td):first-child { min-width: 9rem; }
+
+  /* ---- Quoted material -----------------------------------------------------
+   * Two kinds in the paper. Quotations (a quoted source passage, attribution in
+   * its trailing parenthetical or the following "Source:" line) are set in roman
+   * with a hairline rule and an indent. Editorial notes open with a bold lead
+   * ("Successor identity.") and read as a tinted note panel. The kind is read from
+   * the source text by the reader (data-quote-kind), not guessed from markup. */
+  /* Leg 1b P1 fix: the box now spans the reading frame edge-to-edge (margin 0 left/right, same as
+   * every other body block), with the visual indent moved into padding-left so the text still
+   * lands at the same 1.5rem inset it did before (0.25rem margin + 1.25rem padding); only the
+   * hairline border's position shifts from 0.25rem to the frame edge. e2e's "fills the reading
+   * frame" check (matrix-options-paper.spec.ts, M2) asserts every visible body block's width
+   * matches its .reader-prose card; a quotation-kind blockquote (unlike note-kind, which already
+   * used margin: 1.5rem 0) was 4px narrower than that because of the old margin-left. */
+  .reader-prose .math-renderer > blockquote {
+    margin: 1.5rem 0;
+    padding: 0.125rem 0 0.125rem 1.5rem;
+    border-left: 1px solid var(--db-border-strong);
+    font-style: normal;
+    color: var(--db-text-primary);
+  }
+  .reader-prose .math-renderer > blockquote > :first-child { margin-top: 0; }
+  .reader-prose .math-renderer > blockquote > :last-child { margin-bottom: 0; }
+  .reader-prose .math-renderer > blockquote > p + p { margin-top: 0.75rem; }
+  .reader-prose [data-quote-kind='note'] > .math-renderer > blockquote {
+    margin: 1.5rem 0;
+    padding: 0.875rem 1.125rem;
+    border: 1px solid var(--db-accent-tint-border);
+    border-radius: 8px;
+    background: var(--db-accent-tint);
+  }
+  .reader-prose .math-renderer > blockquote code {
+    color: inherit;
+    background: var(--db-surface);
+  }
+}
+
+/* Print: the page is always light, so the paper's token roles print light too
+ * (the global print block forces element colours but not custom properties),
+ * the table header prints like the reference PDF and repeats on each page, and
+ * a figure is never split. Literal values mirror the light :root tokens. */
+@media print {
+  html.dark .reader-prose,
+  .reader-prose {
+    --db-surface: #ffffff;
+    --db-surface-raised: #ffffff;
+    --db-depth-0: #f8fafc;
+    --db-depth-1: #f1f5f9;
+    --db-depth-3: #cbd5e1;
+    --db-border: #e2e8f0;
+    --db-border-strong: #cbd5e1;
+    --db-text-primary: #0f172a;
+    --db-text-secondary: #475569;
+    --db-text-muted: #64748b;
+    --db-text-on-accent: #ffffff;
+    --db-accent-strong: #0369a1;
+    --db-accent-tint: #f0f9ff;
+    --db-accent-tint-border: #bae6fd;
+    --db-review-tint: #fffbeb;
+    --db-review-tint-border: #fde68a;
+    --paper-table-head-bg: #0369a1;
+    --paper-table-head-fg: #ffffff;
+    --paper-table-band: #f8fafc;
+    --paper-figure-line: #475569;
+  }
+  .reader-prose .math-renderer th {
+    background: var(--paper-table-head-bg) !important;
+    color: var(--paper-table-head-fg) !important;
+    border: 1px solid var(--paper-table-head-bg) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .reader-prose .math-renderer th :is(strong, em, a, code) { color: inherit !important; background: transparent !important; }
+  .reader-prose .math-renderer tbody > tr:nth-child(even) {
+    background: var(--paper-table-band) !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .reader-prose .math-renderer :is(th, td) { font-size: 9pt; padding: 4px 6px; line-height: 1.25; }
+  .paper-figure__canvas,
+  .paper-figure__status,
+  .reader-prose [data-quote-kind='note'] > .math-renderer > blockquote {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .paper-figure { break-inside: avoid; page-break-inside: avoid; }
+  .paper-figure__caption { break-before: avoid; page-break-before: avoid; }
+}

@@ -427,7 +427,8 @@ describe('paper publication V16 route', () => {
       }
     };
     walk(root);
-    expect(pages.length).toBe(10);
+    expect(pages.length).toBe(11);
+    expect(pages.some((routePath) => routePath.endsWith(join('figure-lab', 'page.tsx')))).toBe(true);
     for (const routePath of pages) {
       const source = readFileSync(routePath, 'utf8');
       expect(source).not.toContain('Candidate-015');
