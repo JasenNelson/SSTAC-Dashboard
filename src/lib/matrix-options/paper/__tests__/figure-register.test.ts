@@ -151,15 +151,51 @@ describe('the 20-figure register', () => {
     expect(seven1.semanticAssetId).toBe(bOne.semanticAssetId);
   });
 
-  it("records G-2's Matrix MC replacement-workflow candidate on the historical row without disturbing its DO_NOT_RESTORE_AS_CURRENT_SCHEMA disposition", () => {
+  it('records the owner-selected G-2 workflow binding as lab-only and final-binding-pending', () => {
     const g2 = FIGURE_REGISTER.find((row) => row.number === 'G-2')!;
     expect(g2.semanticAssetId).toBe('mx-asset-database-vv-workflow');
     expect(g2.candidatePacketSha256).toBe(FIGURE_CANDIDATE_PACKET.packetSha256);
-    expect(g2.remainingDecision).toMatch(/treatment A/);
-    expect(g2.remainingDecision).toMatch(/treatment B/);
-    expect(g2.remainingDecision).toMatch(/PX-4/);
+    expect(g2.implementation).toBe('historical-proposal-layout-only');
+    expect(g2.placement).toBe('lab-only');
+    expect(g2.remainingDecision).toMatch(/final binding pending/i);
+    expect(g2.visibleStatus).toContain('PROPOSED; NO COMPLETE RESOURCE PASSED');
+    expect(g2.canonicalSemanticSource).toEqual({
+      semanticAssetId: 'FIGG2',
+      marker: 'APPENDIX_G_BC_AQUATIC_DATABASE_SUMMARY.md#FIGG2',
+      stableLocalMarker: '<!-- FIGURE_SOURCE: FIGG2 -->',
+      semanticSha256: 'C2874D16FBF916B4BB55CF122C763CA95EF689413F4252F6B350A2335C063211',
+      authoritySourceSha256: {
+        ownerDispositionReceipt: '5DEF8223DB7B0F94DE50FDEB5BFE63CBD897A942CEF0264530DF9EB82D5CC3F2',
+        sourceRegister: '358436DF6FBB05A9A219A5D5184D18C8731287004913450F03ECA9367D89DAAF',
+        completionAcceptance: 'A91E45815A4DFB3489E2284A34490D6293A408653018D668CE87348C6C99598C',
+      },
+    });
+    expect(JSON.stringify(g2)).not.toMatch(/G-2A|G-2B|treatment A|treatment B|new figure number|owner has NOT chosen/i);
     const asset = figureCandidateAsset(g2.semanticAssetId!)!;
-    expect(asset.placements).toEqual(['G-2A', 'G-2B']);
+    expect(asset.placements).toEqual(['G-2']);
+    expect(g2.canonicalSemanticSource).toEqual(asset.canonicalSemanticSource);
+  });
+
+  it('records H-1 as the proposed fail-closed evidence-governance flow with its canonical source binding', () => {
+    const h1 = FIGURE_REGISTER.find((row) => row.number === 'H-1')!;
+    expect(h1.semanticAssetId).toBe('mx-asset-parameter-evidence-governance');
+    expect(h1.placement).toBe('lab-only');
+    expect(h1.implementation).toBe('candidate-prototype-nonfinal');
+    expect(h1.visibleStatus).toContain('PROPOSED; FAIL-CLOSED');
+    expect(h1.remainingDecision).toMatch(/final binding pending/i);
+    expect(h1.canonicalSemanticSource).toEqual({
+      semanticAssetId: 'FIGH1',
+      marker: 'APPENDIX_H_POLICY_READY_INPUT_PARAMETER_COMPENDIUM.md#FIGH1',
+      stableLocalMarker: '<!-- FIGURE_SOURCE: FIGH1 -->',
+      semanticSha256: '78865C89BFD1A1F89784C6787F05C6D0DA05EEF5F5F4780DCC095D31FAC236A0',
+      authoritySourceSha256: {
+        ownerDispositionReceipt: '5DEF8223DB7B0F94DE50FDEB5BFE63CBD897A942CEF0264530DF9EB82D5CC3F2',
+        sourceRegister: '358436DF6FBB05A9A219A5D5184D18C8731287004913450F03ECA9367D89DAAF',
+        completionAcceptance: 'A91E45815A4DFB3489E2284A34490D6293A408653018D668CE87348C6C99598C',
+      },
+    });
+    expect(JSON.stringify(h1)).not.toMatch(/identity remains an OWNER decision|REAUTHOR_AS_EVIDENCE_GOVERNANCE_FLOW/i);
+    expect(h1.canonicalSemanticSource).toEqual(figureCandidateAsset(h1.semanticAssetId!)?.canonicalSemanticSource);
   });
 
   it('gives every row a visibleStatus and accessibleEquivalent field (status is never color alone)', () => {
@@ -185,20 +221,18 @@ describe('the 20-figure register', () => {
 
   // ROUND4_FIX_BRIEF item 5 (Leg1b P2-3): a required placement field so Matrix MC can see, without
   // opening the lab, which numbers the default-on inline stakeholder paper actually draws today.
-  it("gives every row a placement field matching what it draws inline: the 12 PAPER_FIGURES numbers are 'inline+lab', G-2 is 'historical-lab-only', and every other row (7-1, 7-2, 7-7, B-1, G-1, G-3, H-1 -- never yet placed inline) is 'lab-only'", () => {
+  it("gives every row a placement field matching what it draws inline: the 12 PAPER_FIGURES numbers are 'inline+lab', and every other row (including lab-only G-2) is 'lab-only'", () => {
     const inlineNumbers = new Set(PAPER_FIGURES.map((entry) => entry.figureNumber));
     expect(inlineNumbers.size).toBe(12);
     for (const row of FIGURE_REGISTER) {
-      if (row.number === 'G-2') {
-        expect(row.placement, row.number).toBe('historical-lab-only');
-      } else if (inlineNumbers.has(row.number)) {
+      if (inlineNumbers.has(row.number)) {
         expect(row.placement, row.number).toBe('inline+lab');
       } else {
         expect(row.placement, row.number).toBe('lab-only');
       }
     }
     expect(FIGURE_REGISTER.filter((row) => row.placement === 'inline+lab').map((row) => row.number).sort()).toEqual([...inlineNumbers].sort());
-    expect(FIGURE_REGISTER.filter((row) => row.placement === 'lab-only').map((row) => row.number).sort()).toEqual(['7-1', '7-2', '7-7', 'B-1', 'G-1', 'G-3', 'H-1'].sort());
+    expect(FIGURE_REGISTER.filter((row) => row.placement === 'lab-only').map((row) => row.number).sort()).toEqual(['7-1', '7-2', '7-7', 'B-1', 'G-1', 'G-2', 'G-3', 'H-1'].sort());
   });
 
   it('no visibleStatus claims "accepted" except F-2\'s disposition-backed wording; none claims "final" or "canonical" without negation/pending (P2-4)', () => {

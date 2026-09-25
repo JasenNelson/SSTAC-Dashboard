@@ -127,7 +127,7 @@ describe('internal paper figure lab', () => {
     }
   }, 120000);
 
-  it('shows a Matrix MC content candidate sub-section for 6-1, 7-1, B-1, 7-7, G-3, H-1 and G-2 (both treatments), and none for rows with no candidate', async () => {
+  it('shows a Matrix MC content candidate sub-section for each candidate row at its bound placement, and none for rows with no candidate', async () => {
     Object.assign(process.env, { MATRIX_OPTIONS_PAPER_WORKSPACE: 'true', MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION: 'true', MATRIX_OPTIONS_PAPER_FIGURE_LAB: 'true' });
     const { container } = render(await MatrixOptionsPaperFigureLabPage());
     const candidateRows = ['6-1', '7-1', 'B-1', '7-7', 'G-3', 'H-1', 'G-2'];
@@ -140,12 +140,24 @@ describe('internal paper figure lab', () => {
     for (const number of noCandidateRows) {
       expect(container.querySelector(`section[data-register-row="${number}"] [data-candidate-section]`), number).toBeNull();
     }
-    // G-2 shows both numbering treatments, with the no-treatment-selected note, and never silently picks one.
+    // G-2 has one owner-selected placement, still lab-only and non-final.
     const g2Candidate = container.querySelector('section[data-register-row="G-2"] [data-candidate-section]')!;
-    expect(g2Candidate.textContent).toContain('No treatment has been selected; this is an owner decision.');
-    expect(g2Candidate.textContent).toContain('Treatment A (workflow replaces Figure G-2)');
-    expect(g2Candidate.textContent).toContain('Treatment B (Figure G-2 stays historical; workflow as a new proposed figure)');
-    expect(g2Candidate.querySelectorAll('figure.paper-figure')).toHaveLength(2);
+    expect(g2Candidate.textContent).not.toMatch(/treatment A|treatment B|new figure number|owner decision/i);
+    expect(g2Candidate.querySelectorAll('figure.paper-figure')).toHaveLength(1);
+    expect(g2Candidate.querySelector('figure.paper-figure')?.querySelector('figcaption')?.textContent).toContain('Figure G-2.');
+    expect(g2Candidate.querySelector('.paper-figure__status')?.textContent).toContain('PROPOSED; NO COMPLETE RESOURCE PASSED');
+    expect(g2Candidate.querySelector('.paper-figure__status')?.textContent).toContain('Final binding pending.');
+    for (const [number, assetId, marker, sha256] of [
+      ['G-2', 'FIGG2', 'APPENDIX_G_BC_AQUATIC_DATABASE_SUMMARY.md#FIGG2', 'C2874D16FBF916B4BB55CF122C763CA95EF689413F4252F6B350A2335C063211'],
+      ['H-1', 'FIGH1', 'APPENDIX_H_POLICY_READY_INPUT_PARAMETER_COMPENDIUM.md#FIGH1', '78865C89BFD1A1F89784C6787F05C6D0DA05EEF5F5F4780DCC095D31FAC236A0'],
+    ]) {
+      const row = container.querySelector(`section[data-register-row="${number}"]`)!;
+      expect(row.querySelector('[data-field="canonical-semantic-asset"]')?.textContent).toBe(assetId);
+      expect(row.querySelector('[data-field="canonical-semantic-marker"]')?.textContent).toBe(marker);
+      expect(row.querySelector('[data-field="canonical-semantic-sha256"]')?.textContent).toBe(sha256);
+      expect(row.querySelector('[data-field="stable-local-marker"]')?.textContent).toContain(`FIGURE_SOURCE: ${assetId}`);
+      expect(row.textContent).not.toMatch(/identity remains an OWNER decision|unresolved between treatments/i);
+    }
     // 7-1 and B-1 render the same semantic asset (same source hash), only label/caption differ.
     const sevenOneFigure = container.querySelector('section[data-register-row="7-1"] [data-candidate-section] figure')!;
     const bOneFigure = container.querySelector('section[data-register-row="B-1"] [data-candidate-section] figure')!;

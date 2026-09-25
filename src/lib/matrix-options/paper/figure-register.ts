@@ -13,7 +13,7 @@
  * is content-non-final: see FIGURE_CANDIDATE_PACKET and each row's remainingDecision.
  */
 
-import { FIGURE_CANDIDATE_PACKET } from './figure-candidates';
+import { FIGURE_CANDIDATE_PACKET, figureCandidateAsset, type CanonicalSemanticSourceBinding } from './figure-candidates';
 import { FIGURE_ADJUDICATION, type DiagramModel, type FigureBinding } from './figures';
 
 export type FigureImplementation =
@@ -43,6 +43,8 @@ export interface FigureRegisterRow {
   readonly remainingDecision: string;
   /** figure-candidates.ts assetId this row draws, or null when it has no Matrix MC content candidate. */
   readonly semanticAssetId: string | null;
+  /** Canonical source identity for the proposed G-2/H-1 semantic assets, distinct from packet bytes. */
+  readonly canonicalSemanticSource?: CanonicalSemanticSourceBinding;
   /** The candidate packet's sha256, or null when this row has no candidate. */
   readonly candidatePacketSha256: string | null;
   /** The words a reader sees for this row's content status (never color alone). */
@@ -52,11 +54,12 @@ export interface FigureRegisterRow {
    * the default-on inline stakeholder paper as well as in the figure lab ('inline+lab', the 12
    * current PAPER_FIGURES entries incl. 6-1), exists only as a Matrix MC candidate or awaiting-
    * content placement never yet placed inline ('lab-only': 7-1, 7-2, 7-7, B-1, G-1, G-3, H-1), or
-   * is a historical v1.0 proposal the current paper explicitly says was never built ('historical-
-   * lab-only': G-2). PX-1..PX-4 (the derived, deterministically-redrawn figures) are not
+   * is a lab-only candidate. G-2 is a historical v1.0 proposal the current paper says was never
+   * built; its implementation field preserves that provenance while placement remains lab-only.
+   * PX-1..PX-4 (the derived, deterministically-redrawn figures) are not
    * FIGURE_REGISTER rows; they are recorded as lab-only in export_register.ts's proposed section.
    */
-  readonly placement: 'inline+lab' | 'lab-only' | 'historical-lab-only';
+  readonly placement: 'inline+lab' | 'lab-only';
   /** How every node and edge meaning reaches a screen reader for this row's drawn figure(s). */
   readonly accessibleEquivalent: string;
   /** Where this row's drawn content traces to against MATRIX_SEVEN_SOURCE_DELTA_LEDGER_20260924.md (FIGURE_SOURCE_LEDGER). */
@@ -231,12 +234,13 @@ export const FIGURE_REGISTER: readonly FigureRegisterRow[] = [
   { number: 'G-1', historicalCaption: 'The four core pillars of the BC aquatic database.', referencePdfPage: 321, historicalPlacement: 'Appendix G 1.2', currentPlacement: 'candidate: Appendix G (referenced duplicate)', implementation: 'referenced-duplicate', contentSource: 'the Figure 7-5 asset (single scientific asset)', disposition: 'RESTORE_AS_REFERENCED_DUPLICATE_PRESENTATION', reuseOf: '7-5', remainingDecision: 'Bind G-1 to the 7-5 asset in the release register; confirm the Appendix G placement.', semanticAssetId: null, candidatePacketSha256: null, placement: 'lab-only', visibleStatus: visibleStatusReferencedDuplicate('7-5'), accessibleEquivalent: REAL_TEXT_EQUIVALENT, lineage: { ledgerSha256: FIGURE_SOURCE_LEDGER.sha256, kind: 'referenced-duplicate', sourceFile: 'SECTION_7_7_BC_AQUATIC_DATABASE_DRAFT_TEXT.md', liveFileSha256: '37bbd1e843386969c2cfdf8a673a9ea62e73a1e331542132ff27a2dfe7e6e55c', stagedFileSha256: 'add774b7e3d446f13e00b9e72fd9b53f3f2861e772e9f8793b8ac5d7ae953e84', fenceSha256: 'cde7ce40b17eca6b25155180b446992996d59b2b20728108da2085ed6b774be1', fenceOrdinal: 1, fenceStartLine: 18, diagramSummary: 11, parity: 'IDENTICAL', renderBinding: "Render-time binding to deployed Diagram summary 11, inherited from Figure 7-5 (the single scientific asset both placements reuse); the summary is not the canonical visual definition (ledger). Semantic definition: live source-native fence.", carriedEncodingRepairs: 'None inside the figure body (repairs noted by the ledger are in surrounding prose and are not carried into this asset).', note: "Referenced duplicate: inherits Figure 7-5's source-native fence fields verbatim, per FIGURE_REGISTER reuseOf. Same fence #1 at SECTION_7_7_BC_AQUATIC_DATABASE_DRAFT_TEXT.md:18." } },
   {
     number: 'G-2', historicalCaption: 'Proposed relational schema -- not implemented.', referencePdfPage: 325, historicalPlacement: 'Appendix G 4.1', currentPlacement: 'none (historical only); candidate: Section 7.7.3 four-stage V&V workflow', implementation: 'historical-proposal-layout-only',
-    contentSource: `structure only; marked historical proposal, not current design. Matrix MC content candidate mx-asset-database-vv-workflow (packet sha256 ${FIGURE_CANDIDATE_PACKET.packetSha256}, YELLOW draft, packet disposition PROPOSED_NEW_FIGURE_FOR_OWNER_ACCEPTANCE) is prototyped under BOTH numbering treatments (G-2A, G-2B); see figure-candidates.ts. This row's own disposition below still governs only the historical relational schema, not the new candidate.`,
+    contentSource: `Historical relational-schema caption is retained as provenance only. The proposed Figure G-2 workflow is shown in the figure lab from candidate asset mx-asset-database-vv-workflow (packet sha256 ${FIGURE_CANDIDATE_PACKET.packetSha256}); canonical semantic source FIGG2 is APPENDIX_G_BC_AQUATIC_DATABASE_SUMMARY.md#FIGG2.`,
     disposition: 'DO_NOT_RESTORE_AS_CURRENT_SCHEMA', reuseOf: null,
-    remainingDecision: 'Owner review focus 1: the owner has NOT chosen between treatment A (the Section 7.7.3 workflow replaces historical Figure G-2 in the register) and treatment B (Figure G-2 stays historical-only; the workflow receives a new figure number). Both are prototyped for comparison; L2 must not silently choose one. Note the overlap with the PX-4 derived figure, which is drawn from the same Section 7.7.3 text.',
+    remainingDecision: 'The proposed four-stage verification and validation workflow remains lab-only and non-final; final binding pending. No complete resource has passed all stages. The historical relational-schema caption remains provenance only.',
     semanticAssetId: 'mx-asset-database-vv-workflow', candidatePacketSha256: FIGURE_CANDIDATE_PACKET.packetSha256,
-    placement: 'historical-lab-only',
-    visibleStatus: 'Historical proposal (not current design) plus a Matrix MC content candidate replacement workflow shown under both numbering treatments - no treatment selected.',
+    canonicalSemanticSource: figureCandidateAsset('mx-asset-database-vv-workflow')?.canonicalSemanticSource,
+    placement: 'lab-only',
+    visibleStatus: 'Historical relational-schema figure remains historical only. Proposed Figure G-2: PROPOSED; NO COMPLETE RESOURCE PASSED. Lab-only, non-final, final binding pending.',
     accessibleEquivalent: CANDIDATE_ACCESSIBLE_EQUIVALENT,
     lineage: {
       ledgerSha256: FIGURE_SOURCE_LEDGER.sha256,
@@ -245,7 +249,7 @@ export const FIGURE_REGISTER: readonly FigureRegisterRow[] = [
       fenceSha256: null, fenceOrdinal: null, fenceStartLine: null, diagramSummary: null, parity: null,
       renderBinding: 'No live diagram-summary rendering: the historical relational schema is layout-only (LAYOUT_SKELETONS[\'G-2\']), drawn from the v1.0 block structure, not from a source-native fence in the seven-file ledger.',
       carriedEncodingRepairs: 'Not applicable: the historical layout skeleton carries no scientific text, so there is no fence body to check for carried repair tokens.',
-      note: `No current schema; treatments A and B both use the Matrix MC content candidate mx-asset-database-vv-workflow (MATRIX_FOUNDATIONAL_FIGURE_CONTENT_CANDIDATES_20260924.md, sha256 ${FIGURE_CANDIDATE_PACKET.packetSha256}), not a source-native fence.`,
+      note: `Historical relational schema remains historical only. The proposed G-2 candidate packet (${FIGURE_CANDIDATE_PACKET.packetFile}, sha256 ${FIGURE_CANDIDATE_PACKET.packetSha256}) is bound to canonical semantic source FIGG2 at APPENDIX_G_BC_AQUATIC_DATABASE_SUMMARY.md#FIGG2; packet fence bytes and canonical semantic digest are separate identities.`,
     },
   },
   {
@@ -269,12 +273,13 @@ export const FIGURE_REGISTER: readonly FigureRegisterRow[] = [
   },
   {
     number: 'H-1', historicalCaption: 'Legislative context: the Environmental Management Act, the CSR and Schedule 3.4.', referencePdfPage: 340, historicalPlacement: 'Appendix H 1.1', currentPlacement: 'candidate: Appendix H Policy-ready input parameter compendium', implementation: 'candidate-prototype-nonfinal',
-    contentSource: `Matrix MC content candidate mx-asset-parameter-evidence-governance (packet sha256 ${FIGURE_CANDIDATE_PACKET.packetSha256}, YELLOW draft); evidence-governance flow, not a source hierarchy; see figure-candidates.ts.`,
-    disposition: 'REAUTHOR_AS_EVIDENCE_GOVERNANCE_FLOW', reuseOf: null,
-    remainingDecision: 'Owner review focus 2: whether H-1 should remain a source-hierarchy figure, become the proposed evidence-governance flow (this candidate), or be split into two figures; the v1.0 List of Figures caption and diagram title disagree, and this candidate resolves that mismatch in favor of the diagram subject without declaring it accepted. Its fence carries no Status line, so the lab shows the packet disposition code REAUTHOR_AS_EVIDENCE_GOVERNANCE_FLOW; if a section-2 status token is intended instead, Matrix MC must supply it (inbox R14). Identity remains an OWNER decision.',
+    contentSource: `Proposed evidence-governance flow for future records, not a source hierarchy. Candidate asset mx-asset-parameter-evidence-governance (packet sha256 ${FIGURE_CANDIDATE_PACKET.packetSha256}) is bound to canonical semantic source FIGH1 at APPENDIX_H_POLICY_READY_INPUT_PARAMETER_COMPENDIUM.md#FIGH1.`,
+    disposition: 'OWNER_DISPOSITION_H1_A_EVIDENCE_GOVERNANCE_FLOW', reuseOf: null,
+    remainingDecision: 'The proposed evidence-governance flow remains lab-only and non-final; final binding pending. It does not accept any source, parameter, method, equation, or calculation. Unverified records remain ineligible for active calculation use.',
     semanticAssetId: 'mx-asset-parameter-evidence-governance', candidatePacketSha256: FIGURE_CANDIDATE_PACKET.packetSha256,
+    canonicalSemanticSource: figureCandidateAsset('mx-asset-parameter-evidence-governance')?.canonicalSemanticSource,
     placement: 'lab-only',
-    visibleStatus: 'Matrix MC content candidate - not final and not scientifically accepted.',
+    visibleStatus: 'PROPOSED; FAIL-CLOSED. Lab-only, non-final, final binding pending; no unverified record is eligible for active calculation use.',
     accessibleEquivalent: CANDIDATE_ACCESSIBLE_EQUIVALENT,
     lineage: {
       ledgerSha256: FIGURE_SOURCE_LEDGER.sha256,
@@ -283,7 +288,7 @@ export const FIGURE_REGISTER: readonly FigureRegisterRow[] = [
       fenceSha256: null, fenceOrdinal: null, fenceStartLine: null, diagramSummary: null, parity: null,
       renderBinding: 'No live diagram-summary rendering at this placement; the figure lab draws this row from figure-candidates.ts (Matrix MC content candidate), not a deployed Diagram summary, and not from a source-native fence in the seven-file ledger.',
       carriedEncodingRepairs: 'Not applicable: this row is not a source-native fence, so the ledger carries no repair-token check for it.',
-      note: `No source-native fence exists for Figure H-1 in the current trees (source_native_parity.json). Content candidate: MATRIX_FOUNDATIONAL_FIGURE_CONTENT_CANDIDATES_20260924.md, sha256 ${FIGURE_CANDIDATE_PACKET.packetSha256}.`,
+      note: `Candidate packet (${FIGURE_CANDIDATE_PACKET.packetFile}, sha256 ${FIGURE_CANDIDATE_PACKET.packetSha256}) is bound to canonical semantic source FIGH1 at APPENDIX_H_POLICY_READY_INPUT_PARAMETER_COMPENDIUM.md#FIGH1; packet fence bytes and canonical semantic digest are separate identities.`,
     },
   },
 ];

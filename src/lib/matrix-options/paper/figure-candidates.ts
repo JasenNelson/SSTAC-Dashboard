@@ -37,10 +37,25 @@ export interface CandidateEdge {
 
 /**
  * One semantic asset (one fence) and the register placement(s) that draw it.
- * A placement id is a figure-register number: '6-1', '7-1', 'B-1', '7-7', 'G-3',
- * 'H-1', or the two G-2 replacement treatments 'G-2A' (workflow replaces G-2)
- * and 'G-2B' (G-2 stays historical; workflow gets a new number).
+ * A placement id is a figure-register number, including the owner-selected G-2
+ * and H-1 canonical semantic bindings.
  */
+export interface CanonicalSemanticSourceBinding {
+  readonly semanticAssetId: string;
+  /** Source-native path and semantic-asset marker used by the accepted register. */
+  readonly marker: string;
+  /** Exact stable_local_marker value from the accepted source register. */
+  readonly stableLocalMarker: string;
+  /** Canonical semantic digest; distinct from this packet candidate's fence digest. */
+  readonly semanticSha256: string;
+  /** Hashes of the three authority records that establish this source binding. */
+  readonly authoritySourceSha256: {
+    readonly ownerDispositionReceipt: string;
+    readonly sourceRegister: string;
+    readonly completionAcceptance: string;
+  };
+}
+
 export interface FigureCandidateAsset {
   readonly assetId: string;
   /** Packet section number and figure label, e.g. "4 (7-1/B-1)". */
@@ -55,6 +70,8 @@ export interface FigureCandidateAsset {
   readonly edgesSourceLine: string | null;
   /** The fence's Status / Global status text, or (H-1, which has neither) the packet's section disposition. Feeds candidateBinding's statusNote. */
   readonly contentStatusText: string;
+  /** Accepted canonical source identity, when Matrix MC has bound this candidate to a source asset. */
+  readonly canonicalSemanticSource?: CanonicalSemanticSourceBinding;
   readonly edges: readonly CandidateEdge[];
   /** Figure-register numbers this one semantic asset is placed at. */
   readonly placements: readonly string[];
@@ -131,7 +148,18 @@ const FIGURE_CANDIDATE_ASSET_DATA: readonly FigureCandidateAsset[] = [
     fenceSha256: '58661fd9c8789441b5a7b510a01ce700d668bc3bddabb0345cd022169d83074e',
     captionCandidate: 'Figure H-1. Proposed evidence-governance flow for future input-parameter records.',
     edgesSourceLine: null,
-    contentStatusText: 'packet disposition REAUTHOR_AS_EVIDENCE_GOVERNANCE_FLOW (the fence carries a fail-closed rule, not a Status line)',
+    contentStatusText: 'PROPOSED; FAIL-CLOSED',
+    canonicalSemanticSource: {
+      semanticAssetId: 'FIGH1',
+      marker: 'APPENDIX_H_POLICY_READY_INPUT_PARAMETER_COMPENDIUM.md#FIGH1',
+      stableLocalMarker: '<!-- FIGURE_SOURCE: FIGH1 -->',
+      semanticSha256: '78865C89BFD1A1F89784C6787F05C6D0DA05EEF5F5F4780DCC095D31FAC236A0',
+      authoritySourceSha256: {
+        ownerDispositionReceipt: '5DEF8223DB7B0F94DE50FDEB5BFE63CBD897A942CEF0264530DF9EB82D5CC3F2',
+        sourceRegister: '358436DF6FBB05A9A219A5D5184D18C8731287004913450F03ECA9367D89DAAF',
+        completionAcceptance: 'A91E45815A4DFB3489E2284A34490D6293A408653018D668CE87348C6C99598C',
+      },
+    },
     edges: [
       { from: 'candidate-record', to: 'step-1', basis: 'packet-sequence' },
       { from: 'step-1', to: 'step-2', basis: 'packet-sequence' },
@@ -144,12 +172,23 @@ const FIGURE_CANDIDATE_ASSET_DATA: readonly FigureCandidateAsset[] = [
   },
   {
     assetId: 'mx-asset-database-vv-workflow',
-    packetSection: '8 (G-2 repl.)',
+    packetSection: '8 (G-2)',
     fenceText: 'Input: candidate environmental record\n\nStage 1 - Structural conformance and referential integrity\n- Validate site, station, event, and measurement relationships\n- Check physical parameter boundaries\n\nStage 2 - Chemical nomenclature and unit harmonization\n- Resolve synonyms to canonical substance identity\n- Standardize concentration units and basis\n\nStage 3 - Sample identity and co-location verification\n- Detect duplicate reporting and recognize co-located records\n- BLOCKED DESIGN DETAIL: identifier attributes are not yet settled; no scheme is built\n\nStage 4 - Censored-data standardization\n- Apply an accepted treatment for non-detects and distribution modelling\n- Method selection and applicability remain subject to scientific review\n\nOutput: QA/QC-screened candidate record for analytical use\n\nGlobal status: PROPOSED_SYSTEM - no data have yet passed this process.',
     fenceSha256: '5c32fd54ed4aeab9d62d02301be34cfd3a129421da4974e506f727f63e4bb872',
     captionCandidate: 'Proposed figure. Four-stage verification and validation process for future BC Aquatic Database records.',
     edgesSourceLine: null,
-    contentStatusText: 'PROPOSED_SYSTEM - no data have yet passed this process',
+    contentStatusText: 'PROPOSED; NO COMPLETE RESOURCE PASSED',
+    canonicalSemanticSource: {
+      semanticAssetId: 'FIGG2',
+      marker: 'APPENDIX_G_BC_AQUATIC_DATABASE_SUMMARY.md#FIGG2',
+      stableLocalMarker: '<!-- FIGURE_SOURCE: FIGG2 -->',
+      semanticSha256: 'C2874D16FBF916B4BB55CF122C763CA95EF689413F4252F6B350A2335C063211',
+      authoritySourceSha256: {
+        ownerDispositionReceipt: '5DEF8223DB7B0F94DE50FDEB5BFE63CBD897A942CEF0264530DF9EB82D5CC3F2',
+        sourceRegister: '358436DF6FBB05A9A219A5D5184D18C8731287004913450F03ECA9367D89DAAF',
+        completionAcceptance: 'A91E45815A4DFB3489E2284A34490D6293A408653018D668CE87348C6C99598C',
+      },
+    },
     edges: [
       { from: 'input', to: 'stage1', basis: 'packet-sequence' },
       { from: 'stage1', to: 'stage2', basis: 'packet-sequence' },
@@ -157,7 +196,7 @@ const FIGURE_CANDIDATE_ASSET_DATA: readonly FigureCandidateAsset[] = [
       { from: 'stage3', to: 'stage4', basis: 'packet-sequence' },
       { from: 'stage4', to: 'output', basis: 'packet-sequence' },
     ],
-    placements: ['G-2A', 'G-2B'],
+    placements: ['G-2'],
   },
 ];
 
@@ -385,19 +424,14 @@ export function stripCaptionLeadIn(captionCandidate: string): string {
   return splitAt === -1 ? captionCandidate : captionCandidate.slice(splitAt + 2);
 }
 
-/** Treatment-B's own label, from the packet's caption head (no figure number has been assigned to it). */
-export const G2_TREATMENT_B_LABEL = 'Proposed figure';
-
 /**
  * The prototype binding for one placement of a candidate asset. `registerNumber`
- * is one of asset.placements. Status is the new `candidate-nonfinal` value;
- * G-2's treatment B is null-safe (labelled from the packet's own caption head,
- * since no figure number has been assigned to that treatment).
+ * is one of asset.placements. Status is `candidate-nonfinal` until final binding.
  */
 export function candidateBinding(asset: FigureCandidateAsset, registerNumber: string): FigureBinding {
-  // Treatment A is the workflow drawn AS Figure G-2 (no "G-2A" number exists); treatment B has no number yet.
   // PaperFigure appends the period after the label, so neither label carries one.
-  const label = registerNumber === 'G-2B' ? G2_TREATMENT_B_LABEL : registerNumber === 'G-2A' ? 'Figure G-2' : `Figure ${registerNumber}`;
+  const label = `Figure ${registerNumber}`;
+  const finalBindingPending = asset.canonicalSemanticSource ? ' Final binding pending.' : '';
   return {
     kind: 'prototype',
     id: registerNumber,
@@ -405,7 +439,7 @@ export function candidateBinding(asset: FigureCandidateAsset, registerNumber: st
     caption: stripCaptionLeadIn(asset.captionCandidate),
     sourceSha256: asset.fenceSha256,
     status: 'candidate-nonfinal',
-    statusNote: `Matrix MC content candidate - not final and not scientifically accepted (packet sha256 ${FIGURE_CANDIDATE_PACKET.packetSha256}, YELLOW draft for prototyping). Content status: ${asset.contentStatusText}.`,
+    statusNote: `Matrix MC content candidate - lab only, not final and not scientifically accepted (packet sha256 ${FIGURE_CANDIDATE_PACKET.packetSha256}, YELLOW draft for prototyping). Content status: ${asset.contentStatusText}.${finalBindingPending}`,
     notation: 'plain',
     labelOverrides: null,
     // Candidates carry no labelOverrides, so overrideAuthority (which documents labelOverrides only) stays

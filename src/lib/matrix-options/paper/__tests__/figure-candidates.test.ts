@@ -9,7 +9,6 @@ import {
   FIGURE_CANDIDATE_ASSETS,
   FIGURE_CANDIDATE_PACKET,
   figureCandidateAsset,
-  G2_TREATMENT_B_LABEL,
   stripCaptionLeadIn,
   type FigureCandidateAsset,
 } from '../figure-candidates';
@@ -294,23 +293,54 @@ describe('Matrix MC figure content candidates (packet 2026-09-24)', () => {
     expect(seven1.caption).toBe(bOne.caption);
   });
 
-  it("G-2's two treatments share one semantic asset; treatment B is labelled from the packet's own caption head", () => {
+  it('binds the proposed G-2 workflow to its accepted canonical semantic asset while keeping packet bytes distinct', () => {
     const asset = figureCandidateAsset('mx-asset-database-vv-workflow')!;
-    expect(asset.placements).toEqual(['G-2A', 'G-2B']);
-    const treatmentA = candidateBinding(asset, 'G-2A');
-    const treatmentB = candidateBinding(asset, 'G-2B');
-    expect(treatmentA.assetId).toBe(treatmentB.assetId);
-    expect(treatmentA.sourceSha256).toBe(treatmentB.sourceSha256);
-    // Treatment A draws the workflow AS Figure G-2; no "G-2A" figure number exists.
-    expect(treatmentA.label).toBe('Figure G-2');
-    expect(treatmentB.label).toBe(G2_TREATMENT_B_LABEL);
-    // PaperFigure renders `${label}.`, so a label ending in "." would print "..".
-    expect(treatmentB.label).toBe('Proposed figure');
-    for (const placement of ['6-1', '7-1', 'B-1', '7-7', 'G-3', 'H-1', 'G-2A', 'G-2B']) {
+    expect(asset.placements).toEqual(['G-2']);
+    expect(asset.canonicalSemanticSource).toEqual({
+      semanticAssetId: 'FIGG2',
+      marker: 'APPENDIX_G_BC_AQUATIC_DATABASE_SUMMARY.md#FIGG2',
+      stableLocalMarker: '<!-- FIGURE_SOURCE: FIGG2 -->',
+      semanticSha256: 'C2874D16FBF916B4BB55CF122C763CA95EF689413F4252F6B350A2335C063211',
+      authoritySourceSha256: {
+        ownerDispositionReceipt: '5DEF8223DB7B0F94DE50FDEB5BFE63CBD897A942CEF0264530DF9EB82D5CC3F2',
+        sourceRegister: '358436DF6FBB05A9A219A5D5184D18C8731287004913450F03ECA9367D89DAAF',
+        completionAcceptance: 'A91E45815A4DFB3489E2284A34490D6293A408653018D668CE87348C6C99598C',
+      },
+    });
+    const binding = candidateBinding(asset, 'G-2');
+    expect(binding.label).toBe('Figure G-2');
+    expect(binding.status).toBe('candidate-nonfinal');
+    expect(binding.statusNote).toContain('PROPOSED; NO COMPLETE RESOURCE PASSED');
+    expect(binding.statusNote).toMatch(/final binding pending/i);
+    expect(asset.fenceSha256).not.toBe('C2874D16FBF916B4BB55CF122C763CA95EF689413F4252F6B350A2335C063211');
+    for (const placement of ['6-1', '7-1', 'B-1', '7-7', 'G-3', 'H-1', 'G-2']) {
       const asset = FIGURE_CANDIDATE_ASSETS.find((candidate) => candidate.placements.includes(placement));
       expect(asset).toBeDefined();
       expect(candidateBinding(asset!, placement).label?.endsWith('.')).toBe(false);
     }
+  });
+
+  it('binds H-1 to its accepted canonical evidence-governance asset and fail-closed status', () => {
+    const asset = figureCandidateAsset('mx-asset-parameter-evidence-governance')!;
+    expect(asset.placements).toEqual(['H-1']);
+    expect(asset.canonicalSemanticSource).toEqual({
+      semanticAssetId: 'FIGH1',
+      marker: 'APPENDIX_H_POLICY_READY_INPUT_PARAMETER_COMPENDIUM.md#FIGH1',
+      stableLocalMarker: '<!-- FIGURE_SOURCE: FIGH1 -->',
+      semanticSha256: '78865C89BFD1A1F89784C6787F05C6D0DA05EEF5F5F4780DCC095D31FAC236A0',
+      authoritySourceSha256: {
+        ownerDispositionReceipt: '5DEF8223DB7B0F94DE50FDEB5BFE63CBD897A942CEF0264530DF9EB82D5CC3F2',
+        sourceRegister: '358436DF6FBB05A9A219A5D5184D18C8731287004913450F03ECA9367D89DAAF',
+        completionAcceptance: 'A91E45815A4DFB3489E2284A34490D6293A408653018D668CE87348C6C99598C',
+      },
+    });
+    const binding = candidateBinding(asset, 'H-1');
+    expect(binding.status).toBe('candidate-nonfinal');
+    expect(binding.statusNote).toContain('PROPOSED; FAIL-CLOSED');
+    expect(binding.statusNote).toMatch(/final binding pending/i);
+    expect(binding.statusNote).not.toContain('REAUTHOR_AS_EVIDENCE_GOVERNANCE_FLOW');
+    expect(binding.statusNote).not.toContain('identity remains');
+    expect(asset.fenceSha256).not.toBe('78865C89BFD1A1F89784C6787F05C6D0DA05EEF5F5F4780DCC095D31FAC236A0');
   });
 
   it('strips only the caption lead-in that the figure label already renders', () => {
