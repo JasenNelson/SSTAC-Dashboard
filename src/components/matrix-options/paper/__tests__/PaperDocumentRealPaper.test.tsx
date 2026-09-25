@@ -12,6 +12,7 @@ vi.mock('@/components/MathRenderer', () => ({
   ),
 }));
 
+import { paperInlineSegments } from '@/lib/matrix-options/paper/derived-figures';
 import { buildLegacyAnchorMap } from '@/lib/matrix-options/paper/full-document';
 import { workingDraftSectionHref } from '@/lib/matrix-options/paper/url-state';
 import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
@@ -32,7 +33,20 @@ describe('PaperDocument on the authenticated release', () => {
     expect(labelOf(sections[sections.length - 1])).toBe(structure.nodes[structure.nodes.length - 1].label);
     expect(sections.filter((section) => labelOf(section) === 'Technical Appendices Compendium')).toHaveLength(1);
     expect(structure.nodes.some((node) => /^Appendix J\b/i.test(node.label))).toBe(false);
-    expect(container.querySelectorAll('[data-testid="markdown"][data-link-map="yes"]')).toHaveLength(341);
+    // Every section's prose goes through the markdown renderer with the link map. A
+    // section that holds a figure renders its prose in more than one segment (before
+    // and after the figure), so the total follows the figure splitter exactly. The inline
+    // stakeholder paper never applies derived figures (owner decision 2026-09-24), so the
+    // expected count is computed from the same inline-only segmenter PaperText itself uses.
+    const expectedMarkdown = model.chunks.reduce((sum, chunk) => sum + paperInlineSegments(chunk.markdown).filter((segment) => segment.kind === 'markdown').length, 0);
+    expect(expectedMarkdown).toBeGreaterThan(341);
+    expect(container.querySelectorAll('[data-testid="markdown"][data-link-map="yes"]')).toHaveLength(expectedMarkdown);
+    expect(container.querySelectorAll('[data-testid="markdown"][data-link-map="no"]')).toHaveLength(0);
+    for (const section of sections) expect(section.querySelector('[data-testid="markdown"][data-link-map="yes"]'), section.id).not.toBeNull();
+    expect(container.querySelectorAll('figure[data-paper-figure]')).toHaveLength(12);
+    // Derived (PX-1..PX-4) figures are figure-lab only; none render inline.
+    expect(container.querySelectorAll('figure[data-derived-figure]')).toHaveLength(0);
+    expect(container.querySelectorAll('figure[data-binding="unbound"]')).toHaveLength(0);
     // M1-09: sections are named groups, never 341 region landmarks.
     expect(container.querySelectorAll('section[data-paper-chunk][role="group"]')).toHaveLength(341);
     expect(screen.queryAllByRole('region')).toHaveLength(0);
