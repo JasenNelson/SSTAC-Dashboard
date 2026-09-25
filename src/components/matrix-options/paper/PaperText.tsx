@@ -1,6 +1,9 @@
 import MathRenderer from '@/components/MathRenderer';
+import { paperInlineSegments } from '@/lib/matrix-options/paper/derived-figures';
 import { demoteMarkdownHeadings, markdownHeadingLevels } from '@/lib/matrix-options/paper/full-document';
 import { cn } from '@/utils/cn';
+
+import { PaperFigure } from './PaperFigure';
 
 /** Heading levels paper markdown is demoted by inside the Working Draft. */
 export const PAPER_DOCUMENT_HEADING_OFFSET = 1;
@@ -80,12 +83,34 @@ export interface PaperTextProps {
 /**
  * Paper markdown through the shared MathRenderer (not modified). No
  * directive: usable from the server PaperDocument and from client components.
+ *
+ * The release carries its figures as flattened "Diagram summary N" lists; each
+ * one that parses is drawn as a figure between the prose segments around it
+ * (lib/matrix-options/paper/figures.ts), with its own current-paper labels and no label
+ * override (owner decision 2026-09-24). The derived PX-1..PX-4 re-drawings of a few tables and
+ * lists (derived-figures.ts) are figure-lab only and are never applied here; their source tables
+ * and lists render as plain text, exactly as before derived figures existed. The markdown text
+ * itself is unchanged.
  */
 export function PaperText({ markdown, linkMap, className, headingOffset = 0, headingVariant }: PaperTextProps) {
+  const segments = paperInlineSegments(markdown);
   return (
     // Inside the reading frame, body text and wide blocks share the frame's full width (globals.css .paper-reading-frame).
     <div className={cn('reader-prose min-w-0 max-w-none', paperHeadingClasses(headingOffset, headingVariant), className)}>
-      <MathRenderer content={demoteMarkdownHeadings(markdown, headingOffset)} internalLinkMap={linkMap} />
+      {segments.map((segment, index) =>
+        segment.kind === 'figure' ? (
+          <PaperFigure key={`figure-${segment.binding?.id ?? index}`} model={segment.model} binding={segment.binding} />
+        ) : (
+          segment.quote ? (
+            // A blockquote in its own segment, tagged from its source text (note or quotation) for styling.
+            <div key={`quote-${index}`} data-quote-kind={segment.quote}>
+              <MathRenderer content={demoteMarkdownHeadings(segment.markdown, headingOffset)} internalLinkMap={linkMap} />
+            </div>
+          ) : (
+            <MathRenderer key={`prose-${index}`} content={demoteMarkdownHeadings(segment.markdown, headingOffset)} internalLinkMap={linkMap} />
+          )
+        ),
+      )}
     </div>
   );
 }
