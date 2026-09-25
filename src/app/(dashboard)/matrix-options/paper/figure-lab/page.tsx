@@ -23,11 +23,6 @@ import {
 import { restoredFigurePrototypeBinding, type DiagramModel, type FigureBinding } from '@/lib/matrix-options/paper/figures';
 import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
 
-const G2_TREATMENT_HEADING: Readonly<Record<string, string>> = {
-  'G-2A': 'Treatment A (workflow replaces Figure G-2)',
-  'G-2B': 'Treatment B (Figure G-2 stays historical; workflow as a new proposed figure)',
-};
-
 /*
  * Internal figure lab (not part of the paper). Shows every row of the 20-figure
  * register -- rendered figures from the current paper, referenced duplicates,
@@ -59,9 +54,8 @@ interface CandidateFigure extends LabFigure {
 /**
  * A row's Matrix MC content candidate placement(s) (figure-candidates.ts), shown
  * under the "Matrix MC content candidate" sub-heading in addition to whatever
- * labFigureFor draws for the row's own historical number. G-2 shows both
- * numbering treatments (G-2A, G-2B); every other row with a candidate shows
- * exactly its one placement.
+ * labFigureFor draws for the row's own historical number. Each candidate is
+ * shown only at its accepted figure-register placement.
  */
 function candidateFiguresForRow(row: FigureRegisterRow): readonly CandidateFigure[] {
   if (!row.semanticAssetId) return [];
@@ -125,6 +119,14 @@ export default async function MatrixOptionsPaperFigureLabPage() {
               <dt className="font-semibold">Current placement</dt><dd>{row.currentPlacement}</dd>
               <dt className="font-semibold">Historical placement</dt><dd>{row.historicalPlacement} (v0.9.87 p.{row.referencePdfPage})</dd>
               <dt className="font-semibold">Content source</dt><dd className="[overflow-wrap:anywhere]">{row.contentSource}</dd>
+              {row.canonicalSemanticSource ? (
+                <>
+                  <dt className="font-semibold">Canonical semantic asset</dt><dd data-field="canonical-semantic-asset">{row.canonicalSemanticSource.semanticAssetId}</dd>
+                  <dt className="font-semibold">Canonical semantic marker</dt><dd className="break-all" data-field="canonical-semantic-marker">{row.canonicalSemanticSource.marker}</dd>
+                  <dt className="font-semibold">Stable local marker</dt><dd className="break-all" data-field="stable-local-marker">{row.canonicalSemanticSource.stableLocalMarker}</dd>
+                  <dt className="font-semibold">Canonical semantic sha256</dt><dd className="break-all" data-field="canonical-semantic-sha256">{row.canonicalSemanticSource.semanticSha256}</dd>
+                </>
+              ) : null}
               {row.reuseOf ? (<><dt className="font-semibold">Reused asset</dt><dd>Figure {row.reuseOf}</dd></>) : null}
               <dt className="font-semibold">Visible status</dt><dd>{row.visibleStatus}</dd>
               <dt className="font-semibold">Accessible equivalent</dt><dd>{row.accessibleEquivalent}</dd>
@@ -154,14 +156,8 @@ export default async function MatrixOptionsPaperFigureLabPage() {
             {candidates.length > 0 ? (
               <div className="mt-6" data-candidate-section={row.number}>
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-[var(--db-text-secondary)]">Matrix MC content candidate</h3>
-                {row.number === 'G-2' ? (
-                  <p className="mt-1 text-sm text-[var(--db-text-secondary)]">No treatment has been selected; this is an owner decision.</p>
-                ) : null}
                 {candidates.map((candidate) => (
                   <div key={candidate.placement} className="reader-prose mt-3">
-                    {G2_TREATMENT_HEADING[candidate.placement] ? (
-                      <p className="text-sm font-semibold">{G2_TREATMENT_HEADING[candidate.placement]}</p>
-                    ) : null}
                     <PaperFigure model={candidate.model} binding={candidate.binding} />
                   </div>
                 ))}
