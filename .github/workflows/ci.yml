@@ -415,6 +415,35 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Record Wiki Graph Python 3.11 job identity
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $loc = $env:pythonLocation
+          if ([string]::IsNullOrWhiteSpace($loc) -or -not (Test-Path -LiteralPath $loc -PathType Container)) {
+            Write-Host "FAIL: pythonLocation is not an existing directory: '$loc'"; exit 1
+          }
+          $candidates = @(Get-ChildItem -LiteralPath $loc -Filter 'python.exe' -File -ErrorAction SilentlyContinue)
+          if ($candidates.Count -ne 1) { Write-Host "FAIL: expected exactly one python.exe under '$loc', found $($candidates.Count)"; exit 1 }
+          $py = [System.IO.Path]::GetFullPath($candidates[0].FullName)
+          if (-not [System.IO.Path]::IsPathRooted($py) -or -not (Test-Path -LiteralPath $py -PathType Leaf)) {
+            Write-Host "FAIL: resolved Python path is not an existing absolute file: '$py'"; exit 1
+          }
+          $versionRaw = & $py -I -B -c "import platform; print(platform.python_version())" 2>&1
+          $versionExit = $LASTEXITCODE
+          if ($versionExit -ne 0) { Write-Host "FAIL: bound Python did not execute (exit $versionExit)"; exit 1 }
+          $version = "$(@($versionRaw) | Select-Object -Last 1)".Trim()
+          if ($version -notmatch '^3\.11\.') { Write-Host "FAIL: bound Python reports '$version', expected Python 3.11"; exit 1 }
+          $executableSha256 = (Get-FileHash -LiteralPath $py -Algorithm SHA256).Hash.ToUpperInvariant()
+          if ($executableSha256 -notmatch '^[0-9A-F]{64}$') { Write-Host "FAIL: Python SHA-256 is malformed"; exit 1 }
+          Write-Host "Authenticated Python: $version @ $py"
+          Write-Host "Python executable SHA-256: $executableSha256"
+          @(
+            "WGP_CI_PYTHON_PATH=$py",
+            "WGP_CI_PYTHON_VERSION=$version",
+            "WGP_CI_PYTHON_SHA256=$executableSha256"
+          ) | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Run Wiki Graph product tests
         shell: powershell
         run: |
@@ -495,6 +524,147 @@ jobs:
           if ($failed) { Write-Host "RESULT: FAIL"; exit 1 }
           Write-Host "RESULT: PASS"
 
+      - name: Run Wiki Graph session lifecycle tests
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $failed = $false
+          function Fail([string]$m) { Write-Host "ASSERTION FAILED: $m"; $script:failed = $true }
+          function ExactKeys($obj, [string[]]$expected, [string]$label) {
+            if ($null -eq $obj -or $obj -isnot [System.Management.Automation.PSCustomObject]) {
+              Fail "$label is not a JSON object"; return $false
+            }
+            $actual = @($obj.PSObject.Properties | ForEach-Object { $_.Name })
+            $left = (@($actual | Sort-Object) -join ',')
+            $right = (@($expected | Sort-Object) -join ',')
+            if ($actual.Count -ne $expected.Count -or $left -cne $right) {
+              Fail "$label keys differ: actual=[$left] expected=[$right]"; return $false
+            }
+            return $true
+          }
+
+          $py = $env:WGP_CI_PYTHON_PATH
+          if ([string]::IsNullOrWhiteSpace($py) -or -not (Test-Path -LiteralPath $py -PathType Leaf)) {
+            Write-Host "FAIL: job-start Python path is not bound to an existing file: '$py'"; exit 1
+          }
+          $ev = Join-Path $env:RUNNER_TEMP 'wiki-graph-product-evidence'
+          if (-not (Test-Path -LiteralPath $ev -PathType Container)) { New-Item -ItemType Directory -Path $ev | Out-Null }
+          $outFile = Join-Path $ev 'session.stdout.txt'
+          $errFile = Join-Path $ev 'session.stderr.txt'
+          $proc = Start-Process -FilePath $py -ArgumentList @('-I', '-B', 'tooling\wiki\tests\test_wiki_graph_session.py') -NoNewWindow -Wait -PassThru -RedirectStandardOutput $outFile -RedirectStandardError $errFile
+          $exit = if ($null -eq $proc) { $null } else { $proc.ExitCode }
+          $allLines = @()
+          foreach ($f in @($outFile, $errFile)) {
+            if (Test-Path -LiteralPath $f) { $allLines += @(Get-Content -LiteralPath $f) }
+          }
+          $allLines | ForEach-Object { Write-Host $_ }
+          if ($null -eq $exit) { Fail "session suite failed to launch" }
+          elseif ($exit -ne 0) { Fail "session suite exited $exit" }
+
+          $prefix = 'WIKI_GRAPH_SESSION_SUMMARY '
+          $stdoutLines = if (Test-Path -LiteralPath $outFile) { @(Get-Content -LiteralPath $outFile) } else { @() }
+          $summaryLines = @($stdoutLines | Where-Object { $_.StartsWith($prefix) })
+          if ($summaryLines.Count -ne 1) {
+            Fail "session suite printed $($summaryLines.Count) summary lines, expected exactly 1"
+          } else {
+            $s = $null
+            try { $s = $summaryLines[0].Substring($prefix.Length) | ConvertFrom-Json } catch { $s = $null }
+            if ($null -eq $s) {
+              Fail "session summary is not valid JSON"
+            } else {
+              $topKeys = @('schema_version','suite','runtime','product_pins','counts','required_cases','case_results','checks','ok')
+              [void](ExactKeys $s $topKeys 'summary')
+              if ($s.schema_version -isnot [string] -or $s.schema_version -cne 'wiki-graph-session-lifecycle-summary-v3') { Fail "summary schema_version is invalid" }
+              if ($s.suite -isnot [string] -or $s.suite -cne 'wiki_graph_session') { Fail "summary suite is invalid" }
+              if ($s.ok -isnot [bool] -or $s.ok -ne $true) { Fail "summary ok must be boolean true" }
+
+              $runtimeKeys = @('profile','python_version','resolved_executable_path','executable_sha256')
+              if (ExactKeys $s.runtime $runtimeKeys 'runtime') {
+                foreach ($name in $runtimeKeys) { if ($s.runtime.$name -isnot [string]) { Fail "runtime.$name must be a string" } }
+                if ($s.runtime.profile -cne 'ci_windows_2025') { Fail "runtime profile is not ci_windows_2025" }
+                if ($s.runtime.python_version -cne $env:WGP_CI_PYTHON_VERSION) { Fail "summary Python version differs from job-start observation" }
+                if (-not [string]::Equals($s.runtime.resolved_executable_path, $env:WGP_CI_PYTHON_PATH, [System.StringComparison]::OrdinalIgnoreCase)) { Fail "summary Python path differs from job-start observation" }
+                if (-not [regex]::IsMatch($s.runtime.executable_sha256, '^[0-9A-Fa-f]{64}$') -or -not [string]::Equals($s.runtime.executable_sha256, $env:WGP_CI_PYTHON_SHA256, [System.StringComparison]::OrdinalIgnoreCase)) { Fail "summary Python SHA-256 differs from job-start observation" }
+              }
+
+              $pinKeys = @('core_sha256','adapter_sha256','synthetic_fixture_sha256','cases_fixture_sha256')
+              $expectedPins = @{
+                core_sha256 = 'DAF9CB00F3257418E5E50540880877F301C68DA22FF058EFF6C6B2CF65D547BE'
+                adapter_sha256 = '40D57E589C81F2A0EBECB1CF0E915275D3DB45DB3B9252B95A7060FAC3C4DFA5'
+                synthetic_fixture_sha256 = 'BD1A2EFEC3EE741617AAC853E5F0ED0160CE1F0FAF625F0E1E6B6B4D4BE535D8'
+                cases_fixture_sha256 = '615C2BD4C893500D1F42C2A3AEB4E576008D347F81A27D446B66D4BF1BD3CE21'
+              }
+              if (ExactKeys $s.product_pins $pinKeys 'product_pins') {
+                foreach ($name in $pinKeys) {
+                  if ($s.product_pins.$name -isnot [string] -or $s.product_pins.$name -cne $expectedPins[$name]) { Fail "product pin $name does not match the frozen value" }
+                }
+              }
+
+              $countKeys = @('tests_run','failures','errors','skipped','required_cases','observed_cases')
+              if (ExactKeys $s.counts $countKeys 'counts') {
+                foreach ($name in $countKeys) {
+                  $value = $s.counts.$name
+                  if (($value -isnot [int]) -and ($value -isnot [long])) { Fail "counts.$name must be an integer" }
+                }
+                if ($s.counts.tests_run -le 0) { Fail "tests_run must be positive" }
+                if ($s.counts.failures -ne 0 -or $s.counts.errors -ne 0 -or $s.counts.skipped -ne 0) { Fail "session suite failures, errors, and skips must all be zero" }
+                if ($s.counts.required_cases -ne 12 -or $s.counts.observed_cases -ne 12) { Fail "session case counts must both equal 12" }
+              }
+
+              $expectedCases = @(
+                @{ id = 'CONFIG-ONLY-WIKI-GRAPH'; status = 'ok' },
+                @{ id = 'CONFIG-UNUSABLE-REJECTED'; status = 'rejected_before_spawn' },
+                @{ id = 'CREATE-NEW-ALLOWLIST'; status = 'ok' },
+                @{ id = 'PATH-ESCAPE-REPARSE'; status = 'refused' },
+                @{ id = 'IDENTITY-PINS'; status = 'ok' },
+                @{ id = 'FIXTURE-HASH-OID'; status = 'refused' },
+                @{ id = 'LIFECYCLE-TOOLS-EXACT-SEVEN'; status = 'ok' },
+                @{ id = 'LIFECYCLE-STATUS-MATCH'; status = 'ok' },
+                @{ id = 'LIFECYCLE-CLEAN-EOF-STDERR'; status = 'ok' },
+                @{ id = 'MALFORMED-FRAME'; status = 'refused' },
+                @{ id = 'TIMEOUT-TEARDOWN'; status = 'timed_out_child_exited' },
+                @{ id = 'NO-OUTSIDE-WRITES'; status = 'ok' }
+              )
+              $required = @($s.required_cases)
+              if ($required.Count -ne 12) { Fail "required_cases must contain exactly 12 entries" }
+              for ($i = 0; $i -lt [Math]::Min($required.Count, 12); $i++) {
+                $entry = $required[$i]
+                if (ExactKeys $entry @('case_id','expected_status') "required_cases[$i]") {
+                  if ($entry.case_id -isnot [string] -or $entry.case_id -cne $expectedCases[$i].id) { Fail "required case ID at index $i is invalid or out of order" }
+                  if ($entry.expected_status -isnot [string] -or $entry.expected_status -cne $expectedCases[$i].status) { Fail "required case status at index $i is invalid" }
+                }
+              }
+              $results = @($s.case_results)
+              if ($results.Count -ne 12) { Fail "case_results must contain exactly 12 entries" }
+              for ($i = 0; $i -lt [Math]::Min($results.Count, 12); $i++) {
+                $entry = $results[$i]
+                if (ExactKeys $entry @('case_id','observed_status') "case_results[$i]") {
+                  if ($entry.case_id -isnot [string] -or $entry.case_id -cne $expectedCases[$i].id) { Fail "observed case ID at index $i is invalid, duplicated, or out of order" }
+                  if ($entry.observed_status -isnot [string] -or $entry.observed_status -cne $expectedCases[$i].status) { Fail "observed case status at index $i differs from the required status" }
+                }
+              }
+
+              $checkKeys = @('runtime_profile_verified','python_311','python_hash_bound','product_pins_match','config_one_server','generated_config_consumed','unusable_config_no_spawn','create_new_allowlist','path_escape_reparse_refused','identity_revalidated','tools_exactly_seven','statuses_match','clean_eof_empty_stderr','timeout_child_exited','no_outside_writes','summary_non_vacuous')
+              if (ExactKeys $s.checks $checkKeys 'checks') {
+                foreach ($name in $checkKeys) {
+                  if ($s.checks.$name -isnot [bool] -or $s.checks.$name -ne $true) { Fail "check $name must be boolean true" }
+                }
+              }
+
+              $ranLines = @($allLines | Where-Object { $_ -match '^Ran [0-9]+ tests? in ' })
+              if ($ranLines.Count -ne 1) {
+                Fail "unittest transcript must contain exactly one Ran N tests line"
+              } else {
+                $ranMatch = [regex]::Match($ranLines[0], '^Ran ([0-9]+) tests? in ')
+                if (-not $ranMatch.Success -or [long]$ranMatch.Groups[1].Value -ne $s.counts.tests_run) { Fail "transcript test count differs from summary counts.tests_run" }
+              }
+              if ($allLines -notcontains 'OK') { Fail "unittest transcript has no exact OK verdict" }
+            }
+          }
+          "WGP_SESSION_TESTS=$($s.counts.tests_run)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          if ($failed) { Write-Host "RESULT: FAIL"; exit 1 }
+          Write-Host "RESULT: PASS"
+
       - name: Job summary
         if: always()
         shell: powershell
@@ -508,7 +678,10 @@ jobs:
             "| Core tests run | $(V $env:WGP_CORE_TESTS) |",
             "| MCP tests run | $(V $env:WGP_MCP_TESTS) |",
             "| Case IDs executed | $(V $env:WGP_CASE_IDS) |",
-            "| Tools executed | $(V $env:WGP_TOOLS) |"
+            "| Tools executed | $(V $env:WGP_TOOLS) |",
+            "| Session tests run | $(V $env:WGP_SESSION_TESTS) |",
+            "| Python 3.11 job-start identity | $(V $env:WGP_CI_PYTHON_VERSION) @ $(V $env:WGP_CI_PYTHON_PATH) |",
+            "| Python executable SHA-256 | $(V $env:WGP_CI_PYTHON_SHA256) |"
           ) | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
 
       - name: Upload Wiki Graph product logs on failure

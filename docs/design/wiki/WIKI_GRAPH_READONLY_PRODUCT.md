@@ -133,11 +133,91 @@ any failure, error, skip, or zero-test run. The CI job `Wiki Graph Product Tests
 re-checks both summaries and the fixture IDs, and is required by the aggregate
 `CI Status Check`.
 
+## Session-local MCP configuration lifecycle
+
+The session-local helper at `tooling/wiki/wiki_graph_session.py` provides
+`prepare`, `validate`, and test-only `smoke` operations for a disposable,
+synthetic conformance run. It does not change this product's INACTIVE and
+UNREGISTERED status and does not create a Claude, project, user, or global MCP
+registration.
+
+The caller supplies an absolute temporary base and an ASCII run identifier. The
+base must resolve beneath the operating system temporary root and outside every
+repository and worktree. The helper creates a new run leaf exclusively; an
+existing leaf is refused and never reused. The leaf contains exactly
+`mcp-config.json` and `mcp-config.json.sha256`. Unexpected files, reparse
+points, invalid paths, or mismatched bytes cause a fail-closed refusal and are
+preserved for inspection.
+
+The generated configuration has exactly one server named `wiki_graph`. Its
+command is the selected Python 3.11 executable with `-I -B`, followed by the
+repository adapter and the explicit synthetic graph path, graph SHA-256, and
+source-OID assertion. The graph SHA-256 is
+`BD1A2EFEC3EE741617AAC853E5F0ED0160CE1F0FAF625F0E1E6B6B4D4BE535D8`; the
+source-OID assertion is
+`0123456789abcdef0123456789abcdef01234567`. The source OID is an envelope
+assertion, not proof of Git object provenance.
+
+Before writing configuration and immediately before each lifecycle use, the
+helper verifies the interpreter profile and the exact core, adapter, synthetic
+fixture, and product-cases fixture hashes. Bound inputs must be regular files
+inside the authenticated repository root, with no reparse or symbolic-link
+component. Validation checks the configuration bytes, sidecar, and exact
+one-server schema. It returns the configuration path and argv parsed from those
+validated bytes. The smoke consumes that returned argv; it does not construct a
+separate command.
+
+The lifecycle sends `initialize`, `tools/list`, and one call to each of the
+seven tools against the pinned synthetic graph. It requires exact tool
+discovery, the frozen expected statuses, complete newline-delimited JSON-RPC
+frames, clean EOF, exit code zero, empty stderr on success, and no writes
+outside the allowed temporary root. Its 12 required case IDs and statuses are:
+
+| Case ID | Expected status |
+|---|---|
+| CONFIG-ONLY-WIKI-GRAPH | ok |
+| CONFIG-UNUSABLE-REJECTED | rejected_before_spawn |
+| CREATE-NEW-ALLOWLIST | ok |
+| PATH-ESCAPE-REPARSE | refused |
+| IDENTITY-PINS | ok |
+| FIXTURE-HASH-OID | refused |
+| LIFECYCLE-TOOLS-EXACT-SEVEN | ok |
+| LIFECYCLE-STATUS-MATCH | ok |
+| LIFECYCLE-CLEAN-EOF-STDERR | ok |
+| MALFORMED-FRAME | refused |
+| TIMEOUT-TEARDOWN | timed_out_child_exited |
+| NO-OUTSIDE-WRITES | ok |
+
+The Windows junction/reparse refusal case is mandatory on the local Windows
+profile and in CI on `windows-2025`; inability to create or verify it fails the
+suite. Normal teardown closes adapter stdin, drains stdout and stderr, waits on
+the retained direct process handle, and on timeout terminates then kills only
+that direct child. After successful teardown it removes only the two owned
+regular files and the now-empty owned leaf. It does not use `taskkill`, PID-only
+termination, descendant enumeration, process trees, or job objects.
+
+The session suite emits exactly one `WIKI_GRAPH_SESSION_SUMMARY ` JSON line
+using schema `wiki-graph-session-lifecycle-summary-v3`. CI checks exact keys,
+types, product pins, runtime observation, all 12 ordered case IDs and statuses,
+all required true checks, and non-vacuous zero-failure, zero-error, zero-skip
+counts. The local profile is bound to the workstation Python 3.11 path and
+SHA-256. CI records its own `windows-2025` Python 3.11 executable path, version,
+and SHA-256 at job start; those CI values are checked against the summary and
+are not claimed to match the workstation values.
+
+This model-free lifecycle establishes only session-local configuration and
+synthetic product conformance. Claude native tool availability, context
+isolation, usefulness, production behavior, and real-data behavior remain
+unproven. Any dogfood disclosure, persistent registration, runtime integration,
+or activation requires a separate owner gate.
+
 ## Non-goals
 
-No network, Git, subprocess, source-tree, write, cache, prompt, resource, logging,
-learning, autolearning, registration, promotion, activation, or runtime behavior,
-and no real-data access. No graph build.
+The adapter has no network, Git, subprocess, source-tree write, cache, prompt,
+resource, logging, learning, autolearning, registration, promotion, activation,
+or runtime behavior, and no real-data access. The session-local helper's only
+writes are the two files in its fresh temporary run leaf described above. No
+graph build occurs.
 
 ## Historical note
 

@@ -772,3 +772,46 @@ Practical rules:
   such as `agy.exe` or `python.exe` -- image-name gates produce both false alarms and false clears.
 - Windows just AFTER a nightly are the safest time to do runtime-referencing work, because a
   forgotten shell then has the full day to be noticed before the next 05:30 boundary.
+
+## 13. Session-local wiki_graph conformance helper
+
+`tooling/wiki/wiki_graph_session.py` supports a bounded, model-free conformance
+run for the separate read-only `wiki_graph` product. Its `prepare`,
+`validate`, and test-only `smoke` operations are session-local and do not
+change the enabled, registered, or scheduled state of the Phase 4-7 wiki
+pipeline described in this runbook.
+
+Use only the public synthetic fixture and the exact product pins in
+`docs/design/wiki/WIKI_GRAPH_READONLY_PRODUCT.md`. The caller provides an
+absolute base beneath the operating system temporary root and outside every
+repository and worktree. Each ASCII run identifier must be new. The helper
+creates the leaf exclusively and writes only `mcp-config.json` and its
+`.sha256` sidecar there. It never edits user, project, Claude, or global MCP
+settings, and it never registers a persistent server.
+
+The helper checks Python 3.11 identity and the core, adapter, synthetic graph,
+and product-cases fixture hashes before writing and before each lifecycle use.
+It refuses path escapes, missing or changed inputs, reparse components,
+unexpected files, existing leaves, and unusable configuration. Validation
+returns argv derived from the freshly parsed and hash-checked configuration;
+the smoke uses that returned argv.
+
+The lifecycle must complete `initialize`, `tools/list`, and all seven
+read-only tool calls, then reach clean EOF with exit code zero and empty stderr.
+The Windows junction refusal case is mandatory in local testing and in the
+GitHub `windows-2025` job. The job records its own Python executable path,
+version, and SHA-256 at startup and validates those observations against the
+single strict session-suite summary. Its 12 required case IDs, status values,
+and summary schema are maintained in the product contract.
+
+Teardown closes stdin, drains both output streams, and waits on the direct child
+process handle. Timeout handling may terminate and then kill only that child.
+After successful teardown, cleanup is limited to the two owned files and the
+empty run leaf. Do not use `taskkill`, PID-only termination, descendant
+enumeration, process trees, or job objects for this helper.
+
+This check establishes synthetic product conformance and configuration
+materialization only. It does not demonstrate Claude native-tool availability,
+context isolation, production usefulness, or real-data behavior. Any dogfood,
+provider disclosure, persistent registration, runtime integration, or
+activation remains subject to a separate owner gate.
