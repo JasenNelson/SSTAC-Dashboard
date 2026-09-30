@@ -1079,6 +1079,56 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await expect(page.getByTestId('paper-document').getByRole('heading', { name: 'Appendix contents', exact: true }).first()).toBeVisible({ timeout: 60000 });
   });
 
+  test('authenticated real release draws the paper figures: Section 6.0 Figure 6-1 with its own labels (no SedS names), and Appendix A Figure A-1', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    for (const [section, selector, caption, sample] of [
+      ['60-proposed-matrix-standards-framework', 'figure[data-paper-figure="6-1"]', 'Figure 6-1. CSR Schedule 3.4 Part 1: the four receptor-pathways.', 'PATHWAY 1: HH-DIR'],
+      ['11-scope-and-objective-of-the-bioavailability-monograph', 'figure[data-paper-figure="A-1"]', 'Figure A-1. The two bioavailability pathways.', 'HUMAN HEALTH SHORELINE EXPOSURE'],
+    ] as const) {
+      await page.goto(`${canonicalWorkingDraft}&section=${section}`, { waitUntil: 'domcontentloaded' });
+      failOnLogin(page.url());
+      const figure = page.getByTestId('paper-document').locator(selector);
+      await expect(figure).toBeVisible({ timeout: 60000 });
+      await expect(figure.locator('figcaption')).toContainText(caption);
+      await expect(figure).toContainText(sample);
+      // The figure is named by its caption for assistive technology.
+      await expect(figure).toHaveAttribute('aria-labelledby', /paper-figure-caption-/);
+      // The flattened summary text never reaches the page.
+      await expect(page.getByTestId('paper-document').getByText(/^Diagram summary \d+\.$/)).toHaveCount(0);
+      if (section === '60-proposed-matrix-standards-framework') {
+        // Owner decision 2026-09-24: the default-on inline stakeholder paper never shows the
+        // adjudicated SedS pathway names or their override authority (that prototype is
+        // figure-lab only). Asserted here, while section 6.0 is loaded (a prior round asserted
+        // this after navigating away to Appendix A, where the figure is not in the DOM at all,
+        // so the negated matchers timed out on a missing element rather than testing anything).
+        // Two-sided against the positive `sample` ('PATHWAY 1: HH-DIR') and `toBeVisible`
+        // assertions above, which already pin the plain own-label figure.
+        await expect(figure).not.toContainText('SedS');
+        await expect(figure).not.toHaveAttribute('data-label-authority');
+      }
+    }
+    // Owner decision: no derived (PX-*) figure renders inline; the table/list it would have
+    // redrawn (Section 7.7.3's proposed four-stage verification and validation process) still
+    // renders as plain text -- assert the real source wording (the derived-figure builder's
+    // synthesized "Stage N: <lead>" label never appears in the source and only ever existed on
+    // the removed PX-4 node, so a locator for it can never resolve while PX is inline-absent).
+    await page.goto(`${canonicalWorkingDraft}&section=773-proposed-data-verification-and-validation-process`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    await expect(page.getByTestId('paper-document').locator('figure[data-derived-figure]')).toHaveCount(0);
+    const verificationItem = page
+      .getByTestId('paper-document')
+      .locator('li')
+      .filter({ hasText: 'Sample Identity and Co-Location Verification:' });
+    await expect(verificationItem).toHaveCount(1);
+    await expect(verificationItem).toBeVisible({ timeout: 60000 });
+    // No horizontal overflow on a phone with a figure on screen.
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto(`${canonicalWorkingDraft}&section=60-proposed-matrix-standards-framework`, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('paper-document').locator('figure[data-paper-figure="6-1"]')).toBeVisible({ timeout: 60000 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+  });
+
   test('M2: authenticated real release a question deep link opens that question; without one every question starts collapsed', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
     await page.goto(`${canonicalWorkingDraft}&q=${encodeURIComponent(`rpq:${realVersion}:q08`)}`, { waitUntil: 'domcontentloaded' });

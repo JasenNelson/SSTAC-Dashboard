@@ -1,0 +1,352 @@
+[
+  {
+    "assetId": "mx-asset-receptor-pathways-4",
+    "nodes": [
+      {
+        "id": "root",
+        "label": "SEDIMENT CONTAMINATION",
+        "heads": [
+          "Status: SETTLED_STRUCTURE"
+        ],
+        "bullets": []
+      },
+      {
+        "id": "p1",
+        "label": "Pathway 1 - SedS-contactHH",
+        "heads": [
+          "Human direct contact"
+        ],
+        "bullets": [
+          "Relevant shoreline, harvesting, recreational, occupational, or other contact scenarios",
+          "Incidental ingestion and dermal exposure",
+          "Exposure factors and toxicological reference values require verified records"
+        ]
+      },
+      {
+        "id": "p2",
+        "label": "Pathway 2 - SedS-foodHH",
+        "heads": [
+          "Human food pathway"
+        ],
+        "bullets": [
+          "Sediment-associated contaminants in fish, shellfish, or other aquatic foods",
+          "Future seafood ingestion rate assigned per exposure scenario only after primary verification",
+          "Transfer-method and toxicological-reference selections remain open",
+          "Species-resolved diet, preparation, and harvest-area apportionment belong to site-specific assessment"
+        ]
+      },
+      {
+        "id": "p3",
+        "label": "Pathway 3 - SedS-contactECO",
+        "heads": [
+          "Ecological direct contact"
+        ],
+        "bullets": [
+          "Benthic and sediment-associated ecological receptors",
+          "Candidate methods include equilibrium partitioning and AVS-SEM where applicable",
+          "Chronic toxicity benchmark, waterbody applicability, and supporting parameters require verification"
+        ]
+      },
+      {
+        "id": "p4",
+        "label": "Pathway 4 - SedS-foodECO",
+        "heads": [
+          "Ecological food-web pathway"
+        ],
+        "bullets": [
+          "Sediment-to-prey-to-wildlife transfer",
+          "Candidate receptor classes include piscivorous birds and semi-aquatic or marine mammals",
+          "Receptor set, transfer method, food-web position, and wildlife toxicity references remain open or source-gapped"
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "assetId": "mx-asset-bioaccumulation-pathways",
+    "nodes": [
+      {
+        "id": "root",
+        "label": "BIOACCUMULATION EVIDENCE FOR SEDIMENT",
+        "heads": [
+          "Status: OPTION_OPEN / SOURCE_GAP"
+        ],
+        "bullets": []
+      },
+      {
+        "id": "p2",
+        "label": "Pathway 2 - SedS-foodHH",
+        "heads": [
+          "Sediment -> edible aquatic biota -> people"
+        ],
+        "bullets": [
+          "Required evidence: paired sediment and tissue observations, species and tissue identity, normalization basis, exposure duration, and site linkage",
+          "Future scenario-specific seafood ingestion rate requires exact primary-source verification",
+          "Empirical transfer, tissue-residue, mechanistic, and tiered methods remain options",
+          "No BSAF, intake rate, or toxicological-reference value is activated by this figure"
+        ]
+      },
+      {
+        "id": "p4",
+        "label": "Pathway 4 - SedS-foodECO",
+        "heads": [
+          "Sediment -> prey -> wildlife"
+        ],
+        "bullets": [
+          "Required evidence: prey and receptor identity, diet, food-web position, body size, ingestion, toxicological reference, and site linkage",
+          "Candidate receptor examples require source-level and applicability review",
+          "Empirical transfer, tissue-residue, mechanistic, and tiered methods remain options",
+          "No TMF, FCM, SUF, trophic level, receptor value, or wildlife TRV is activated by this figure"
+        ]
+      },
+      {
+        "id": "shared-evidence-gate",
+        "label": "Shared evidence gate",
+        "heads": [],
+        "bullets": [
+          "Hold exact study or database record",
+          "Verify source location, units, medium, receptor, basis, applicability, and uncertainty",
+          "Independently review method and dimensional consistency",
+          "Only then may a future registry record be considered for use"
+        ]
+      }
+    ],
+    "notes": []
+  },
+  {
+    "assetId": "mx-asset-parameter-evidence-modules",
+    "nodes": [
+      {
+        "id": "root",
+        "label": "FUTURE PARAMETER REGISTRY",
+        "heads": [
+          "Status: PROPOSED_SYSTEM / SOURCE_GAP"
+        ],
+        "bullets": []
+      },
+      {
+        "id": "m1",
+        "label": "Module 1 - Human exposure and contact",
+        "heads": [],
+        "bullets": [
+          "Body size",
+          "Sediment contact and ingestion",
+          "Exposure frequency and duration",
+          "Seafood or other aquatic-food intake",
+          "Tissue, preparation, and site linkage where applicable"
+        ]
+      },
+      {
+        "id": "m2",
+        "label": "Module 2 - Human toxicological references and risk treatment",
+        "heads": [],
+        "bullets": [
+          "Toxicological reference identity and exact source",
+          "Exposure route and averaging basis",
+          "Non-cancer and cancer treatment",
+          "Applicability and uncertainty"
+        ]
+      },
+      {
+        "id": "m3",
+        "label": "Module 3 - Ecological receptors, exposure, and toxicological references",
+        "heads": [],
+        "bullets": [
+          "Receptor identity and life stage",
+          "Body size, ingestion, diet, and food-web position",
+          "Toxicity or tissue-residue benchmark",
+          "Habitat, waterbody, and site linkage"
+        ]
+      },
+      {
+        "id": "m4",
+        "label": "Module 4 - Sediment properties, direct-exposure methods, and analytical context",
+        "heads": [],
+        "bullets": [
+          "Organic carbon, lipid or protein basis, grain size, redox, pH, and related modifiers",
+          "Partitioning or AVS-SEM method where applicable",
+          "Waterbody-specific chronic benchmark",
+          "Analytical feasibility and method limitations"
+        ]
+      },
+      {
+        "id": "m5",
+        "label": "Module 5 - Paired sediment, tissue, and transfer evidence",
+        "heads": [],
+        "bullets": [
+          "Co-located sediment and tissue observations",
+          "Species, tissue, normalization basis, and exposure duration",
+          "Empirical transfer or alternative method candidate",
+          "Provenance, uncertainty, and independent test"
+        ]
+      }
+    ],
+    "notes": [
+      "Every module passes through the shared evidence gate: source + exact location + units + medium + receptor + applicability + uncertainty + independent review."
+    ]
+  },
+  {
+    "assetId": "mx-asset-future-pathway-testing",
+    "nodes": [
+      {
+        "id": "root",
+        "label": "FUTURE QA/QC-SCREENED BC AQUATIC DATABASE",
+        "heads": [
+          "Status: PROPOSED_SYSTEM - no data compiled, screened, or verified"
+        ],
+        "bullets": []
+      },
+      {
+        "id": "p1",
+        "label": "Pathway 1 - SedS-contactHH",
+        "heads": [],
+        "bullets": [
+          "Use shoreline sediment properties and contact evidence to test human direct-contact assumptions"
+        ]
+      },
+      {
+        "id": "p2",
+        "label": "Pathway 2 - SedS-foodHH",
+        "heads": [],
+        "bullets": [
+          "Use co-located sediment and edible-biota tissue records to evaluate empirical transfer",
+          "Evaluate seafood-exposure models only against a future, source-verified scenario-specific ingestion record"
+        ]
+      },
+      {
+        "id": "p3",
+        "label": "Pathway 3 - SedS-contactECO",
+        "heads": [],
+        "bullets": [
+          "Compare sediment chemistry and modifiers with benthic bioassay and community evidence",
+          "Test candidate equilibrium-partitioning and AVS-SEM methods where applicable"
+        ]
+      },
+      {
+        "id": "p4",
+        "label": "Pathway 4 - SedS-foodECO",
+        "heads": [],
+        "bullets": [
+          "Compare sediment-to-prey monitoring evidence with candidate wildlife food-web methods",
+          "Evaluate receptor and transfer assumptions only after source and applicability review"
+        ]
+      }
+    ],
+    "notes": [
+      "Footer: No candidate equation has been tested, calibrated, or validated against a dataset; no Part 1 algorithm has been established."
+    ]
+  },
+  {
+    "assetId": "mx-asset-parameter-evidence-governance",
+    "nodes": [
+      {
+        "id": "candidate-record",
+        "label": "Candidate record",
+        "heads": [],
+        "bullets": []
+      },
+      {
+        "id": "step-1",
+        "label": "Record the source and exact location",
+        "heads": [],
+        "bullets": []
+      },
+      {
+        "id": "step-2",
+        "label": "Check units, medium, receptor, normalization basis, and applicability",
+        "heads": [],
+        "bullets": []
+      },
+      {
+        "id": "step-3",
+        "label": "Record uncertainty and the independent test required",
+        "heads": [],
+        "bullets": []
+      },
+      {
+        "id": "step-4",
+        "label": "Assign one evidence status:",
+        "heads": [],
+        "bullets": [
+          "VERIFIED_PRIMARY",
+          "VERIFIED_SECONDARY",
+          "WORKING_CONVENTION",
+          "OPTION_OPEN",
+          "SOURCE_GAP",
+          "WITHDRAW"
+        ]
+      },
+      {
+        "id": "step-5",
+        "label": "Independent scientific review",
+        "heads": [],
+        "bullets": []
+      },
+      {
+        "id": "step-6",
+        "label": "Eligible for a future active registry only if the governing method permits its status",
+        "heads": [],
+        "bullets": []
+      }
+    ],
+    "notes": [
+      "Fail-closed rule: No calculation may consume an unverified record."
+    ]
+  },
+  {
+    "assetId": "mx-asset-database-vv-workflow",
+    "nodes": [
+      {
+        "id": "input",
+        "label": "Input: candidate environmental record",
+        "heads": [],
+        "bullets": []
+      },
+      {
+        "id": "stage1",
+        "label": "Stage 1 - Structural conformance and referential integrity",
+        "heads": [],
+        "bullets": [
+          "Validate site, station, event, and measurement relationships",
+          "Check physical parameter boundaries"
+        ]
+      },
+      {
+        "id": "stage2",
+        "label": "Stage 2 - Chemical nomenclature and unit harmonization",
+        "heads": [],
+        "bullets": [
+          "Resolve synonyms to canonical substance identity",
+          "Standardize concentration units and basis"
+        ]
+      },
+      {
+        "id": "stage3",
+        "label": "Stage 3 - Sample identity and co-location verification",
+        "heads": [],
+        "bullets": [
+          "Detect duplicate reporting and recognize co-located records",
+          "BLOCKED DESIGN DETAIL: identifier attributes are not yet settled; no scheme is built"
+        ]
+      },
+      {
+        "id": "stage4",
+        "label": "Stage 4 - Censored-data standardization",
+        "heads": [],
+        "bullets": [
+          "Apply an accepted treatment for non-detects and distribution modelling",
+          "Method selection and applicability remain subject to scientific review"
+        ]
+      },
+      {
+        "id": "output",
+        "label": "Output: QA/QC-screened candidate record for analytical use",
+        "heads": [],
+        "bullets": []
+      }
+    ],
+    "notes": [
+      "Global status: PROPOSED_SYSTEM - no data have yet passed this process."
+    ]
+  }
+]
