@@ -1,2 +1,6 @@
 matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md -text
 matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md.sha256 -text
+tooling/wiki/wiki_graph_core.py text eol=lf
+tooling/wiki/wiki_graph_mcp.py text eol=lf
+tooling/wiki/tests/fixtures/wiki_graph_product_cases_v1.json text eol=lf
+tooling/wiki/tests/fixtures/wiki_graph_synthetic_v1.json text eol=lf
