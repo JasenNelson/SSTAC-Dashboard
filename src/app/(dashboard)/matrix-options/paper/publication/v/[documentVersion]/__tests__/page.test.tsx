@@ -2,8 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { renderToStaticMarkup } from 'react-dom/server';
 
-const { redirectMock, notFoundMock, workspaceMock, structureMock, requestLoadSpy, privateLoadSpy, defaultStructure, resolveReviewerGuideMock, cohortManifestMock, defaultManifest, downloadServerMock, supabaseMock } = vi.hoisted(() => {
+const { redirectMock, notFoundMock, workspaceMock, structureMock, requestLoadSpy, privateLoadSpy, defaultStructure, resolveReviewerGuideMock, cohortManifestMock, defaultManifest, downloadServerMock, supabaseMock, createAuthenticatedClientMock, roleMaybeSingleMock, roleEqMock } = vi.hoisted(() => {
   const labels = ['4.1 Categories and uses', '9.9 Water lot use classes', '6.0 Proposed framework', '18.1 Three-part structure', '7.5.1 Scope', '7.5.2 Evidence', '7.5.3 Boundary', '7.8 Exposure terms', '9.5 Matrix derivation options', '7.7 BC Aquatic Database', '15.0 Limitations of this draft', '4.4.2 Existing schedule structure', 'Technical Appendices Compendium', 'unrelated-sentinel'];
   // Depth-1 headings are the S1 section boundaries: sections are [0,1], [2..9], [10,11], [12].
   const TOP_LEVEL_LABELS = ['4.1 Categories and uses', '6.0 Proposed framework', '15.0 Limitations of this draft', 'Technical Appendices Compendium'];
@@ -28,7 +29,19 @@ const { redirectMock, notFoundMock, workspaceMock, structureMock, requestLoadSpy
       { id: 'methods-water-type', name: 'Methods and water type', questionNumbers: [10, 11], sourceLocators: ['Sections 6.0 and 7.5', 'Section 4.4.2', "Reviewer's Guide lines 212-222"], guideEvidenceRanges: [[1, 1]], purpose: 'test', packageContents: ['test'], limitations: 'test' },
     ],
   });
+  const roleMaybeSingleMock = vi.fn(async () => ({ data: { role: 'admin' }, error: null }));
+  const roleEqMock = vi.fn(() => ({ eq: roleEqMock, maybeSingle: roleMaybeSingleMock }));
+  const roleSelectMock = vi.fn(() => ({ eq: roleEqMock }));
+  const roleFromMock = vi.fn(() => ({ select: roleSelectMock }));
+  const supabaseMock = {
+    from: roleFromMock,
+    auth: { getUser: vi.fn(async () => ({ data: { user: { is_anonymous: false } }, error: null })) },
+  };
+  const createAuthenticatedClientMock = vi.fn(async () => supabaseMock);
   return {
+    createAuthenticatedClientMock,
+    roleMaybeSingleMock,
+    roleEqMock,
     redirectMock: vi.fn((_url: string) => { throw new Error('NEXT_REDIRECT'); }),
     notFoundMock: vi.fn(() => { throw new Error('NEXT_NOT_FOUND'); }),
     workspaceMock: vi.fn((..._args: any[]) => <div data-testid="revised-workspace" />),
@@ -45,16 +58,12 @@ const { redirectMock, notFoundMock, workspaceMock, structureMock, requestLoadSpy
       buildValidatedDownloadManifest: vi.fn(),
       loadDownloadManifestMapState: vi.fn<typeof loadDownloadManifestMapState>(async () => ({ status: 'ready', manifests: {} as any })),
     },
-    supabaseMock: {
-      auth: {
-        getUser: vi.fn(async () => ({ data: { user: { is_anonymous: false } }, error: null })),
-      },
-    },
+    supabaseMock,
   };
 });
 
 vi.mock('next/navigation', () => ({ redirect: redirectMock, notFound: notFoundMock }));
-vi.mock('@/lib/supabase-auth', () => ({ createAuthenticatedClient: async () => supabaseMock }));
+vi.mock('@/lib/supabase-auth', () => ({ createAuthenticatedClient: createAuthenticatedClientMock }));
 vi.mock('@/components/matrix-options/paper/RevisedPaperWorkspace', () => ({ RevisedPaperWorkspace: workspaceMock }));
 vi.mock('@/lib/matrix-options/revised-paper-structure', () => ({ loadRevisedPaperStructure: structureMock }));
 // The real loaders behind spies: the default release goes through the request loader to
@@ -81,9 +90,10 @@ import { loadDownloadManifestMapState } from '@/lib/matrix-options/paper/downloa
 import PublicationNodePage from '../nodes/[canonicalNodeId]/page';
 import PublicationQuestionPage from '../questions/[questionId]/page';
 import { PaperDocument } from '@/components/matrix-options/paper/PaperDocument';
-import { PrivateReleaseSessionGate } from '@/components/matrix-options/paper/PrivateReleaseSessionGate';
+import { PrivateReleaseSessionGate, privateReleaseReaderState } from '@/components/matrix-options/paper/PrivateReleaseSessionGate';
 import { syntheticResolvedR5Guide } from '@/components/matrix-options/paper/__tests__/r5-synthetic-guide';
-import { R5_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { R5_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { PrivateReleaseUnavailableError } from '@/lib/matrix-options/paper/private-release-assets';
 import { getReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
 import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 
@@ -129,6 +139,9 @@ describe('paper publication V16 route', () => {
     // The resolved guide of the default release is its stored contract.
     resolveReviewerGuideMock.mockImplementation(() => getReviewerGuideContract());
     supabaseMock.auth.getUser.mockResolvedValue({ data: { user: { is_anonymous: false } }, error: null });
+    roleMaybeSingleMock.mockResolvedValue({ data: { role: 'admin' }, error: null });
+    createAuthenticatedClientMock.mockReset();
+    createAuthenticatedClientMock.mockResolvedValue(supabaseMock);
     consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
     process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'true';
@@ -538,5 +551,138 @@ describe('paper publication V16 route', () => {
     const result = await PublicationPage({ params: Promise.resolve({ documentVersion: '1.0.11-remediated-7-8-successor-20260918-D' }), searchParams: Promise.resolve({ mode: 'my-review' }) });
     expect(result.type).toBe(workspaceMock);
     expect(result.props.downloadManifests).toBeNull();
+  });
+
+  describe('v0.9.91 admin-only private release diagnostic', () => {
+    const readerId = '44444444-4444-4444-8444-444444444444';
+    const request = (documentVersion: string = V0991_PAPER_VERSION) => PublicationPage({
+      params: Promise.resolve({ documentVersion }),
+      searchParams: Promise.resolve({ mode: 'working-draft' }),
+    });
+
+    beforeEach(() => {
+      supabaseMock.auth.getUser.mockResolvedValue({ data: { user: { id: readerId, is_anonymous: false } }, error: null } as never);
+    });
+
+    it.each(['STATUS', 'STRUCTURE', 'SHA256'] as const)('shows only an allowlisted %s code to a verified admin on the bound release', async (code) => {
+      privateLoadSpy.mockRejectedValue(new PrivateReleaseUnavailableError(code));
+      const result = await request();
+      expect(result.type).toBe(PrivateReleaseSessionGate);
+      expect(result.props.servedTo).toBe(readerId);
+      const html = renderToStaticMarkup(result.props.children);
+      expect(html).toContain('Options Paper unavailable');
+      expect(html).toContain(`Diagnostic code: <code>${code}</code>`);
+      expect(html).not.toContain(readerId);
+      expect(html).not.toContain('presentation.md');
+      expect(createAuthenticatedClientMock).toHaveBeenCalledTimes(1);
+      expect(supabaseMock.auth.getUser).toHaveBeenCalledTimes(2);
+      expect(supabaseMock.from).toHaveBeenCalledWith('user_roles');
+      expect(roleEqMock.mock.calls).toEqual([['user_id', readerId], ['role', 'admin']]);
+      expect(privateLoadSpy).toHaveBeenCalledTimes(1);
+      expect(requestLoadSpy).not.toHaveBeenCalled();
+      expect(workspaceMock).not.toHaveBeenCalled();
+    });
+
+    it('never grants access from a substituted second client', async () => {
+      const failure = new PrivateReleaseUnavailableError('STATUS');
+      privateLoadSpy.mockRejectedValue(failure);
+      roleMaybeSingleMock.mockResolvedValue({ data: null, error: null } as never);
+      const secondClient = {
+        auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'substituted-admin', is_anonymous: false } }, error: null })) },
+        from: vi.fn(() => ({ select: () => ({ eq: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { role: 'admin' }, error: null }) }) }) }) })),
+      };
+      createAuthenticatedClientMock.mockResolvedValueOnce(supabaseMock).mockResolvedValueOnce(secondClient as never);
+      await expect(request()).rejects.toBe(failure);
+      expect(createAuthenticatedClientMock).toHaveBeenCalledTimes(1);
+      expect(secondClient.from).not.toHaveBeenCalled();
+    });
+
+    it('fails closed if the authenticated user changes on the same client after the load fails', async () => {
+      const failure = new PrivateReleaseUnavailableError('STATUS');
+      privateLoadSpy.mockRejectedValue(failure);
+      supabaseMock.auth.getUser
+        .mockResolvedValueOnce({ data: { user: { id: readerId, is_anonymous: false } }, error: null } as never)
+        .mockResolvedValueOnce({ data: { user: { id: 'changed-reader', is_anonymous: false } }, error: null } as never);
+      await expect(request()).rejects.toBe(failure);
+      expect(createAuthenticatedClientMock).toHaveBeenCalledTimes(1);
+      expect(supabaseMock.from).not.toHaveBeenCalled();
+    });
+
+    it('preserves the successful bound private-release path without consulting the admin role', async () => {
+      const resolved = syntheticResolvedR5Guide();
+      privateLoadSpy.mockImplementation(async () => ({ ...defaultStructure(), manifest: { source: { version: V0991_PAPER_VERSION, sha256: 'f'.repeat(64) } } }));
+      cohortManifestMock.mockImplementation(() => ({ ...defaultManifest(), releaseIdentity: V0991_PAPER_VERSION }) as never);
+      resolveReviewerGuideMock.mockImplementation(() => resolved);
+      const result = await request();
+      expect(result.type).toBe(PrivateReleaseSessionGate);
+      expect(result.props.servedTo).toBe(readerId);
+      expect(result.props.children.type).toBe(workspaceMock);
+      expect(privateLoadSpy).toHaveBeenCalledTimes(1);
+      expect(createAuthenticatedClientMock).toHaveBeenCalledTimes(1);
+      expect(supabaseMock.auth.getUser).toHaveBeenCalledTimes(1);
+      expect(supabaseMock.from).not.toHaveBeenCalled();
+    });
+
+    it('hides the gated diagnostic for a signed-out or changed browser session', async () => {
+      privateLoadSpy.mockRejectedValue(new PrivateReleaseUnavailableError('STATUS'));
+      const result = await request();
+      expect(result.type).toBe(PrivateReleaseSessionGate);
+      expect(result.props.servedTo).toBe(readerId);
+      expect(privateReleaseReaderState({ session: null, isLoading: false }, readerId)).toBe('denied');
+      expect(privateReleaseReaderState({ session: { user: { id: 'other-reader', is_anonymous: false } }, isLoading: false }, readerId)).toBe('denied');
+    });
+
+    it('keeps the original generic failure for an ordinary reader', async () => {
+      const failure = new PrivateReleaseUnavailableError('STATUS');
+      privateLoadSpy.mockRejectedValue(failure);
+      roleMaybeSingleMock.mockResolvedValue({ data: null, error: null } as never);
+      await expect(request()).rejects.toBe(failure);
+      expect(workspaceMock).not.toHaveBeenCalled();
+    });
+
+    it('keeps anonymous readers out before the private loader and admin lookup', async () => {
+      supabaseMock.auth.getUser.mockResolvedValue({ data: { user: { id: readerId, is_anonymous: true } }, error: null } as never);
+      await expect(request()).rejects.toThrow('NEXT_NOT_FOUND');
+      expect(privateLoadSpy).not.toHaveBeenCalled();
+      expect(supabaseMock.from).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when the admin role lookup errors', async () => {
+      const failure = new PrivateReleaseUnavailableError('STATUS');
+      privateLoadSpy.mockRejectedValue(failure);
+      roleMaybeSingleMock.mockResolvedValue({ data: { role: 'admin' }, error: new Error('role sentinel') } as never);
+      await expect(request()).rejects.toBe(failure);
+    });
+
+    it('does not expose a diagnostic for a different bound release', async () => {
+      const failure = new PrivateReleaseUnavailableError('STATUS');
+      privateLoadSpy.mockRejectedValue(failure);
+      await expect(request(R5_PAPER_VERSION)).rejects.toBe(failure);
+      expect(supabaseMock.from).not.toHaveBeenCalled();
+    });
+
+    it('does not expose a diagnostic for an unbound version', async () => {
+      await expect(request('v0.9.91-wrong-hash')).rejects.toThrow('NEXT_NOT_FOUND');
+      expect(privateLoadSpy).not.toHaveBeenCalled();
+      expect(supabaseMock.from).not.toHaveBeenCalled();
+    });
+
+    it('rejects an unknown forged code and never reflects its sentinel', async () => {
+      const failure = new PrivateReleaseUnavailableError('STATUS');
+      Object.defineProperty(failure, 'code', { value: 'SENTINEL_PRIVATE_BYTES_URL_TOKEN' });
+      privateLoadSpy.mockRejectedValue(failure);
+      await expect(request()).rejects.toBe(failure);
+      expect(supabaseMock.from).not.toHaveBeenCalled();
+      expect(workspaceMock).not.toHaveBeenCalled();
+    });
+
+    it('does not mask unrelated errors or change a successful repository release', async () => {
+      privateLoadSpy.mockRejectedValue(new TypeError('unrelated sentinel'));
+      await expect(request()).rejects.toThrow('unrelated sentinel');
+      expect(supabaseMock.from).not.toHaveBeenCalled();
+      const result = await page({ mode: 'working-draft' });
+      expect(result.type).toBe(workspaceMock);
+      expect(supabaseMock.from).not.toHaveBeenCalled();
+    });
   });
 });
