@@ -5,6 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { isPrivatePaperRelease, loadPaperStructureForRequest, loadPrivatePaperStructure } from '@/lib/matrix-options/paper/paper-request-loader';
 import { PaperReaderDeniedError, requirePaperReader } from '@/lib/matrix-options/paper/private-release-assets';
+import type { PaperReader } from '@/lib/matrix-options/paper/private-release-assets';
 import type { RevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
 import { createAuthenticatedClient } from '@/lib/supabase-auth';
 
@@ -44,11 +45,16 @@ export interface PaperStructureForPage {
   readonly servedTo: string | null;
 }
 
-export async function loadPaperStructureForPage(documentVersion: string): Promise<PaperStructureForPage> {
+export async function loadPaperStructureForPage(
+  documentVersion: string,
+  onPrivateReader?: (reader: PaperReader, supabase: SupabaseClient) => void,
+): Promise<PaperStructureForPage> {
   const supabase = await createAuthenticatedClient();
   try {
     if (isPrivatePaperRelease(documentVersion)) {
       const reader = await requirePaperReader(supabase);
+      // A page may retain this request-local proof if the storage load fails.
+      onPrivateReader?.(reader, supabase);
       const structure = await loadPrivatePaperStructure(documentVersion, reader);
       return { structure, supabase, servedTo: reader.userId };
     }

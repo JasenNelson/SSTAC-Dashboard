@@ -6,7 +6,10 @@ import {
   resolveMatrixOptionsPaperReviewNavigationGate,
 } from '@/lib/matrix-options/navigation';
 import { REVISED_PAPER_ROUTE } from '@/lib/matrix-options/revised-paper';
-import { getPaperRelease } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { PrivateReleaseUnavailableError } from '@/lib/matrix-options/paper/private-release-assets';
+import type { PrivateReleaseFailureCode } from '@/lib/matrix-options/paper/private-release-assets';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { PaperReleaseVersion } from '@/lib/matrix-options/paper/releases';
 import { getReviewLineage, reviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 import type { ReviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
@@ -155,6 +158,35 @@ function authenticatedReview(structure: RevisedPaperStructure, documentVersion: 
 
 export const dynamic = 'force-dynamic';
 
+// Only these existing constant codes may cross the admin-only diagnostic boundary.
+const ADMIN_DIAGNOSTIC_CODES = new Set<PrivateReleaseFailureCode>([
+  'CONFIGURATION', 'SESSION', 'TRANSPORT', 'STATUS', 'MEDIA_TYPE', 'LENGTH',
+  'SHA256', 'ENCODING', 'IMAGE_FORM', 'DEADLINE', 'STRUCTURE', 'BUSY',
+]);
+
+async function mayShowPrivateReleaseDiagnostic(supabase: SupabaseClient, readerId: string): Promise<boolean> {
+  try {
+    // Recheck on the same client that established the reader for this failed load.
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user || user.is_anonymous !== false || user.id !== readerId) return false;
+    const { data: role, error: roleError } = await supabase
+      .from('user_roles').select('role').eq('user_id', readerId).eq('role', 'admin').maybeSingle();
+    return !roleError && role?.role === 'admin';
+  } catch {
+    return false;
+  }
+}
+
+function AdminPrivateReleaseDiagnostic({ code }: { code: PrivateReleaseFailureCode }) {
+  return (
+    <div role="alert" className="mx-auto max-w-3xl px-4 py-12">
+      <h1 className="text-2xl font-bold">Options Paper unavailable</h1>
+      <p>The selected version could not pass its provider or integrity checks. No unverified content was displayed.</p>
+      <p>Diagnostic code: <code>{code}</code></p>
+    </div>
+  );
+}
+
 export default async function PublicationPage({
   params,
   searchParams,
@@ -175,7 +207,24 @@ export default async function PublicationPage({
   // A private-storage release is read with this request's own session, and only for
   // a signed-in, non-anonymous reader (request-structure.ts): anyone else gets
   // notFound(), and a release that cannot be read right now reaches error.tsx.
-  const { structure, supabase, servedTo } = await loadPaperStructureForPage(documentVersion);
+  let loaded: Awaited<ReturnType<typeof loadPaperStructureForPage>>;
+  const verifiedReader: { current: { userId: string; supabase: SupabaseClient } | null } = { current: null };
+  try {
+    loaded = await loadPaperStructureForPage(documentVersion, documentVersion === V0991_PAPER_VERSION
+      ? (reader, supabase) => { verifiedReader.current = { userId: reader.userId, supabase }; }
+      : undefined);
+  } catch (error) {
+    const reader = verifiedReader.current;
+    if (documentVersion === V0991_PAPER_VERSION
+      && reader
+      && error instanceof PrivateReleaseUnavailableError
+      && ADMIN_DIAGNOSTIC_CODES.has(error.code)
+      && await mayShowPrivateReleaseDiagnostic(reader.supabase, reader.userId)) {
+      return <PrivateReleaseSessionGate servedTo={reader.userId}><AdminPrivateReleaseDiagnostic code={error.code} /></PrivateReleaseSessionGate>;
+    }
+    throw error;
+  }
+  const { structure, supabase, servedTo } = loaded;
   let context: PaperUrlContext;
   try {
     context = buildPaperUrlContext(structure, documentVersion);
