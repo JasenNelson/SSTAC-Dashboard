@@ -68,7 +68,8 @@ describe('PaperDocument on the authenticated release', () => {
       expect(anchors.has(section)).toBe(true);
     }
     const legacy = buildLegacyAnchorMap(structure);
-    expect(Object.keys(legacy)).toHaveLength(117);
+    // 120 of 120 authored ids since rule 3b (sec-7-8, sec-7-8-1, sec-7-8-2 are authored under their headings).
+    expect(Object.keys(legacy)).toHaveLength(120);
     for (const [id, anchor] of Object.entries(legacy)) expect(model.linkMap[id]).toBe(workingDraftSectionHref(anchor));
     const referenced = [...new Set([...structure.content.matchAll(/\]\(#([^)\s]+)\)/g)].map((match) => match[1]))];
     const sectionReferences = referenced.filter((id) => /^(?:sec|app)-/.test(id) || anchors.has(id));

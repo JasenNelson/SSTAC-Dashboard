@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthAndRateLimit } from '@/app/api/_helpers/rate-limit-wrapper';
 import { resolveMatrixOptionsPaperReviewNavigationGate } from '@/lib/matrix-options/navigation';
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
-import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
-import { getReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
+import { getReviewerGuideBinding } from '@/lib/matrix-options/reviewer-guide';
+import { findReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
 import { reviewResponseRowSchema } from '@/lib/matrix-options/paper/review-responses';
 
 export const runtime = 'nodejs';
@@ -29,8 +29,12 @@ export async function GET(request: NextRequest) {
   if (resolveMatrixOptionsPaperReviewNavigationGate(process.env.MATRIX_OPTIONS_PAPER_WORKSPACE, process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION) !== 'REVIEW_NAVIGATION') return gateResponse();
   const documentVersion = queryValue(request, 'documentVersion');
   const manifestSha256 = queryValue(request, 'manifestSha256');
-  const reviewManifest = getReviewManifest();
-  if (documentVersion !== reviewManifest.documentVersion || manifestSha256 !== reviewManifest.sha256) return NextResponse.json({ error: 'Invalid release identity' }, { status: 400, headers: noStoreHeaders });
+  // The request must name one bound release by BOTH its version and that
+  // release's own review manifest digest. Rows are then read, filtered and
+  // validated under that exact release: a response is never served across
+  // releases, and one release's question ids are never valid for another.
+  const reviewManifest = findReviewManifest(documentVersion, manifestSha256);
+  if (!reviewManifest || documentVersion === null || manifestSha256 === null) return NextResponse.json({ error: 'Invalid release identity' }, { status: 400, headers: noStoreHeaders });
 
   const { user, supabase, rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'default');
   if (rateLimitResponse) return rateLimitResponse;
@@ -46,9 +50,10 @@ export async function GET(request: NextRequest) {
     .order('question_id', { ascending: true });
   if (error) return unavailableResponse(user.id, rateLimitHeaders);
 
-  const guide = getReviewerGuideContract();
+  // Question ids and numbers only: the stored binding of the release, which needs no paper text.
+  const guide = getReviewerGuideBinding(reviewManifest.documentVersion);
   const questionById = new Map(guide.questions.map((question) => [question.id, question]));
-  const cohorts = getCohortManifest().cohorts;
+  const cohorts = getCohortManifest(reviewManifest.documentVersion).cohorts;
   if (!Array.isArray(data)) return unavailableResponse(user.id, rateLimitHeaders);
   const rows = data.flatMap((row: unknown) => {
     const parsed = reviewResponseRowSchema.safeParse(row);

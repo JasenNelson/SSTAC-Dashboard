@@ -11,6 +11,8 @@ import { reviewResponseRowSchema, reviewResponseStatusLabel } from '@/lib/matrix
 import type { ReviewResponseRow } from '@/lib/matrix-options/paper/review-responses';
 import { questionPromptSummary } from '@/lib/matrix-options/paper/review-navigation';
 import type { ReviewNavTopic } from '@/lib/matrix-options/paper/review-navigation';
+import { DEFAULT_PAPER_VERSION, PAPER_RELEASES } from '@/lib/matrix-options/paper/releases';
+import type { ReviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import { cn } from '@/utils/cn';
 
@@ -22,7 +24,16 @@ export const REVIEW_COMMENTS_TEXT_LIMIT = REVIEW_LOCAL_BUFFER_TEXT_LIMIT;
 export const REVIEW_COMMENTS_CHAR_COUNT_LIVE_THRESHOLD = 1000;
 /** A save request that has not answered after this long is treated as offline. */
 export const REVIEW_SAVE_TIMEOUT_MS = 30000;
-type PersistenceState = 'loading' | 'available' | 'unavailable' | 'unauthenticated' | 'identity-changed';
+/*
+ * 'not-provisioned': a NON-DEFAULT draft whose save the review record refused because it
+ * does not hold this draft's questions under this draft's identity (unknown_identity, or
+ * stale_manifest: the record holds them under another digest). Neither is retryable from
+ * the page and neither is fixed by a reload (a page whose own digest is out of date is
+ * refused by the route before the record is asked), so saving stops for the session and
+ * no "Try again" is offered. The default draft never enters this state: it keeps the
+ * behaviour it had before a second draft existed (the generic "Could not save ... Try again").
+ */
+type PersistenceState = 'loading' | 'available' | 'unavailable' | 'not-provisioned' | 'unauthenticated' | 'identity-changed';
 /** Result of the last save attempt for one question (in-flight state is tracked separately). */
 type SaveOutcome = 'saved' | 'offline' | 'error' | 'throttled';
 /** Unsaved text for one question and the server revision it was typed against (null: no row existed). */
@@ -60,6 +71,23 @@ export interface ReviewCommentsPanelProps {
   readonly sectionNote?: string | null;
   /** The review topic (cohort) of any question, so a save for a question other than the active one carries its own cohort. */
   readonly cohortForQuestion?: (questionId: string) => string | null;
+  /**
+   * A successor draft only. The reviewer's responses to the predecessor draft are
+   * READ under the predecessor's own identity and shown as reference beside a
+   * question whose text is identical. They are never written, copied into the
+   * editor, saved under this draft, or shown for a question that changed.
+   */
+  readonly lineage?: ReviewLineageView;
+}
+
+/** Why the earlier-draft reference is or is not available. */
+type LineageState = 'idle' | 'loading' | 'ready' | 'unavailable';
+
+/** The earlier response as it stands: the submitted text when there is one, else the saved draft. */
+export function lineageResponseText(row: ReviewResponseRow | null | undefined): { readonly text: string; readonly submitted: boolean } | null {
+  if (!row) return null;
+  if (row.submitted_revision !== null && row.submitted_text) return { text: row.submitted_text, submitted: true };
+  return row.draft_text ? { text: row.draft_text, submitted: false } : null;
 }
 
 function rowForQuestion(rows: ReadonlyMap<string, ReviewResponseRow>, questionId: string | undefined): ReviewResponseRow | null { return questionId ? rows.get(questionId) ?? null : null; }
@@ -94,7 +122,7 @@ function headingCitation(heading: string): string | null {
 /** Why a review row is revealed: an explicit selection, or the q deep link at mount. */
 export type ReviewRevealCause = 'selection' | 'url';
 
-export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', cohortId, questions, question, highlightQuestionNumber, onCloseQuestion, revealElement, openRequest = 0, responseRef, onSelectQuestion, onPreviousQuestion, onNextQuestion, topics, sectionNote = null, cohortForQuestion }: ReviewCommentsPanelProps) {
+export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', cohortId, questions, question, highlightQuestionNumber, onCloseQuestion, revealElement, openRequest = 0, responseRef, onSelectQuestion, onPreviousQuestion, onNextQuestion, topics, sectionNote = null, cohortForQuestion, lineage }: ReviewCommentsPanelProps) {
   /*
    * STATE MODEL -- one source of truth per question.
    *
@@ -148,7 +176,9 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
   /** The question whose caret the textarea currently reflects. */
   const caretQuestionRef = useRef<string | undefined>(question?.id);
 
-  useEffect(() => { persistenceRef.current = persistence; }, [persistence]);
+  // A layout effect, so the ref is current in the very commit that enables Save draft:
+  // a press that lands before the next task must not be dropped as "still loading".
+  useLayoutEffect(() => { persistenceRef.current = persistence; }, [persistence]);
   useEffect(() => { userKeyRef.current = userKey; }, [userKey]);
 
   const commitRows = useCallback((next: ReadonlyMap<string, ReviewResponseRow>) => { rowsRef.current = next; setRows(next); }, []);
@@ -312,6 +342,72 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
     return () => { cancelled = true; clearTimeout(timer); controller.abort(); if (bootstrapAbortRef.current === controller) bootstrapAbortRef.current = null; };
   }, [documentVersion, manifestSha256, bootstrapAttempt]);
 
+  /*
+   * READ-ONLY LINEAGE (a successor draft only).
+   *
+   * The reviewer's responses to the predecessor draft are fetched once, with the
+   * predecessor's OWN version and manifest, through the same GET the predecessor
+   * page uses. They live in their own map, keyed by PREDECESSOR question id. No
+   * code path moves a value from this map into rows, drafts, the textarea, the
+   * browser buffer or a save request, so a predecessor response can only ever be
+   * displayed. The fetch waits for this page's verified reviewer and is dropped
+   * if it answers for anyone else.
+   */
+  const [lineageRows, setLineageRows] = useState<ReadonlyMap<string, ReviewResponseRow>>(() => new Map());
+  const [lineageState, setLineageState] = useState<LineageState>('idle');
+  /** The read in flight, so sign-out can abandon it before its answer is applied. */
+  const lineageAbortRef = useRef<AbortController | null>(null);
+  const lineageVersion = lineage?.predecessorVersion;
+  const lineageManifest = lineage?.predecessorManifestSha256;
+  useEffect(() => {
+    if (!lineageVersion || !lineageManifest || !/^[a-f0-9]{64}$/.test(lineageManifest) || !userKey || typeof fetch !== 'function') {
+      // No predecessor, or no verified reviewer (signed out, or not loaded yet): nothing is shown.
+      // Same-value updates, so a draft with no lineage never re-renders for this.
+      setLineageRows((previous) => (previous.size === 0 ? previous : new Map()));
+      setLineageState('idle');
+      return undefined;
+    }
+    const controller = new AbortController();
+    lineageAbortRef.current = controller;
+    let cancelled = false;
+    setLineageState('loading');
+    // A hung read must not leave the reference 'loading' forever: after the same
+    // budget a save gets, it is abandoned and reported as unavailable.
+    const timer = setTimeout(() => {
+      if (cancelled || !mountedRef.current) return;
+      cancelled = true;
+      controller.abort();
+      setLineageRows(new Map());
+      setLineageState('unavailable');
+    }, REVIEW_SAVE_TIMEOUT_MS);
+    const url = `/api/matrix-options/paper/reviews?documentVersion=${encodeURIComponent(lineageVersion)}&manifestSha256=${encodeURIComponent(lineageManifest)}`;
+    void fetch(url, { credentials: 'same-origin', cache: 'no-store', signal: controller.signal }).then(async (response) => {
+      const payload = await response.json().catch(() => ({})) as ReviewBootstrap;
+      if (cancelled || controller.signal.aborted || !mountedRef.current) return;
+      clearTimeout(timer);
+      // Only this page's own reviewer, and only a complete answer: anything else shows no reference.
+      if (!response.ok || payload.persistence !== 'available' || payload.userKey !== userKey || !Array.isArray(payload.rows)) {
+        setLineageRows(new Map());
+        setLineageState('unavailable');
+        return;
+      }
+      const next = new Map<string, ReviewResponseRow>();
+      for (const candidate of payload.rows) {
+        const parsed = reviewResponseRowSchema.safeParse(candidate);
+        if (!parsed.success || parsed.data.document_version !== lineageVersion || parsed.data.manifest_sha256 !== lineageManifest) continue;
+        next.set(parsed.data.question_id, parsed.data);
+      }
+      setLineageRows(next);
+      setLineageState('ready');
+    }).catch(() => {
+      if (cancelled || controller.signal.aborted || !mountedRef.current) return;
+      clearTimeout(timer);
+      setLineageRows(new Map());
+      setLineageState('unavailable');
+    });
+    return () => { cancelled = true; clearTimeout(timer); controller.abort(); if (lineageAbortRef.current === controller) lineageAbortRef.current = null; };
+  }, [lineageManifest, lineageVersion, userKey]);
+
   useEffect(() => {
     mountedRef.current = true;
     const inFlight = inFlightRef.current;
@@ -335,13 +431,23 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
       if (debounceRef.current) clearTimeout(debounceRef.current);
       const previousUserKey = userKeyRef.current;
       if (previousUserKey) knownUserKeysRef.current.add(previousUserKey);
-      knownUserKeysRef.current.forEach((knownUserKey) => clearReviewLocalDrafts(knownUserKey, documentVersion));
-      clearReviewLocalDrafts(REVIEW_LOCAL_BUFFER_ANONYMOUS_USER_KEY, documentVersion);
-      clearReviewLocalDraftsForVersion(documentVersion);
+      // Sign-out leaves no unsaved review text in this browser. With more than one bound
+      // draft that means EVERY draft's browser copies, not only the draft on screen: a
+      // reviewer who typed under one draft and signed out from the other is cleared too.
+      for (const version of new Set([documentVersion, ...PAPER_RELEASES.map((release) => release.documentVersion)])) {
+        knownUserKeysRef.current.forEach((knownUserKey) => clearReviewLocalDrafts(knownUserKey, version));
+        clearReviewLocalDrafts(REVIEW_LOCAL_BUFFER_ANONYMOUS_USER_KEY, version);
+        clearReviewLocalDraftsForVersion(version);
+      }
       knownUserKeysRef.current.clear();
       userKeyRef.current = null;
       pendingMutationQuestionIdsRef.current = new Set(); setPendingMutationQuestionIds(new Set());
       setPageOnly(new Set());
+      // The earlier-draft reference goes in this same batch. Left to the lineage effect it
+      // would still be drawn in the first signed-out render (effects run after that render),
+      // and a read answered in between would be drawn too, so the read is abandoned here.
+      lineageAbortRef.current?.abort();
+      setLineageRows(new Map()); setLineageState('idle');
       setUserKey(null); commitRows(new Map()); commitDrafts(new Map()); conflictsRef.current = new Map(); setConflicts(new Map()); setOutcomes(new Map()); setPersistence('unauthenticated');
     };
     window.addEventListener('matrix-options-auth-signed-out', onSignedOut);
@@ -490,6 +596,17 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
           setPersistence('unauthenticated');
           return;
         }
+        if (documentVersion !== DEFAULT_PAPER_VERSION && (payload.outcome === 'unknown_identity' || payload.outcome === 'stale_manifest')) {
+          // The review record does not hold this draft's questions under this draft's
+          // identity (not provisioned, or provisioned under another digest). Sending the
+          // same save again can never succeed, so nothing is queued or retried: saving
+          // stops for this page and the text stays exactly where it is. Only a non-default
+          // draft takes this path; the default draft's handling is unchanged.
+          queueRef.current.delete(questionId);
+          setOutcome(questionId, 'offline');
+          setPersistence('not-provisioned');
+          return;
+        }
         if (!response.ok || (payload.outcome !== 'ok' && payload.outcome !== 'noop_already_submitted') || !savedRow) {
           setOutcome(questionId, response.status === 503 ? 'offline' : response.status === 429 ? 'throttled' : 'error');
           return;
@@ -514,7 +631,9 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
       }
     })();
   }, [cohortForQuestion, cohortId, documentVersion, manifestSha256, markMutationPending, mergeRow, setDraft, setOutcome, updateConflict, userKey]);
-  useEffect(() => { persistRef.current = persist; }, [persist]);
+  // A layout effect for the same reason as persistenceRef: a Submit pressed in the commit
+  // that verifies the reviewer must reach the save that knows the reviewer, not the one before it.
+  useLayoutEffect(() => { persistRef.current = persist; }, [persist]);
 
   // Question switch: save the outgoing question's unsaved text now (Back /
   // Forward and paper sync switch without a blur, and the switch cancels its
@@ -663,7 +782,9 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
   // Where the active question's text is: in this browser only for a verified
   // reviewer whose copy was written (predictive before the first keystroke).
   const storedInBrowser = Boolean(userKey) && !(question && pageOnly.has(question.id));
-  const keptWhere = storedInBrowser ? 'Your text is kept in this browser only.' : 'Your text is kept on this page only -- this browser is not storing it, so do not reload.';
+  // The browser copy is removed at sign-out (so the next person at this browser cannot read
+  // it). Wherever that copy is the ONLY copy, the reader is told so before they sign out.
+  const keptWhere = storedInBrowser ? 'Your text is kept in this browser only, and is cleared when you sign out.' : 'Your text is kept on this page only -- this browser is not storing it, so do not reload.';
   const rowStatusText = activeState === 'submitted'
     ? `Submitted${submittedAt ? ` ${submittedAt}` : ''}. Editing creates a new draft; re-submit to replace it.`
     : activeState === 'changed'
@@ -683,7 +804,19 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
     : persistence === 'loading' ? 'Saving becomes available once your saved responses have loaded.'
       : persistence === 'unauthenticated' ? (storedInBrowser ? 'Sign in again in another tab, then select Try again here. Until then, what you type is kept in this browser only.' : 'Sign in again in another tab, then select Try again here. What you type is on this page only and is lost if you reload or leave.')
         : persistence === 'identity-changed' ? (userKey && !hasPageOnlyDrafts ? 'A different reviewer is now signed in on this browser, so saving here is stopped. Reload the page to continue. Unsaved text stays in this browser for the reviewer who typed it.' : 'A different reviewer is now signed in on this browser, so saving here is stopped. This browser is not storing your unsaved text -- copy it before you reload.')
-        : storedInBrowser ? 'Saving to the review record is not available yet. What you type is kept in this browser only.' : 'Saving to the review record is not available yet. What you type is on this page only and is lost if you reload or leave.';
+        : persistence === 'not-provisioned' ? (storedInBrowser ? 'Responses to this draft cannot be saved to the review record yet. What you type is kept in this browser only, and is cleared when you sign out.' : 'Responses to this draft cannot be saved to the review record yet. What you type is on this page only and is lost if you reload or leave.')
+        : storedInBrowser ? 'Saving to the review record is not available yet. What you type is kept in this browser only, and is cleared when you sign out.' :'Saving to the review record is not available yet. What you type is on this page only and is lost if you reload or leave.';
+  // Lineage for the open question: `undefined` = this draft has no predecessor (or the
+  // question is unknown to the lineage); `null` = the question changed; a string = the
+  // predecessor question whose text is identical.
+  const predecessorQuestionId = question && lineage && Object.prototype.hasOwnProperty.call(lineage.predecessorQuestionIds, question.id) ? lineage.predecessorQuestionIds[question.id] : undefined;
+  const lineageChanged = predecessorQuestionId === null;
+  const lineageRow = typeof predecessorQuestionId === 'string' && lineageState === 'ready' ? lineageRows.get(predecessorQuestionId) ?? null : null;
+  const lineageReference = lineageResponseText(lineageRow);
+  // Said only when this draft's own record is reachable: when nothing can be read at all,
+  // the standing persistence message already says so and a second note would be noise.
+  const lineageUnreadable = typeof predecessorQuestionId === 'string' && lineageState === 'unavailable' && persistence === 'available';
+  const lineageReferenceAt = lineageReference ? formatTimestamp(lineageReference.submitted ? lineageRow?.submitted_at : lineageRow?.updated_at) : null;
   const blankText = draftText.trim().length === 0;
   const actionReason = persistenceReason ?? (conflict ? 'Choose Keep mine or Use saved to resolve the conflict first.' : blankText ? 'Write a response before submitting.' : null);
   const buttonBase = 'inline-flex min-h-[44px] items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] disabled:cursor-not-allowed disabled:opacity-55';
@@ -777,6 +910,19 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
                       <p data-testid="review-question-context" className="text-xs text-[var(--db-text-secondary)]">{[questionTopic?.label, citation].filter(Boolean).join(' - ') || 'Review question'}</p>
                       <h5 id="active-question-heading" className="mt-0.5 text-base font-semibold leading-snug text-[var(--db-text-primary)]">{question ? `Question ${question.number}: ${navQuestion?.title ?? question.heading}` : 'Active review question'}</h5>
                       {question ? <div className="mt-3 text-sm leading-relaxed text-[var(--db-text-primary)]"><MathRenderer content={question.prompt} /></div> : <p className="mt-3 text-sm">No review question is selected.</p>}
+                      {lineageChanged ? (
+                        <p data-testid="review-lineage-changed" className="mt-3 rounded-md border border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] p-3 text-xs text-[var(--db-text-primary)]">This question was reworded for this draft. A response to the earlier wording is not carried over, so it needs a new response.</p>
+                      ) : null}
+                      {lineageUnreadable ? (
+                        <p data-testid="review-lineage-unavailable" className="mt-3 text-xs text-[var(--db-text-secondary)]">Your response to this question in the earlier draft, if you wrote one, could not be loaded. Reload the page to try again.</p>
+                      ) : null}
+                      {lineageReference ? (
+                        <details data-testid="review-lineage-reference" className="mt-3 rounded-md border border-[var(--db-border)] p-3 text-sm">
+                          <summary className="cursor-pointer font-semibold text-[var(--db-text-primary)]">Your {lineageReference.submitted ? 'submitted response' : 'saved draft'} in the earlier draft{lineageReferenceAt ? ` (${lineageReferenceAt})` : ''}</summary>
+                          <p data-testid="review-lineage-text" className="mt-2 whitespace-pre-wrap break-words text-[var(--db-text-primary)]">{lineageReference.text}</p>
+                          <p className="mt-2 text-xs text-[var(--db-text-secondary)]">Shown for reference only. It stays with the earlier draft and is not copied here; write your response to this draft below.</p>
+                        </details>
+                      ) : null}
                     </div>
 
                     <div className="min-w-0">

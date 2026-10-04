@@ -135,13 +135,20 @@ describe('full-document model against the real authenticated paper', () => {
     const legacy = buildLegacyAnchorMap(structure);
     const distinctIds = [...new Set([...structure.content.matchAll(ANCHOR_LINE_GLOBAL)].map((match) => match[1]))];
     expect(distinctIds).toHaveLength(120);
-    const legacyExpectedIds = distinctIds.filter(id => !['sec-7-8', 'sec-7-8-1', 'sec-7-8-2'].includes(id));
+    // Owner decision 2026-10-01: every authored id resolves, including sec-7-8, sec-7-8-1 and
+    // sec-7-8-2, whose divs this release authors directly UNDER their headings (rule 3b). Before
+    // that rule those three were dropped, and a link or a draft switch to Section 7.8 opened the
+    // paper at its start.
     for (const [id, anchor] of Object.entries(legacy)) {
-      expect(legacyExpectedIds).toContain(id);
+      expect(distinctIds).toContain(id);
       expect(anchors.has(anchor)).toBe(true);
     }
-    expect(Object.keys(legacy).sort()).toEqual([...legacyExpectedIds].sort());
+    expect(Object.keys(legacy).sort()).toEqual([...distinctIds].sort());
     const headingAnchor = (prefix: string) => structure.nodes.find((node) => node.label.startsWith(prefix))?.anchor;
+    expect(legacy['sec-7-8']).toBe(headingAnchor('Section 7.8: '));
+    expect(legacy['sec-7-8-1']).toBe(headingAnchor('7.8.1 '));
+    expect(legacy['sec-7-8-2']).toBe(headingAnchor('7.8.2 '));
+    expect(new Set([legacy['sec-7-8'], legacy['sec-7-8-1'], legacy['sec-7-8-2']]).size).toBe(3);
     expect(legacy['sec-4-1']).toBe(headingAnchor('4.1 '));
     expect(legacy['sec-10-2']).toBe(headingAnchor('10.2 '));
     expect(legacy['sec-12-0']).toBe(headingAnchor('12.0 '));

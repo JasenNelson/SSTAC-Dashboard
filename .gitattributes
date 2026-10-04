@@ -1,2 +1,7 @@
 matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md -text
 matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md.sha256 -text
+# The default paper release is authenticated byte for byte (SHA-256 and byte length) at load,
+# so no checkout may rewrite its line endings: a core.autocrlf=true clone would otherwise
+# make the release unavailable.
+candidate/paper/BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md -text
+candidate/paper/BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md.sha256 -text

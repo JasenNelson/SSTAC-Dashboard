@@ -1,4 +1,4 @@
-import { APPENDIX_BOUNDARY_LABEL } from './outline-hierarchy';
+import { isAppendixBoundaryLabel } from './outline-hierarchy';
 
 /*
  * Paper Navigation groups (presentation only).
@@ -93,18 +93,48 @@ export function buildPaperNavGroups<T extends PaperNavSourceEntry>(outline: read
     seen.add(root.id);
     return isContentsHeading(root.label) ? shownChildren(root, seen) : [root];
   });
-  const boundary = shownRoots.findIndex((entry) => entry.label.trim() === APPENDIX_BOUNDARY_LABEL);
-  const mainRoots = boundary < 0 ? shownRoots : shownRoots.slice(0, boundary);
-  const appendixRoots = boundary < 0 ? [] : shownRoots.slice(boundary);
+  const rootBoundary = shownRoots.findIndex((entry) => isAppendixBoundaryLabel(entry.label));
+  let mainRoots: T[];
+  let appendixRoots: T[];
+  let nestedBoundaryParentId: string | null = null;
+  let nestedBoundaryChildIndex = -1;
+  if (rootBoundary >= 0) {
+    mainRoots = shownRoots.slice(0, rootBoundary);
+    appendixRoots = shownRoots.slice(rootBoundary);
+  } else {
+    // Earlier releases authored the appendix boundary as a depth-1 root.
+    // v0.9.91 authors it at depth 2 beneath the document-title root, so split
+    // that root's displayed children while keeping the title in Main Report.
+    const nested = shownRoots.flatMap((root, rootIndex) => {
+      const children = shownChildren(root, new Set(seen));
+      const childIndex = children.findIndex((child) => isAppendixBoundaryLabel(child.label));
+      return childIndex < 0 ? [] : [{ rootIndex, children, childIndex }];
+    })[0];
+    if (nested) {
+      mainRoots = shownRoots.slice(0, nested.rootIndex + 1);
+      appendixRoots = [
+        ...nested.children.slice(nested.childIndex),
+        ...shownRoots.slice(nested.rootIndex + 1),
+      ];
+      nestedBoundaryParentId = shownRoots[nested.rootIndex].id;
+      nestedBoundaryChildIndex = nested.childIndex;
+    } else {
+      mainRoots = shownRoots;
+      appendixRoots = [];
+    }
+  }
 
   const main: MutableNode<T>[] = [];
   for (const root of mainRoots) {
     const children = shownChildren(root, seen);
-    if (main.length === 0 && root.level <= 1 && children.length > 0) {
+    const mainChildren = root.id === nestedBoundaryParentId
+      ? children.slice(0, nestedBoundaryChildIndex)
+      : children;
+    if (main.length === 0 && root.level <= 1 && mainChildren.length > 0) {
       // The document title: one row; its chapters are the group's rows.
-      main.push({ entry: root, children: [] }, ...children.map((child) => toNode(child, seen)));
+      main.push({ entry: root, children: [] }, ...mainChildren.map((child) => toNode(child, seen)));
     } else {
-      main.push({ entry: root, children: children.map((child) => toNode(child, seen)) });
+      main.push({ entry: root, children: mainChildren.map((child) => toNode(child, seen)) });
     }
   }
 
@@ -116,7 +146,7 @@ export function buildPaperNavGroups<T extends PaperNavSourceEntry>(outline: read
       continue;
     }
     const children = shownChildren(root, seen);
-    const introduced = root.label.trim() === APPENDIX_BOUNDARY_LABEL ? undefined : children.find((child) => appendixLetter(child.label) !== null);
+    const introduced = isAppendixBoundaryLabel(root.label) ? undefined : children.find((child) => appendixLetter(child.label) !== null);
     if (introduced) {
       // A banner introducing an appendix: the appendix leads, the banner stays reachable inside it.
       const banner: MutableNode<T> = { entry: root, children: children.filter((child) => child !== introduced).map((child) => toNode(child, seen)) };

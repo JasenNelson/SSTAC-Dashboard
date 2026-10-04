@@ -55,7 +55,13 @@ describe('paper figures: the deployed release', () => {
   });
 
   it('keeps every source byte: prose plus figure sources reassemble the paper exactly', () => {
-    const rebuilt = segments.map((segment) => (segment.kind === 'figure' ? segment.source : segment.markdown));
+    // splitPaperMarkdown yields only prose and diagram-summary figures; an accepted (PNG) figure
+    // segment would be a defect here, so it fails the reassembly instead of being skipped.
+    const rebuilt = segments.map((segment) => {
+      if (segment.kind === 'figure') return segment.source;
+      if (segment.kind === 'markdown') return segment.markdown;
+      throw new Error(`unexpected segment kind ${segment.kind}`);
+    });
     // Segments are joined on the line boundaries the splitter cut at.
     expect(rebuilt.join('\n').replace(/\n+/g, '\n')).toBe(paper.replace(/\n+/g, '\n'));
   });

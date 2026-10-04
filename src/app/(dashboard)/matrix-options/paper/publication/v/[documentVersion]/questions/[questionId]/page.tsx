@@ -4,11 +4,12 @@ import {
   MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH,
   resolveMatrixOptionsPaperReviewNavigationGate,
 } from '@/lib/matrix-options/navigation';
-import { REVISED_PAPER_ROUTE, REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
-import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
+import { isPaperReleaseVersion } from '@/lib/matrix-options/paper/releases';
+import { REVISED_PAPER_ROUTE } from '@/lib/matrix-options/revised-paper';
 import { paperWorkspaceHref, parsePaperUrlState } from '@/lib/matrix-options/paper/url-state';
 import type { PaperSearchParams } from '@/lib/matrix-options/paper/url-state';
 import { buildPaperUrlContext, resolveSectionAnchor } from '@/components/matrix-options/paper/PaperDocument';
+import { loadPaperStructureForPage } from '@/app/(dashboard)/matrix-options/paper/request-structure';
 
 /**
  * Legacy question deep link (F-07: the identity is never dropped).
@@ -31,15 +32,16 @@ export default async function PublicationQuestionPage({
   if (gate === 'LEGACY_TWG_REVIEW') redirect(MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH);
   if (gate === 'PAPER_RESOLVER') redirect(REVISED_PAPER_ROUTE);
   const { documentVersion, questionId } = await params;
-  if (documentVersion !== REVISED_PAPER_VERSION) notFound();
+  if (!isPaperReleaseVersion(documentVersion)) notFound();
   let resolvedQuestionId: string;
   try {
     resolvedQuestionId = decodeURIComponent(questionId);
   } catch {
     notFound();
   }
-  const structure = loadRevisedPaperStructure();
-  const context = buildPaperUrlContext(structure);
+  // A private-storage release resolves an identity only for its allowed reader (request-structure.ts).
+  const { structure } = await loadPaperStructureForPage(documentVersion);
+  const context = buildPaperUrlContext(structure, documentVersion);
   const guideCohort = context.questionCohort.get(resolvedQuestionId);
   if (guideCohort !== undefined) {
     redirect(paperWorkspaceHref(documentVersion, { mode: 'my-review', cohort: guideCohort, q: resolvedQuestionId, section: null }));

@@ -1,6 +1,7 @@
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
 import {
   buildLegacyAnchorMap,
+  buildPandocAnchorMap,
   buildPaperChunks,
   buildPaperOutline,
   sectionAnchorSet,
@@ -12,7 +13,7 @@ import { workingDraftSectionHref } from '@/lib/matrix-options/paper/url-state';
 import type { PaperUrlContext } from '@/lib/matrix-options/paper/url-state';
 import { createWorkspaceModel } from '@/lib/matrix-options/revised-paper-review';
 import type { RevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
-import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
+import { getReviewerGuideBinding } from '@/lib/matrix-options/reviewer-guide';
 
 import { PAPER_DOCUMENT_ARTICLE_CLASSES, PaperChunkSection } from './PaperChunkSection';
 import type { PaperOutlineNavEntry } from './PaperOutlineNav';
@@ -36,9 +37,11 @@ export { PAPER_DOCUMENT_HEADING_OFFSET } from './PaperText';
  * demoted one level (headingOffset 1), so the workspace h1 stays the page's only
  * h1; heading text is unchanged.
  *
- * Derived models are cached per structure object. loadRevisedPaperStructure
- * returns one cached, already authenticated structure, so a warm server
- * derives chunks, outline and link map once instead of per request.
+ * Derived models are cached per structure object. Both loaders hand out one
+ * already authenticated structure object for many requests (the repository
+ * loader for the process, the private-storage loader for as long as it keeps
+ * the verified bytes), so a warm server derives chunks, outline and link map
+ * once per structure instead of per request.
  */
 
 export interface PaperDocumentModel {
@@ -49,6 +52,7 @@ export interface PaperDocumentModel {
 const outlineCache = new WeakMap<object, readonly PaperOutlineNavEntry[]>();
 const anchorCache = new WeakMap<object, ReadonlySet<string>>();
 const legacyCache = new WeakMap<object, Readonly<Record<string, string>>>();
+const stableIdCache = new WeakMap<object, Readonly<Record<string, string>>>();
 const documentCache = new WeakMap<object, PaperDocumentModel>();
 
 export function getPaperSectionAnchors(structure: Pick<RevisedPaperStructure, 'nodes'>): ReadonlySet<string> {
@@ -115,8 +119,20 @@ export function buildPaperLinkMap(structure: RevisedPaperStructure): Readonly<Re
     const anchor = anchorByNodeId.get(nodeId);
     if (anchor) entries.set(key, workingDraftSectionHref(anchor));
   }
+  // 4. (lowest precedence, added first below) empty pandoc anchor spans -- the
+  //    targets of a release's own List of Figures / List of Tables links -- map
+  //    to the section that holds the figure or table. A heading anchor or a
+  //    legacy section id of the same name always wins.
+  const pandocEntries = Object.entries(buildPandocAnchorMap(structure)).filter(([id]) => !entries.has(id));
+  for (const [id, anchor] of pandocEntries) entries.set(id, workingDraftSectionHref(anchor));
   for (const anchor of getPaperSectionAnchors(structure)) entries.set(anchor, workingDraftSectionHref(anchor));
   for (const [legacyId, anchor] of Object.entries(getPaperLegacyAnchorMap(structure))) entries.set(legacyId, workingDraftSectionHref(anchor));
+  // 5. A withheld section (releases.ts `withheld`) is never a link target. Its anchor line is
+  //    not in the presented text, so step 1's heuristic would otherwise invent a target for
+  //    the leftover reference to it (an unrelated section). The id leaves the map here, after
+  //    every source has been merged; the reference itself is not shown when it is a contents
+  //    entry of its own, and is shown as plain text otherwise (buildPaperChunks).
+  for (const id of structure.presentation?.inactiveLinkTargets ?? []) entries.delete(id);
   return Object.freeze(Object.fromEntries(entries));
 }
 
@@ -128,10 +144,15 @@ export function getPaperDocumentModel(structure: RevisedPaperStructure): PaperDo
   return model;
 }
 
-/** URL-state context: heading anchors plus reviewer-guide question -> cohort bindings. */
-export function buildPaperUrlContext(structure: Pick<RevisedPaperStructure, 'nodes'>): PaperUrlContext {
-  const manifest = getCohortManifest();
-  const guide = getReviewerGuideContract();
+/**
+ * URL-state context: heading anchors plus reviewer-guide question -> cohort
+ * bindings of ONE release (the default release when no version is given), so a
+ * question id of another release is never a valid `q` here. Only question
+ * numbers and ids are read, so the stored guide binding is enough for any release.
+ */
+export function buildPaperUrlContext(structure: Pick<RevisedPaperStructure, 'nodes'>, documentVersion?: string): PaperUrlContext {
+  const manifest = getCohortManifest(documentVersion);
+  const guide = getReviewerGuideBinding(documentVersion);
   const questionCohort = new Map<string, string>();
   for (const cohort of manifest.cohorts) {
     for (const number of cohort.questionNumbers) {
@@ -165,8 +186,16 @@ export function resolveSectionAnchor(structure: Pick<RevisedPaperStructure, 'nod
  * itself when it is a heading anchor, else its legacy section-anchor div
  * mapping. The percent-decoded id is tried first and the raw id second; a
  * malformed encoding is tried raw only. Unknown ids resolve to null.
+ *
+ * `retired` names the predecessor's stable ids that open no section of this
+ * release and the stable id each one lands on (releases.ts retiredSectionAnchors).
+ * It is consulted last and for NAVIGATION only: landing on the other section makes
+ * no claim that the missing section's content is found there. The stable id of a
+ * WITHHELD section is not resolved here at all: it names no section of this
+ * release, and the section route sends it to the withheld notice before any
+ * structure is loaded.
  */
-export function resolveLegacySectionAnchor(structure: Pick<RevisedPaperStructure, 'content' | 'nodes'>, rawId: string): string | null {
+export function resolveLegacySectionAnchor(structure: Pick<RevisedPaperStructure, 'content' | 'nodes'>, rawId: string, retired: Readonly<Record<string, string>> = {}): string | null {
   const candidates = [rawId];
   try {
     const decoded = decodeURIComponent(rawId);
@@ -180,7 +209,31 @@ export function resolveLegacySectionAnchor(structure: Pick<RevisedPaperStructure
     if (anchors.has(id)) return id;
     if (Object.prototype.hasOwnProperty.call(legacy, id)) return legacy[id];
   }
+  for (const id of candidates) {
+    if (!Object.prototype.hasOwnProperty.call(retired, id)) continue;
+    const fallback = retired[id];
+    if (Object.prototype.hasOwnProperty.call(legacy, fallback)) return legacy[fallback];
+  }
   return null;
+}
+
+/**
+ * Heading anchor -> the stable section id (`sec-...` / `app-...`) that labels
+ * it, for headings that have one. Stable ids are identical across releases
+ * (interface overlay, section_anchor_lineage.identity_rule), so they are the
+ * identity a reader's place is carried by when they switch drafts. When several
+ * stable ids label one heading, the first in document order is used.
+ */
+export function getPaperStableSectionIds(structure: Pick<RevisedPaperStructure, 'content' | 'nodes'>): Readonly<Record<string, string>> {
+  const cached = stableIdCache.get(structure);
+  if (cached) return cached;
+  const entries = new Map<string, string>();
+  for (const [stableId, anchor] of Object.entries(getPaperLegacyAnchorMap(structure))) {
+    if (!entries.has(anchor)) entries.set(anchor, stableId);
+  }
+  const stableIds = Object.freeze(Object.fromEntries(entries));
+  stableIdCache.set(structure, stableIds);
+  return stableIds;
 }
 
 /**

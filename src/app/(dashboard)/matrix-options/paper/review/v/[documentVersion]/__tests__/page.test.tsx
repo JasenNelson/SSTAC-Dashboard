@@ -79,7 +79,7 @@ describe('paper review V16 legacy routes', () => {
     const renderers = pages.filter((file) => readFileSync(file, 'utf8').includes('RevisedPaperWorkspace')).map((file) => path.relative(root, file).split(path.sep).join('/'));
     expect(renderers).toEqual(['publication/v/[documentVersion]/page.tsx']);
     const publication = readFileSync(path.join(root, 'publication', 'v', '[documentVersion]', 'page.tsx'), 'utf8');
-    expect(publication).toMatch(/if \(state\.mode === 'my-review'\) \{\s*return <RevisedPaperWorkspace [^>]*cohortPortions=\{cohortPortions\}/);
+    expect(publication).toMatch(/if \(state\.mode === 'my-review'\) \{\s*return gated\(<RevisedPaperWorkspace [^>]*cohortPortions=\{cohortPortions\}/);
     expect(publication.match(/<RevisedPaperWorkspace /g)).toHaveLength(2);
   });
 

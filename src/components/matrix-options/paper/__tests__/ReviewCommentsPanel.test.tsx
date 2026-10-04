@@ -854,7 +854,8 @@ describe('ReviewCommentsPanel', () => {
     await waitFor(() => expect(textarea()).toHaveValue('new text'));
     const statusText = screen.getByTestId('review-save-status').textContent ?? '';
     expect(statusText).not.toMatch(/^Draft saved/);
-    expect(statusText === 'Not saved to the review record. Your text is kept in this browser only.' || statusText === 'Unsaved changes').toBe(true);
+    // The browser copy is the only copy here, so the line also says that signing out clears it.
+    expect(statusText === 'Not saved to the review record. Your text is kept in this browser only, and is cleared when you sign out.' || statusText === 'Unsaved changes').toBe(true);
     expect(screen.getByTestId(`review-progress-q${questions[0].number}`)).toHaveAttribute('data-state', 'draft-local');
   });
 
@@ -1787,5 +1788,82 @@ describe('ReviewCommentsPanel: question index (owner-approved correction)', () =
     expect(select.value).toBe('');
     fireEvent.change(select, { target: { value: String(questions[0].number) } });
     expect(handlers.onSelectQuestion).toHaveBeenCalledWith(questions[0].number);
+  });
+});
+
+/*
+ * The save controls read the panel's state through refs. Those refs must be
+ * current as soon as the commit that enables the controls is on screen, not one
+ * task later: a press that lands in between was dropped (Save draft returned as
+ * if still loading; Submit reported "offline" for a reviewer who was verified).
+ *
+ * Each test presses the control from inside the DOM-change notification of the
+ * very commit that enables it, which runs before any later task.
+ * Two-sided: with the refs mirrored in passive effects (useEffect), no request is
+ * sent and both tests fail; mirrored in layout effects, the request is sent.
+ */
+describe('ReviewCommentsPanel: the save controls work in the same task that enables them', () => {
+  /** Presses `name` the moment it is enabled and the editor shows `text`, inside that commit's own mutation notification. */
+  async function pressAsSoonAsEnabled(name: string, text: string) {
+    const scope = globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean };
+    const previous = scope.IS_REACT_ACT_ENVIRONMENT;
+    // The loaded responses arrive outside act(), as they do under waitFor.
+    scope.IS_REACT_ACT_ENVIRONMENT = false;
+    try {
+      await new Promise<void>((resolve) => {
+        const observer = new MutationObserver(() => {
+          const editor = screen.queryByRole('textbox', { name: 'Your response' }) as HTMLTextAreaElement | null;
+          const control = screen.queryByRole('button', { name }) as HTMLButtonElement | null;
+          if (!editor || editor.value !== text || !control || control.disabled) return;
+          observer.disconnect();
+          fireEvent.click(control);
+          resolve();
+        });
+        observer.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
+      });
+    } finally {
+      scope.IS_REACT_ACT_ENVIRONMENT = previous;
+    }
+  }
+
+  it('Submit pressed in the commit that shows the loaded response sends it, for the verified reviewer', async () => {
+    const requests: Array<{ init?: RequestInit }> = [];
+    vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
+      if (url.includes('?documentVersion=')) {
+        return Promise.resolve(new Response(JSON.stringify({
+          persistence: 'available',
+          userKey: REVIEWER,
+          rows: [{ document_version: version, manifest_sha256: MANIFEST, cohort_id: 'categories', question_id: questions[0].id, draft_text: 'A', submitted_text: null, revision: 3, submitted_revision: null, submitted_at: null, updated_at: null }],
+        }), { status: 200 }));
+      }
+      return new Promise<Response>(() => { requests.push({ init }); });
+    }));
+    renderPanel({ manifestSha256: MANIFEST, cohortId: 'categories', question: questions[0] });
+
+    await pressAsSoonAsEnabled('Submit response', 'A');
+
+    expect(requests).toHaveLength(1);
+    const body = JSON.parse(String(requests[0].init?.body));
+    expect(body.action).toBe('submit');
+    expect(body.text).toBe('A');
+    expect(body.expectedUserId).toBe(REVIEWER);
+    expect(screen.getByTestId('review-save-status')).not.toHaveTextContent(/offline/i);
+  });
+
+  it('Save draft pressed in the commit that restores a browser copy sends it', async () => {
+    const requests: Array<{ init?: RequestInit }> = [];
+    vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
+      if (url.includes('?documentVersion=')) return Promise.resolve(new Response(JSON.stringify({ persistence: 'available', userKey: REVIEWER, rows: [] }), { status: 200 }));
+      return new Promise<Response>(() => { requests.push({ init }); });
+    }));
+    seedDraft(questions[0].id, 'kept in the browser');
+    renderPanel({ manifestSha256: MANIFEST, cohortId: 'categories', question: questions[0] });
+
+    await pressAsSoonAsEnabled('Save draft', 'kept in the browser');
+
+    expect(requests).toHaveLength(1);
+    const body = JSON.parse(String(requests[0].init?.body));
+    expect(body.action).toBe('save-draft');
+    expect(body.text).toBe('kept in the browser');
   });
 });

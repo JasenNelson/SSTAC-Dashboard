@@ -27,6 +27,8 @@ export interface DownloadFilesPanelProps {
   readonly headingId?: string;
   /** Receives a short result message (saved or failed) to announce outside the popover. */
   readonly onAnnounce?: (message: string) => void;
+  /** Shown when there are no groups. A draft that has no print packages says so instead of "being prepared". */
+  readonly pendingText?: string;
 }
 
 /**
@@ -81,7 +83,10 @@ type PackageState =
  * validated manifest and the controlled fetch below, they are just not
  * presentation.
  */
-export function DownloadFilesPanel({ groups, headingId = PAPER_DOWNLOAD_FILES_HEADING_ID, onAnnounce }: DownloadFilesPanelProps) {
+/** What the panel says when no verified package exists (the default release's wording). */
+export const DOWNLOAD_FILES_PENDING_TEXT = 'Download files are being prepared for this release and are not available yet.';
+
+export function DownloadFilesPanel({ groups, headingId = PAPER_DOWNLOAD_FILES_HEADING_ID, onAnnounce, pendingText = DOWNLOAD_FILES_PENDING_TEXT }: DownloadFilesPanelProps) {
   const labelFor = (packageEntry: DownloadManifestPackage) => {
     const group = groups?.find((candidate) => candidate.manifest.packages.some((entry) => entry.packageId === packageEntry.packageId));
     return group ? `${group.cohortName} - ${packageEntry.kind}` : packageEntry.kind;
@@ -277,7 +282,7 @@ export function DownloadFilesPanel({ groups, headingId = PAPER_DOWNLOAD_FILES_HE
         </>
       ) : (
         <p data-testid="reading-materials-content" className="px-2 pb-2 text-sm text-[var(--db-text-secondary)]">
-          <span data-testid="download-files-pending">Download files are being prepared for this release and are not available yet.</span>
+          <span data-testid="download-files-pending">{pendingText}</span>
         </p>
       )}
     </section>

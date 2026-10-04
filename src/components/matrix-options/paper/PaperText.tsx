@@ -3,6 +3,7 @@ import { paperInlineSegments } from '@/lib/matrix-options/paper/derived-figures'
 import { demoteMarkdownHeadings, markdownHeadingLevels } from '@/lib/matrix-options/paper/full-document';
 import { cn } from '@/utils/cn';
 
+import { AcceptedPaperFigure, AcceptedPaperFigureUnavailable } from './AcceptedPaperFigure';
 import { PaperFigure } from './PaperFigure';
 
 /** Heading levels paper markdown is demoted by inside the Working Draft. */
@@ -98,7 +99,24 @@ export function PaperText({ markdown, linkMap, className, headingOffset = 0, hea
     // Inside the reading frame, body text and wide blocks share the frame's full width (globals.css .paper-reading-frame).
     <div className={cn('reader-prose min-w-0 max-w-none', paperHeadingClasses(headingOffset, headingVariant), className)}>
       {segments.map((segment, index) =>
-        segment.kind === 'figure' ? (
+        segment.kind === 'accepted-figure' ? (
+          // The exact accepted PNG of this release (accepted-figures.ts), never a redraw.
+          <AcceptedPaperFigure key={`accepted-figure-${segment.figure.placement.figureId}`} figure={segment.figure} />
+        ) : segment.kind === 'accepted-figure-unavailable' ? (
+          <AcceptedPaperFigureUnavailable key={`accepted-figure-unavailable-${segment.figureId}-${index}`} figureId={segment.figureId} />
+        ) : segment.kind === 'appendix-source-media' ? (
+          <div key={`appendix-source-media-${segment.media.sha256}`} data-appendix-source-media data-source-media-sha256={segment.media.sha256} className="my-6 max-w-full overflow-x-auto">
+            <img
+              src={`/api/matrix-options/paper/v/${segment.media.releaseIdentity}/figures/${encodeURIComponent(segment.media.file)}?sha256=${segment.media.sha256}`}
+              alt={segment.media.alt}
+              width={segment.media.width}
+              height={segment.media.height}
+              style={{ width: segment.media.widthAttribute, maxWidth: '100%', height: 'auto' }}
+            />
+          </div>
+        ) : segment.kind === 'appendix-source-media-unavailable' ? (
+          <p key={`appendix-source-media-unavailable-${index}`} role="note">The source image could not be verified, so it is not shown.</p>
+        ) : segment.kind === 'figure' ? (
           <PaperFigure key={`figure-${segment.binding?.id ?? index}`} model={segment.model} binding={segment.binding} />
         ) : (
           segment.quote ? (

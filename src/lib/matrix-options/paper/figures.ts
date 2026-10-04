@@ -24,6 +24,9 @@
  * cleanly stays as its original markdown.
  */
 
+import type { AcceptedFigureBinding } from './accepted-figures';
+import type { AppendixLSourceMediaBinding } from './accepted-source-media';
+
 export type DiagramLayout = 'grid' | 'tree' | 'flow' | 'stack';
 
 export interface DiagramNode {
@@ -125,7 +128,14 @@ export type QuoteKind = 'note' | 'quotation';
 
 export type PaperMarkdownSegment =
   | { readonly kind: 'markdown'; readonly markdown: string; readonly quote?: QuoteKind }
-  | { readonly kind: 'figure'; readonly model: DiagramModel; readonly source: string; readonly binding: FigureBinding | null };
+  | { readonly kind: 'figure'; readonly model: DiagramModel; readonly source: string; readonly binding: FigureBinding | null }
+  // An accepted PNG placement (accepted-figures.ts): the exact image of a release, never a redraw.
+  | { readonly kind: 'accepted-figure'; readonly figure: AcceptedFigureBinding }
+  // A placement block that is not exactly the bound one: shown as a note, never as an image.
+  | { readonly kind: 'accepted-figure-unavailable'; readonly figureId: string }
+  // Authenticated source media with its original alt text and width, without a numbered figure disposition.
+  | { readonly kind: 'appendix-source-media'; readonly media: AppendixLSourceMediaBinding }
+  | { readonly kind: 'appendix-source-media-unavailable' };
 
 /**
  * FNV-1a (32-bit) over UTF-16 code units, as 8 hex digits. A cheap, synchronous
