@@ -6,7 +6,7 @@ import {
   resolveMatrixOptionsPaperReviewNavigationGate,
 } from '@/lib/matrix-options/navigation';
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
-import { REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
+import { isPaperReleaseVersion } from '@/lib/matrix-options/paper/releases';
 
 export default async function ReviewAssignmentPage({
   params,
@@ -23,6 +23,7 @@ export default async function ReviewAssignmentPage({
   if (gate === 'PAPER_RESOLVER') redirect(MATRIX_OPTIONS_PAPER_LANDING_PATH);
 
   const { documentVersion } = await params;
-  if (documentVersion !== REVISED_PAPER_VERSION) notFound();
+  // Any bound release is addressable here; an unknown version is not found.
+  if (!isPaperReleaseVersion(documentVersion)) notFound();
   redirect(paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: null, section: null }));
 }

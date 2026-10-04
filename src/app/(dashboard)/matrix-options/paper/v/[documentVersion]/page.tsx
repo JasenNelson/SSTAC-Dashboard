@@ -4,6 +4,7 @@ import {
   MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH,
   resolveMatrixOptionsPaperReviewNavigationGate,
 } from '@/lib/matrix-options/navigation';
+import { isPaperReleaseVersion } from '@/lib/matrix-options/paper/releases';
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import {
   loadRevisedPaper,
@@ -19,11 +20,14 @@ export default async function PaperVersionPage({
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { documentVersion } = await params;
-  if (documentVersion !== REVISED_PAPER_VERSION) notFound();
+  if (!isPaperReleaseVersion(documentVersion)) notFound();
   const gate = resolveMatrixOptionsPaperReviewNavigationGate(
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE,
     process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION,
   );
+  // The legacy portal and the resolver page render the default release only;
+  // another bound release is addressable through the review workspace alone.
+  if (gate !== 'REVIEW_NAVIGATION' && documentVersion !== REVISED_PAPER_VERSION) notFound();
   if (gate === 'LEGACY_TWG_REVIEW') redirect(MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH);
   if (gate === 'PAPER_RESOLVER') {
     try {

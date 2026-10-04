@@ -28,6 +28,8 @@ import { PaperScrollAuthority } from '@/lib/matrix-options/paper/scroll-authorit
 
 const version = '1.0.11-remediated-7-8-successor-20260918-D';
 const base = `/matrix-options/paper/publication/v/${version}`;
+// The workspace is handed its reviewer guide by the server page; these tests hand it the default draft's.
+const defaultGuide = getReviewerGuideContract();
 const originalMatchMedia = window.matchMedia;
 const originalScrollBy = window.scrollBy;
 let scrollIntoView: ReturnType<typeof vi.fn>;
@@ -111,7 +113,7 @@ function questionId(number: number): string {
 }
 
 function renderWorkingDraft(section: string | null = null, children: ReactNode = <FakeDocument />) {
-  return render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ section })} assignment={getProductionAssignment()} outline={outline}>{children}</RevisedPaperWorkspace>);
+  return render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ section })} assignment={getProductionAssignment()} outline={outline}>{children}</RevisedPaperWorkspace>);
 }
 
 function realPortions(): CohortPortion[] {
@@ -133,7 +135,7 @@ function realPortions(): CohortPortion[] {
 
 function renderMyReview(overrides: Partial<PaperUrlState> = {}, portions: readonly CohortPortion[] | 'none' = realPortions()) {
   const cohortPortions = portions === 'none' ? undefined : portions;
-  return render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ mode: 'my-review', ...overrides })} assignment={getProductionAssignment()} cohortPortions={cohortPortions} />);
+  return render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ mode: 'my-review', ...overrides })} assignment={getProductionAssignment()} cohortPortions={cohortPortions} />);
 }
 
 function setLgViewport(matches: boolean) {
@@ -591,7 +593,7 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
 
   it('(d) Working Draft outline click highlights the section\'s question WITHOUT writing it to the URL (q names only an opened question); popstate restores the highlight', () => {
     const pushState = vi.spyOn(window.history, 'pushState');
-    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
     const guide = getReviewerGuideContract();
     const question4 = guide.questions.find((candidate) => candidate.number === 4);
     const question8 = guide.questions.find((candidate) => candidate.number === 8);
@@ -634,7 +636,7 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
   // to be instead), this would show something other than "Question 1: ...".
   it('(c) a Working Draft popstate with neither q nor section restores the first question', () => {
     const pushState = vi.spyOn(window.history, 'pushState');
-    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
     const guide = getReviewerGuideContract();
     const question1 = guide.questions.find((candidate) => candidate.number === 1);
     expect(question1).toBeTruthy();
@@ -663,7 +665,7 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
   it('(d) below lg, selecting a question in "Jump to topic" updates identity and the URL without scrolling the paper', () => {
     const pushState = vi.spyOn(window.history, 'pushState');
     setLgViewport(false);
-    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
     const guide = getReviewerGuideContract();
     const question8 = guide.questions.find((candidate) => candidate.number === 8);
     expect(question8).toBeTruthy();
@@ -697,7 +699,7 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
       return 0;
     });
     setLgViewport(false);
-    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
     const guide = getReviewerGuideContract();
     const question8 = guide.questions.find((candidate) => candidate.number === 8);
     expect(question8).toBeTruthy();
@@ -726,7 +728,7 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
   // update the review panel's identity and leave the paper wherever it was.
   it('(f) a Working Draft popstate with q but no section navigates the paper to that question\'s section', () => {
     const pushState = vi.spyOn(window.history, 'pushState');
-    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
     const guide = getReviewerGuideContract();
     const question8 = guide.questions.find((candidate) => candidate.number === 8);
     expect(question8).toBeTruthy();
@@ -760,7 +762,7 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
     if (!question8) return;
     window.history.replaceState(null, '', '/#sec-78');
     try {
-      render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+      render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
       expect(document.getElementById('sec-78')).toHaveFocus();
       // Two-sided: before the fix the paper went to 7.8 while the panel's
       // highlight stayed on Question 1. Item 3: a hash navigation moves only
@@ -779,7 +781,7 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
     if (!question4) return;
     window.history.replaceState(null, '', `/?mode=working-draft&q=${encodeURIComponent(question4.id)}#sec-78`);
     try {
-      render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ q: question4.id })} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+      render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ q: question4.id })} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
       expect(document.getElementById('sec-78')).toHaveFocus();
       expect(document.getElementById('active-question-heading')).toHaveTextContent(`Question 4: ${titleWithoutCitation(question4.heading)}`);
     } finally {
@@ -790,13 +792,13 @@ describe('2026-09-22 UX brief: focused regression coverage', () => {
   it('a URL that names a question (q) opens exactly that question; a section-only URL opens none', () => {
     const guide = getReviewerGuideContract();
     const question8 = guide.questions.find((candidate) => candidate.number === 8)!;
-    const { unmount } = render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ q: question8.id })} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    const { unmount } = render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ q: question8.id })} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
     expect(screen.getByTestId('review-question-row-q8')).toHaveAttribute('data-open', 'true');
     expect(document.getElementById('active-question-heading')).toHaveTextContent(/^Question 8:/);
     expect(document.querySelectorAll('[data-testid^="review-question-row-q"][data-open="true"]')).toHaveLength(1);
     unmount();
     // Two-sided: a section deep link syncs (highlights) the related question but opens no editor.
-    render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ section: 'sec-78' })} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
+    render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ section: 'sec-78' })} assignment={getProductionAssignment()} outline={questionOutline}><QuestionOutlineDocument /></RevisedPaperWorkspace>);
     expect(screen.getByTestId('review-question-row-q8')).toHaveAttribute('data-highlighted', 'true');
     expect(screen.getByTestId('review-question-row-q8')).toHaveAttribute('data-open', 'false');
     expect(document.getElementById('active-question-heading')).toBeNull();
@@ -851,7 +853,7 @@ describe('RevisedPaperWorkspace Working Draft section window (S1)', () => {
 
   function renderWindow(section: string | null = null) {
     return render(
-      <RevisedPaperWorkspace documentVersion={version} urlState={state({ section })} assignment={getProductionAssignment()} outline={outline} sectionWindow={sectionWindow}>
+      <RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ section })} assignment={getProductionAssignment()} outline={outline} sectionWindow={sectionWindow}>
         <InitialSection />
       </RevisedPaperWorkspace>,
     );
@@ -1195,7 +1197,7 @@ describe('RevisedPaperWorkspace My Review', () => {
     // all, but the closeout's changed-assertion list should not miss any).
     expect(screen.queryByTestId('paper-portion-navigation')).toBeNull();
 
-    rerender(<RevisedPaperWorkspace documentVersion={version} urlState={state({ mode: 'my-review' })} assignment={getProductionAssignment()} cohortPortions={realPortions()} />);
+    rerender(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ mode: 'my-review' })} assignment={getProductionAssignment()} cohortPortions={realPortions()} />);
     expect(screen.queryByTestId('cohort-portions-unavailable')).toBeNull();
     // M2: the selected cohort's portions render STACKED (PLAN-R4 3.B.2), not
     // paginated -- one authenticated portion here, so exactly one cohort-paper
@@ -1581,7 +1583,7 @@ describe('RevisedPaperWorkspace My Review', () => {
       }
     };
     render(
-      <RevisedPaperWorkspace documentVersion={version} urlState={state({ mode: 'my-review' })} assignment={getProductionAssignment()} cohortPortions={realPortions()} downloadManifests={downloadManifests} />
+      <RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ mode: 'my-review' })} assignment={getProductionAssignment()} cohortPortions={realPortions()} downloadManifests={downloadManifests} />
     );
 
     // Initial cohort is Categories. Open download panel.
@@ -1639,7 +1641,7 @@ describe('RevisedPaperWorkspace My Review', () => {
     const downloadManifests = Object.fromEntries(cohortIds.map((id, index) => [id, mk(id, `c${index}`)]));
 
     render(
-      <RevisedPaperWorkspace documentVersion={version} urlState={state({ mode: 'working-draft' })} assignment={getProductionAssignment()} outline={[]} downloadManifests={downloadManifests} />
+      <RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ mode: 'working-draft' })} assignment={getProductionAssignment()} outline={[]} downloadManifests={downloadManifests} />
     );
     fireEvent.click(screen.getByRole('button', { name: 'Download Files' }));
 
@@ -1671,7 +1673,7 @@ describe('RevisedPaperWorkspace My Review', () => {
       },
     };
     render(
-      <RevisedPaperWorkspace documentVersion={version} urlState={state({ mode: 'working-draft' })} assignment={getProductionAssignment()} outline={[]} downloadManifests={downloadManifests} />
+      <RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ mode: 'working-draft' })} assignment={getProductionAssignment()} outline={[]} downloadManifests={downloadManifests} />
     );
     fireEvent.click(screen.getByRole('button', { name: 'Download Files' }));
     expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(1);
@@ -1680,7 +1682,7 @@ describe('RevisedPaperWorkspace My Review', () => {
 
   it('P1-A: an entirely absent manifest map still fails closed to pending', () => {
     render(
-      <RevisedPaperWorkspace documentVersion={version} urlState={state({ mode: 'working-draft' })} assignment={getProductionAssignment()} outline={[]} downloadManifests={null} />
+      <RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ mode: 'working-draft' })} assignment={getProductionAssignment()} outline={[]} downloadManifests={null} />
     );
     fireEvent.click(screen.getByRole('button', { name: 'Download Files' }));
     expect(screen.getByTestId('download-files-pending')).toHaveTextContent('Download files are being prepared for this release and are not available yet.');
@@ -1975,7 +1977,7 @@ describe('sticky-header reveal and landing corrections (M1R4-02, M1R4-03)', () =
       json: async () => threeSectionContract(String(url).includes('/sections/results') ? 2 : 1),
     } as unknown as Response)));
     return render(
-      <RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={threeSectionOutline} sectionWindow={threeSectionWindow}>
+      <RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} outline={threeSectionOutline} sectionWindow={threeSectionWindow}>
         <section id="intro" data-paper-chunk="intro" tabIndex={-1} style={{ scrollMarginTop: '137px' }}><h2>1 Introduction body</h2></section>
       </RevisedPaperWorkspace>,
     );
@@ -2133,7 +2135,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
     // section (and never resets a scroll margin a test has set on it).
     const children = <section id="methods" data-paper-chunk="methods" tabIndex={-1} style={{ scrollMarginTop }}><h2>2 Methods body</h2></section>;
     const tree = (section: string | null) => (
-      <RevisedPaperWorkspace documentVersion={version} urlState={state({ section })} assignment={getProductionAssignment()} outline={mountOutline} sectionWindow={mountSectionWindow}>
+      <RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ section })} assignment={getProductionAssignment()} outline={mountOutline} sectionWindow={mountSectionWindow}>
         {children}
       </RevisedPaperWorkspace>
     );
@@ -3834,7 +3836,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
 
       render(
         <>
-          <RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} />
+          <RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} />
           <Flag />
           <Probe onCommit={() => {
             if (gapAsserted) return;
@@ -3868,7 +3870,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
       cleanup();
       setLgViewport(false);
 
-      render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} />);
+      render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} />);
       await act(async () => { await Promise.resolve(); });
       act(() => { navigationToggle().click(); });
       act(() => { navigationToggle().click(); });
@@ -3895,7 +3897,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
 
     const { unmount } = render(
       <StrictMode>
-        <RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} />
+        <RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} />
       </StrictMode>
     );
 
@@ -3906,7 +3908,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
   });
 
   it('R11-FG1: server-render smoke test', () => {
-    const html = renderToString(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} />);
+    const html = renderToString(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} />);
     expect(html).toContain('Navigation');
   });
 
@@ -3975,7 +3977,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
 
     render(
       <>
-        <RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} />
+        <RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} />
         <Flag />
       </>
     );
@@ -3990,13 +3992,13 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
 describe('RevisedPaperWorkspace: q names only an explicitly opened question', () => {
   it('reloading the URL that paper navigation produced opens no editor', () => {
     // What the outline navigation writes now: the section only.
-    render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ section: 'scope' })} assignment={getProductionAssignment()} outline={outline}><FakeDocument /></RevisedPaperWorkspace>);
+    render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ section: 'scope' })} assignment={getProductionAssignment()} outline={outline}><FakeDocument /></RevisedPaperWorkspace>);
     expect(document.querySelectorAll('[data-testid^="review-question-row-q"][data-open="true"]')).toHaveLength(0);
   });
 
   it('closing the open question removes q from the URL, so a reload opens nothing', () => {
     const replaceState = vi.spyOn(window.history, 'replaceState');
-    render(<RevisedPaperWorkspace documentVersion={version} urlState={state({ q: questionId(1) })} assignment={getProductionAssignment()} outline={outline}><FakeDocument /></RevisedPaperWorkspace>);
+    render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state({ q: questionId(1) })} assignment={getProductionAssignment()} outline={outline}><FakeDocument /></RevisedPaperWorkspace>);
     expect(screen.getByTestId('review-question-row-q1')).toHaveAttribute('data-open', 'true');
     fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
     expect(screen.getByTestId('review-question-row-q1')).toHaveAttribute('data-open', 'false');
@@ -4085,7 +4087,7 @@ describe('Round 3: Back/Forward make the open editor agree with the restored URL
   }
 
   it('Working Draft: close, then Back to an entry naming a question reopens it; an entry without q restores the closed state; no history is written', () => {
-    render(<RevisedPaperWorkspace documentVersion={version} urlState={state()} assignment={getProductionAssignment()} outline={outline}><FakeDocument /></RevisedPaperWorkspace>);
+    render(<RevisedPaperWorkspace documentVersion={version} guide={defaultGuide} urlState={state()} assignment={getProductionAssignment()} outline={outline}><FakeDocument /></RevisedPaperWorkspace>);
     const closedUrl = window.location.pathname + window.location.search;
     fireEvent.click(screen.getByTestId('review-question-toggle-q3'));
     const q3Url = window.location.pathname + window.location.search;

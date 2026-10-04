@@ -4,11 +4,12 @@ import {
   MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH,
   resolveMatrixOptionsPaperReviewNavigationGate,
 } from '@/lib/matrix-options/navigation';
-import { REVISED_PAPER_ROUTE, REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
-import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
+import { isPaperReleaseVersion } from '@/lib/matrix-options/paper/releases';
+import { REVISED_PAPER_ROUTE } from '@/lib/matrix-options/revised-paper';
 import { paperWorkspaceHref, parsePaperUrlState } from '@/lib/matrix-options/paper/url-state';
 import type { PaperSearchParams } from '@/lib/matrix-options/paper/url-state';
 import { buildPaperUrlContext, resolveSectionAnchor } from '@/components/matrix-options/paper/PaperDocument';
+import { loadPaperStructureForPage } from '@/app/(dashboard)/matrix-options/paper/request-structure';
 
 /**
  * Legacy node/object deep link. Resolves the identity to its section anchor and
@@ -29,18 +30,19 @@ export default async function PublicationNodePage({
   if (gate === 'LEGACY_TWG_REVIEW') redirect(MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH);
   if (gate === 'PAPER_RESOLVER') redirect(REVISED_PAPER_ROUTE);
   const { documentVersion, canonicalNodeId } = await params;
-  if (documentVersion !== REVISED_PAPER_VERSION) notFound();
+  if (!isPaperReleaseVersion(documentVersion)) notFound();
   let resolvedCanonicalNodeId: string;
   try {
     resolvedCanonicalNodeId = decodeURIComponent(canonicalNodeId);
   } catch {
     notFound();
   }
-  const structure = loadRevisedPaperStructure();
+  // A private-storage release resolves an identity only for its allowed reader (request-structure.ts).
+  const { structure } = await loadPaperStructureForPage(documentVersion);
   const node = structure.nodes.find((candidate) => candidate.id === resolvedCanonicalNodeId);
   const object = node ? undefined : structure.objects.find((candidate) => candidate.id === resolvedCanonicalNodeId);
   if (!node && !object) notFound();
   const section = node ? node.anchor : resolveSectionAnchor(structure, object!.ownerNodeId, object!.startByte);
-  const { state } = parsePaperUrlState((await searchParams) ?? {}, buildPaperUrlContext(structure));
+  const { state } = parsePaperUrlState((await searchParams) ?? {}, buildPaperUrlContext(structure, documentVersion));
   redirect(paperWorkspaceHref(documentVersion, { ...state, section }));
 }

@@ -4,6 +4,20 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import {
+  getPaperRelease,
+  paperReleaseIdentity,
+  paperReleaseRelativePath,
+  paperReleaseSidecarRelativePath,
+  type PaperRelease,
+  type PaperReleaseVersion,
+} from './paper/releases';
+
+/*
+ * The DEFAULT release. Every REVISED_PAPER_* constant below names the
+ * predecessor and is unchanged by the second release: the default landing route,
+ * the review route and the persisted review manifest all still resolve to it.
+ */
 export const REVISED_PAPER_VERSION = '1.0.11-remediated-7-8-successor-20260918-D';
 export const REVISED_PAPER_SHA256 =
   'feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337';
@@ -22,12 +36,13 @@ export const REVISED_PAPER_ROUTE =
 export const REVISED_PAPER_PERSISTENCE_STATE =
   'DISABLED_PENDING_LIVE_CONTRACT' as const;
 
+/** `content` is the exact text of the release artifact; `sha256` and `bytes` are its identity. */
 export interface RevisedPaperDescriptor {
   readonly content: string;
-  readonly documentVersion: typeof REVISED_PAPER_VERSION;
-  readonly sha256: typeof REVISED_PAPER_SHA256;
-  readonly bytes: typeof REVISED_PAPER_BYTES;
-  readonly releaseIdentity: typeof REVISED_PAPER_RELEASE_IDENTITY;
+  readonly documentVersion: PaperReleaseVersion;
+  readonly sha256: string;
+  readonly bytes: number;
+  readonly releaseIdentity: string;
   readonly persistenceState: typeof REVISED_PAPER_PERSISTENCE_STATE;
 }
 
@@ -42,11 +57,31 @@ function unavailable(): never {
   throw new RevisedPaperUnavailableError();
 }
 
+/**
+ * The descriptor of a release for text that is ALREADY proven to be the release
+ * artifact. The length and hash are checked again here, so a descriptor can
+ * never carry text other than the bound bytes whoever calls this.
+ */
+export function describeAuthenticatedPaper(release: PaperRelease, content: string): RevisedPaperDescriptor {
+  const bytes = Buffer.from(content, 'utf8');
+  if (bytes.byteLength !== release.bytes) unavailable();
+  if (createHash('sha256').update(bytes).digest('hex') !== release.sha256) unavailable();
+  return Object.freeze({
+    content,
+    documentVersion: release.documentVersion,
+    sha256: release.sha256,
+    bytes: release.bytes,
+    releaseIdentity: paperReleaseIdentity(release),
+    persistenceState: REVISED_PAPER_PERSISTENCE_STATE,
+  });
+}
+
 function decodeAndAuthenticate(
+  release: PaperRelease,
   markdownBytes: Buffer,
   sidecarBytes: Buffer,
 ): RevisedPaperDescriptor {
-  if (markdownBytes.byteLength !== REVISED_PAPER_BYTES) unavailable();
+  if (markdownBytes.byteLength !== release.bytes) unavailable();
   if (
     markdownBytes[0] === 0xef &&
     markdownBytes[1] === 0xbb &&
@@ -63,7 +98,7 @@ function decodeAndAuthenticate(
   }
 
   const expectedSidecar = Buffer.from(
-    `${REVISED_PAPER_SHA256}  ${REVISED_PAPER_FILENAME}\n`,
+    `${release.sha256}  ${release.filename}\n`,
     'ascii',
   );
   if (!sidecarBytes.equals(expectedSidecar)) unavailable();
@@ -71,35 +106,32 @@ function decodeAndAuthenticate(
   const computedSha256 = createHash('sha256')
     .update(markdownBytes)
     .digest('hex');
-  if (computedSha256 !== REVISED_PAPER_SHA256) unavailable();
+  if (computedSha256 !== release.sha256) unavailable();
 
-  return Object.freeze({
-    content,
-    documentVersion: REVISED_PAPER_VERSION,
-    sha256: REVISED_PAPER_SHA256,
-    bytes: REVISED_PAPER_BYTES,
-    releaseIdentity: REVISED_PAPER_RELEASE_IDENTITY,
-    persistenceState: REVISED_PAPER_PERSISTENCE_STATE,
-  });
+  return describeAuthenticatedPaper(release, content);
 }
 
+/**
+ * Loads one bound REPOSITORY release by its exact version. An absent or unknown
+ * version fails closed before any file is read: there is no fallback to the
+ * default. A private-storage release has no file here and no synchronous path:
+ * it is unavailable from this loader and is read only through
+ * ./paper/paper-request-loader.ts, with the reader's own session.
+ */
 export function loadRevisedPaper(
   documentVersion: string | undefined,
 ): RevisedPaperDescriptor {
-  if (documentVersion !== REVISED_PAPER_VERSION) unavailable();
+  const release = getPaperRelease(documentVersion);
+  if (!release) unavailable();
+  const markdownRelativePath = paperReleaseRelativePath(release);
+  const sidecarRelativePath = paperReleaseSidecarRelativePath(release);
+  if (release.delivery !== 'repository' || !markdownRelativePath || !sidecarRelativePath) unavailable();
 
   try {
-    const markdownPath = path.join(
-      process.cwd(),
-      ...REVISED_PAPER_RELATIVE_PATH.split('/'),
-    );
-    const sidecarPath = path.join(
-      process.cwd(),
-      ...REVISED_PAPER_SIDECAR_RELATIVE_PATH.split('/'),
-    );
     return decodeAndAuthenticate(
-      fs.readFileSync(markdownPath),
-      fs.readFileSync(sidecarPath),
+      release,
+      fs.readFileSync(path.join(process.cwd(), ...markdownRelativePath.split('/'))),
+      fs.readFileSync(path.join(process.cwd(), ...sidecarRelativePath.split('/'))),
     );
   } catch {
     unavailable();

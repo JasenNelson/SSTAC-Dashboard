@@ -3,7 +3,7 @@ import type { MockInstance } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-const { redirectMock, notFoundMock, workspaceMock, structureMock, defaultStructure, authenticateReviewerGuideMock, cohortManifestMock, defaultManifest, downloadServerMock, supabaseMock } = vi.hoisted(() => {
+const { redirectMock, notFoundMock, workspaceMock, structureMock, requestLoadSpy, privateLoadSpy, defaultStructure, resolveReviewerGuideMock, cohortManifestMock, defaultManifest, downloadServerMock, supabaseMock } = vi.hoisted(() => {
   const labels = ['4.1 Categories and uses', '9.9 Water lot use classes', '6.0 Proposed framework', '18.1 Three-part structure', '7.5.1 Scope', '7.5.2 Evidence', '7.5.3 Boundary', '7.8 Exposure terms', '9.5 Matrix derivation options', '7.7 BC Aquatic Database', '15.0 Limitations of this draft', '4.4.2 Existing schedule structure', 'Technical Appendices Compendium', 'unrelated-sentinel'];
   // Depth-1 headings are the S1 section boundaries: sections are [0,1], [2..9], [10,11], [12].
   const TOP_LEVEL_LABELS = ['4.1 Categories and uses', '6.0 Proposed framework', '15.0 Limitations of this draft', 'Technical Appendices Compendium'];
@@ -33,8 +33,10 @@ const { redirectMock, notFoundMock, workspaceMock, structureMock, defaultStructu
     notFoundMock: vi.fn(() => { throw new Error('NEXT_NOT_FOUND'); }),
     workspaceMock: vi.fn((..._args: any[]) => <div data-testid="revised-workspace" />),
     structureMock: vi.fn(buildStructure),
+    requestLoadSpy: vi.fn(),
+    privateLoadSpy: vi.fn(),
     defaultStructure: buildStructure,
-    authenticateReviewerGuideMock: vi.fn(async (_contract: unknown, _paperText: string): Promise<void> => undefined),
+    resolveReviewerGuideMock: vi.fn((_structure: unknown): unknown => undefined),
     cohortManifestMock: vi.fn(buildManifest),
     defaultManifest: buildManifest,
     downloadServerMock: {
@@ -52,16 +54,25 @@ const { redirectMock, notFoundMock, workspaceMock, structureMock, defaultStructu
 });
 
 vi.mock('next/navigation', () => ({ redirect: redirectMock, notFound: notFoundMock }));
-vi.mock('@/lib/supabase-auth', () => ({ createClientForPagePath: () => ({ supabase: supabaseMock }) }));
+vi.mock('@/lib/supabase-auth', () => ({ createAuthenticatedClient: async () => supabaseMock }));
 vi.mock('@/components/matrix-options/paper/RevisedPaperWorkspace', () => ({ RevisedPaperWorkspace: workspaceMock }));
 vi.mock('@/lib/matrix-options/revised-paper-structure', () => ({ loadRevisedPaperStructure: structureMock }));
+// The real loaders behind spies: the default release goes through the request loader to
+// structureMock; one test stands a structure in for a private-storage release (loaded by
+// loadPrivatePaperStructure for the reader the page's own check issued), whose bytes are not here.
+vi.mock('@/lib/matrix-options/paper/paper-request-loader', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/matrix-options/paper/paper-request-loader')>('@/lib/matrix-options/paper/paper-request-loader');
+  requestLoadSpy.mockImplementation(actual.loadPaperStructureForRequest);
+  privateLoadSpy.mockImplementation(actual.loadPrivatePaperStructure);
+  return { ...actual, loadPaperStructureForRequest: requestLoadSpy, loadPrivatePaperStructure: privateLoadSpy };
+});
 vi.mock('@/lib/matrix-options/cohort-contract', async () => {
   const actual = await vi.importActual<typeof import('@/lib/matrix-options/cohort-contract')>('@/lib/matrix-options/cohort-contract');
   return { ...actual, getCohortManifest: cohortManifestMock };
 });
-vi.mock('@/lib/matrix-options/reviewer-guide', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/matrix-options/reviewer-guide')>('@/lib/matrix-options/reviewer-guide');
-  return { ...actual, authenticateReviewerGuideAgainstPaper: authenticateReviewerGuideMock };
+vi.mock('@/lib/matrix-options/paper/reviewer-guide-server', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/matrix-options/paper/reviewer-guide-server')>('@/lib/matrix-options/paper/reviewer-guide-server');
+  return { ...actual, resolveReviewerGuide: resolveReviewerGuideMock };
 });
 vi.mock('@/lib/matrix-options/paper/download-manifest-server', () => ({ ...downloadServerMock }));
 
@@ -70,7 +81,11 @@ import { loadDownloadManifestMapState } from '@/lib/matrix-options/paper/downloa
 import PublicationNodePage from '../nodes/[canonicalNodeId]/page';
 import PublicationQuestionPage from '../questions/[questionId]/page';
 import { PaperDocument } from '@/components/matrix-options/paper/PaperDocument';
+import { PrivateReleaseSessionGate } from '@/components/matrix-options/paper/PrivateReleaseSessionGate';
+import { syntheticResolvedR5Guide } from '@/components/matrix-options/paper/__tests__/r5-synthetic-guide';
+import { R5_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { getReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
+import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 
 const version = '1.0.11-remediated-7-8-successor-20260918-D';
 const base = `/matrix-options/paper/publication/v/${version}`;
@@ -80,6 +95,7 @@ interface WorkspaceElement {
   readonly type: unknown;
   readonly props: {
     readonly documentVersion: string;
+    readonly guide?: unknown;
     readonly reviewManifestSha256?: string;
     readonly urlState: { mode: string; cohort: string | null; q: string | null; section: string | null };
     readonly outline?: readonly { anchor: string }[];
@@ -103,11 +119,15 @@ async function expectRedirect(run: () => Promise<unknown>, target: string) {
 let consoleError: MockInstance<typeof console.error>;
 
 describe('paper publication V16 route', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    const loaderModule = await vi.importActual<typeof import('@/lib/matrix-options/paper/paper-request-loader')>('@/lib/matrix-options/paper/paper-request-loader');
+    requestLoadSpy.mockImplementation(loaderModule.loadPaperStructureForRequest);
+    privateLoadSpy.mockImplementation(loaderModule.loadPrivatePaperStructure);
     structureMock.mockImplementation(defaultStructure);
     cohortManifestMock.mockImplementation(defaultManifest);
-    authenticateReviewerGuideMock.mockResolvedValue(undefined);
+    // The resolved guide of the default release is its stored contract.
+    resolveReviewerGuideMock.mockImplementation(() => getReviewerGuideContract());
     supabaseMock.auth.getUser.mockResolvedValue({ data: { user: { is_anonymous: false } }, error: null });
     consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
@@ -129,7 +149,7 @@ describe('paper publication V16 route', () => {
     await expectRedirect(() => page({ mode: 'my-review', lens: 'all', page: '1' }), `${base}?mode=my-review`);
     await expectRedirect(() => page({ mode: 'my-review', q: guideId(4) }), `${base}?mode=my-review&cohort=pathway-grid&q=${encodeURIComponent(guideId(4))}`);
     await expectRedirect(() => page({ mode: 'my-review', cohort: 'categories', q: guideId(4) }), `${base}?mode=my-review&cohort=pathway-grid&q=${encodeURIComponent(guideId(4))}`);
-    expect(authenticateReviewerGuideMock).not.toHaveBeenCalled();
+    expect(resolveReviewerGuideMock).not.toHaveBeenCalled();
     expect(workspaceMock).not.toHaveBeenCalled();
   });
 
@@ -167,7 +187,10 @@ describe('paper publication V16 route', () => {
     expect(JSON.stringify(clientProps)).not.toContain('markdown');
     expect(Object.keys(result.props)).not.toContain('readerText');
     expect(Object.keys(result.props)).not.toContain('model');
-    expect(authenticateReviewerGuideMock).toHaveBeenCalledWith(expect.objectContaining({ schemaVersion: 'matrix-paper-reviewer-guide-v1' }), expect.any(String));
+    // The guide is resolved from the loaded structure itself, and the workspace is handed exactly that guide.
+    expect(resolveReviewerGuideMock).toHaveBeenCalledWith(expect.objectContaining({ content: defaultStructure().content }));
+    expect(result.props.guide).toBe(resolveReviewerGuideMock.mock.results[0].value);
+    expect(result.props.guide).toMatchObject({ schemaVersion: 'matrix-paper-reviewer-guide-v1', releaseIdentity: version });
   });
 
   it('S1: falls back to the first section without a deep link and keeps every section reachable', async () => {
@@ -199,13 +222,15 @@ describe('paper publication V16 route', () => {
 
   it('renders the real release only after authenticating its guide against paper bytes', async () => {
     const actualStructureModule = await vi.importActual<typeof import('@/lib/matrix-options/revised-paper-structure')>('@/lib/matrix-options/revised-paper-structure');
-    const actualGuideModule = await vi.importActual<typeof import('@/lib/matrix-options/reviewer-guide')>('@/lib/matrix-options/reviewer-guide');
+    const actualGuideModule = await vi.importActual<typeof import('@/lib/matrix-options/paper/reviewer-guide-server')>('@/lib/matrix-options/paper/reviewer-guide-server');
     const structure = actualStructureModule.loadRevisedPaperStructure();
     structureMock.mockReturnValue(structure as never);
-    authenticateReviewerGuideMock.mockImplementationOnce((contract, paperText) => actualGuideModule.authenticateReviewerGuideAgainstPaper(contract as Parameters<typeof actualGuideModule.authenticateReviewerGuideAgainstPaper>[0], paperText));
+    resolveReviewerGuideMock.mockImplementationOnce((source) => actualGuideModule.resolveReviewerGuide(source as Parameters<typeof actualGuideModule.resolveReviewerGuide>[0]));
 
     const result = await page({ mode: 'my-review' });
-    expect(authenticateReviewerGuideMock).toHaveBeenCalledWith(expect.objectContaining({ releaseIdentity: version }), structure.content);
+    expect(resolveReviewerGuideMock).toHaveBeenCalledWith(structure);
+    // The real resolver proves the stored guide against the real paper text and returns it: My Review is handed that guide.
+    expect(result.props.guide).toBe(getReviewerGuideContract());
     const portions = result.props.cohortPortions ?? [];
     const aggregate = portions.find((portion) => portion.sectionNumber === '7.5');
     expect(aggregate).toMatchObject({ status: 'available', sectionLabel: 'Section 7.5 (7.5.1-7.5.3)' });
@@ -263,7 +288,7 @@ describe('paper publication V16 route', () => {
   });
 
   it.each(['guide', 'range', 'paper'])('fails closed with a logged reason code when authenticated %s verification rejects (F-04)', async (tamperedPart) => {
-    authenticateReviewerGuideMock.mockRejectedValueOnce(new Error(`Invalid reviewer guide contract: prompt source 1 (tampered ${tamperedPart} secret-detail)`));
+    resolveReviewerGuideMock.mockImplementationOnce(() => { throw new Error(`reviewer guide: Invalid reviewer guide contract: prompt source 1 (tampered ${tamperedPart} secret-detail)`); });
     await expect(page({ mode: 'working-draft' })).rejects.toThrow('NEXT_NOT_FOUND');
     expect(notFoundMock).toHaveBeenCalledTimes(1);
     expect(workspaceMock).not.toHaveBeenCalled();
@@ -296,13 +321,15 @@ describe('paper publication V16 route', () => {
   });
 
   it('M1-05: rethrows unexpected programming errors instead of converting them to a reason-coded 404', async () => {
-    authenticateReviewerGuideMock.mockRejectedValueOnce(new TypeError('contract.questions is not iterable'));
+    resolveReviewerGuideMock.mockImplementationOnce(() => { throw new TypeError('contract.questions is not iterable'); });
     await expect(page({ mode: 'working-draft' })).rejects.toThrow(TypeError);
-    authenticateReviewerGuideMock.mockRejectedValueOnce(new Error('unexpected guide failure'));
+    resolveReviewerGuideMock.mockImplementationOnce(() => { throw new Error('unexpected guide failure'); });
     await expect(page({ mode: 'working-draft' })).rejects.toThrow('unexpected guide failure');
     class ContractLikeError extends Error {}
-    authenticateReviewerGuideMock.mockRejectedValueOnce(new ContractLikeError('Invalid reviewer guide contract: subclass'));
+    resolveReviewerGuideMock.mockImplementationOnce(() => { throw new ContractLikeError('Invalid reviewer guide contract: subclass'); });
     await expect(page({ mode: 'working-draft' })).rejects.toThrow('Invalid reviewer guide contract: subclass');
+    resolveReviewerGuideMock.mockImplementationOnce(() => { throw new ContractLikeError('reviewer guide: subclass'); });
+    await expect(page({ mode: 'working-draft' })).rejects.toThrow('reviewer guide: subclass');
 
     cohortManifestMock.mockImplementation(() => { throw new TypeError('manifest builder is not a function'); });
     await expect(page({ mode: 'working-draft' })).rejects.toThrow(TypeError);
@@ -331,15 +358,15 @@ describe('paper publication V16 route', () => {
     structureMock.mockReturnValue(structure as never);
     await page({ mode: 'working-draft' });
     await page({ mode: 'my-review' });
-    expect(authenticateReviewerGuideMock).toHaveBeenCalledTimes(1);
+    expect(resolveReviewerGuideMock).toHaveBeenCalledTimes(1);
 
     const other = defaultStructure();
     structureMock.mockReturnValue(other as never);
-    authenticateReviewerGuideMock.mockRejectedValueOnce(new Error('Invalid reviewer guide contract: paper SHA-256'));
+    resolveReviewerGuideMock.mockImplementationOnce(() => { throw new Error('reviewer guide: paper SHA-256'); });
     await expect(page({ mode: 'working-draft' })).rejects.toThrow('NEXT_NOT_FOUND');
     const recovered = await page({ mode: 'working-draft' });
     expect(recovered.type).toBe(workspaceMock);
-    expect(authenticateReviewerGuideMock).toHaveBeenCalledTimes(3);
+    expect(resolveReviewerGuideMock).toHaveBeenCalledTimes(3);
   });
 
   it('redirects legacy and resolver states before loading real content', async () => {
@@ -427,7 +454,8 @@ describe('paper publication V16 route', () => {
       }
     };
     walk(root);
-    expect(pages.length).toBe(10);
+    expect(pages.length).toBe(11);
+    expect(pages.some((routePath) => routePath.endsWith(join('figure-lab', 'page.tsx')))).toBe(true);
     for (const routePath of pages) {
       const source = readFileSync(routePath, 'utf8');
       expect(source).not.toContain('Candidate-015');
@@ -442,6 +470,66 @@ describe('paper publication V16 route', () => {
     expect(result.props).toMatchObject({ downloadManifests: null });
     downloadServerMock.loadDownloadManifestMapState.mockRejectedValueOnce(new Error('private transport failure'));
     await expect(page({ mode: 'working-draft' })).rejects.toThrow('private transport failure');
+  });
+
+  it('default release: a session with no user is still served (the page gate is the middleware) and no download is consulted', async () => {
+    supabaseMock.auth.getUser.mockResolvedValueOnce({ data: { user: null }, error: null } as never);
+    const result = await page({ mode: 'working-draft' });
+    expect(result.type).toBe(workspaceMock);
+    expect(notFoundMock).not.toHaveBeenCalled();
+    expect(downloadServerMock.loadDownloadManifestMapState).not.toHaveBeenCalled();
+    expect(result.props).toMatchObject({ downloadManifests: null });
+  });
+
+  it('wraps everything a private-storage release renders in the client session gate, bound to the reader the load was authorized for, in both modes, and returns the default release with no gate and no reader id', async () => {
+    interface Gated { readonly type: unknown; readonly props: { readonly servedTo: unknown; readonly children: WorkspaceElement } }
+    const READER_ID = '44444444-4444-4444-8444-444444444444';
+    // The real reader check runs on this request's client; the loader it hands its reader to is a
+    // stand-in for the private release: the default synthetic text under that release's identity.
+    supabaseMock.auth.getUser.mockResolvedValue({ data: { user: { id: READER_ID, is_anonymous: false } }, error: null } as never);
+    const resolved = syntheticResolvedR5Guide();
+    privateLoadSpy.mockImplementation(async () => ({ ...defaultStructure(), manifest: { source: { version: R5_PAPER_VERSION, sha256: 'f'.repeat(64) } } }));
+    cohortManifestMock.mockImplementation(() => ({ ...defaultManifest(), releaseIdentity: R5_PAPER_VERSION }) as never);
+    resolveReviewerGuideMock.mockImplementation(() => resolved);
+    for (const mode of ['working-draft', 'my-review']) {
+      const result = (await PublicationPage({ params: Promise.resolve({ documentVersion: R5_PAPER_VERSION }), searchParams: Promise.resolve({ mode }) })) as unknown as Gated;
+      expect(result.type, mode).toBe(PrivateReleaseSessionGate);
+      // The gate holds the whole workspace and nothing sits beside it: guide, portions and
+      // the first section are all inside.
+      expect(Object.keys(result.props).sort(), mode).toEqual(['children', 'servedTo']);
+      // The page is bound to the reader of THIS load: the id the reader check issued, which is
+      // the very reader the loader was called with.
+      expect(result.props.servedTo, mode).toBe(READER_ID);
+      expect(privateLoadSpy.mock.calls[privateLoadSpy.mock.calls.length - 1][1], mode).toMatchObject({ userId: READER_ID });
+      const workspace = result.props.children;
+      expect(workspace.type, mode).toBe(workspaceMock);
+      expect(workspace.props.documentVersion, mode).toBe(R5_PAPER_VERSION);
+      expect(workspace.props.guide, mode).toBe(resolved);
+      if (mode === 'working-draft') expect(workspace.props.children?.type).toBe(PaperDocument);
+      else expect(workspace.props.cohortPortions).toHaveLength(14);
+    }
+    expect(workspaceMock).not.toHaveBeenCalled();
+    // One user check per page request, and the default-release loader was never asked.
+    expect(supabaseMock.auth.getUser).toHaveBeenCalledTimes(2);
+    expect(requestLoadSpy).not.toHaveBeenCalled();
+    // Another reader's request is bound to that reader.
+    supabaseMock.auth.getUser.mockResolvedValue({ data: { user: { id: 'another-reader', is_anonymous: false } }, error: null } as never);
+    const other = (await PublicationPage({ params: Promise.resolve({ documentVersion: R5_PAPER_VERSION }), searchParams: Promise.resolve({ mode: 'my-review' }) })) as unknown as Gated;
+    expect(other.props.servedTo).toBe('another-reader');
+
+    // The default release: the workspace itself is the page's root, exactly as before, and
+    // carries no reader id.
+    privateLoadSpy.mockClear();
+    cohortManifestMock.mockImplementation(defaultManifest);
+    resolveReviewerGuideMock.mockImplementation(() => getReviewerGuideContract());
+    for (const mode of ['working-draft', 'my-review']) {
+      const result = await page({ mode });
+      expect(result.type, mode).toBe(workspaceMock);
+      expect(result.type, mode).not.toBe(PrivateReleaseSessionGate);
+      expect(result.props.documentVersion, mode).toBe(version);
+      expect(Object.keys(result.props), mode).not.toContain('servedTo');
+    }
+    expect(privateLoadSpy).not.toHaveBeenCalled();
   });
 
   it('hides the complete manifest map from anonymous readers', async () => {

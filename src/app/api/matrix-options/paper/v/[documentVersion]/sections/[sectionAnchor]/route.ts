@@ -3,6 +3,8 @@ import type { NextRequest } from 'next/server';
 
 import { getRateLimitHeaders } from '@/app/api/_helpers/rate-limit-wrapper';
 import { resolveMatrixOptionsPaperReviewNavigationGate } from '@/lib/matrix-options/navigation';
+import { loadPrivatePaperStructure } from '@/lib/matrix-options/paper/paper-request-loader';
+import { PaperReaderDeniedError, PrivateReleaseUnavailableError } from '@/lib/matrix-options/paper/private-release-assets';
 import {
   buildPaperSectionContract,
   getPaperSectionWindowModel,
@@ -10,10 +12,13 @@ import {
   paperSectionIdentity,
 } from '@/lib/matrix-options/paper/section-window';
 import type { PaperSectionGroup } from '@/lib/matrix-options/paper/section-window';
-import { REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
+import { getPaperRelease } from '@/lib/matrix-options/paper/releases';
 import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
+import type { RevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
 import { RATE_LIMIT_CONFIGS } from '@/lib/rate-limit-redis';
-import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth';
+import { createAuthenticatedClient } from '@/lib/supabase-auth';
+
+import { PRIVATE_RELEASE_UNAVAILABLE_BODY, resolvePaperRouteSession } from '../../route-session';
 
 /*
  * GET /api/matrix-options/paper/v/<version>/sections/<depth-1 anchor>?paper=<sha256>
@@ -27,6 +32,13 @@ import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-
  * the feature gate and the session itself, in this order: gate -> session ->
  * rate limit -> version -> paper identity -> section anchor. Every response is
  * JSON and no-store.
+ *
+ * The session rule depends on the release (route-session.ts): any signed-in
+ * session for a repository release; a signed-in, non-anonymous reader for a
+ * private-storage release, checked on every request. For a private-storage
+ * release the `paper` hash is compared with the hash BOUND in the release entry
+ * before anything is loaded, so a request that names other bytes never causes a
+ * read; a release that cannot be read or verified right now is a constant 503.
  */
 
 export const runtime = 'nodejs';
@@ -69,22 +81,40 @@ export async function GET(
   if (gate !== 'REVIEW_NAVIGATION') return json({ error: 'Not found' }, 404);
 
   const supabase = await createAuthenticatedClient();
-  const user = await getAuthenticatedUser(supabase);
-  if (!user) return json({ error: 'Unauthorized' }, 401);
+  const { documentVersion, sectionAnchor } = await params;
+  // The release named decides which session rule applies; nothing else is read from it yet.
+  const session = await resolvePaperRouteSession(supabase, documentVersion);
+  if (!session) return json({ error: 'Unauthorized' }, 401);
 
-  const { response: rateLimited, headers: rateLimitHeaders } = await getRateLimitHeaders(request, user.id, RATE_LIMIT_CONFIGS.default);
+  const { response: rateLimited, headers: rateLimitHeaders } = await getRateLimitHeaders(request, session.userId, RATE_LIMIT_CONFIGS.default);
   if (rateLimited) {
     rateLimited.headers.set('Cache-Control', 'no-store');
     return rateLimited;
   }
 
-  const { documentVersion, sectionAnchor } = await params;
-  if (documentVersion !== REVISED_PAPER_VERSION) return json({ error: 'Not found' }, 404, rateLimitHeaders);
+  // Only a bound release is served, and each one from its own authenticated
+  // structure: the `paper` hash below is checked against THAT release.
+  const release = getPaperRelease(documentVersion);
+  if (!release) return json({ error: 'Not found' }, 404, rateLimitHeaders);
 
-  const structure = loadRevisedPaperStructure();
+  let structure: RevisedPaperStructure;
+  if (session.reader) {
+    if (new URL(request.url).searchParams.get('paper') !== release.sha256) {
+      return json({ error: 'Paper release mismatch' }, 409, rateLimitHeaders);
+    }
+    try {
+      structure = await loadPrivatePaperStructure(release.documentVersion, session.reader);
+    } catch (error) {
+      if (error instanceof PaperReaderDeniedError) return json({ error: 'Unauthorized' }, 401, rateLimitHeaders);
+      if (error instanceof PrivateReleaseUnavailableError) return json(PRIVATE_RELEASE_UNAVAILABLE_BODY, 503, rateLimitHeaders);
+      throw error;
+    }
+  } else {
+    structure = loadRevisedPaperStructure(release.documentVersion);
+  }
   try {
     const { groups } = getPaperSectionWindowModel(structure);
-    const identity = paperSectionIdentity(structure, documentVersion);
+    const identity = paperSectionIdentity(structure, release.documentVersion);
     if (new URL(request.url).searchParams.get('paper') !== identity.paperSha256) {
       return json({ error: 'Paper release mismatch' }, 409, rateLimitHeaders);
     }

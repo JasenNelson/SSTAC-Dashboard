@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "matrix-paper-private-release-receipt-v1",
+  "documentVersion": "v0.9.88-r4-presentation-001",
+  "presentation": {
+    "bytes": 562836,
+    "sha256": "c215b125757bbc0294f6ea904f7e4236a39d8912c137f226bb6148cced804c84"
+  },
+  "provenance": {
+    "sourceVersion": "v0.9.88-run106-r4-c1-c3-001",
+    "sourceBytes": 588609,
+    "sourceSha256": "561eef1aee9806c257936299bf9f7d4ccb89bcaa5de756c6f0ca77517805e020",
+    "sourceManifestSha256": "8846254f358cd322bf9509f8dd8976dd690004d4bd6d558bf4511df77138eeff"
+  },
+  "contracts": {
+    "reviewerGuide": "3071167943a6cadd00094a979cc1321e527f84a3a6f3f275abd00eba1374144e",
+    "cohorts": "aa48d3d4760b1e0c69a2d683a3256aef8a273b6b88d849fba44caa5533b40884",
+    "acceptedFigures": "a389a292d7e37b5453d0d27a37c68f891487e54dcf64726bfa75595e8ddc17fb"
+  },
+  "reviewManifestSha256": "c0e99115f042cdeb193da10cbe31ea2d2b442c119c7c07b1b11b260ec7d4e2aa",
+  "counts": {
+    "questions": 12,
+    "cohorts": 5,
+    "figureAssets": 17,
+    "figurePlacements": 20,
+    "objects": 18
+  },
+  "objectSetSha256": "af9c4c490bca32fa8d89735cf9992435a050d65357e7cc5ab28eddeba3321609"
+}
