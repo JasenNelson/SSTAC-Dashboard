@@ -84,6 +84,7 @@ jobs:
           done
         env:
           NODE_OPTIONS: --max-old-space-size=8192
+          MATRIX_PAPER_PRIVATE_FIXTURE: skip
 
       # vitest.config coverage.reporter already includes 'json', so each shard writes a
       # non-empty coverage/shard-N/coverage-final.json. Codecov ingests + merges the 6 files in
