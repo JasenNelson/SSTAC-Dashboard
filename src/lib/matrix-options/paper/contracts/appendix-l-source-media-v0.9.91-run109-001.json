@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "matrix-paper-source-media-v1",
+  "releaseIdentity": "v0.9.91",
+  "sourcePath": "presentation:v0.9.91",
+  "sourceHeadingId": "app-l",
+  "sourceLine": 5076,
+  "sourceMediaPath": "appendix_l_media/image1.png",
+  "file": "APPENDIX-L-SOURCE.png",
+  "marker": "APPENDIX_L_SOURCE_MEDIA: word/media/image1.png",
+  "sourceMarkdownLineSha256": "4f5b4c1db6091c4621c6f8fcd956803ece50470bc2a57744c0d5d5f06f0571c0",
+  "alt": "Source image embedded in the Phase 2 Project Plan V2: a Gantt chart titled Sediment Standards Phase 2 - Interactive Gantt Chart (2026 - 2027), showing one bar for each project task, 1.0 to 10.0, from May 2026 to June 2027.",
+  "widthAttribute": "6.5in",
+  "sha256": "9e511fa96cd4f642b5fd3c06de35fc5891ebb26e838c3e6cc982d88eea5aa7a5",
+  "bytes": 270437,
+  "width": 1875,
+  "height": 913
+}

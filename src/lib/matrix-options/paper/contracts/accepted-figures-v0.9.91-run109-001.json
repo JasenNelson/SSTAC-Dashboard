@@ -1,0 +1,384 @@
+{
+  "schemaVersion": "matrix-paper-accepted-figures-v1",
+  "releaseIdentity": "v0.9.91",
+  "paperSha256": "a5b1d81d11af23d3437bba4cadcf0a0fa555001be27e9227c6015ff0bad6599e",
+  "sources": {
+    "candidateManifestSha256": "d009ab49f108124acbabad5cacab08c41dba4f3a074211a19130348ccb0e4d29",
+    "placementRegistrySha256": "cc2fe4f3f95432a8bcd4bf8f682bd12c3a940b366602da111bdad06ea132162f",
+    "interfaceOverlaySha256": "230237b4cfe7e06b6d680bc31d4a667933938086055c49e7449563bd05e47965"
+  },
+  "assets": [
+    {
+      "id": "FIG6-1",
+      "file": "FIG6-1.png",
+      "sha256": "ccb78b1142afc4f4788272948920bbd495615e12ae5e1edf7e9d4dc4acd3cdbf",
+      "bytes": 55780,
+      "width": 1431,
+      "height": 474,
+      "placementIds": [
+        "6-1"
+      ]
+    },
+    {
+      "id": "FIG7-1B1",
+      "file": "FIG7-1B1.png",
+      "sha256": "fc0761ddb56cb8ce2b33ee5cda8458b6a6e05da5835f443028324a8e2b72e62d",
+      "bytes": 111179,
+      "width": 1430,
+      "height": 1504,
+      "placementIds": [
+        "7-1",
+        "B-1"
+      ]
+    },
+    {
+      "id": "FIG7-2E1",
+      "file": "FIG7-2E1.png",
+      "sha256": "3b05c9d3785610b864e64c88e91fe5b666b830549b4290820abf75e5942ca47c",
+      "bytes": 86176,
+      "width": 1430,
+      "height": 750,
+      "placementIds": [
+        "7-2",
+        "E-1"
+      ]
+    },
+    {
+      "id": "FIG7-3",
+      "file": "FIG7-3.png",
+      "sha256": "fc982293c8ace404d063f042ba0ae0f1b5d00a9384a83bdb7bc0dd0a88306c2d",
+      "bytes": 53011,
+      "width": 1430,
+      "height": 590,
+      "placementIds": [
+        "7-3"
+      ]
+    },
+    {
+      "id": "FIG7-4",
+      "file": "FIG7-4.png",
+      "sha256": "c0a422a650420c9483904208a3e41c97aff9d7fe3bee12867e830763d1d8d300",
+      "bytes": 44665,
+      "width": 1430,
+      "height": 697,
+      "placementIds": [
+        "7-4"
+      ]
+    },
+    {
+      "id": "FIG7-5G1",
+      "file": "FIG7-5G1.png",
+      "sha256": "825237f4254dc8a29a2b067b53b3522ebc58dbb4dbc09270b1fdc84fd494dda2",
+      "bytes": 50839,
+      "width": 1430,
+      "height": 470,
+      "placementIds": [
+        "7-5",
+        "G-1"
+      ]
+    },
+    {
+      "id": "FIG7-6",
+      "file": "FIG7-6.png",
+      "sha256": "9e83686bab6710b7675b81610b6f9219819a4719ecbc77377f3ff02a637b7a3a",
+      "bytes": 95253,
+      "width": 1430,
+      "height": 1435,
+      "placementIds": [
+        "7-6"
+      ]
+    },
+    {
+      "id": "FIG7-7",
+      "file": "FIG7-7.png",
+      "sha256": "e4f7f17e471972493739107257f85adcd30d4defd5a84c11be13e01b5b26f33e",
+      "bytes": 46697,
+      "width": 1431,
+      "height": 474,
+      "placementIds": [
+        "7-7"
+      ]
+    },
+    {
+      "id": "FIGA1",
+      "file": "FIGA1.png",
+      "sha256": "1812d1ecafc56b6be2aea1a84e8d38e15d3b6bb906994f5ed1d13a9b74cf27e4",
+      "bytes": 63930,
+      "width": 1430,
+      "height": 507,
+      "placementIds": [
+        "A-1"
+      ]
+    },
+    {
+      "id": "FIGA2",
+      "file": "FIGA2.png",
+      "sha256": "c18ce304b977e92e2b5c8e1d5b690767eaa8f54e3e24502191b145fea220cd45",
+      "bytes": 40399,
+      "width": 1430,
+      "height": 536,
+      "placementIds": [
+        "A-2"
+      ]
+    },
+    {
+      "id": "FIGA3",
+      "file": "FIGA3.png",
+      "sha256": "7feafceb73ca930c0b0afb4117686289d6da43b8f494c9f2b3318e13128439ec",
+      "bytes": 63503,
+      "width": 1430,
+      "height": 579,
+      "placementIds": [
+        "A-3"
+      ]
+    },
+    {
+      "id": "FIGA4",
+      "file": "FIGA4.png",
+      "sha256": "b1b0d49a11585bee5e012e4c498e523294f53769dc2f0b647f14fff732b068c4",
+      "bytes": 101095,
+      "width": 1430,
+      "height": 1231,
+      "placementIds": [
+        "A-4"
+      ]
+    },
+    {
+      "id": "FIGF1",
+      "file": "FIGF1.png",
+      "sha256": "632c11a51ad43fa458f53f90aceb4237b653b0771d8e8d7f6e87a696613eadf6",
+      "bytes": 66984,
+      "width": 1430,
+      "height": 1002,
+      "placementIds": [
+        "F-1"
+      ]
+    },
+    {
+      "id": "FIGF2",
+      "file": "FIGF2.png",
+      "sha256": "b23175457a6ebf2da3f9665bab89e02e240c9b46bb23af33ba836d092f6339cf",
+      "bytes": 177886,
+      "width": 1430,
+      "height": 2244,
+      "placementIds": [
+        "F-2"
+      ]
+    },
+    {
+      "id": "FIGG2",
+      "file": "FIGG2.png",
+      "sha256": "532fd596d07e5043294bebdf865e9d3176a9cea679b6be6f603bc6a8f75c6869",
+      "bytes": 114204,
+      "width": 1430,
+      "height": 1569,
+      "placementIds": [
+        "G-2"
+      ]
+    },
+    {
+      "id": "FIGG3",
+      "file": "FIGG3.png",
+      "sha256": "37302453cd41f651715296c4e7a292aaaec4d64196dfd397e2f20ab302a7cb1c",
+      "bytes": 114491,
+      "width": 1430,
+      "height": 1504,
+      "placementIds": [
+        "G-3"
+      ]
+    },
+    {
+      "id": "FIGH1",
+      "file": "FIGH1.png",
+      "sha256": "ed261d846524374f1ac7cca2573feb884d96c2558ed4a0a5b7dda4014049020b",
+      "bytes": 111776,
+      "width": 1430,
+      "height": 1504,
+      "placementIds": [
+        "H-1"
+      ]
+    }
+  ],
+  "placements": [
+    {
+      "figureId": "6-1",
+      "assetId": "FIG6-1",
+      "textSha256": "e56ca9cfd073dfd7103aa2803061cc572736e08c913a360d8d9a33bda0c7b264",
+      "sectionAnchor": "sec-6-0",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 858
+    },
+    {
+      "figureId": "7-1",
+      "assetId": "FIG7-1B1",
+      "textSha256": "ec9399ebc9de98921871543b0e96c3aa3b00f4e37ec64a5aaf2f0abc197a77d1",
+      "sectionAnchor": "sec-7-2",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 1018
+    },
+    {
+      "figureId": "7-2",
+      "assetId": "FIG7-2E1",
+      "textSha256": "60f4d2f78d6a56ef61fa13c8ceb9eaf697365654f3b608046868c7194d0e489a",
+      "sectionAnchor": "sec-7-5",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 1081
+    },
+    {
+      "figureId": "7-3",
+      "assetId": "FIG7-3",
+      "textSha256": "03afee6526f0372f28a986efb43e9a21db06f0f3231208be0289c5fd43592863",
+      "sectionAnchor": "sec-7-6",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 1098
+    },
+    {
+      "figureId": "7-4",
+      "assetId": "FIG7-4",
+      "textSha256": "8dce21ded0a1bd676087bea45ee7666937b91ff5e9582524e5b57a31b1b9c97b",
+      "sectionAnchor": "sec-7-6",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 1107
+    },
+    {
+      "figureId": "7-5",
+      "assetId": "FIG7-5G1",
+      "textSha256": "7387011740bd9f186a137782c845b8ef1753dd95c0c64ce3b0b0dcf0a511dd7e",
+      "sectionAnchor": "sec-7-7",
+      "anchorSource": "overlay-correction",
+      "role": "secondary",
+      "markerLine": 1146
+    },
+    {
+      "figureId": "7-6",
+      "assetId": "FIG7-6",
+      "textSha256": "ce6f925b8c83f6fc4454ddd71e33c66f47711026be3968ceb84804b8127cfb54",
+      "sectionAnchor": "sec-7-7",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 1203
+    },
+    {
+      "figureId": "7-7",
+      "assetId": "FIG7-7",
+      "textSha256": "3c1cd81e92c4f6e7af5a4f8ad9f14b7e25ebf4edf2b5a5d6c1e3a47de926da2a",
+      "sectionAnchor": "sec-7-8",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 1225
+    },
+    {
+      "figureId": "A-1",
+      "assetId": "FIGA1",
+      "textSha256": "4222698ca0f204e8bd52b998c9c0b1ac973dbede263c82b5abbdef9705a6251c",
+      "sectionAnchor": "app-a",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 3347
+    },
+    {
+      "figureId": "A-2",
+      "assetId": "FIGA2",
+      "textSha256": "8f4c8cd10ced2d0d013aa7d8102216204d4b0480ad8e85abeddcf18c2e4d52ce",
+      "sectionAnchor": "app-a",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 3405
+    },
+    {
+      "figureId": "A-3",
+      "assetId": "FIGA3",
+      "textSha256": "2d0992a882205689ab3e6d1f8647bde6e39416acc8ab96cfb9c49c2d126bed8c",
+      "sectionAnchor": "app-a",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 3526
+    },
+    {
+      "figureId": "A-4",
+      "assetId": "FIGA4",
+      "textSha256": "213f87103a944b4743d03bb7ecbd04fb2709e3898cf12381c32522e2b4e7212a",
+      "sectionAnchor": "app-a",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 3753
+    },
+    {
+      "figureId": "B-1",
+      "assetId": "FIG7-1B1",
+      "textSha256": "84becaf63a8dc9f7eee2bb8a751f58ec22529c10086a7c749e1a5d9b5933d6e5",
+      "sectionAnchor": "app-b-4",
+      "anchorSource": "overlay-correction",
+      "role": "secondary",
+      "markerLine": 3883
+    },
+    {
+      "figureId": "E-1",
+      "assetId": "FIG7-2E1",
+      "textSha256": "809733b97b643b4a38098018f9b6854aa0fa27c5dab47ff4192bf1c5adc54ec8",
+      "sectionAnchor": "app-e-1-1",
+      "anchorSource": "overlay-correction",
+      "role": "secondary",
+      "markerLine": 4031
+    },
+    {
+      "figureId": "F-1",
+      "assetId": "FIGF1",
+      "textSha256": "81e10643f4fdd1f03eeb2a4f9b478c62b3a3d0a74165f900dba2e48aab795840",
+      "sectionAnchor": "app-f",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 4195
+    },
+    {
+      "figureId": "F-2",
+      "assetId": "FIGF2",
+      "textSha256": "eb350828d28a9711868e091e7ffed4db3749d24e7237eb3f764eca4b8587776d",
+      "sectionAnchor": "app-f",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 4237
+    },
+    {
+      "figureId": "G-1",
+      "assetId": "FIG7-5G1",
+      "textSha256": "d2a05016a86c99917dccc596ba00fbd0fc4ea068751535df979a80b5c1c66f6e",
+      "sectionAnchor": "app-g",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 4314
+    },
+    {
+      "figureId": "G-2",
+      "assetId": "FIGG2",
+      "textSha256": "b684215df9f87a9d6760ca82b4f1587a51543c7291893ef862ad57592630bea2",
+      "sectionAnchor": "app-g",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 4326
+    },
+    {
+      "figureId": "G-3",
+      "assetId": "FIGG3",
+      "textSha256": "0ae484089f2d7ac17faaf9843d9451c797372aa0b8d6a86d3552fc1c7527341d",
+      "sectionAnchor": "app-g",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 4340
+    },
+    {
+      "figureId": "H-1",
+      "assetId": "FIGH1",
+      "textSha256": "1aa94747b6089a84acf35548c7b390224acb8cc3050fe2a9809e9a5c55e22593",
+      "sectionAnchor": "app-h",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 4406
+    }
+  ]
+}

@@ -27,6 +27,7 @@ const Q1 = 'rpq:1.0.11-remediated-7-8-successor-20260918-D:q01';
 describe('workingDraftSectionHref (M1-04)', () => {
   it('serializes exactly one encoded section identity as a canonical Working Draft query', () => {
     expect(workingDraftSectionHref('methods')).toBe('?mode=working-draft&section=methods');
+    expect(workingDraftSectionHref('app-l')).toBe('?mode=working-draft&section=app-l');
     expect(workingDraftSectionHref('a b&c=d#e')).toBe('?mode=working-draft&section=a+b%26c%3Dd%23e');
     expect(new URLSearchParams(workingDraftSectionHref('a b&c=d#e').slice(1)).getAll('section')).toEqual(['a b&c=d#e']);
     const search = Object.fromEntries(new URLSearchParams(workingDraftSectionHref('methods').slice(1)));

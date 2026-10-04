@@ -4,7 +4,7 @@ vi.mock('server-only', () => ({}));
 
 import { appendixLetter, buildPaperNavGroups, CONTENTS_HEADING_LABEL, isContentsHeading, paperNavGroupKey, paperNavPath } from '../paper-nav-groups';
 import type { PaperNavNode, PaperNavSourceEntry } from '../paper-nav-groups';
-import { APPENDIX_BOUNDARY_LABEL } from '../outline-hierarchy';
+import { APPENDIX_BOUNDARY_LABEL, isAppendixBoundaryLabel } from '../outline-hierarchy';
 import { getPaperNavOutline } from '@/components/matrix-options/paper/PaperDocument';
 import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
 
@@ -82,6 +82,29 @@ describe('buildPaperNavGroups (synthetic)', () => {
     expect(isContentsHeading('Table of Contents')).toBe(false);
     expect(appendixLetter('Appendix H: Policy-ready input parameter compendium')).toBe('H');
     expect(appendixLetter('Appendices overview')).toBeNull();
+  });
+});
+
+describe('buildPaperNavGroups (v0.9.91 boundary shape)', () => {
+  const paper: PaperNavSourceEntry[] = [
+    entry('title', 'Paper Title', null, ['chapter', 'appendix-boundary', 'appendix-a'], 1),
+    entry('chapter', '1.0 Introduction', 'title', [], 2),
+    entry('appendix-boundary', 'Technical Appendices', 'title', ['appendix-a'], 2),
+    entry('appendix-a', 'Appendix A: Source Material', 'title', ['appendix-a-1'], 2),
+    entry('appendix-a-1', 'A.1 Supporting Detail', 'appendix-a', [], 3),
+  ];
+  const [main, appendices] = buildPaperNavGroups(paper);
+
+  it('splits the nested accepted boundary without omitting, duplicating, or reordering headings', () => {
+    // The former root-only lookup had no boundary to split and an empty
+    // Appendices group for this valid v0.9.91 shape.
+    expect(paper.filter((item) => item.parentId === null).some((item) => isAppendixBoundaryLabel(item.label))).toBe(false);
+    expect(labels(main.nodes)).toEqual(['Paper Title', '1.0 Introduction']);
+    expect(labels(appendices.nodes)).toEqual(['Technical Appendices', 'Appendix A: Source Material']);
+    expect(allLabels(appendices.nodes)).toContain('A.1 Supporting Detail');
+    const shown = [...allLabels(main.nodes), ...allLabels(appendices.nodes)];
+    expect(shown).toEqual(paper.map((item) => item.label));
+    expect(new Set(shown).size).toBe(shown.length);
   });
 });
 

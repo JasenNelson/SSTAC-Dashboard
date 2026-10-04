@@ -14,6 +14,7 @@ import { advancePrint, cancelPrint, INITIAL_PRINT_STATE, isPrintBusy, printStatu
 import type { PrintLoaderView, PrintState } from '@/lib/matrix-options/paper/print-orchestrator';
 import { cn } from '@/utils/cn';
 
+import { ACCEPTED_FIGURE_IMAGE_CLASS } from './AcceptedPaperFigure';
 import { PAPER_DOCUMENT_ARTICLE_CLASSES, PAPER_OVERFLOW_ANCHOR_CLASSES, PAPER_SCROLL_MARGIN_CLASSES, PaperChunkSection } from './PaperChunkSection';
 import { isLgViewport } from './paper-viewport';
 
@@ -263,6 +264,38 @@ export function PaperSectionWindowView({ sectionWindow, api, scrollRootRef, chil
   );
 }
 
+/** How long printing waits for the paper's figure images before going ahead without them. */
+export const PAPER_PRINT_IMAGE_WAIT_MS = 8000;
+
+/**
+ * Resolves once every accepted-figure image under `root` has finished loading
+ * (or failed), or after `timeoutMs`, whichever comes first. A page with no such
+ * image resolves at once.
+ */
+export function waitForPaperFigureImages(root: ParentNode, timeoutMs: number = PAPER_PRINT_IMAGE_WAIT_MS): Promise<void> {
+  const pending = Array.from(root.querySelectorAll<HTMLImageElement>(`img.${ACCEPTED_FIGURE_IMAGE_CLASS}`)).filter((image) => !image.complete);
+  if (pending.length === 0) return Promise.resolve();
+  return new Promise<void>((resolve) => {
+    let remaining = pending.length;
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve();
+    };
+    const timer = setTimeout(finish, timeoutMs);
+    const onSettle = () => {
+      remaining -= 1;
+      if (remaining <= 0) finish();
+    };
+    for (const image of pending) {
+      image.addEventListener('load', onSettle, { once: true });
+      image.addEventListener('error', onSettle, { once: true });
+    }
+  });
+}
+
 /**
  * Print orchestration for the Working Draft (print-orchestrator.ts). Print is a
  * single action: missing sections are loaded first, the page is given two
@@ -310,6 +343,9 @@ export function usePaperPrint(api: PaperSectionWindowApi) {
       } catch {
         // Fonts failing to load never blocks printing.
       }
+      // Accepted figures are images: give the ones just mounted time to arrive, so
+      // the printout is not missing them. Bounded, and a failed image never blocks printing.
+      await waitForPaperFigureImages(document);
       if (cancelled) return;
       try {
         window.print();

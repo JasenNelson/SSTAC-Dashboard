@@ -1,19 +1,27 @@
 import 'server-only';
 
 import { createHash } from 'node:crypto';
-import { unified } from 'unified';
-import remarkParse from 'remark-parse';
-import remarkGfm from 'remark-gfm';
-import remarkMath from 'remark-math';
+import v0991HeadingContract from './paper/contracts/heading-anchors-v0.9.91-run109-001.json';
 import {
   loadRevisedPaper,
-  REVISED_PAPER_BYTES,
-  REVISED_PAPER_RELEASE_IDENTITY,
-  REVISED_PAPER_RELATIVE_PATH,
-  REVISED_PAPER_SHA256,
   REVISED_PAPER_VERSION,
   type RevisedPaperDescriptor,
 } from './revised-paper';
+import { authenticateAcceptedFigures } from './paper/accepted-figures-server';
+import { assertAppendixLSourceMedia } from './paper/accepted-source-media';
+import { isPlainDisplayLabel } from './paper/contents-heading';
+import { assertWithheldNavigation } from './paper/full-document';
+import { parsePaperMarkdown } from './paper/markdown-tree';
+import {
+  getPaperRelease,
+  paperReleaseIdentity,
+  paperReleaseSourceLabel,
+  V0991_PAPER_VERSION,
+  type PaperReleaseVersion,
+} from './paper/releases';
+import { resolveReviewerGuide } from './paper/reviewer-guide-server';
+import { inactiveLinkAudit, maskFrontMatter, maskPandocHeadingAttributes, parseFrontMatter, type PaperSourcePresentation } from './paper/source-presentation';
+import { reviewerGuideForm } from './reviewer-guide';
 
 export const REVISED_PAPER_STRUCTURE_SCHEMA_VERSION = 'matrix-paper-v16-structure-v1';
 export const REVISED_PAPER_STRUCTURE_COMPILER_VERSION = '1';
@@ -119,11 +127,16 @@ export interface RevisedPaperStructureManifest {
   readonly schemaVersion: typeof REVISED_PAPER_STRUCTURE_SCHEMA_VERSION;
   readonly compilerVersion: typeof REVISED_PAPER_STRUCTURE_COMPILER_VERSION;
   readonly source: {
-    readonly path: typeof REVISED_PAPER_RELATIVE_PATH;
-    readonly version: typeof REVISED_PAPER_VERSION;
-    readonly releaseIdentity: typeof REVISED_PAPER_RELEASE_IDENTITY;
-    readonly bytes: typeof REVISED_PAPER_BYTES;
-    readonly sha256: typeof REVISED_PAPER_SHA256;
+    /**
+     * Which artifact was compiled: the repository path of a tracked file, or
+     * `presentation:<version>` for a private-storage release (releases.ts
+     * paperReleaseSourceLabel). Never a storage location.
+     */
+    readonly path: string;
+    readonly version: PaperReleaseVersion;
+    readonly releaseIdentity: string;
+    readonly bytes: number;
+    readonly sha256: string;
   };
   readonly parsers: readonly {
     readonly name: string;
@@ -148,7 +161,7 @@ export interface RevisedPaperStructureManifest {
   }>>;
   readonly coverage: {
     readonly firstByte: 0;
-    readonly lastByteExclusive: typeof REVISED_PAPER_BYTES;
+    readonly lastByteExclusive: number;
   };
   readonly orderedIdsSha256: {
     readonly nodes: string;
@@ -158,7 +171,13 @@ export interface RevisedPaperStructureManifest {
 }
 
 export interface RevisedPaperStructure {
-  readonly releaseIdentity: typeof REVISED_PAPER_RELEASE_IDENTITY;
+  readonly releaseIdentity: string;
+  /**
+   * Present only for a release whose source needs presentation handling (the
+   * R5 working draft's front matter). Absent for the predecessor, so its
+   * compiled structure is exactly what it was before a second release existed.
+   */
+  readonly presentation?: PaperSourcePresentation;
   readonly content: string;
   readonly lines: readonly SourceRange[];
   readonly nodes: readonly RevisedPaperNode[];
@@ -299,6 +318,38 @@ function githubAnchor(label: string, prior: Map<string, number>): string {
   return seen === 0 ? base : `${base}-${seen}`;
 }
 
+const V0991_HEADING_CONTRACT = v0991HeadingContract as {
+  readonly schemaVersion: string;
+  readonly releaseIdentity: string;
+  readonly sourceRegistrySha256: string;
+  readonly headings: readonly { readonly level: number; readonly title: string; readonly id: string; readonly chapter: boolean }[];
+};
+
+function deriveV0991Presentation(content: string): string {
+  const appendix = /^## Appendix L: Phase 2 Project Plan V2 \{#app-l \.chapter\}[ \t]*\r?$/gm;
+  const matches = Array.from(content.matchAll(appendix));
+  if (matches.length !== 1) fail(`expected one authenticated Appendix L boundary, found ${matches.length}`);
+  if (V0991_HEADING_CONTRACT.schemaVersion !== 'matrix-paper-heading-anchors-v1'
+    || V0991_HEADING_CONTRACT.releaseIdentity !== V0991_PAPER_VERSION
+    || V0991_HEADING_CONTRACT.sourceRegistrySha256 !== '72f9f3e6321bad7acd69b7a84a7f99416c642e65b2770a68d1c3d5671aa469ff'
+    || V0991_HEADING_CONTRACT.headings.length !== 332
+    || V0991_HEADING_CONTRACT.headings.at(-1)?.id !== 'app-l') fail('heading registry identity or Appendix L inclusion');
+  const tocLinks = content.match(/^\s*[-*+]\s+\[Appendix L: Phase 2 Project Plan V2\]\(#app-l\)[ \t]*$/gm) ?? [];
+  if (tocLinks.length !== 1) fail('expected one source Appendix L contents link');
+  try {
+    assertAppendixLSourceMedia(content);
+  } catch {
+    fail('Appendix L source media binding');
+  }
+  return content;
+}
+
+function pandocHeadingId(content: string, offset: number): string | null {
+  const lineEnd = content.indexOf('\n', offset);
+  const line = content.slice(offset, lineEnd < 0 ? content.length : lineEnd);
+  return /^#{1,6} .+ \{#([A-Za-z][A-Za-z0-9_-]*)(?: \.[A-Za-z][A-Za-z0-9_-]*)*\}[ \t]*$/.exec(line)?.[1] ?? null;
+}
+
 function normalizeQuestionHeading(label: string): string {
   return label.trim().toLowerCase().replace(/\s+/g, ' ');
 }
@@ -332,6 +383,13 @@ export function findAppendixBoundary(
     if (node.depth === 1 && node.label === 'Technical Appendices Compendium') indexes.push(index);
     return indexes;
   }, []);
+  if (matches.length === 0) {
+    const pandocBoundary = nodes.reduce<number[]>((indexes, node, index) => {
+      if (node.depth === 1 && node.label === 'Technical Appendices') indexes.push(index);
+      return indexes;
+    }, []);
+    if (pandocBoundary.length === 1) return pandocBoundary[0];
+  }
   if (matches.length !== 1) fail(`expected exactly one appendix boundary, found ${matches.length}`);
   return matches[0];
 }
@@ -360,35 +418,70 @@ function lensSummary(placements: readonly LensPlacement[]) {
 export function compileRevisedPaperStructure(
   paper: RevisedPaperDescriptor,
 ): RevisedPaperStructure {
-  if (paper.releaseIdentity !== REVISED_PAPER_RELEASE_IDENTITY) fail('release identity mismatch');
-  if (paper.bytes !== REVISED_PAPER_BYTES || Buffer.byteLength(paper.content, 'utf8') !== REVISED_PAPER_BYTES) {
+  // The descriptor must be one of the bound releases, byte for byte. Every
+  // check below uses THAT release's identity, so a descriptor can never be
+  // compiled against another release's hash or length.
+  const release = getPaperRelease(paper.documentVersion);
+  if (!release || paper.releaseIdentity !== paperReleaseIdentity(release)) fail('release identity mismatch');
+  // What is compiled is the release artifact itself, whole: its bound length and hash are
+  // proven here against the content, whoever produced the descriptor.
+  const SOURCE_BYTES = release.bytes;
+  if (paper.bytes !== SOURCE_BYTES || Buffer.byteLength(paper.content, 'utf8') !== SOURCE_BYTES) {
     fail('byte length mismatch');
   }
   const contentSha256 = createHash('sha256').update(paper.content, 'utf8').digest('hex');
-  if (contentSha256 !== REVISED_PAPER_SHA256) fail('content SHA-256 mismatch');
+  if (contentSha256 !== release.sha256 || paper.sha256 !== release.sha256) fail('content SHA-256 mismatch');
   if (paper.content.includes('\r')) fail('CR is not permitted');
+  if (release.frontMatter !== (parseFrontMatter(paper.content) !== null)) fail('front matter does not match the release');
+  const presentationContent = release.documentVersion === V0991_PAPER_VERSION ? deriveV0991Presentation(paper.content) : paper.content;
+  const PRESENTATION_BYTES = Buffer.byteLength(presentationContent, 'utf8');
+  // The reader draws a figure placement block from its content alone (accepted-figures.ts
+  // resolves a block against the bound figure contracts, not against a release). A release
+  // with no accepted figures must therefore carry no placement marker at all: with one, a
+  // block could be drawn from another release's contract under this release's page.
+  if (!release.acceptedFigures && paper.content.includes('MATRIX_FIGURE_PLACEMENT')) fail('figure placement marker in a release with no accepted figures');
+  // Every literal reference to a withheld section must be a simple inline link, the one form
+  // the presentation handles (paper/withheld-sections.ts presentWithheldSections: a contents
+  // entry of its own is not shown, any other is shown as plain text). Anything else would stay in the
+  // shown text as a reference the reader cannot follow.
+  if (release.withheld) {
+    // A release that leaves a section out always has the one-line sentence that says so, and
+    // names that section by a stable appendix id.
+    const { notice, stableSectionId } = release.withheld;
+    if (typeof notice !== 'string' || notice.trim() === '' || notice !== notice.trim() || /[\r\n]/.test(notice)) fail('the withheld notice is not one line of text');
+    if (!/^app-[a-z]$/.test(stableSectionId)) fail('the withheld stable id form');
+    const audit = inactiveLinkAudit(paper.content, stableSectionId);
+    if (audit.tokens !== audit.links) fail('a reference to the withheld section is not a simple link');
+  }
 
-  const byteMap = utf8ByteMap(paper.content);
-  if (byteMap[paper.content.length] !== REVISED_PAPER_BYTES) fail('UTF-8 byte map mismatch');
+  const byteMap = utf8ByteMap(presentationContent);
+  if (byteMap[presentationContent.length] !== PRESENTATION_BYTES) fail('UTF-8 byte map mismatch');
 
   const lines: SourceRange[] = [];
   let lineStart = 0;
-  for (let offset = 0; offset < paper.content.length; offset += 1) {
-    if (paper.content[offset] !== '\n') continue;
+  for (let offset = 0; offset < presentationContent.length; offset += 1) {
+    if (presentationContent[offset] !== '\n') continue;
     lines.push({ startByte: byteMap[lineStart], endByte: byteMap[offset + 1] });
     lineStart = offset + 1;
   }
-  if (lineStart < paper.content.length) {
-    lines.push({ startByte: byteMap[lineStart], endByte: byteMap[paper.content.length] });
+  if (lineStart < presentationContent.length) {
+    lines.push({ startByte: byteMap[lineStart], endByte: byteMap[presentationContent.length] });
   }
-  if (lines.length === 0 || lines[0].startByte !== 0 || lines.at(-1)?.endByte !== REVISED_PAPER_BYTES) {
+  if (lines.length === 0 || lines[0].startByte !== 0 || lines.at(-1)?.endByte !== PRESENTATION_BYTES) {
     fail('physical line coverage mismatch');
   }
   for (let index = 1; index < lines.length; index += 1) {
     if (lines[index - 1].endByte !== lines[index].startByte) fail('physical line gap or overlap');
   }
 
-  const tree = unified().use(remarkParse).use(remarkGfm).use(remarkMath).parse(paper.content) as AstNode;
+  // A YAML front-matter block would otherwise parse as a thematic break plus a
+  // setext heading made of the YAML lines. It is masked with spaces of the same
+  // length for PARSING only: every offset the parser reports is still an offset
+  // into paper.content, and no byte of the paper changes.
+  const parseSource = maskPandocHeadingAttributes(release.frontMatter ? maskFrontMatter(presentationContent) : presentationContent);
+  if (parseSource.length !== presentationContent.length) fail('presentation parse mask changed the source length');
+  // The one parse of paper text (paper/markdown-tree.ts): the parser the reader's renderer uses.
+  const tree = parsePaperMarkdown(parseSource) as unknown as AstNode;
   const definitions = new Map<string, LinkDefinition>();
   walk(tree, (ast) => {
     if (ast.type !== 'definition' || !ast.identifier) return;
@@ -399,7 +492,7 @@ export function compileRevisedPaperStructure(
     definitions.set(identifier, {
       identifier: ast.identifier,
       target,
-      ...exactAstRange(ast, paper.content, byteMap),
+      ...exactAstRange(ast, presentationContent, byteMap),
     });
   });
   const headingAsts: AstNode[] = [];
@@ -411,27 +504,39 @@ export function compileRevisedPaperStructure(
     if (node.type === 'heading') headingAsts.push(node);
   });
   if (headingAsts.length === 0) fail('paper has no headings');
+  if (release.documentVersion === V0991_PAPER_VERSION && headingAsts.length !== 364) fail('authenticated parsed heading count');
+
+  // Node depth is the authored heading level less the release's bound shift, so
+  // a release whose top-level sections are authored as `##` (R5 has no `#`
+  // heading: its title is front matter) still has depth-1 top-level sections.
+  // The shift must be exact: the shallowest authored heading lands on depth 1.
+  const depthShift = release.headingDepthShift;
+  const shallowest = headingAsts.reduce((least, heading) => Math.min(least, heading.depth ?? 0), 7);
+  if (shallowest - depthShift !== 1) fail('heading depth shift does not match the source');
 
   const anchors = new Map<string, number>();
   const mutableNodes: Array<RevisedPaperNode & { ast: AstNode }> = [];
   const parentIndexes: number[] = [];
   const stack: number[] = [];
+  let stableHeadingIndex = 0;
+  let appendixLStarted = false;
   for (let index = 0; index < headingAsts.length; index += 1) {
     const ast = headingAsts[index];
-    const depth = ast.depth;
-    if (!depth || depth < 1 || depth > 6) fail('invalid heading depth');
+    const depth = (ast.depth ?? 0) - depthShift;
+    if (!ast.depth || depth < 1 || depth > 6) fail('invalid heading depth');
     while (stack.length > 0 && mutableNodes[stack.at(-1)!].depth >= depth) stack.pop();
     const parentIndex = stack.at(-1) ?? -1;
     if (parentIndex >= 0 && mutableNodes[parentIndex].depth >= depth) fail('invalid heading ancestry');
     parentIndexes.push(parentIndex);
 
-    const tokenRange = exactAstRange(ast, paper.content, byteMap);
-    let sectionEndByte = REVISED_PAPER_BYTES;
+    const tokenRange = exactAstRange(ast, presentationContent, byteMap);
+    let sectionEndByte = PRESENTATION_BYTES;
     for (let later = index + 1; later < headingAsts.length; later += 1) {
-      const laterDepth = headingAsts[later].depth;
-      if (!laterDepth) fail('invalid later heading depth');
+      const laterAuthoredDepth = headingAsts[later].depth;
+      if (!laterAuthoredDepth) fail('invalid later heading depth');
+      const laterDepth = laterAuthoredDepth - depthShift;
       if (laterDepth <= depth) {
-        sectionEndByte = exactAstRange(headingAsts[later], paper.content, byteMap).startByte;
+        sectionEndByte = exactAstRange(headingAsts[later], presentationContent, byteMap).startByte;
         break;
       }
     }
@@ -441,6 +546,24 @@ export function compileRevisedPaperStructure(
       : [...mutableNodes[parentIndex].ancestorIds, mutableNodes[parentIndex].id];
     const range = { startByte: tokenRange.startByte, endByte: sectionEndByte };
     const id = createStructureId('node', paper.releaseIdentity, 'heading', range, [...ancestorIds, label]);
+    let anchor: string;
+    if (release.documentVersion === V0991_PAPER_VERSION) {
+      const sourceHeadingId = pandocHeadingId(presentationContent, ast.position?.start.offset ?? -1);
+      if (sourceHeadingId) {
+        const expected = V0991_HEADING_CONTRACT.headings[stableHeadingIndex];
+        if (!expected || sourceHeadingId !== expected.id || label !== expected.title || (ast.depth ?? 0) !== expected.level) fail(`heading registry source ${stableHeadingIndex}`);
+        anchor = expected.id;
+        stableHeadingIndex += 1;
+        if (anchor === 'app-l') appendixLStarted = true;
+        if (anchors.has(anchor)) fail(`duplicate stable heading id ${anchor}`);
+        anchors.set(anchor, 1);
+      } else {
+        if (!appendixLStarted) fail(`unregistered heading before Appendix L at ${index}`);
+        anchor = githubAnchor(label, anchors);
+      }
+    } else {
+      anchor = githubAnchor(label, anchors);
+    }
     mutableNodes.push({
       id,
       domain: 'node',
@@ -450,12 +573,13 @@ export function compileRevisedPaperStructure(
       parentId: parentIndex < 0 ? null : mutableNodes[parentIndex].id,
       ancestorIds,
       tokenEndByte: tokenRange.endByte,
-      anchor: githubAnchor(label, anchors),
+      anchor,
       ...range,
       ast,
     });
     stack.push(index);
   }
+  if (release.documentVersion === V0991_PAPER_VERSION && stableHeadingIndex !== V0991_HEADING_CONTRACT.headings.length) fail('authenticated stable heading registry coverage');
 
   const nodeIds = new Set<string>();
   for (const node of mutableNodes) {
@@ -486,7 +610,7 @@ export function compileRevisedPaperStructure(
       domain = 'object.equation'; kind = 'math'; label = ast.value ?? '';
     }
     if (!domain || !kind) return;
-    const range = exactAstRange(ast, paper.content, byteMap);
+    const range = exactAstRange(ast, presentationContent, byteMap);
     const owner = ownerForRange(range);
     const pathParts = [...(owner?.ancestorIds ?? []), ...(owner ? [owner.id] : []), label];
     objects.push({
@@ -513,7 +637,7 @@ export function compileRevisedPaperStructure(
     for (const { node: ast, parent } of allAsts) {
       if (!['heading', 'paragraph', 'listItem'].includes(ast.type)) continue;
       if (ast.type === 'paragraph' && parent?.type === 'listItem') continue;
-      const range = exactAstRange(ast, paper.content, byteMap);
+      const range = exactAstRange(ast, presentationContent, byteMap);
       if (range.startByte < container.startByte || range.endByte > container.endByte) continue;
       const label = plainText(ast).trim();
       if (!label.endsWith('?')) continue;
@@ -592,7 +716,7 @@ export function compileRevisedPaperStructure(
   }
   walk(tree, (ast) => {
     if (!['link', 'linkReference', 'definition'].includes(ast.type)) return;
-    const range = exactAstRange(ast, paper.content, byteMap);
+    const range = exactAstRange(ast, presentationContent, byteMap);
     const owner = ownerForRange(range);
     if (!owner) return;
     const resolved = ast.type === 'link' || ast.type === 'linkReference'
@@ -665,11 +789,11 @@ export function compileRevisedPaperStructure(
     schemaVersion: REVISED_PAPER_STRUCTURE_SCHEMA_VERSION,
     compilerVersion: REVISED_PAPER_STRUCTURE_COMPILER_VERSION,
     source: {
-      path: REVISED_PAPER_RELATIVE_PATH,
-      version: REVISED_PAPER_VERSION,
-      releaseIdentity: REVISED_PAPER_RELEASE_IDENTITY,
-      bytes: REVISED_PAPER_BYTES,
-      sha256: REVISED_PAPER_SHA256,
+      path: paperReleaseSourceLabel(release),
+      version: release.documentVersion,
+      releaseIdentity: paperReleaseIdentity(release),
+      bytes: SOURCE_BYTES,
+      sha256: release.sha256,
     },
     parsers: [
       { name: 'remark-gfm', version: '4.0.1' },
@@ -697,7 +821,7 @@ export function compileRevisedPaperStructure(
       objects: lensSummary(lensPlacements.objects),
       questions: lensSummary(lensPlacements.questions),
     },
-    coverage: { firstByte: 0, lastByteExclusive: REVISED_PAPER_BYTES },
+    coverage: { firstByte: 0, lastByteExclusive: PRESENTATION_BYTES },
     orderedIdsSha256: {
       nodes: orderedIdsHash(nodeRecords.map((node) => node.id)),
       objects: orderedIdsHash(objects.map((object) => object.id)),
@@ -705,9 +829,23 @@ export function compileRevisedPaperStructure(
     },
   };
 
-  return deepFreeze({
+  // Presentation rules come from the release entry alone. A release with none of them (the
+  // default) has no `presentation` member, exactly as before a second release existed.
+  // A display label that is not one line of plain words makes the whole release unavailable
+  // (every mode), not only the pages that would write it.
+  if (release.contentsHeadingDisplay !== null && !isPlainDisplayLabel(release.contentsHeadingDisplay)) fail('the contents display label is not one line of plain words');
+  const presentation: PaperSourcePresentation | null = release.frontMatter || release.withheld || release.contentsHeadingDisplay !== null
+    ? {
+      frontMatter: release.frontMatter,
+      ...(release.withheld ? { inactiveLinkTargets: [release.withheld.stableSectionId] } : {}),
+      ...(release.contentsHeadingDisplay !== null ? { contentsHeadingDisplay: release.contentsHeadingDisplay } : {}),
+    }
+    : null;
+
+  const structure = deepFreeze({
     releaseIdentity: paper.releaseIdentity,
-    content: paper.content,
+    ...(presentation ? { presentation } : {}),
+    content: presentationContent,
     lines,
     nodes: nodeRecords,
     objects,
@@ -716,15 +854,70 @@ export function compileRevisedPaperStructure(
     lenses: lensPlacements,
     manifest,
   });
+  return structure;
 }
 
-let cachedStructure: RevisedPaperStructure | undefined;
+/**
+ * The structure of one release from its authenticated descriptor, with every
+ * release-level check a served structure must pass. Pure (no file, no network):
+ * both loaders end here, the repository one below and the request loader of a
+ * private-storage release (./paper/paper-request-loader.ts).
+ *
+ * A release with accepted figures is authenticated against its figure contract
+ * (placements, order, lines, sections and bound text), so a drifted figure makes
+ * the whole release unavailable instead of rendering a wrong or missing image.
+ * The figure BYTES are proven where they are read (./paper/private-release-assets.ts).
+ * A release whose reviewer guide is hash form must resolve that guide from this
+ * text (./paper/reviewer-guide-server.ts).
+ */
+export function compileAuthenticatedRelease(paper: RevisedPaperDescriptor): RevisedPaperStructure {
+  const structure = compileRevisedPaperStructure(paper);
+  const release = getPaperRelease(paper.documentVersion);
+  if (release?.acceptedFigures) {
+    try {
+      authenticateAcceptedFigures(structure);
+    } catch (error) {
+      fail(error instanceof Error ? error.message : 'accepted figures');
+    }
+  }
+  // The stable id of a section the artifact does not contain must name nothing in the text;
+  // otherwise the release is unavailable rather than half-navigable.
+  if (release?.withheld) {
+    try {
+      assertWithheldNavigation(structure, release.withheld);
+    } catch (error) {
+      fail(error instanceof Error ? error.message : 'withheld navigation');
+    }
+  }
+  // A hash-form reviewer guide stores no question text: it is resolved from this text, and
+  // every question's heading and prompt must hash to what the guide binds. A release whose
+  // guide does not resolve is unavailable rather than shown with unverified questions.
+  if (release && reviewerGuideForm(release) === 'hash') {
+    try {
+      resolveReviewerGuide(structure);
+    } catch (error) {
+      fail(error instanceof Error ? error.message : 'reviewer guide');
+    }
+  }
+  return structure;
+}
 
-export function loadRevisedPaperStructure(): RevisedPaperStructure {
-  if (!cachedStructure) cachedStructure = compileRevisedPaperStructure(loadRevisedPaper(REVISED_PAPER_VERSION));
-  return cachedStructure;
+const cachedStructures = new Map<string, RevisedPaperStructure>();
+
+/**
+ * The compiled, byte-authenticated structure of one bound REPOSITORY release,
+ * cached per version for the life of the process. With no argument it is the
+ * DEFAULT release, exactly as before a second release existed. A
+ * private-storage release is unavailable here (revised-paper.ts loadRevisedPaper).
+ */
+export function loadRevisedPaperStructure(documentVersion: string = REVISED_PAPER_VERSION): RevisedPaperStructure {
+  const cached = cachedStructures.get(documentVersion);
+  if (cached) return cached;
+  const structure = compileAuthenticatedRelease(loadRevisedPaper(documentVersion));
+  cachedStructures.set(documentVersion, structure);
+  return structure;
 }
 
 export function resetRevisedPaperStructureCacheForTests(): void {
-  cachedStructure = undefined;
+  cachedStructures.clear();
 }

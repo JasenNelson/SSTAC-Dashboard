@@ -47,7 +47,8 @@ export function paperSectionLabelId(anchor: string): string {
  * `region` says whether the chunk is in the main report or after the appendix
  * boundary; it only changes how an exact "Master Table of Contents" heading is
  * SHOWN ("Paper contents" / "Appendix contents"). The paper bytes and the
- * anchor (the section id) are unchanged.
+ * anchor (the section id) are unchanged. A release with its own contents display
+ * label never reaches that relabel: its chunk already carries the display label.
  */
 export function PaperChunkSection({ chunk, linkMap, region = 'main' }: { readonly chunk: PaperChunkView; readonly linkMap?: Readonly<Record<string, string>>; readonly region?: PaperRegion }) {
   const markdown = presentChunkMarkdown(chunk.markdown, chunk.label, region);

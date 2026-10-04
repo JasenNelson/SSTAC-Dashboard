@@ -1,6 +1,8 @@
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import pkg from '@next/env';
+import { privateFixtureModeForLeg } from './matrix-paper-e2e-fixture-mode.mjs';
+import { assertMatrixPaperE2EPlan, buildMatrixPaperE2EPlan } from './matrix-paper-e2e-plan.mjs';
 const { loadEnvConfig } = pkg;
 
 loadEnvConfig(process.cwd());
@@ -32,17 +34,24 @@ function run(label, args, overrides) {
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
-run('flags-off regression', [], {
-  MATRIX_OPTIONS_PAPER_WORKSPACE: 'false',
-  MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION: 'false',
-});
+if (process.argv.includes('--appendix-l-inclusion-only')) {
+  run('v0.9.91 Appendix L authenticated inclusion', [
+    'e2e/matrix-options-paper.spec.ts',
+    '--project=chromium-auth',
+    '--grep', 'v0.9.91 Appendix L inclusion',
+  ], {
+    MATRIX_OPTIONS_PAPER_WORKSPACE: 'true',
+    MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION: 'true',
+    MATRIX_PAPER_PRIVATE_FIXTURE: privateFixtureModeForLeg('appendix-l-inclusion-only'),
+    MATRIX_OPTIONS_PAPER_PRIVATE_ASSET_DIR: path.resolve(process.cwd(), 'candidate', 'paper'),
+    E2E_AUTH_ENABLED: 'true',
+  });
+  process.exit(0);
+}
 
-run('real V16 authenticated acceptance', [
-  'e2e/matrix-options-paper.spec.ts',
-  '--project=chromium-auth',
-  '--grep', 'authenticated real release',
-], {
-  MATRIX_OPTIONS_PAPER_WORKSPACE: 'true',
-  MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION: 'true',
-  E2E_AUTH_ENABLED: 'true',
+const plan = buildMatrixPaperE2EPlan({
+  cwd: process.cwd(),
+  githubActions: process.env.GITHUB_ACTIONS === 'true',
 });
+assertMatrixPaperE2EPlan(plan);
+for (const leg of plan) run(leg.label, leg.args, leg.overrides);

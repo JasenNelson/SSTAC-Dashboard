@@ -1,17 +1,22 @@
+import type { JSX } from 'react';
 import { notFound, redirect } from 'next/navigation';
 
 import {
   MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH,
   resolveMatrixOptionsPaperReviewNavigationGate,
 } from '@/lib/matrix-options/navigation';
-import { REVISED_PAPER_ROUTE, REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
-import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
+import { REVISED_PAPER_ROUTE } from '@/lib/matrix-options/revised-paper';
+import { getPaperRelease } from '@/lib/matrix-options/paper/releases';
+import type { PaperReleaseVersion } from '@/lib/matrix-options/paper/releases';
+import { getReviewLineage, reviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
+import type { ReviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 import { sectionRegion } from '@/lib/matrix-options/paper/contents-heading';
 import type { PaperRegion } from '@/lib/matrix-options/paper/contents-heading';
 import { APPENDIX_BOUNDARY_LABEL } from '@/lib/matrix-options/paper/outline-hierarchy';
 import type { RevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
-import { authenticateReviewerGuideAgainstPaper, getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
+import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
+import { resolveReviewerGuide, REVIEWER_GUIDE_FAILURE_PREFIX } from '@/lib/matrix-options/paper/reviewer-guide-server';
 import { getProductionAssignment } from '@/lib/matrix-options/revised-paper-review';
 import { getReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
 import { deriveCohortPortions } from '@/lib/matrix-options/paper/cohort-portions';
@@ -30,14 +35,17 @@ import {
   buildPaperUrlContext,
   getPaperDocumentModel,
   getPaperNavOutline,
+  getPaperStableSectionIds,
   PaperDocument,
 } from '@/components/matrix-options/paper/PaperDocument';
 import type { PaperDocumentModel } from '@/components/matrix-options/paper/PaperDocument';
+import { PrivateReleaseSessionGate } from '@/components/matrix-options/paper/PrivateReleaseSessionGate';
 // The page consumes ONLY the manifest-map loader. It deliberately does not import
 // the catalog/context/manifest primitives: catalog authentication and release
 // binding belong to the server trust boundary, and importing them here would
 // suggest the page performs validation it does not perform.
 import { loadDownloadManifestMapState } from '@/lib/matrix-options/paper/download-manifest-server';
+import { loadPaperStructureForPage } from '@/app/(dashboard)/matrix-options/paper/request-structure';
 
 /** Non-sensitive reason codes logged before an expected fail-closed 404 (F-04). */
 type PaperRouteFailureReason =
@@ -45,6 +53,7 @@ type PaperRouteFailureReason =
   | 'GUIDE_AUTHENTICATION_FAILED'
   | 'COHORT_RELEASE_MISMATCH'
   | 'COHORT_PORTIONS_UNAVAILABLE'
+  | 'REVIEW_LINEAGE_UNAVAILABLE'
   | 'PAPER_DOCUMENT_UNAVAILABLE';
 
 class PaperRouteFailure extends Error {
@@ -70,6 +79,9 @@ function failClosed(reason: PaperRouteFailureReason): never {
  * defect and is rethrown so it surfaces instead of hiding behind a 404.
  */
 const CONTRACT_FAILURE_PREFIXES = ['Invalid reviewer guide contract: ', 'Invalid cohort contract: '] as const;
+/** The guide resolver reports every mismatch between a guide and its paper under its own prefix. */
+const GUIDE_FAILURE_PREFIXES = [REVIEWER_GUIDE_FAILURE_PREFIX, ...CONTRACT_FAILURE_PREFIXES] as const;
+const LINEAGE_FAILURE_PREFIXES = ['Invalid review lineage: ', ...CONTRACT_FAILURE_PREFIXES] as const;
 const COHORT_PORTION_FAILURE_PREFIXES = [
   'Expected exactly one authenticated appendix boundary',
   'Cohort has no paper section locators: ',
@@ -91,41 +103,53 @@ function isExpectedPaperFailure(error: unknown, prefixes: readonly string[]): bo
     && prefixes.some((prefix) => error.message.startsWith(prefix));
 }
 
-// One authentication per cached structure object: loadRevisedPaperStructure
-// returns a process-cached, byte/SHA-verified structure, so the guide hash and
+/** What the workspace needs from a release's review contracts, proven against that release's text. */
+interface AuthenticatedReview {
+  /** The guide with its question text: stored text for a repository release, text derived from the release for a private one. */
+  readonly guide: ReviewerGuideContract;
+  readonly cohortPortions: readonly CohortPortion[];
+}
+
+// One authentication per structure object. A loaded structure is byte/SHA-verified
+// and reused across requests (for the process by the repository loader, for as
+// long as the verified bytes are kept by the private one), so the guide check and
 // the cohort portion derivation are not repeated on every request (F-04).
 // Failures are not cached.
-const authenticatedPortionsCache = new WeakMap<object, Promise<readonly CohortPortion[]>>();
+const authenticatedReviewCache = new WeakMap<object, Promise<AuthenticatedReview>>();
 
-function authenticatedCohortPortions(structure: RevisedPaperStructure): Promise<readonly CohortPortion[]> {
-  const cached = authenticatedPortionsCache.get(structure);
+function authenticatedReview(structure: RevisedPaperStructure, documentVersion: PaperReleaseVersion): Promise<AuthenticatedReview> {
+  const cached = authenticatedReviewCache.get(structure);
   if (cached) return cached;
   const pending = (async () => {
+    // The guide and cohorts are the requested release's own contracts, and the
+    // guide is authenticated against that release's exact bytes. Its question
+    // text is the result of that check: nothing reads guide text any other way.
+    let guide: ReviewerGuideContract;
     try {
-      await authenticateReviewerGuideAgainstPaper(getReviewerGuideContract(), structure.content);
+      guide = resolveReviewerGuide(structure);
     } catch (error) {
-      if (isExpectedPaperFailure(error, CONTRACT_FAILURE_PREFIXES)) throw new PaperRouteFailure('GUIDE_AUTHENTICATION_FAILED');
+      if (isExpectedPaperFailure(error, GUIDE_FAILURE_PREFIXES)) throw new PaperRouteFailure('GUIDE_AUTHENTICATION_FAILED');
       throw error;
     }
     let cohortManifest: ReturnType<typeof getCohortManifest>;
     try {
-      cohortManifest = getCohortManifest();
+      cohortManifest = getCohortManifest(documentVersion);
     } catch (error) {
       if (isExpectedPaperFailure(error, CONTRACT_FAILURE_PREFIXES)) throw new PaperRouteFailure('COHORT_RELEASE_MISMATCH');
       throw error;
     }
-    if (cohortManifest.releaseIdentity !== REVISED_PAPER_VERSION || structure.manifest.source.version !== REVISED_PAPER_VERSION || cohortManifest.cohorts.length !== 5) {
+    if (cohortManifest.releaseIdentity !== documentVersion || structure.manifest.source.version !== documentVersion || cohortManifest.cohorts.length !== 5) {
       throw new PaperRouteFailure('COHORT_RELEASE_MISMATCH');
     }
     try {
-      return deriveCohortPortions(structure, cohortManifest);
+      return { guide, cohortPortions: deriveCohortPortions(structure, cohortManifest) };
     } catch (error) {
       if (isExpectedPaperFailure(error, COHORT_PORTION_FAILURE_PREFIXES)) throw new PaperRouteFailure('COHORT_PORTIONS_UNAVAILABLE');
       throw error;
     }
   })();
-  authenticatedPortionsCache.set(structure, pending);
-  pending.catch(() => authenticatedPortionsCache.delete(structure));
+  authenticatedReviewCache.set(structure, pending);
+  pending.catch(() => authenticatedReviewCache.delete(structure));
   return pending;
 }
 
@@ -141,14 +165,20 @@ export default async function PublicationPage({
   const gate = resolveMatrixOptionsPaperReviewNavigationGate(process.env.MATRIX_OPTIONS_PAPER_WORKSPACE, process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION);
   if (gate === 'LEGACY_TWG_REVIEW') redirect(MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH);
   if (gate === 'PAPER_RESOLVER') redirect(REVISED_PAPER_ROUTE);
-  const { documentVersion } = await params;
-  if (documentVersion !== REVISED_PAPER_VERSION) notFound();
+  const { documentVersion: requestedVersion } = await params;
+  // Only a bound release is served. The default stays the default: this route
+  // never substitutes one release for another, it serves the one the URL names.
+  const release = getPaperRelease(requestedVersion);
+  if (!release) notFound();
+  const documentVersion = release.documentVersion;
   const query = (await searchParams) ?? {};
-  const structure = loadRevisedPaperStructure();
-
+  // A private-storage release is read with this request's own session, and only for
+  // a signed-in, non-anonymous reader (request-structure.ts): anyone else gets
+  // notFound(), and a release that cannot be read right now reaches error.tsx.
+  const { structure, supabase, servedTo } = await loadPaperStructureForPage(documentVersion);
   let context: PaperUrlContext;
   try {
-    context = buildPaperUrlContext(structure);
+    context = buildPaperUrlContext(structure, documentVersion);
   } catch (error) {
     if (isExpectedPaperFailure(error, CONTRACT_FAILURE_PREFIXES)) failClosed('URL_CONTEXT_UNAVAILABLE');
     throw error;
@@ -157,9 +187,10 @@ export default async function PublicationPage({
   // Aliases, missing mode, unknown or repeated values: 307 to the canonical URL.
   if (!canonical) redirect(paperWorkspaceHref(documentVersion, state));
 
+  let guide: ReviewerGuideContract;
   let cohortPortions: readonly CohortPortion[];
   try {
-    cohortPortions = await authenticatedCohortPortions(structure);
+    ({ guide, cohortPortions } = await authenticatedReview(structure, documentVersion));
   } catch (error) {
     if (error instanceof PaperRouteFailure) failClosed(error.reason);
     throw error;
@@ -167,12 +198,22 @@ export default async function PublicationPage({
 
   const assignment = getProductionAssignment();
   const workspaceKey = `${state.mode}:${state.cohort ?? ''}:${state.q ?? ''}`;
-  const reviewManifestSha256 = getReviewManifest().sha256;
-
-  const { createClientForPagePath } = await import('@/lib/supabase-auth');
-  const { supabase } = await createClientForPagePath('/matrix-options/paper/publication');
-  const { data: { user } } = await supabase.auth.getUser();
-  const isAnonymous = user?.is_anonymous ?? true;
+  // Each release has its own review manifest: responses are read and written
+  // under the exact release on screen.
+  const reviewManifestSha256 = getReviewManifest(documentVersion).sha256;
+  // A successor release shows the reader's answers to the predecessor as
+  // read-only reference for questions whose text is identical. The predecessor's
+  // rows are read under ITS manifest and are never copied or re-keyed.
+  let reviewLineage: ReviewLineageView | undefined;
+  try {
+    const lineage = getReviewLineage(documentVersion);
+    if (lineage) reviewLineage = reviewLineageView(lineage, getReviewManifest(lineage.predecessorVersion).sha256);
+  } catch (error) {
+    if (isExpectedPaperFailure(error, LINEAGE_FAILURE_PREFIXES)) failClosed('REVIEW_LINEAGE_UNAVAILABLE');
+    throw error;
+  }
+  // The reader's place is carried across drafts by stable section id.
+  const stableSectionIds = getPaperStableSectionIds(structure);
 
   // DELIBERATE, TESTED BEHAVIOUR: a download-boundary failure propagates and
   // fails the page, rather than degrading the download panel to pending. See
@@ -185,12 +226,27 @@ export default async function PublicationPage({
   // That is a real trade-off, but reversing it would mean rewriting the
   // regression test that encodes the current intent, so it is an OWNER decision
   // and is recorded in the handoff rather than changed here.
-  const downloadState = isAnonymous ? null : await loadDownloadManifestMapState(documentVersion, reviewManifestSha256);
+  // Print packages exist for the default release only (the download catalog is
+  // bound to its review manifest). Another release has none provisioned, so
+  // neither the session nor the boundary is consulted for it and the panel shows
+  // its pending state. An anonymous session gets no manifests.
+  let downloadState: Awaited<ReturnType<typeof loadDownloadManifestMapState>> | null = null;
+  if (release.activation === 'DEFAULT') {
+    const { data: { user } } = await supabase.auth.getUser();
+    const isAnonymous = user?.is_anonymous ?? true;
+    if (!isAnonymous) downloadState = await loadDownloadManifestMapState(documentVersion, reviewManifestSha256);
+  }
   const downloadManifests = downloadState?.status === 'ready' ? downloadState.manifests : null;
-
-  const { RevisedPaperWorkspace } = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
+  const workspaceModule = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
+  const { RevisedPaperWorkspace } = workspaceModule;
+  // Everything a private-storage release renders (the workspace, with its guide and its first
+  // section) goes inside the client session gate, bound to the reader this load was authorized
+  // for: a page the browser kept is shown again only while the browser still holds THAT
+  // reader's session (PrivateReleaseSessionGate.tsx). A missing id is passed as it is and the
+  // gate shows nothing. A repository release is returned as it is: no gate, no id.
+  const gated = (workspace: JSX.Element): JSX.Element => (release.delivery === 'private-storage' ? <PrivateReleaseSessionGate servedTo={servedTo ?? ''}>{workspace}</PrivateReleaseSessionGate> : workspace);
   if (state.mode === 'my-review') {
-    return <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} cohortPortions={cohortPortions} downloadManifests={downloadManifests} />;
+    return gated(<RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} guide={guide} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} cohortPortions={cohortPortions} downloadManifests={downloadManifests} reviewLineage={reviewLineage} stableSectionIds={stableSectionIds} />);
   }
 
   // S1 incremental section window: only the initial (or deep-linked) depth-1
@@ -218,9 +274,9 @@ export default async function PublicationPage({
     if (isExpectedPaperFailure(error, DOCUMENT_FAILURE_PREFIXES)) failClosed('PAPER_DOCUMENT_UNAVAILABLE');
     throw error;
   }
-  return (
-    <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} outline={getPaperNavOutline(structure)} sectionWindow={sectionWindow} downloadManifests={downloadManifests}>
+  return gated(
+    <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} guide={guide} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} outline={getPaperNavOutline(structure)} sectionWindow={sectionWindow} downloadManifests={downloadManifests} reviewLineage={reviewLineage} stableSectionIds={stableSectionIds}>
       <PaperDocument model={documentModel} layout="chunks" region={initialRegion} />
-    </RevisedPaperWorkspace>
+    </RevisedPaperWorkspace>,
   );
 }

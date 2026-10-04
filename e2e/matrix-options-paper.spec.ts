@@ -1,17 +1,158 @@
 import { expect, test } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Page, TestInfo } from '@playwright/test';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
+// Both modules are isomorphic and import nothing: the release entries (versions, hashes, the
+// notice id and sentence) and the scroll authority's own bounds are read, not restated.
+import { getPaperRelease, PAPER_WITHHELD_NOTICE_ID, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '../src/lib/matrix-options/paper/releases';
+import { appendixLSourceMediaContract } from '../src/lib/matrix-options/paper/accepted-source-media';
+import { PAPER_LANDING_MAX_ATTEMPTS } from '../src/lib/matrix-options/paper/scroll-authority';
+import {
+  assertPrivateFixtureModeContract,
+  privateFixtureModeForLeg,
+  privateReleaseJourneysEnabled,
+} from '../scripts/verify/matrix-paper-e2e-fixture-mode.mjs';
 import { SESSION_TEARDOWN_PROJECT, SESSION_TEARDOWN_TAG } from './session-teardown';
+
+const contractsDirectory = path.join(__dirname, '..', 'src', 'lib', 'matrix-options', 'paper', 'contracts');
 
 // The ten package ids of the reviewed print-package catalog, read from the contract itself so the
 // anonymous-denial test covers every artifact route rather than a hand-picked one.
 const printPackageIds: string[] = (JSON.parse(
-  fs.readFileSync(path.join(__dirname, '..', 'src', 'lib', 'matrix-options', 'paper', 'contracts', 'print-packages-v1.json'), 'utf8'),
+  fs.readFileSync(path.join(contractsDirectory, 'print-packages-v1.json'), 'utf8'),
 ) as { artifacts: Array<{ packageId: string }> }).artifacts.map((artifact) => artifact.packageId);
 
 const realVersion = '1.0.11-remediated-7-8-successor-20260918-D';
+
+/*
+ * The current review draft is a PRIVATE release: its Markdown and figures are not in the
+ * repository. A non-production server reads them from the directory this variable names (the
+ * private fixture, <dir>/<version>/presentation.md and <dir>/<version>/figures/<ID>.png);
+ * without it the release cannot be rendered here at all.
+ *
+ * Rules for everything below that touches that release:
+ * - a journey that renders it lives in the one describe that is skipped unless
+ *   PRIVATE_RELEASE_JOURNEYS is true, and that describe records no trace, screenshot or video;
+ * - it never runs on GitHub Actions, whatever else is set;
+ * - no text of the release is typed in this file. An assertion about its content compares a
+ *   hash, a count, an id or a boolean, or reads the value from the fixture at run time; nothing
+ *   read from the fixture or from the rendered release is put in a test title, an expect
+ *   message, a log line or an attachment;
+ * - everywhere else, a request that names the private version is aborted before it is sent.
+ */
+/*
+ * What a run without those journeys means is stated, never assumed (the same two words the unit
+ * suites use, src/lib/matrix-options/paper/__tests__/private-fixture.ts):
+ * MATRIX_PAPER_PRIVATE_FIXTURE=required: the private journeys must run. It is a failure when
+ *   the fixture variable is unset, on GitHub Actions, or when the authenticated project that
+ *   runs them is not enabled;
+ * MATRIX_PAPER_PRIVATE_FIXTURE=skip: they are skipped knowingly, fixture or not.
+ * Outside GitHub Actions one of the two must be set: with neither, the guard test fails.
+ */
+const PRIVATE_FIXTURE_MODE = process.env.MATRIX_PAPER_PRIVATE_FIXTURE;
+const ON_GITHUB_ACTIONS = process.env.GITHUB_ACTIONS === 'true';
+const privateAssetDirectory = process.env.MATRIX_OPTIONS_PAPER_PRIVATE_ASSET_DIR;
+const hasPrivatePresentation = (version: string): boolean => Boolean(
+  privateAssetDirectory && fs.existsSync(path.join(privateAssetDirectory, version, 'presentation.md')),
+);
+const PRIVATE_R5_FIXTURE_PRESENT = hasPrivatePresentation(R5_PAPER_VERSION);
+const PRIVATE_V0991_FIXTURE_PRESENT = hasPrivatePresentation(V0991_PAPER_VERSION);
+const PRIVATE_RELEASE_JOURNEYS = privateReleaseJourneysEnabled({
+  mode: PRIVATE_FIXTURE_MODE,
+  githubActions: ON_GITHUB_ACTIONS,
+  fixturePresent: PRIVATE_R5_FIXTURE_PRESENT,
+});
+const V0991_APPENDIX_L_JOURNEY = privateReleaseJourneysEnabled({
+  mode: PRIVATE_FIXTURE_MODE,
+  githubActions: ON_GITHUB_ACTIONS,
+  fixturePresent: PRIVATE_V0991_FIXTURE_PRESENT,
+});
+const ANY_PRIVATE_RELEASE_JOURNEY = PRIVATE_RELEASE_JOURNEYS || V0991_APPENDIX_L_JOURNEY;
+// Mirrors playwright.config.ts (runAuthenticatedE2E): the authenticated project exists only with
+// both test credentials and E2E_AUTH_ENABLED exactly 'true'. Only whether they are set is read.
+const AUTHENTICATED_PROJECT_ENABLED = Boolean(process.env.E2E_TEST_EMAIL && process.env.E2E_TEST_PASSWORD) && process.env.E2E_AUTH_ENABLED === 'true';
+const privateRelease = getPaperRelease(R5_PAPER_VERSION)!;
+const privateWorkspacePath = `/matrix-options/paper/publication/v/${R5_PAPER_VERSION}`;
+const sha256Hex = (value: string | Buffer) => createHash('sha256').update(value).digest('hex');
+
+/*
+ * Playwright's trace, screenshot and video options are worker-scoped: it rejects a test.use()
+ * of them inside a describe group, so they are switched here, for the whole file, exactly when
+ * the private journeys can run. Where they cannot (GitHub Actions, or no fixture) nothing of
+ * the private release is ever requested, and the other journeys keep the configured recording.
+ * The private describe checks the effective values again before every journey.
+ */
+test.use(ANY_PRIVATE_RELEASE_JOURNEY ? { trace: 'off', screenshot: 'off', video: 'off' } : {});
+
+test.describe('v0.9.91 Appendix L inclusion fixture-mode contract', () => {
+  test('v0.9.91 Appendix L inclusion rejects an unset fixture mode outside GitHub Actions', () => {
+    expect(() => assertPrivateFixtureModeContract({
+      mode: undefined,
+      githubActions: false,
+      fixturePresent: true,
+      authenticatedProjectEnabled: true,
+    })).toThrow('MATRIX_PAPER_PRIVATE_FIXTURE must be');
+  });
+
+  test('v0.9.91 Appendix L inclusion isolates the private fixture in non-private wrapper legs', () => {
+    expect(privateFixtureModeForLeg('flags-off')).toBe('skip');
+    expect(privateFixtureModeForLeg('authenticated-v16')).toBe('skip');
+    expect(privateReleaseJourneysEnabled({ mode: 'skip', githubActions: false, fixturePresent: true })).toBe(false);
+    expect(assertPrivateFixtureModeContract({
+      mode: 'skip',
+      githubActions: false,
+      fixturePresent: true,
+      authenticatedProjectEnabled: true,
+    })).toBe(false);
+  });
+
+  test('v0.9.91 Appendix L inclusion runs in the focused required mode with fixture and authentication', () => {
+    const mode = privateFixtureModeForLeg('appendix-l-inclusion-only');
+    expect(mode).toBe('required');
+    expect(privateReleaseJourneysEnabled({ mode, githubActions: false, fixturePresent: true })).toBe(true);
+    expect(assertPrivateFixtureModeContract({
+      mode,
+      githubActions: false,
+      fixturePresent: true,
+      authenticatedProjectEnabled: true,
+    })).toBe(true);
+    expect(() => assertPrivateFixtureModeContract({
+      mode,
+      githubActions: false,
+      fixturePresent: true,
+      authenticatedProjectEnabled: false,
+    })).toThrow('MATRIX_PAPER_PRIVATE_FIXTURE=required, but the authenticated project');
+  });
+
+  test('v0.9.91 Appendix L inclusion requires its version-specific fixture in required mode', () => {
+    if (PRIVATE_FIXTURE_MODE === 'required') {
+      expect(() => assertPrivateFixtureModeContract({
+        mode: PRIVATE_FIXTURE_MODE,
+        githubActions: ON_GITHUB_ACTIONS,
+        fixturePresent: PRIVATE_V0991_FIXTURE_PRESENT,
+        authenticatedProjectEnabled: AUTHENTICATED_PROJECT_ENABLED,
+      })).not.toThrow();
+      expect(V0991_APPENDIX_L_JOURNEY).toBe(!ON_GITHUB_ACTIONS && PRIVATE_V0991_FIXTURE_PRESENT);
+    } else {
+      expect(V0991_APPENDIX_L_JOURNEY).toBe(false);
+    }
+  });
+});
+
+/*
+ * After a failed test Playwright also writes a text snapshot of the page it failed on
+ * (error-context.md, which the HTML report embeds). For a private journey that is the paper's
+ * text, so it is switched off the same way: this variable is read in this worker process when
+ * a test fails.
+ */
+if (ANY_PRIVATE_RELEASE_JOURNEY) process.env.PLAYWRIGHT_NO_COPY_PROMPT = '1';
+/** The whole failure message of a private journey that would run with any recording on. */
+const PRIVATE_RECORDING_MESSAGE = 'A private release journey must not record a trace, a screenshot or a video.';
+
+/** Aborts every request of this page whose address names the private release. */
+const blockPrivateRelease = (page: Page) => page.route((url) => url.href.includes(R5_PAPER_VERSION), (route) => route.abort());
 const realReviewPath = `/matrix-options/paper/review/v/${realVersion}`;
 const legacyFixtureVersion = 'slice-1a-fixture-v1';
 const legacySectionPath = `/matrix-options/paper/v/${legacyFixtureVersion}/synthetic.framework.example`;
@@ -43,7 +184,74 @@ const paperFlagEnabled = (value: string | undefined) => value === undefined || v
 const paperWorkspaceEnabled = paperFlagEnabled(process.env.MATRIX_OPTIONS_PAPER_WORKSPACE);
 const reviewNavigationEnabled = paperWorkspaceEnabled && paperFlagEnabled(process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION);
 
+/*
+ * The workspace header controls are server rendered, so being VISIBLE no
+ * longer implies React has hydrated (they used to be portalled in after
+ * mount). A click before hydration is lost. Every navigation of a workspace
+ * journey therefore waits for the shell's data-hydrated marker when the page is
+ * the workspace (pages that redirect elsewhere have no shell and are not held).
+ */
+const holdNavigationsUntilHydrated = (page: Page, testInfo: TestInfo) => {
+  // Real-release pages render the whole paper server side; against a cold dev
+  // server a single navigation can take most of the default budget.
+  testInfo.setTimeout(Math.max(testInfo.timeout, 240000));
+  const waitForWorkspace = () => page.waitForFunction(() => {
+    const shell = document.querySelector('[data-testid="workspace-shell"]');
+    return !shell || shell.getAttribute('data-hydrated') === 'true';
+  }, null, { timeout: 180000 });
+  const goto = page.goto.bind(page);
+  page.goto = async (...args: Parameters<typeof page.goto>) => {
+    const response = await goto(...args);
+    await waitForWorkspace();
+    return response;
+  };
+  const reload = page.reload.bind(page);
+  page.reload = async (...args: Parameters<typeof page.reload>) => {
+    const response = await reload(...args);
+    await waitForWorkspace();
+    return response;
+  };
+};
+
+const workspacePath = `/matrix-options/paper/publication/v/${realVersion}`;
+const canonicalWorkingDraft = `${workspacePath}?mode=working-draft`;
+/**
+ * Paper Navigation groups start collapsed unless they hold the URL target or
+ * the section in view, which opens them shortly after load. Wait briefly for
+ * that, then open the group explicitly -- never toggling an already-open one.
+ */
+const openOutlineGroup = async (page: Page, name: 'Main Report' | 'Appendices') => {
+  const button = page.getByTestId('paper-outline-desktop').getByRole('button', { name, exact: true });
+  await expect(button).toBeVisible({ timeout: 30000 });
+  await expect.poll(() => button.getAttribute('aria-expanded'), { timeout: 3000 }).toBe('true').catch(() => undefined);
+  if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
+  await expect(button).toHaveAttribute('aria-expanded', 'true');
+};
+/** Review questions start collapsed: open one explicitly (its row toggle). */
+const openQuestion = async (page: Page, number: number) => {
+  const toggle = page.getByTestId(`review-question-toggle-q${number}`);
+  await expect(toggle).toBeVisible({ timeout: 30000 });
+  if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+};
+const pathAndQuery = (url: string) => {
+  const parsed = new URL(url);
+  return `${parsed.pathname}${parsed.search}`;
+};
+const requireJourney = (projectName: string) => {
+  test.skip(!reviewNavigationEnabled, 'The standard E2E harness supplies both exact-true flags for this journey.');
+  if (projectName !== 'chromium-auth') test.skip(true, 'This journey is required only in the authenticated Chromium project.');
+};
+const failOnLogin = (url: string) => {
+  if (url.includes('/login')) throw new Error('REAL_V16_AUTH_REQUIRED_BUT_LOGIN_REDIRECTED');
+};
+const waitForHydratedWorkspace = (page: Page) => page.waitForFunction(() => document.querySelector('[data-testid="workspace-shell"]')?.getAttribute('data-hydrated') === 'true', null, { timeout: 180000 });
+
 test.describe('Matrix Options Paper disabled-route regressions', () => {
+  test.beforeEach(async ({ page }) => {
+    if (!PRIVATE_RELEASE_JOURNEYS) await blockPrivateRelease(page);
+  });
+
   test('flags-off old TWG query preserves the revised-paper status', async ({ page }, testInfo) => {
     test.skip(paperWorkspaceEnabled, 'This regression requires both paper flags to be off.');
     await page.goto('/matrix-options?view=TWG%20Review', { waitUntil: 'networkidle' });
@@ -107,74 +315,20 @@ test.describe('Matrix Options Paper disabled-route regressions', () => {
 });
 
 test.describe('Matrix Options Paper real V16 acceptance', () => {
-  /*
-   * The workspace header controls are server rendered, so being VISIBLE no
-   * longer implies React has hydrated (they used to be portalled in after
-   * mount). A click before hydration is lost. Every navigation in this block
-   * therefore waits for the shell's data-hydrated marker when the page is the
-   * workspace (pages that redirect elsewhere have no shell and are not held).
-   */
   test.beforeEach(async ({ page }, testInfo) => {
-    // Real-release pages render the whole 534 KB paper server side; against a
-    // cold dev server a single navigation can take most of the default budget.
-    testInfo.setTimeout(Math.max(testInfo.timeout, 240000));
-    const waitForWorkspace = () => page.waitForFunction(() => {
-      const shell = document.querySelector('[data-testid="workspace-shell"]');
-      return !shell || shell.getAttribute('data-hydrated') === 'true';
-    }, null, { timeout: 180000 });
-    const goto = page.goto.bind(page);
-    page.goto = async (...args: Parameters<typeof page.goto>) => {
-      const response = await goto(...args);
-      await waitForWorkspace();
-      return response;
-    };
-    const reload = page.reload.bind(page);
-    page.reload = async (...args: Parameters<typeof page.reload>) => {
-      const response = await reload(...args);
-      await waitForWorkspace();
-      return response;
-    };
+    // These journeys are the default draft's. Its version control lists the private draft, so
+    // a request that names it is aborted here rather than trusted not to happen.
+    if (!PRIVATE_RELEASE_JOURNEYS) await blockPrivateRelease(page);
+    holdNavigationsUntilHydrated(page, testInfo);
   });
 
   test.setTimeout(120000);
-  const workspacePath = `/matrix-options/paper/publication/v/${realVersion}`;
-  const canonicalWorkingDraft = `${workspacePath}?mode=working-draft`;
-  /**
-   * Paper Navigation groups start collapsed unless they hold the URL target or
-   * the section in view, which opens them shortly after load. Wait briefly for
-   * that, then open the group explicitly -- never toggling an already-open one.
-   */
-  const openOutlineGroup = async (page: Page, name: 'Main Report' | 'Appendices') => {
-    const button = page.getByTestId('paper-outline-desktop').getByRole('button', { name, exact: true });
-    await expect(button).toBeVisible({ timeout: 30000 });
-    await expect.poll(() => button.getAttribute('aria-expanded'), { timeout: 3000 }).toBe('true').catch(() => undefined);
-    if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
-    await expect(button).toHaveAttribute('aria-expanded', 'true');
-  };
   /** Below lg: open the stacked Appendices group (never toggling it closed). */
   const openStackedAppendices = async (page: Page) => {
     const button = page.getByTestId('paper-outline-stacked').getByRole('button', { name: 'Appendices', exact: true });
     await expect(button).toBeVisible({ timeout: 30000 });
     if ((await button.getAttribute('aria-expanded')) !== 'true') await button.click();
     await expect(button).toHaveAttribute('aria-expanded', 'true');
-  };
-  /** Review questions start collapsed: open one explicitly (its row toggle). */
-  const openQuestion = async (page: Page, number: number) => {
-    const toggle = page.getByTestId(`review-question-toggle-q${number}`);
-    await expect(toggle).toBeVisible({ timeout: 30000 });
-    if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
-    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
-  };
-  const pathAndQuery = (url: string) => {
-    const parsed = new URL(url);
-    return `${parsed.pathname}${parsed.search}`;
-  };
-  const requireJourney = (projectName: string) => {
-    test.skip(!reviewNavigationEnabled, 'The standard E2E harness supplies both exact-true flags for this journey.');
-    if (projectName !== 'chromium-auth') test.skip(true, 'This journey is required only in the authenticated Chromium project.');
-  };
-  const failOnLogin = (url: string) => {
-    if (url.includes('/login')) throw new Error('REAL_V16_AUTH_REQUIRED_BUT_LOGIN_REDIRECTED');
   };
 
   test('authenticated real release lands every legacy entry on the canonical Working Draft', async ({ page }, testInfo) => {
@@ -1248,6 +1402,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
   // test proves the app asked GoTrue for a GLOBAL sign-out, without revoking anyone's session.
   // If the intercept ever stops matching, the request-count assertion fails the test.
   test(`${SESSION_TEARDOWN_TAG} authenticated real release logout ends the session and returns to /login`, async ({ page }, testInfo) => {
+    test.skip(!PRIVATE_RELEASE_JOURNEYS, 'The R5 session-teardown journey needs its version-specific private fixture.');
     test.skip(!reviewNavigationEnabled, 'The standard E2E harness supplies both exact-true flags for this journey.');
     test.skip(testInfo.project.name !== SESSION_TEARDOWN_PROJECT, 'Session-ending tests run only after every shared-session test has finished.');
     const logoutRequests: string[] = [];
@@ -1270,4 +1425,1001 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     await expect(page).toHaveURL(/\/login/);
   });
+});
+
+/** The committed figures contract of the private draft: ids, sizes and hashes, no text. */
+const privateFigureContract = JSON.parse(fs.readFileSync(path.join(contractsDirectory, `accepted-figures-${R5_PAPER_VERSION}.json`), 'utf8')) as {
+  assets: Array<{ id: string; file: string; sha256: string; width: number; height: number }>;
+  placements: Array<{ figureId: string; assetId: string; sectionAnchor: string }>;
+};
+/** Where the app asks for an accepted figure (acceptedFigureAssetHref). */
+const privateFigureHref = (asset: { file: string; sha256: string }) => `/api/matrix-options/paper/v/${encodeURIComponent(R5_PAPER_VERSION)}/figures/${encodeURIComponent(asset.file)}?sha256=${asset.sha256}`;
+/** Where the app asks for one section (PaperSectionWindow's sectionUrl). */
+const privateSectionHref = (anchor: string, paperSha256: string) => `/api/matrix-options/paper/v/${encodeURIComponent(R5_PAPER_VERSION)}/sections/${encodeURIComponent(anchor)}?paper=${encodeURIComponent(paperSha256)}`;
+/** The private presentation, read in this test process only. Call it inside a private journey. */
+const readPrivatePresentationBytes = () => fs.readFileSync(path.join(process.env.MATRIX_OPTIONS_PAPER_PRIVATE_ASSET_DIR ?? '', R5_PAPER_VERSION, 'presentation.md'));
+
+/*
+ * Always-run guards of the private draft. None renders it: the first reads only the
+ * environment (and, where the fixture exists, its length and hash), the second proves the
+ * block that keeps every other page away from it, the third sends requests that carry no
+ * session. They carry the standard harness's journey name so that the authenticated run
+ * selects them as well.
+ */
+test.describe('Matrix Options Paper private draft guards', () => {
+  test('authenticated real release private draft journeys are not silently skipped where the fixture is required', () => {
+    const privateJourneysEnabled = assertPrivateFixtureModeContract({
+      mode: PRIVATE_FIXTURE_MODE,
+      githubActions: ON_GITHUB_ACTIONS,
+      fixturePresent: PRIVATE_R5_FIXTURE_PRESENT || PRIVATE_V0991_FIXTURE_PRESENT,
+      authenticatedProjectEnabled: AUTHENTICATED_PROJECT_ENABLED,
+    });
+    if (!privateJourneysEnabled) return;
+    for (const version of [R5_PAPER_VERSION, V0991_PAPER_VERSION]) {
+      if (!hasPrivatePresentation(version)) continue;
+      const release = getPaperRelease(version)!;
+      const bytes = fs.readFileSync(path.join(privateAssetDirectory!, version, 'presentation.md'));
+      expect(bytes.length).toBe(release.bytes);
+      expect(sha256Hex(bytes)).toBe(release.sha256);
+    }
+  });
+
+  test('authenticated real release a page outside the private journeys cannot request the private draft', async ({ page }) => {
+    test.skip(PRIVATE_RELEASE_JOURNEYS, 'The block is installed only where the private journeys cannot run.');
+    // The block every other describe installs, proven on the real address.
+    await blockPrivateRelease(page);
+    // The control first: with the block installed, the page still reaches an address that
+    // does not name the private draft.
+    expect((await page.goto('/login', { waitUntil: 'domcontentloaded' }))?.ok()).toBe(true);
+    // Then the private draft's own address: the navigation is refused in the browser and the
+    // server is never asked.
+    const answered: string[] = [];
+    page.on('response', (response) => {
+      if (response.url().includes(R5_PAPER_VERSION)) answered.push(response.url());
+    });
+    const refused = await page.goto(`${privateWorkspacePath}?mode=working-draft`).then(() => false, () => true);
+    expect(refused).toBe(true);
+    expect(answered).toEqual([]);
+  });
+
+  test('authenticated real release private draft routes give a request with no session no content', async ({ playwright, baseURL }) => {
+    // storageState is EXPLICITLY empty: in the authenticated project a bare request context
+    // inherits the stored session, and a 401 proven with a session attached proves nothing.
+    const anonymous = await playwright.request.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    try {
+      expect((await anonymous.storageState()).cookies).toHaveLength(0);
+      /*
+       * Both routes check the feature gate first and the session second. With the paper flags
+       * off (the flags-off regression run) the gate answers 404 before a session is looked at;
+       * with them on, no session is 401. Either way: JSON, no-store, and nothing but the error.
+       */
+      const denied = reviewNavigationEnabled ? { status: 401, body: { error: 'Unauthorized' } } : { status: 404, body: { error: 'Not found' } };
+      const asset = privateFigureContract.assets[0];
+      const otherSha256 = '0'.repeat(64);
+      for (const address of [
+        privateSectionHref('any-section', privateRelease.sha256),
+        privateFigureHref(asset),
+        // 401 comes before the hash comparisons: a wrong hash with no session is not a 409.
+        privateSectionHref('any-section', otherSha256),
+        privateFigureHref({ file: asset.file, sha256: otherSha256 }),
+      ]) {
+        const response = await anonymous.get(address, { maxRedirects: 0 });
+        expect(response.status(), address).toBe(denied.status);
+        expect(response.headers()['cache-control'], address).toBe('no-store');
+        expect(response.headers()['content-type'] ?? '', address).toContain('application/json');
+        expect(await response.json(), address).toEqual(denied.body);
+      }
+    } finally {
+      await anonymous.dispose();
+    }
+  });
+});
+
+/*
+ * Journeys of the private draft. They read only: the review API is intercepted wherever a
+ * response could be written, so nothing is saved to the review record for either draft.
+ *
+ * What is asserted about the draft's own content is a count, an id, a hash or a boolean
+ * computed in this process, so a failure prints numbers and never paper text. Text the
+ * application itself defines (labels, the notice, status lines) is asserted as text.
+ */
+test.describe('Matrix Options Paper private draft journeys', () => {
+  test.skip(!PRIVATE_RELEASE_JOURNEYS, 'The private draft renders only where its fixture is available, never on GitHub Actions, and not when MATRIX_PAPER_PRIVATE_FIXTURE is skip.');
+  // Decided here rather than inside each journey, so the flags-off run opens no page for them.
+  test.skip(!reviewNavigationEnabled, 'The standard E2E harness supplies both exact-true flags for these journeys.');
+  test.beforeEach(({ page, trace, screenshot, video }, testInfo) => {
+    // Fail closed: the file-level test.use above is what switches recording off for these journeys.
+    if (trace !== 'off' || screenshot !== 'off' || video !== 'off') throw new Error(PRIVATE_RECORDING_MESSAGE);
+    holdNavigationsUntilHydrated(page, testInfo);
+  });
+  test.setTimeout(120000);
+
+  const privateStart = `${privateWorkspacePath}?mode=working-draft`;
+  const privateWorkspacePattern = privateWorkspacePath.replace(/[.]/g, '[.]');
+  const noticeText = privateRelease.withheld!.notice;
+  const withheldStableSectionId = privateRelease.withheld!.stableSectionId;
+  const oldWithheldAddress = `/matrix-options/paper/v/${R5_PAPER_VERSION}/${withheldStableSectionId}`;
+  const noticeLandingAddress = `${privateStart}#${PAPER_WITHHELD_NOTICE_ID}`;
+  /** Every heading of a Markdown text with the anchor the reader gives it (duplicates are numbered). */
+  const headingsOf = (text: string) => {
+    const seen = new Map<string, number>();
+    return Array.from(text.matchAll(/^(#{1,6})[ \t]+(.+?)[ \t]*$/gm), (match) => {
+      const base = match[2].trim().toLowerCase().replace(/[^\p{L}\p{N}\s-]/gu, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+      const count = seen.get(base) ?? 0;
+      seen.set(base, count + 1);
+      return { level: match[1].length, anchor: count === 0 ? base : `${base}-${count}`, index: match.index ?? 0 };
+    });
+  };
+  /** The private presentation and its headings; this file's own heading parse agrees with the compiler's count. */
+  const readPrivateHeadings = () => {
+    const presentation = readPrivatePresentationBytes().toString('utf8');
+    const headings = headingsOf(presentation);
+    expect(headings.length).toBe(340);
+    // The draft's top-level sections are its level-2 headings (it has no level-1 heading).
+    expect(headings.filter((heading) => heading.level === 2).length).toBe(98);
+    return { presentation, headings };
+  };
+  /** Whether the text an element shows matches, decided in the page: the text itself never reaches a failure message. */
+  const shows = (page: Page, selector: string, pattern: RegExp) => page.locator(selector).first().evaluate((element, source) => new RegExp(source).test((element.textContent ?? '').replace(/\s+/g, ' ').trim()), pattern.source);
+  const sectionOf = (href: string | null) => new URLSearchParams((href ?? '').replace(/^\?/, '')).get('section') ?? '';
+
+  test('authenticated real release offers the private draft as a selectable non-default draft and draws all 20 figure placements', async ({ page, playwright, baseURL }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    test.setTimeout(420000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const { presentation, headings } = readPrivateHeadings();
+    // The alternative text of each placement block (marker, blank, caption, blank, status, blank, image), as a hash.
+    const lines = presentation.split('\n');
+    const altSha256 = new Map<string, string>();
+    lines.forEach((line, index) => {
+      const marker = /^<!-- MATRIX_FIGURE_PLACEMENT: ([0-9A-Z]+-[0-9]+) -->[ \t]*$/.exec(line);
+      const image = marker ? /^!\[(.*)\]\(assets\/[A-Za-z0-9-]+\.png\)[ \t]*$/.exec(lines[index + 6] ?? '') : null;
+      if (marker && image) altSha256.set(marker[1], sha256Hex(image[1]));
+    });
+    expect(altSha256.size).toBe(20);
+    // The section that lists the figures: the top-level heading above the first link to a figure anchor.
+    const firstFigureLink = presentation.search(/\]\(#fig-[a-z0-9-]+\)/);
+    expect(firstFigureLink).toBeGreaterThan(0);
+    const figureListAnchor = headings.filter((heading) => heading.level === 2 && heading.index < firstFigureLink).at(-1)?.anchor ?? '';
+    expect(figureListAnchor.length).toBeGreaterThan(0);
+
+    // The default entry is still the predecessor, with no working-draft status line.
+    await page.goto('/matrix-options/paper', { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    await expect.poll(() => pathAndQuery(page.url()), { timeout: 30000 }).toBe(canonicalWorkingDraft);
+    await expect(page.getByTestId('paper-version-status')).toHaveCount(0);
+    const toggle = page.getByTestId('paper-version-toggle');
+    await expect(toggle).toContainText('Earlier draft');
+    await expect(page.getByTestId('paper-document').locator('figure[data-accepted-figure]')).toHaveCount(0);
+
+    // Choosing the private draft is plain navigation to its own version. Hydrated first: what
+    // is asserted above is already true of the server-rendered page, where a click is lost.
+    await waitForHydratedWorkspace(page);
+    await toggle.click();
+    const popover = page.getByTestId('paper-version-popover');
+    await expect(popover.getByTestId('paper-version-option-1.0.11-remediated-7-8-successor-20260918-D')).toHaveAttribute('aria-current', 'true');
+    await popover.getByTestId(`paper-version-option-${R5_PAPER_VERSION}`).click();
+    await expect.poll(() => new RegExp(`^${privateWorkspacePattern}[?]mode=working-draft`).test(pathAndQuery(page.url())), { timeout: 60000 }).toBe(true);
+    await waitForHydratedWorkspace(page);
+    await expect(page.getByTestId('paper-version-toggle')).toContainText('Current draft');
+    const status = page.getByTestId('paper-version-status');
+    await expect(status).toBeVisible();
+    await expect(status).toContainText('Current review draft. A preview: not the default draft. Responses to this draft are separate from the earlier draft.');
+    await expect(page.getByRole('link', { name: 'Working Draft', exact: true })).toHaveAttribute('href', privateStart);
+    await expect(page.locator('h1')).toHaveCount(1);
+
+    // Every accepted figure, proven the way a reader reaches one: from the draft's list of
+    // figures. Each of its links is the app's own mapping of a figure to the section that holds
+    // it (a figure can sit in a subsection of the section the contract anchors it to, and this
+    // draft loads those subsections as sections of their own), so the test follows the links and
+    // computes no address. The whole draft is deliberately NOT loaded here. 98 sections plus 17
+    // images is most of one user's request budget for a minute, and this file runs in parallel
+    // with the other full-load journeys under the same shared e2e user.
+    await expect(page.getByTestId('paper-load-progress')).toContainText('of 98 sections', { timeout: 30000 });
+    expect(privateFigureContract.placements).toHaveLength(20);
+    expect(privateFigureContract.assets).toHaveLength(17);
+    const drawn = new Map<string, { src: string; altSha256: string; section: string }>();
+    const paperDocument = page.getByTestId('paper-document');
+    await page.goto(`${privateStart}&section=${figureListAnchor}`, { waitUntil: 'domcontentloaded' });
+    await expect(paperDocument.getByRole('link', { name: /^Figure 6-1[.]/ })).toBeVisible({ timeout: 60000 });
+    // Only the figure id and the address leave the page: the link text stays there.
+    const figureLinks = new Map<string, string>(await paperDocument.locator('a').evaluateAll((nodes) => nodes.flatMap((node): Array<[string, string]> => {
+      const id = /^Figure ([0-9A-Z]+-[0-9]+)[.]/.exec((node.textContent ?? '').trim())?.[1];
+      return id ? [[id, node.getAttribute('href') ?? '']] : [];
+    })));
+    // One link for each of the 20 placements, and nothing else.
+    expect([...figureLinks.keys()].sort()).toEqual(privateFigureContract.placements.map((placement) => placement.figureId).sort());
+    for (const placement of privateFigureContract.placements) {
+      if (drawn.has(placement.figureId)) continue;
+      const href = figureLinks.get(placement.figureId) ?? '';
+      expect(/^[?]mode=working-draft&section=[a-z0-9-]+$/.test(href), `figure list link for ${placement.figureId}`).toBe(true);
+      await page.goto(`${privateWorkspacePath}${href}`, { waitUntil: 'domcontentloaded' });
+      await expect.poll(() => /[?]mode=working-draft&section=/.test(pathAndQuery(page.url())), { timeout: 60000 }).toBe(true);
+      await expect(paperDocument.locator(`figure[data-accepted-figure="${placement.figureId}"]`)).toHaveCount(1, { timeout: 60000 });
+      const windowFigures = paperDocument.locator('figure[data-accepted-figure]');
+      // Every image in this window is served by the authenticated figures route, and it decodes.
+      await expect.poll(() => windowFigures.locator('img').evaluateAll((images) => images.filter((image) => !(image as HTMLImageElement).complete || (image as HTMLImageElement).naturalWidth === 0).length), { timeout: 120000 }).toBe(0);
+      await expect(paperDocument.locator('[data-accepted-figure-load-failed], [data-testid="accepted-figure-load-failed"]')).toHaveCount(0);
+      for (const entry of await windowFigures.evaluateAll((nodes) => nodes.map((node) => ({ id: node.getAttribute('data-accepted-figure') ?? '', section: node.getAttribute('data-section-anchor') ?? '', src: node.querySelector('img')?.getAttribute('src') ?? '', alt: node.querySelector('img')?.getAttribute('alt') ?? '' })))) {
+        drawn.set(entry.id, { src: entry.src, altSha256: sha256Hex(entry.alt), section: entry.section });
+      }
+      // In every window: no figure that failed to bind, none of the predecessor's redraws or the
+      // figure-lab PX figures, nothing of the source markup, no element id used twice, no sideways scroll.
+      await expect(paperDocument.locator('[data-accepted-figure-unavailable]')).toHaveCount(0);
+      // No figure of this private draft links to its image in a tab of its own.
+      await expect(windowFigures.locator('a, [target], .paper-figure__actions')).toHaveCount(0);
+      await expect(paperDocument.locator('figure[data-paper-figure]')).toHaveCount(0);
+      await expect(paperDocument.locator('figure[data-derived-figure]')).toHaveCount(0);
+      const windowText = await paperDocument.innerText();
+      for (const marker of ['MATRIX_FIGURE_PLACEMENT', '[]{#', ':::', 'assets/FIG']) expect(windowText.includes(marker), marker).toBe(false);
+      // A section opened by its own address is server-rendered, so the source Markdown of that
+      // section travels in the framework's page data (script elements the reader never sees).
+      // The marker must be nowhere else: no rendered text, comment, attribute or template.
+      expect(await page.evaluate(() => {
+        const found: string[] = [];
+        const walker = document.createTreeWalker(document.documentElement, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_COMMENT);
+        for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+          const parent = node.parentElement;
+          if (parent?.tagName === 'SCRIPT') continue;
+          if ((node.nodeValue ?? '').includes('MATRIX_FIGURE_PLACEMENT')) found.push(`${node.nodeType === Node.COMMENT_NODE ? 'comment' : 'text'} in ${parent?.tagName ?? 'document'}`);
+        }
+        for (const element of Array.from(document.querySelectorAll('*'))) {
+          for (const attribute of Array.from(element.attributes)) if (attribute.value.includes('MATRIX_FIGURE_PLACEMENT')) found.push(`attribute ${attribute.name} on ${element.tagName}`);
+          if (element instanceof HTMLTemplateElement && element.innerHTML.includes('MATRIX_FIGURE_PLACEMENT')) found.push('template');
+        }
+        return found;
+      })).toEqual([]);
+      expect(await page.evaluate(() => {
+        const seen = new Set<string>();
+        let duplicates = 0;
+        for (const element of Array.from(document.querySelectorAll('[id]'))) {
+          if (seen.has(element.id)) duplicates += 1;
+          seen.add(element.id);
+        }
+        return duplicates;
+      })).toBe(0);
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    }
+    // All twenty placements were drawn, each in the section the contract binds it to, from 17
+    // distinct assets, with the alternative text of its own block.
+    expect([...drawn.keys()].sort()).toEqual(privateFigureContract.placements.map((placement) => placement.figureId).sort());
+    for (const placement of privateFigureContract.placements) {
+      const asset = privateFigureContract.assets.find((candidate) => candidate.id === placement.assetId)!;
+      expect(drawn.get(placement.figureId), placement.figureId).toEqual({ src: privateFigureHref(asset), altSha256: altSha256.get(placement.figureId), section: placement.sectionAnchor });
+    }
+    const sources = [...new Set([...drawn.values()].map((entry) => entry.src))];
+    expect(sources).toHaveLength(17);
+    const figures = paperDocument.locator('figure[data-accepted-figure]');
+    // Print: the figures stay, the screen-only controls go.
+    await page.emulateMedia({ media: 'print' });
+    await expect(figures.first()).toBeVisible();
+    await expect(page.getByTestId('paper-version-status')).toHaveCSS('display', 'none');
+    // The withheld-appendix notice is outside the header and prints with the paper.
+    await expect(page.getByTestId('paper-withheld-notice')).toBeVisible();
+    await page.emulateMedia({ media: 'screen' });
+    // A figure of this private draft has no link of its own, on screen or in print: nothing in
+    // a figure opens the image by itself in a tab outside the page's session gate.
+    await expect(figures.locator('a, [target], .paper-figure__actions')).toHaveCount(0);
+    await expect(paperDocument.getByText('Open full-size image')).toHaveCount(0);
+
+    // What it has instead is the full-size viewer: a button under every figure, and a dialog IN
+    // the page (inside its session gate). Opened from the keyboard, it asks the authenticated
+    // figures route for the bytes again and draws them: the image is given no address at all.
+    // (Sections go on loading around the reading position, so "the first figure" is not a
+    // fixed element: the figure under test is named by its own id.)
+    await expect.poll(() => figures.evaluateAll((nodes) => nodes.filter((node) => node.querySelectorAll('button[data-testid="accepted-figure-view-full-size"]').length !== 1).length)).toBe(0);
+    const viewedFigureId = (await figures.first().getAttribute('data-accepted-figure')) ?? '';
+    expect(privateFigureContract.placements.some((placement) => placement.figureId === viewedFigureId)).toBe(true);
+    const viewButton = paperDocument.locator(`figure[data-accepted-figure="${viewedFigureId}"]`).getByRole('button', { name: `View full-size image of Figure ${viewedFigureId}`, exact: true });
+    await expect(viewButton).toHaveCount(1);
+    await expect(viewButton).toBeEnabled();
+    const viewer = page.getByTestId('accepted-figure-viewer');
+    await expect(viewer).toHaveCount(0);
+    const viewerRequests: Array<{ path: string; status: number; headers: Promise<Record<string, string>> }> = [];
+    // Only the viewer asks for a figure with fetch; the figures in the page are image loads
+    // (and sections around the reading position go on loading theirs).
+    const recordFigureRequest = (response: { url: () => string; status: () => number; request: () => { resourceType: () => string; allHeaders: () => Promise<Record<string, string>> } }) => {
+      const address = new URL(response.url());
+      if (address.pathname.includes('/figures/') && response.request().resourceType() === 'fetch') viewerRequests.push({ path: address.pathname, status: response.status(), headers: response.request().allHeaders() });
+    };
+    page.on('response', recordFigureRequest);
+    await viewButton.focus();
+    await page.keyboard.press('Enter');
+    await expect(viewer).toHaveAttribute('data-view', 'shown', { timeout: 60000 });
+    // One new request, to the application's own figures route (never to Storage), asking for no cached answer.
+    expect(viewerRequests).toHaveLength(1);
+    expect(viewerRequests[0].path.startsWith(`/api/matrix-options/paper/v/${encodeURIComponent(R5_PAPER_VERSION)}/figures/`)).toBe(true);
+    // It is a full request, not a revalidation of a kept copy: it offers no validator, and the
+    // route answers it 200 with the bytes (a revalidation would be answered 304).
+    const viewerRequestHeaders = await viewerRequests[0].headers;
+    expect(viewerRequestHeaders['if-none-match']).toBeUndefined();
+    expect(viewerRequests[0].status).toBe(200);
+    // The dialog is modal, holds the focus, has a name, and the image in it is DRAWN (a canvas
+    // of the asset's bound pixel size with something on it), so it has no address at all: no
+    // element in the dialog loads from one, and nothing in it names one.
+    const viewedAsset = privateFigureContract.assets.find((candidate) => candidate.id === privateFigureContract.placements.find((placement) => placement.figureId === viewedFigureId)?.assetId)!;
+    expect(await viewer.evaluate((dialog) => {
+      const canvas = dialog.querySelector('canvas') as HTMLCanvasElement;
+      // A sample of the drawn pixels: a canvas nothing was drawn on is fully transparent.
+      const sample = canvas.getContext('2d')!.getImageData(Math.floor(canvas.width / 4), Math.floor(canvas.height / 4), Math.ceil(canvas.width / 2), 1).data;
+      let opaque = 0;
+      for (let index = 3; index < sample.length; index += 4) if (sample[index] > 0) opaque += 1;
+      const box = dialog.getBoundingClientRect();
+      return {
+        modal: (dialog as HTMLDialogElement).open && dialog.matches(':modal'),
+        focusInside: dialog.contains(document.activeElement),
+        width: canvas.width,
+        height: canvas.height,
+        drawn: opaque > 0,
+        isAnImageWithAName: canvas.getAttribute('role') === 'img' && (canvas.getAttribute('aria-label') ?? '').length > 0,
+        elementsWithAnAddress: dialog.querySelectorAll('img, a, [src], [href], [target]').length,
+        namesAnAddress: /https?:|blob:|data:|[/]storage[/]|[/]api[/]|token=/.test(dialog.innerHTML),
+        insideWindow: box.left >= 0 && box.top >= 0 && box.right <= window.innerWidth && box.bottom <= window.innerHeight,
+      };
+    })).toEqual({ modal: true, focusInside: true, width: viewedAsset.width, height: viewedAsset.height, drawn: true, isAnImageWithAName: true, elementsWithAnAddress: 0, namesAnAddress: false, insideWindow: true });
+    await expect(viewer).toHaveAccessibleName(/^Figure [0-9A-Z]+-[0-9]+, full size$/);
+    // "Fit to window" off shows the image at its own pixel size; the page behind does not scroll sideways.
+    const fitToggle = viewer.getByRole('button', { name: 'Fit to window' });
+    await expect(fitToggle).toHaveAttribute('aria-pressed', 'true');
+    expect(await viewer.locator('canvas').evaluate((canvas) => { const stage = canvas.parentElement!.getBoundingClientRect(); const box = canvas.getBoundingClientRect(); return box.width > 0 && box.right <= stage.right + 1 && box.bottom <= stage.bottom + 1; })).toBe(true);
+    await fitToggle.click();
+    await expect(fitToggle).toHaveAttribute('aria-pressed', 'false');
+    expect(await viewer.locator('canvas').evaluate((canvas) => Math.abs(canvas.getBoundingClientRect().width - (canvas as HTMLCanvasElement).width) <= 1)).toBe(true);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    // Escape closes it and focus is back on the button it was opened from.
+    await page.keyboard.press('Escape');
+    await expect(viewer).toHaveCount(0);
+    await expect(viewButton).toBeFocused();
+    // "Close" does the same, and every open asks the route again.
+    await page.keyboard.press('Space');
+    await expect(viewer).toHaveAttribute('data-view', 'shown', { timeout: 60000 });
+    expect(viewerRequests).toHaveLength(2);
+    await viewer.getByRole('button', { name: 'Close' }).click();
+    await expect(viewer).toHaveCount(0);
+    await expect(viewButton).toBeFocused();
+    page.off('response', recordFigureRequest);
+
+    // A signed-out request never receives a figure of this draft. storageState is EXPLICITLY
+    // empty: in this project a bare request context inherits the stored session.
+    const signedOut = await playwright.request.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    try {
+      expect((await signedOut.storageState()).cookies).toHaveLength(0);
+      const denied = await signedOut.get(sources[0]);
+      expect(denied.status()).toBe(401);
+      expect(denied.headers()['content-type'] ?? '').not.toContain('image/');
+      // Two-sided: the same address is served to the signed-in reader.
+      expect((await page.request.get(sources[0])).status()).toBe(200);
+    } finally {
+      await signedOut.dispose();
+    }
+
+    // Phone width: the figure scrolls inside its own plate, the page never scrolls sideways.
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto(`/matrix-options/paper/v/${R5_PAPER_VERSION}/sec-6-0`, { waitUntil: 'domcontentloaded' });
+    await expect.poll(() => /[?]mode=working-draft&section=/.test(pathAndQuery(page.url())), { timeout: 60000 }).toBe(true);
+    const phoneFigure = page.getByTestId('paper-document').locator('figure#fig-6-1');
+    await expect(phoneFigure).toBeVisible({ timeout: 60000 });
+    expect(await shows(page, 'figure#fig-6-1 figcaption', /Figure 6-1[.]/)).toBe(true);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    // Phone width, the viewer: the dialog fits the window, the fitted image fits the dialog, and
+    // the page behind still does not scroll sideways.
+    await waitForHydratedWorkspace(page);
+    const phoneViewButton = phoneFigure.getByRole('button', { name: 'View full-size image of Figure 6-1' });
+    await expect(phoneViewButton).toBeEnabled({ timeout: 60000 });
+    await phoneViewButton.click();
+    const phoneViewer = page.getByTestId('accepted-figure-viewer');
+    await expect(phoneViewer).toHaveAttribute('data-view', 'shown', { timeout: 60000 });
+    expect(await phoneViewer.evaluate((dialog) => {
+      const box = dialog.getBoundingClientRect();
+      const image = dialog.querySelector('canvas')!.getBoundingClientRect();
+      const close = dialog.querySelector('[data-testid="accepted-figure-viewer-close"]')!.getBoundingClientRect();
+      return {
+        dialogInsideWindow: box.left >= 0 && box.top >= 0 && box.right <= window.innerWidth && box.bottom <= window.innerHeight,
+        imageInsideDialog: image.width > 0 && image.left >= box.left - 1 && image.right <= box.right + 1 && image.bottom <= box.bottom + 1,
+        closeIsATouchTarget: close.height >= 44 && close.right <= box.right,
+      };
+    })).toEqual({ dialogInsideWindow: true, imageInsideDialog: true, closeIsATouchTarget: true });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    await phoneViewer.getByRole('button', { name: 'Close' }).click();
+    await expect(phoneViewer).toHaveCount(0);
+    await expect(phoneViewButton).toBeFocused();
+
+    // A retired predecessor id lands where the section that replaced it lands; the status line returns to the default draft.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/matrix-options/paper/v/${R5_PAPER_VERSION}/sec-7-8`, { waitUntil: 'domcontentloaded' });
+    await expect.poll(() => /[?]mode=working-draft&section=[a-z0-9-]+$/.test(pathAndQuery(page.url())), { timeout: 60000 }).toBe(true);
+    const replacementLanding = pathAndQuery(page.url());
+    await page.goto(`/matrix-options/paper/v/${R5_PAPER_VERSION}/sec-7-8-1`, { waitUntil: 'domcontentloaded' });
+    await expect.poll(() => pathAndQuery(page.url()) === replacementLanding, { timeout: 60000 }).toBe(true);
+    // Hydrated first, like every other interaction here (without this wait the click failed
+    // to navigate in 1 of 4 runs).
+    await waitForHydratedWorkspace(page);
+    await page.getByTestId('paper-version-status').getByRole('link', { name: 'Go to the earlier draft' }).click();
+    await expect.poll(() => new RegExp(`^${workspacePath.replace(/[.]/g, '[.]')}[?]mode=working-draft`).test(pathAndQuery(page.url())), { timeout: 60000 }).toBe(true);
+    await waitForHydratedWorkspace(page);
+    await expect(page.getByTestId('paper-version-status')).toHaveCount(0);
+  });
+
+  // Session-ending, so it runs ONLY in the session-teardown project, and the one request the
+  // app's Logout sends to GoTrue is answered here instead of delivered (see the logout journey
+  // of the default draft above: no session of the shared account is revoked).
+  test(`${SESSION_TEARDOWN_TAG} authenticated real release private draft: after sign-out, Back shows no figure, no full-size viewer and nothing of the draft`, async ({ page }, testInfo) => {
+    test.skip(!PRIVATE_RELEASE_JOURNEYS, 'The R5 session-teardown journey needs its version-specific private fixture.');
+    test.skip(testInfo.project.name !== SESSION_TEARDOWN_PROJECT, 'Session-ending tests run only after every shared-session test has finished.');
+    test.setTimeout(420000);
+    const logoutRequests: string[] = [];
+    await page.route('**/auth/v1/logout**', async (route) => {
+      logoutRequests.push(route.request().url());
+      await route.fulfill({ status: 204, body: '', headers: { 'access-control-allow-origin': route.request().headers()['origin'] ?? '*', 'access-control-allow-credentials': 'true' } });
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/matrix-options/paper/v/${R5_PAPER_VERSION}/sec-6-0`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    await expect.poll(() => /[?]mode=working-draft&section=/.test(pathAndQuery(page.url())), { timeout: 60000 }).toBe(true);
+    await waitForHydratedWorkspace(page);
+    const figure = page.getByTestId('paper-document').locator('figure#fig-6-1');
+    await expect(figure).toBeVisible({ timeout: 60000 });
+    // The reader uses the viewer, then closes it: the page is the one a kept copy would show again.
+    const viewButton = figure.getByRole('button', { name: 'View full-size image of Figure 6-1' });
+    await expect(viewButton).toBeEnabled({ timeout: 60000 });
+    await viewButton.click();
+    const viewer = page.getByTestId('accepted-figure-viewer');
+    await expect(viewer).toHaveAttribute('data-view', 'shown', { timeout: 60000 });
+    await page.keyboard.press('Escape');
+    await expect(viewer).toHaveCount(0);
+    // Sign out with the application's own control.
+    await page.getByRole('button', { name: 'Logout' }).click();
+    await expect(page).toHaveURL(/\/login/, { timeout: 120000 });
+    expect(logoutRequests).toHaveLength(1);
+    /** What of the private draft is in the document: counts only. */
+    const privateContent = () => page.evaluate(() => ({
+      workspace: document.querySelectorAll('[data-testid="workspace-shell"], [data-testid="paper-document"], #paper-withheld-notice').length,
+      figures: document.querySelectorAll('figure[data-accepted-figure], figure[data-accepted-figure] img').length,
+      viewer: document.querySelectorAll('[data-testid="accepted-figure-viewer"], [data-testid="accepted-figure-view-full-size"], dialog').length,
+    }));
+    expect(await privateContent()).toEqual({ workspace: 0, figures: 0, viewer: 0 });
+    // Back, then Forward. Signing out on the private page makes its session gate leave by a
+    // hard navigation that REPLACES the page's own history entry, so Back has no entry of the
+    // draft to return to. Wherever each step ends, it is not the draft, and nothing of the
+    // draft is in the document.
+    const settled = async () => {
+      let last = page.url();
+      for (let stable = 0; stable < 8;) {
+        await page.waitForTimeout(250);
+        if (page.url() === last) stable += 1;
+        else { last = page.url(); stable = 0; }
+      }
+      await page.waitForLoadState('domcontentloaded').catch(() => undefined);
+      return { onTheDraft: page.url().includes(R5_PAPER_VERSION), ...(await privateContent()) };
+    };
+    await page.goBack({ waitUntil: 'commit' }).catch(() => undefined);
+    expect(await settled()).toEqual({ onTheDraft: false, workspace: 0, figures: 0, viewer: 0 });
+    await page.goForward({ waitUntil: 'commit' }).catch(() => undefined);
+    expect(await settled()).toEqual({ onTheDraft: false, workspace: 0, figures: 0, viewer: 0 });
+    // Asking for the draft's address again is answered by the sign-in page.
+    await page.goto(`/matrix-options/paper/v/${R5_PAPER_VERSION}/sec-6-0`, { waitUntil: 'domcontentloaded' });
+    await expect(page).toHaveURL(/\/login/, { timeout: 120000 });
+    expect(await privateContent()).toEqual({ workspace: 0, figures: 0, viewer: 0 });
+    // And a signed-out browser is not given the figure by its route either.
+    const asset = privateFigureContract.assets[0];
+    const refused = await page.request.get(privateFigureHref(asset), { maxRedirects: 0 });
+    expect(refused.status()).toBe(401);
+    expect(refused.headers()['content-type'] ?? '').not.toContain('image/');
+  });
+
+  test('authenticated real release private draft My Review keeps responses separate: earlier answers are read-only reference, Q11 needs a new response, and a save carries only what was typed', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    test.setTimeout(240000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    const earlier = 'E2E earlier answer to the previous draft.';
+    const response = '[data-testid="active-question-response"]';
+    const heading = '#active-question-heading';
+    let userKey = '';
+    const reads: Array<{ version: string | null; method: string }> = [];
+    const writes: string[] = [];
+    await page.route('**/api/matrix-options/paper/reviews?*', async (route) => {
+      const url = new URL(route.request().url());
+      const version = url.searchParams.get('documentVersion');
+      const manifest = url.searchParams.get('manifestSha256') ?? '';
+      reads.push({ version, method: route.request().method() });
+      if (!userKey) {
+        // The signed-in reviewer's own id, from the real (read-only) route.
+        const real = await route.fetch();
+        userKey = String(((await real.json().catch(() => ({}))) as { userKey?: unknown }).userKey ?? '');
+        expect(/\S/.test(userKey)).toBe(true);
+      }
+      const earlierRow = (number: number, cohortId: string) => ({ id: `lineage-${number}`, document_version: realVersion, manifest_sha256: manifest, cohort_id: cohortId, question_id: `rpq:${realVersion}:q${String(number).padStart(2, '0')}`, draft_text: null, submitted_text: earlier, revision: 2, submitted_revision: 2, submitted_at: '2026-09-20T10:00:00.000Z', updated_at: '2026-09-20T10:00:00.000Z' });
+      // The reviewer answered Q1 and Q11 of the previous draft; this draft has no responses yet.
+      const rows = version === realVersion ? [earlierRow(1, 'categories'), earlierRow(11, 'methods-water-type')] : [];
+      await route.fulfill({ status: 200, headers: { 'Cache-Control': 'no-store' }, contentType: 'application/json', body: JSON.stringify({ persistence: 'available', userKey, rows }) });
+    });
+    // Every save or submit is answered HERE and never reaches the server, so this journey writes
+    // nothing to the review record. It is answered the way a record that has not been provisioned
+    // for this draft answers: unknown_identity.
+    const writeBodies: Array<Record<string, unknown>> = [];
+    await page.route('**/api/matrix-options/paper/reviews/**', async (route) => {
+      writes.push(`${route.request().method()} ${decodeURIComponent(new URL(route.request().url()).pathname)}`);
+      writeBodies.push(JSON.parse(route.request().postData() ?? '{}') as Record<string, unknown>);
+      await route.fulfill({ status: 404, contentType: 'application/json', headers: { 'Cache-Control': 'no-store' }, body: JSON.stringify({ outcome: 'unknown_identity' }) });
+    });
+
+    await page.goto(`${privateWorkspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    await expect(page.getByTestId('paper-version-status')).toContainText('Responses to this draft are separate from the earlier draft.');
+    await expect(page.getByTestId('review-progress-count')).toHaveText('0 of 12 complete');
+
+    // Q1: identical wording, so the earlier answer is shown for reference and the editor is empty.
+    await openQuestion(page, 1);
+    await expect.poll(() => shows(page, heading, /^Question 1: /), { timeout: 30000 }).toBe(true);
+    const reference = page.getByTestId('review-lineage-reference');
+    await expect(reference).toBeVisible({ timeout: 30000 });
+    await reference.locator('summary').click();
+    await expect(page.getByTestId('review-lineage-text')).toHaveText(earlier);
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('');
+    await expect(page.getByTestId('review-lineage-changed')).toHaveCount(0);
+
+    // Q11: reworded, so nothing is carried over although the reviewer answered the earlier Q11.
+    await openQuestion(page, 11);
+    await expect.poll(() => shows(page, heading, /^Question 11: \S/), { timeout: 30000 }).toBe(true);
+    // Kept in this process to compare with the default draft's Q11 below; never printed.
+    const privateQuestion11 = sha256Hex(await page.locator(heading).innerText());
+    await expect(page.getByTestId('review-lineage-changed')).toBeVisible();
+    await expect(page.getByTestId('review-lineage-reference')).toHaveCount(0);
+    await expect(page.getByText(earlier)).toHaveCount(0);
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('');
+    await expect(page.getByRole('button', { name: 'Submit response' })).toBeDisabled();
+
+    // Reads only so far: each under its own draft identity, and no write of any kind from
+    // merely viewing the earlier answer or the reworded question.
+    expect(reads.every((read) => read.method === 'GET')).toBe(true);
+    expect(new Set(reads.map((read) => read.version))).toEqual(new Set([R5_PAPER_VERSION, realVersion]));
+    expect(writes).toEqual([]);
+
+    // Now a real save attempt on Q1, whose earlier answer is on screen as reference. The save
+    // carries ONLY what was typed, under this draft's identity: never the earlier answer.
+    await openQuestion(page, 1);
+    await expect(page.getByTestId('review-lineage-reference')).toBeVisible({ timeout: 30000 });
+    const typed = 'E2E typed answer for the current review draft.';
+    // Nothing is clicked: the save is sent by the autosave timer (1.5 s after typing stops), so
+    // this test proves the timer is live here before it proves that it stops.
+    await page.getByRole('textbox', { name: 'Your response' }).fill(typed);
+    expect(writes).toHaveLength(0);
+    await expect.poll(() => writes.length, { timeout: 30000 }).toBe(1);
+    expect(writes[0]).toBe(`PUT /api/matrix-options/paper/reviews/rpq:${R5_PAPER_VERSION}:q01`);
+    expect(writeBodies[0]).toMatchObject({ documentVersion: R5_PAPER_VERSION, cohortId: 'categories', action: 'save-draft', text: typed });
+    expect(JSON.stringify(writeBodies[0]).includes(earlier)).toBe(false);
+    expect(JSON.stringify(writeBodies[0]).includes(realVersion)).toBe(false);
+    // A record that does not know this draft is said plainly, not as a retryable error, and the text stays.
+    await expect.poll(() => shows(page, response, /Responses to this draft cannot be saved to the review record yet[.] What you type is kept in this browser only, and is cleared when you sign out[.]/), { timeout: 30000 }).toBe(true);
+    expect(await shows(page, response, /Could not save/)).toBe(false);
+    await expect(page.getByTestId('review-persistence-retry')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue(typed);
+    // The earlier answer is still only a reference.
+    await expect(page.getByTestId('review-lineage-text')).toHaveText(earlier);
+    // No retry and no further autosave: the reviewer keeps typing after the refusal, twice the
+    // autosave delay passes, and it is still exactly the one refused save. The text stays.
+    const typedMore = `${typed} More, typed after the refusal.`;
+    await page.getByRole('textbox', { name: 'Your response' }).fill(typedMore);
+    await page.waitForTimeout(3000);
+    expect(writes).toHaveLength(1);
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue(typedMore);
+
+    // The default draft is unchanged: its own questions (its Q11 is not this draft's reworded
+    // one), no lineage note, no working-draft status.
+    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByTestId('paper-version-status')).toHaveCount(0);
+    await openQuestion(page, 11);
+    await expect(page.locator(heading)).toHaveText(/^Question 11: On water type/);
+    expect(sha256Hex(await page.locator(heading).innerText()) === privateQuestion11).toBe(false);
+    await expect(page.getByTestId('review-lineage-changed')).toHaveCount(0);
+    await expect(page.getByTestId('review-lineage-reference')).toHaveCount(0);
+    // Viewing the default draft sent nothing either: still only the one intercepted save.
+    expect(writes).toHaveLength(1);
+  });
+
+  test('authenticated real release private draft has no Appendix L: one notice, no Appendix L in the paper or its navigation, and old Appendix L addresses land on the notice', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    test.setTimeout(420000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    /*
+     * The release artifact ends before Appendix L, so there is no withheld text anywhere to look
+     * for: the server holds none (the artifact is proven by length and hash where it is read).
+     * What a browser can still show is structure, and that is what is asserted: the paper ends
+     * with the artifact's last top-level section, nothing names Appendix L as a section or a
+     * link, and every old address of it lands on the one notice.
+     */
+    const { presentation, headings } = readPrivateHeadings();
+    const lastSectionAnchor = headings.filter((heading) => heading.level === 2).at(-1)?.anchor ?? '';
+    expect(lastSectionAnchor.length).toBeGreaterThan(0);
+    const notice = page.getByTestId('paper-withheld-notice');
+    const paper = page.getByTestId('paper-document');
+    const atNoticeLanding = () => pathAndQuery(page.url()) === privateStart && new URL(page.url()).hash === `#${PAPER_WITHHELD_NOTICE_ID}`;
+
+    // 1. The old stable address of Appendix L lands on the notice of this draft's Working Draft.
+    await page.goto(oldWithheldAddress, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    await expect.poll(atNoticeLanding, { timeout: 60000 }).toBe(true);
+    await waitForHydratedWorkspace(page);
+    // One notice, in neither the paper nor the header, showing the sentence the release entry defines.
+    await expect(notice).toHaveCount(1);
+    await expect(notice).toBeVisible();
+    await expect(notice.getByTestId('paper-withheld-notice-text')).toHaveText(noticeText);
+    // It is editorial, and says so: the workspace's own label, then that one sentence.
+    await expect(notice.getByTestId('paper-withheld-notice-label')).toHaveText('Workspace note');
+    await expect(notice).toHaveText(`Workspace note${noticeText}`);
+    expect(noticeText).toBe('Appendix L is under revision and is not included in this presentation.');
+    await expect(notice).toHaveAttribute('id', PAPER_WITHHELD_NOTICE_ID);
+    await expect(page.getByText(noticeText, { exact: true })).toHaveCount(1);
+    await expect(paper.getByText(noticeText)).toHaveCount(0);
+    await expect(page.getByTestId('workspace-header').getByText(noticeText)).toHaveCount(0);
+
+    // 2. Navigation and section list: every appendix up to K, no Appendix L, 98 sections.
+    const outline = page.getByTestId('paper-outline-desktop');
+    await openOutlineGroup(page, 'Appendices');
+    for (const letter of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K']) {
+      await expect(outline.getByRole('link', { name: new RegExp(`^Appendix ${letter}: `) }).first()).toBeVisible();
+    }
+    await expect(outline.getByRole('link', { name: /^Appendix L\b/ })).toHaveCount(0);
+    await expect(page.getByTestId('paper-load-progress')).toContainText('of 98 sections', { timeout: 30000 });
+    const sections = paper.locator('[data-paper-section], [data-paper-section-placeholder]');
+    await expect(sections).toHaveCount(98);
+    await expect(paper.getByRole('heading', { name: /^Appendix L\b/ })).toHaveCount(0);
+    await expect(paper.getByRole('heading', { name: /^Appendix K: / }).first()).toBeAttached();
+
+    // 2b. The paper's own contents list, opened so that it is on the page: its heading is shown
+    //     as "Table of Contents"; the entry for Appendix K is a link (the control); there is NO
+    //     entry for Appendix L, as a link or as text, and no link on the page names the withheld id.
+    await page.goto(`${privateStart}&section=master-table-of-contents`, { waitUntil: 'domcontentloaded' });
+    await waitForHydratedWorkspace(page);
+    await expect(paper.getByRole('heading', { name: 'Table of Contents', exact: true }).first()).toBeVisible({ timeout: 60000 });
+    const contentsEntry = (letter: string) => paper.locator('li').filter({ hasText: new RegExp(`^\\s*Appendix ${letter}: `) });
+    /** Any list entry that opens with the appendix's designation, with or without a title after it. */
+    const listEntryNaming = (letter: string) => paper.locator('li').filter({ hasText: new RegExp(`^\\s*Appendix ${letter}(?![A-Za-z0-9])`) });
+    await expect(contentsEntry('K').first()).toBeVisible({ timeout: 60000 });
+    // Checked only now, with the list itself rendered (a placeholder could not show an entry).
+    await expect(paper.getByRole('heading', { name: 'Master Table of Contents', exact: true })).toHaveCount(0);
+    expect(await contentsEntry('K').locator('a').count()).toBeGreaterThan(0);
+    await expect(contentsEntry('L')).toHaveCount(0);
+    await expect(listEntryNaming('L')).toHaveCount(0);
+    await expect(paper.getByText(/Appendix L\s*:/)).toHaveCount(0);
+    await expect(page.locator(`a[href*="${withheldStableSectionId}"]`)).toHaveCount(0);
+
+    // 2c. The artifact names Appendix L in two list entries: the contents line above, and one
+    //     line of a list of the appendices. The section that holds the second is opened so that
+    //     the list is on the page: its entry for Appendix K is there (the control), and there is
+    //     no entry for Appendix L. Only the section's address is taken from the artifact.
+    const namingEntries = (letter: string) => Array.from(presentation.matchAll(new RegExp(`^[ \\t]*(?:[-*+]|[0-9]{1,9}[.)])[ \\t]+[\\[*_]*Appendix[ \\t]+${letter}(?![A-Za-z0-9])`, 'gim')), (match) => headings.filter((heading) => heading.level === 2 && heading.index < (match.index ?? 0)).at(-1)?.anchor ?? '');
+    const sectionsNamingL = namingEntries('L');
+    expect(sectionsNamingL.length).toBe(2);
+    expect(sectionsNamingL.every((anchor) => anchor.length > 0)).toBe(true);
+    expect(sectionsNamingL[0] === 'master-table-of-contents').toBe(true);
+    // The control entry is in the same two sections (compared here, never printed).
+    expect(JSON.stringify(namingEntries('K')) === JSON.stringify(sectionsNamingL)).toBe(true);
+    await page.goto(`${privateStart}&section=${sectionsNamingL[1]}`, { waitUntil: 'domcontentloaded' });
+    await waitForHydratedWorkspace(page);
+    await expect.poll(() => paper.locator('[data-paper-section]').evaluateAll((nodes, anchor) => nodes.filter((node) => node.getAttribute('data-paper-section') === anchor).length, sectionsNamingL[1]), { timeout: 60000 }).toBe(1);
+    await expect(listEntryNaming('K').first()).toBeVisible({ timeout: 60000 });
+    await expect(listEntryNaming('L')).toHaveCount(0);
+    await expect(paper.getByText(/Appendix L\s*:/)).toHaveCount(0);
+
+    // 3. The paper ends with the artifact's last top-level section.
+    await page.goto(`${privateStart}&section=${lastSectionAnchor}`, { waitUntil: 'domcontentloaded' });
+    await expect.poll(() => pathAndQuery(page.url()) === `${privateStart}&section=${lastSectionAnchor}`, { timeout: 60000 }).toBe(true);
+    await waitForHydratedWorkspace(page);
+    await expect.poll(() => paper.locator('[data-paper-section]').evaluateAll((nodes, anchor) => nodes.filter((node) => node.getAttribute('data-paper-section') === anchor).length, lastSectionAnchor), { timeout: 60000 }).toBe(1);
+    expect((await sections.last().getAttribute('data-paper-section')) === lastSectionAnchor).toBe(true);
+
+    // 4. An address that names no section of this draft is dropped: the draft opens at its start.
+    await page.goto(`${privateStart}&section=no-such-section-of-this-draft`, { waitUntil: 'domcontentloaded' });
+    await expect.poll(() => pathAndQuery(page.url()), { timeout: 60000 }).toBe(privateStart);
+    await waitForHydratedWorkspace(page);
+    await expect(notice).toHaveCount(1);
+    await expect(page.locator('h1')).toHaveCount(1);
+
+    // 5. Back and Forward across the old Appendix L address, which redirects: Back returns to
+    //    where the reader was, Forward to the notice the old address landed on.
+    await page.goto(privateStart, { waitUntil: 'domcontentloaded' });
+    await waitForHydratedWorkspace(page);
+    await page.goto(oldWithheldAddress, { waitUntil: 'domcontentloaded' });
+    await expect.poll(atNoticeLanding, { timeout: 60000 }).toBe(true);
+    await waitForHydratedWorkspace(page);
+    await page.goBack({ waitUntil: 'domcontentloaded' });
+    await expect.poll(() => pathAndQuery(page.url()) === privateStart && new URL(page.url()).hash === '', { timeout: 60000 }).toBe(true);
+    await waitForHydratedWorkspace(page);
+    await expect(notice).toHaveCount(1);
+    await page.goForward({ waitUntil: 'domcontentloaded' });
+    await expect.poll(atNoticeLanding, { timeout: 60000 }).toBe(true);
+    await waitForHydratedWorkspace(page);
+    await expect(notice).toHaveCount(1);
+
+    // 6. Print (Working Draft): the header and its status line go, the notice stays.
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.getByTestId('workspace-header')).toHaveCSS('display', 'none');
+    await expect(notice).toBeVisible();
+    await expect(notice.getByTestId('paper-withheld-notice-text')).toHaveText(noticeText);
+    await page.emulateMedia({ media: 'screen' });
+
+    // 7. My Review: the same single notice on screen; hidden in print, where no paper text prints.
+    await page.goto(`${privateWorkspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    await waitForHydratedWorkspace(page);
+    await expect(notice).toHaveCount(1);
+    await expect(notice).toBeVisible();
+    await expect(notice.getByTestId('paper-withheld-notice-text')).toHaveText(noticeText);
+    await page.emulateMedia({ media: 'print' });
+    await expect(notice).toHaveCSS('display', 'none');
+    await page.emulateMedia({ media: 'screen' });
+
+    // 8. The default draft is unchanged: no notice, and its own Appendix L still opens.
+    await page.goto(`/matrix-options/paper/v/${realVersion}/${withheldStableSectionId}`, { waitUntil: 'domcontentloaded' });
+    await expect.poll(() => pathAndQuery(page.url()), { timeout: 60000 }).toMatch(new RegExp(`^${workspacePath.replace(/[.]/g, '[.]')}[?]mode=working-draft&section=appendix-l`));
+    await waitForHydratedWorkspace(page);
+    await expect(notice).toHaveCount(0);
+    await expect(page.getByTestId('paper-document').getByRole('heading', { name: /^Appendix L: / }).first()).toBeVisible({ timeout: 60000 });
+
+    // 9. Switching drafts from there carries the stable id of the section being read, and
+    //    this draft lands it on the notice.
+    await page.getByTestId('paper-version-toggle').click();
+    const currentDraft = page.getByTestId(`paper-version-option-${R5_PAPER_VERSION}`);
+    await expect(currentDraft).toBeVisible();
+    await expect.poll(() => currentDraft.getAttribute('href'), { timeout: 30000 }).toBe(oldWithheldAddress);
+    await currentDraft.click();
+    await expect.poll(atNoticeLanding, { timeout: 60000 }).toBe(true);
+    await waitForHydratedWorkspace(page);
+    await expect(notice).toHaveCount(1);
+    await expect(notice.getByTestId('paper-withheld-notice-text')).toHaveText(noticeText);
+    await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? ''), { timeout: 30000 }).toBe(PAPER_WITHHELD_NOTICE_ID);
+  });
+
+  /*
+   * The landing on the withheld notice, measured in a real layout engine.
+   *
+   * One reading: where the notice and the sticky layout header are, what has focus, and what
+   * is painted at the notice's centre. It is taken only from a SETTLED layout: the workspace
+   * has hydrated, the layout header's own navigation has mounted, and the notice and header
+   * rectangles have been identical for more consecutive animation frames than the scroll
+   * authority's bounded landing corrections can span (PAPER_LANDING_MAX_ATTEMPTS checks, two
+   * frames apart). A layout that never settles is reported as such and fails.
+   */
+  interface NoticeLanding {
+    readonly settled: boolean;
+    readonly frames: number;
+    readonly headerBottom: number;
+    readonly noticeTop: number;
+    readonly noticeBottom: number;
+    readonly noticeLeft: number;
+    readonly noticeRight: number;
+    readonly viewportWidth: number;
+    readonly viewportHeight: number;
+    readonly scrollY: number;
+    readonly activeElementId: string;
+    readonly centreIsNotice: boolean;
+    readonly hash: string;
+  }
+  const NOTICE_SETTLE_FRAMES = 2 * PAPER_LANDING_MAX_ATTEMPTS + 2;
+  const measureNoticeLanding = async (page: Page): Promise<NoticeLanding> => {
+    await page.waitForFunction(() => document.querySelector('[data-testid="workspace-shell"]')?.getAttribute('data-hydrated') === 'true'
+      && document.querySelector('[data-testid="workspace-header-controls"]') !== null
+      && document.querySelector('[data-testid="paper-layout-header"] [role="tablist"][data-primary-tablist-ready="true"]') !== null, null, { timeout: 180000 });
+    return page.evaluate(({ noticeId, stableId, settleFrames }) => new Promise<NoticeLanding>((resolve) => {
+      const read = () => {
+        const notice = document.getElementById(noticeId);
+        const header = document.querySelector('[data-testid="paper-layout-header"]');
+        if (!notice || !header) return null;
+        const rect = notice.getBoundingClientRect();
+        return { headerBottom: header.getBoundingClientRect().bottom, noticeTop: rect.top, noticeBottom: rect.bottom, noticeLeft: rect.left, noticeRight: rect.right };
+      };
+      let previous = '';
+      let stable = 0;
+      let frames = 0;
+      const step = () => {
+        const current = read();
+        const key = JSON.stringify(current);
+        stable = current !== null && key === previous ? stable + 1 : 0;
+        previous = key;
+        frames += 1;
+        const settled = current !== null && stable >= settleFrames;
+        if (!settled && frames < 600) {
+          requestAnimationFrame(step);
+          return;
+        }
+        const notice = document.getElementById(noticeId);
+        const box = current ?? { headerBottom: 0, noticeTop: 0, noticeBottom: 0, noticeLeft: 0, noticeRight: 0 };
+        const centre = document.elementFromPoint((box.noticeLeft + box.noticeRight) / 2, (box.noticeTop + box.noticeBottom) / 2);
+        const focused = document.activeElement;
+        const fragment = window.location.hash;
+        resolve({
+          settled,
+          frames,
+          ...box,
+          viewportWidth: window.innerWidth,
+          viewportHeight: window.innerHeight,
+          scrollY: window.scrollY,
+          // Any other id or fragment is a section anchor, which is made from a heading: it stays in the page.
+          activeElementId: focused === notice && notice !== null ? noticeId : focused === null || focused === document.body ? '' : 'other',
+          centreIsNotice: notice !== null && centre !== null && notice.contains(centre),
+          hash: fragment === '' || fragment === `#${noticeId}` || fragment === `#${stableId}` ? fragment : '#other',
+        });
+      };
+      requestAnimationFrame(step);
+    }), { noticeId: PAPER_WITHHELD_NOTICE_ID, stableId: withheldStableSectionId, settleFrames: NOTICE_SETTLE_FRAMES });
+  };
+  /** Numbers and ids only: one line per reading, and the same record attached to the test. */
+  const recordNoticeLanding = async (testInfo: TestInfo, record: Record<string, unknown>) => {
+    const line = JSON.stringify(record);
+    console.log(`[notice-landing] ${line}`);
+    await testInfo.attach('notice-landing', { body: line, contentType: 'application/json' });
+  };
+  /** The notice has focus, is wholly inside the viewport, starts at or below the sticky header, and is what is painted at its centre. */
+  const expectLandedOnNotice = (landing: NoticeLanding, step: string) => {
+    expect.soft(landing.settled, `${step}: layout settled`).toBe(true);
+    expect.soft(landing.activeElementId, `${step}: focused element`).toBe(PAPER_WITHHELD_NOTICE_ID);
+    expect.soft(landing.headerBottom, `${step}: sticky header bottom`).toBeGreaterThan(0);
+    expect.soft(landing.noticeBottom - landing.noticeTop, `${step}: notice height`).toBeGreaterThan(0);
+    expect.soft(landing.noticeTop, `${step}: notice top against the sticky header bottom`).toBeGreaterThanOrEqual(landing.headerBottom);
+    expect.soft(landing.noticeBottom, `${step}: notice bottom against the viewport height`).toBeLessThanOrEqual(landing.viewportHeight);
+    expect.soft(landing.noticeLeft, `${step}: notice left edge`).toBeGreaterThanOrEqual(0);
+    expect.soft(landing.noticeRight, `${step}: notice right edge against the viewport width`).toBeLessThanOrEqual(landing.viewportWidth);
+    expect.soft(landing.centreIsNotice, `${step}: the notice is what is painted at its centre`).toBe(true);
+  };
+
+  for (const viewport of [{ width: 360, height: 800 }, { width: 768, height: 1024 }, { width: 1024, height: 768 }, { width: 1440, height: 900 }]) {
+    const size = `${viewport.width}x${viewport.height}`;
+    test(`authenticated real release private draft lands every address of the withheld appendix on the notice, below the sticky header, at ${size}`, async ({ page }, testInfo) => {
+      requireJourney(testInfo.project.name);
+      test.setTimeout(480000);
+      await page.setViewportSize(viewport);
+      const land = async (step: string, mode: string, extra: Record<string, unknown> = {}) => {
+        const landing = await measureNoticeLanding(page);
+        await recordNoticeLanding(testInfo, { viewport: size, step, mode, ...extra, ...landing });
+        expectLandedOnNotice(landing, `${size} ${step}`);
+        return landing;
+      };
+
+      // (a) The first response to the old address, redirects not followed, names the notice
+      //     as where to go. A loading boundary sits above every paper page, so a redirect
+      //     decided inside a page can be answered as an HTTP redirect (Location) or, once the
+      //     response has started, as 200 with the framework's redirect <meta>. Either form is
+      //     read; which one was served is recorded with the status and the Location.
+      const first = await page.request.get(oldWithheldAddress, { maxRedirects: 0 });
+      const redirectStatus = first.status();
+      const redirectLocation = (first.headers()['location'] ?? '').replace(/^https?:\/\/[^/]+/, '');
+      const redirectMeta = redirectStatus === 200 ? (/<meta[^>]*id="__next-page-redirect"[^>]*>/.exec(await first.text())?.[0] ?? '') : '';
+      const metaTarget = (/content="[0-9]+;url=([^"]*)"/.exec(redirectMeta)?.[1] ?? '').replace(/&amp;/g, '&');
+      const redirect = {
+        redirectStatus,
+        redirectLocation,
+        redirectForm: [307, 308].includes(redirectStatus) ? 'http' : metaTarget ? 'meta-refresh' : 'none',
+        redirectTarget: [307, 308].includes(redirectStatus) ? redirectLocation : metaTarget,
+      };
+      await recordNoticeLanding(testInfo, { viewport: size, step: 'redirect', ...redirect });
+      expect.soft(redirect.redirectForm, `${size} redirect: the first response redirects`).not.toBe('none');
+      expect.soft(redirect.redirectTarget, `${size} redirect: target`).toBe(noticeLandingAddress);
+
+      // (b) Following the old address lands on the notice.
+      await page.goto(oldWithheldAddress, { waitUntil: 'domcontentloaded' });
+      failOnLogin(page.url());
+      await expect.poll(() => pathAndQuery(page.url()), { timeout: 60000 }).toBe(privateStart);
+      expect.soft((await land('old-address', 'working-draft', redirect)).hash, `${size} old-address: fragment`).toBe(`#${PAPER_WITHHELD_NOTICE_ID}`);
+
+      // (c) The same after a reload.
+      await page.reload({ waitUntil: 'domcontentloaded' });
+      await land('reload', 'working-draft');
+
+      // (d) An outline entry opens its section; Back returns to the notice; Forward returns to that section.
+      const outline = page.getByTestId(viewport.width >= 1024 ? 'paper-outline-desktop' : 'paper-outline-stacked');
+      const mainReport = outline.getByRole('button', { name: 'Main Report', exact: true });
+      await expect(mainReport).toBeVisible({ timeout: 30000 });
+      if ((await mainReport.getAttribute('aria-expanded')) !== 'true') await mainReport.click();
+      await expect(mainReport).toHaveAttribute('aria-expanded', 'true');
+      const entry = outline.getByRole('link').nth(2);
+      const anchor = sectionOf(await entry.getAttribute('href'));
+      expect(anchor.length).toBeGreaterThan(0);
+      await entry.click();
+      const atSection = () => page.evaluate((id) => new URLSearchParams(window.location.search).get('section') === id && document.activeElement?.id === id, anchor);
+      await expect.poll(atSection, { timeout: 60000 }).toBe(true);
+      await page.goBack();
+      await expect.poll(() => new URL(page.url()).searchParams.get('section') === null, { timeout: 30000 }).toBe(true);
+      await land('back', 'working-draft');
+      await page.goForward();
+      // Forward restores the section: it is addressed again and back in view. A restore from
+      // history moves the paper, not the focus (the workspace's rule for Back and Forward), so
+      // what has focus is recorded and not asserted.
+      const sectionRestored = () => page.evaluate(({ id, noticeId }) => {
+        const section = document.getElementById(id);
+        const sectionTop = section ? section.getBoundingClientRect().top : Number.NaN;
+        const headerBottom = document.querySelector('[data-testid="paper-layout-header"]')?.getBoundingClientRect().bottom ?? 0;
+        const focused = document.activeElement;
+        return {
+          addressed: new URLSearchParams(window.location.search).get('section') === id,
+          // The same 2px allowance the section landings of the default draft use.
+          inView: Number.isFinite(sectionTop) && sectionTop >= headerBottom - 2 && sectionTop < window.innerHeight,
+          sectionTop: Number.isFinite(sectionTop) ? sectionTop : null,
+          headerBottom,
+          viewportHeight: window.innerHeight,
+          scrollY: window.scrollY,
+          focus: focused !== null && focused === section ? 'section' : focused?.id === noticeId ? noticeId : focused === null || focused === document.body ? '' : 'other',
+        };
+      }, { id: anchor, noticeId: PAPER_WITHHELD_NOTICE_ID });
+      await expect.poll(async () => {
+        const state = await sectionRestored();
+        return state.addressed && state.inView;
+      }, { timeout: 60000 }).toBe(true).catch(() => undefined);
+      const forward = await sectionRestored();
+      await recordNoticeLanding(testInfo, { viewport: size, step: 'forward', mode: 'working-draft', ...forward });
+      expect.soft(forward.addressed, `${size} forward: the section is addressed again`).toBe(true);
+      expect.soft(forward.inView, `${size} forward: the section is in view below the sticky header`).toBe(true);
+      //     Still at that section, away from the notice: a fragment change to the withheld
+      //     section's stable id (what following an in-page link to it does) lands on the notice.
+      await page.evaluate((id) => {
+        window.location.hash = id;
+      }, withheldStableSectionId);
+      await land('hashchange-stable-id', 'working-draft');
+
+      // (e) The withheld section's own stable id as the fragment is the same landing.
+      await page.goto(`${privateStart}#${withheldStableSectionId}`, { waitUntil: 'domcontentloaded' });
+      await land('fragment-stable-id', 'working-draft');
+
+      // (f) Both modes: My Review, by either fragment.
+      await page.goto(`${privateWorkspacePath}?mode=my-review#${PAPER_WITHHELD_NOTICE_ID}`, { waitUntil: 'domcontentloaded' });
+      await land('fragment-notice-id', 'my-review');
+      // Between two My Review addresses that differ only in their fragment a navigation would
+      // stay in the document, so the Working Draft is opened in between: a full load each time.
+      await page.goto(privateStart, { waitUntil: 'domcontentloaded' });
+      await page.goto(`${privateWorkspacePath}?mode=my-review#${withheldStableSectionId}`, { waitUntil: 'domcontentloaded' });
+      await land('fragment-stable-id', 'my-review');
+      // Not asserted: a fragment on an address the server first has to make canonical (no mode,
+      // a retired mode). The canonicalising redirect of every paper page drops it, and no old
+      // link to the withheld appendix has that form.
+    });
+  }
+});
+
+test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion', () => {
+  test.skip(!V0991_APPENDIX_L_JOURNEY, 'The private v0.9.91 source fixture is required and is never requested in a public or fixture-free run.');
+  test.skip(!reviewNavigationEnabled, 'The standard E2E harness supplies both exact-true paper flags for this journey.');
+  test.beforeEach(({ page, trace, screenshot, video }, testInfo) => {
+    if (trace !== 'off' || screenshot !== 'off' || video !== 'off') throw new Error(PRIVATE_RECORDING_MESSAGE);
+    holdNavigationsUntilHydrated(page, testInfo);
+  });
+
+  test('authenticated section navigation renders the source image through its hash-bound route', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    const media = appendixLSourceMediaContract();
+    const canonicalPath = `/matrix-options/paper/publication/v/${V0991_PAPER_VERSION}`;
+    const imageResponsePromise = page.waitForResponse((response) => response.url().includes(`/figures/${encodeURIComponent(media.file)}?sha256=${media.sha256}`), { timeout: 60000 });
+    await page.goto(`${canonicalPath}?mode=working-draft`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    await waitForHydratedWorkspace(page);
+    await openOutlineGroup(page, 'Appendices');
+    const appendixLLink = page.getByTestId('paper-outline-desktop').getByRole('link', { name: 'Appendix L: Phase 2 Project Plan V2', exact: true });
+    await expect(appendixLLink).toBeVisible({ timeout: 60000 });
+    expect(await appendixLLink.getAttribute('href')).toBe('?mode=working-draft&section=app-l');
+    await appendixLLink.click();
+    await expect.poll(() => pathAndQuery(page.url()), { timeout: 60000 }).toContain(`${canonicalPath}?mode=working-draft&section=app-l`);
+    await waitForHydratedWorkspace(page);
+
+    const paper = page.getByTestId('paper-document');
+    await expect(paper.getByRole('heading', { name: 'Appendix L: Phase 2 Project Plan V2', exact: true })).toBeVisible({ timeout: 60000 });
+    const image = paper.locator('[data-appendix-source-media] img');
+    await expect(image).toBeVisible({ timeout: 60000 });
+    const src = await image.getAttribute('src');
+    expect(src).toContain(`/figures/${encodeURIComponent(media.file)}?sha256=${media.sha256}`);
+    expect(await image.getAttribute('alt')).not.toBeNull();
+    expect(sha256Hex(await image.getAttribute('alt') ?? '')).toBe(sha256Hex(media.alt));
+    await expect(image).toHaveAttribute('width', String(media.width));
+    await expect(image).toHaveAttribute('height', String(media.height));
+    expect(await image.evaluate((element) => (element as HTMLImageElement).style.width)).toBe(media.widthAttribute);
+    await expect.poll(() => image.evaluate((element) => {
+      const rendered = element as HTMLImageElement;
+      return rendered.complete && rendered.naturalWidth === 1875 && rendered.naturalHeight === 913;
+    }), { timeout: 60000 }).toBe(true);
+
+    const response = await imageResponsePromise;
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type']).toContain('image/png');
+    expect(response.headers().etag).toBe(`"${media.sha256}"`);
+    expect(sha256Hex(await response.body())).toBe(media.sha256);
+  });
+
 });

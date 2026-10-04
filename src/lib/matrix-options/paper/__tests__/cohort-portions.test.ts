@@ -11,6 +11,8 @@ import {
   sectionNumbersFromLocator,
   type CohortPortion,
 } from '../cohort-portions';
+import { stripStandaloneSectionAnchorLines } from '../full-document';
+import { presentWithheldSections, shownWithheldEntryCount } from '../withheld-sections';
 
 /*
  * REFERENCE: verbatim copy of the pre-refactor algorithm from
@@ -264,6 +266,77 @@ describe('cohort portions strict section-number parsing (F-08)', () => {
       ['categories:13', 'available', '13 Thirteen', 'node:5'],
     ]);
     expect(portions[0].sectionAnchor).toBe('anchor-8');
+  });
+
+  // Two-sided: without the inactive-link presentation in deriveCohortPortions the portion keeps
+  // `[the appendix](#app-l)`, a link into a section the release does not present.
+  it('shows a simple link to an inactive target as its text in a portion, and leaves every other link alone', () => {
+    const paper = SYNTHETIC_PAPER.replace('epsilon', 'see [the appendix](#app-l) and [nine](#sec-9)');
+    expect(paper).not.toBe(SYNTHETIC_PAPER);
+    const withheld = deriveCohortPortions({ ...synthetic(paper), presentation: { frontMatter: false, inactiveLinkTargets: ['app-l'] } }, manifestWith(['Section 13']));
+    expect(withheld.map((portion) => portion.text)).toEqual(['## 13 Thirteen\nsee the appendix and [nine](#sec-9)\n']);
+    // Control: a release with no inactive target keeps the link exactly as authored.
+    const whole = deriveCohortPortions(synthetic(paper), manifestWith(['Section 13']));
+    expect(whole.map((portion) => portion.text)).toEqual(['## 13 Thirteen\nsee [the appendix](#app-l) and [nine](#sec-9)\n']);
+  });
+
+  // Two-sided: without the withheld-section presentation in deriveCohortPortions the portion keeps
+  // both entries, and without the refusal an entry that cannot be removed would be shown.
+  it('My Review shows no list entry for a withheld appendix: an entry is removed whole, and one that cannot be removed refuses the portion', () => {
+    const presentation = { frontMatter: false, inactiveLinkTargets: ['app-l'] };
+    const listed = SYNTHETIC_PAPER.replace('epsilon', 'epsilon\n\n- [Appendix K: A kept part](#app-k)\n- [Appendix L: A synthetic title](#app-l)\n\n- **Appendix L** holds a synthetic title');
+    expect(listed).not.toBe(SYNTHETIC_PAPER);
+    const withheld = deriveCohortPortions({ ...synthetic(listed), presentation }, manifestWith(['Section 13']));
+    expect(withheld.map((portion) => portion.text)).toEqual(['## 13 Thirteen\nepsilon\n\n- [Appendix K: A kept part](#app-k)\n\n']);
+    // Control: a release that withholds nothing keeps both entries exactly as authored.
+    const whole = deriveCohortPortions(synthetic(listed), manifestWith(['Section 13']));
+    expect(whole.map((portion) => portion.text)).toEqual(['## 13 Thirteen\nepsilon\n\n- [Appendix K: A kept part](#app-k)\n- [Appendix L: A synthetic title](#app-l)\n\n- **Appendix L** holds a synthetic title\n']);
+    // An entry is one node of the parsed text and goes whole: a second line, a further paragraph after a
+    // blank line, a quoted paragraph, an entry under it (tab-indented too). Nothing of it is left in the portion.
+    for (const entry of [
+      '- **Appendix L** holds a synthetic title\n  that runs on to a second line',
+      '- **Appendix L** holds a synthetic title\n\n  A second paragraph of the same entry.',
+      '- [Appendix L: A synthetic title](#app-l)\n\n  - An entry under it',
+      '- Appendix L: A synthetic title\n\n  >A quoted paragraph of the same entry.',
+      `- Appendix L: A synthetic title\n${String.fromCharCode(9)}- An entry under it`,
+    ]) {
+      const paper = SYNTHETIC_PAPER.replace('epsilon', `epsilon\n\n${entry}`);
+      expect(deriveCohortPortions({ ...synthetic(paper), presentation }, manifestWith(['Section 13'])).map((portion) => portion.text)).toEqual(['## 13 Thirteen\nepsilon\n\n']);
+      // Control: a release that withholds nothing shows the entry whole.
+      expect(deriveCohortPortions(synthetic(paper), manifestWith(['Section 13'])).map((portion) => portion.text)).toEqual([`## 13 Thirteen\nepsilon\n\n${entry}\n`]);
+    }
+    // A near match is another designation and stays.
+    const near = SYNTHETIC_PAPER.replace('epsilon', 'epsilon\n\n- Appendix L_1: A kept part\n- Appendix L-1: A kept part\n- Appendix LA: A kept part');
+    expect(deriveCohortPortions({ ...synthetic(near), presentation }, manifestWith(['Section 13'])).map((portion) => portion.text)).toEqual(['## 13 Thirteen\nepsilon\n\n- Appendix L_1: A kept part\n- Appendix L-1: A kept part\n- Appendix LA: A kept part\n']);
+    // My Review strips the standalone section-anchor lines before it draws a portion. A line of raw HTML
+    // directly above a list hides the list from the parser, so the portion is presented and counted on the
+    // text WITHOUT those lines (the order the Working Draft uses): the entry under the anchor line goes,
+    // whether it is a link to the withheld section or names the appendix, and the item beside it stays.
+    for (const entry of ['- [A linked title](#app-l)', '- Appendix L: A synthetic title', '- [Appendix L: A synthetic title](#app-l)']) {
+      const under = SYNTHETIC_PAPER.replace('epsilon', `<div id="sec-13-1" class="section-anchor"></div>\n${entry}\n- Kept item`);
+      const [portion] = deriveCohortPortions({ ...synthetic(under), presentation }, manifestWith(['Section 13']));
+      expect(portion.text).toBe('## 13 Thirteen\n- Kept item\n');
+      // What My Review does to the text afterwards changes nothing any more: no anchor line is left in it.
+      expect(stripStandaloneSectionAnchorLines(portion.text ?? '')).toBe(portion.text);
+      expect(shownWithheldEntryCount(portion.text ?? '', ['app-l'])).toBe(0);
+      // The other side: presented WITH the anchor line (the order before this rule) the same range is
+      // either refused or keeps the entry as plain text, which the count cannot see once the line is stripped.
+      const withAnchorLine = presentWithheldSections(`## 13 Thirteen\n<div id="sec-13-1" class="section-anchor"></div>\n${entry}\n- Kept item\n`, ['app-l']);
+      expect(withAnchorLine.includes('- Kept item') && (withAnchorLine.includes('A linked title') || withAnchorLine.includes('A synthetic title'))).toBe(true);
+      // Control: a release that withholds nothing keeps the exact text of its byte range, anchor line included.
+      expect(deriveCohortPortions(synthetic(under), manifestWith(['Section 13'])).map((whole) => whole.text)).toEqual([`## 13 Thirteen\n<div id="sec-13-1" class="section-anchor"></div>\n${entry}\n- Kept item\n`]);
+    }
+    // An entry that cannot be removed without changing what is kept refuses the portion too: here the
+    // numbered list would stop being a list once its first item is gone.
+    const interrupts = SYNTHETIC_PAPER.replace('epsilon', 'Kept lead-in line\n1. Appendix L: A synthetic title\n2. Kept two');
+    expect(() => deriveCohortPortions({ ...synthetic(interrupts), presentation }, manifestWith(['Section 13']))).toThrow('Authenticated paper section lists a withheld appendix: categories/13');
+    expect(() => deriveCohortPortions(synthetic(interrupts), manifestWith(['Section 13']))).not.toThrow();
+    // An entry that cannot be removed (a table header row, raw HTML) refuses the portion: it is not shown.
+    for (const stuck of ['| Appendix L | A synthetic title |\n|---|---|\n| Appendix K | A kept part |', '<ul>\n<li>Appendix L: A synthetic title</li>\n</ul>']) {
+      const paper = SYNTHETIC_PAPER.replace('epsilon', `epsilon\n\n${stuck}`);
+      expect(() => deriveCohortPortions({ ...synthetic(paper), presentation }, manifestWith(['Section 13']))).toThrow('Authenticated paper section lists a withheld appendix: categories/13');
+      expect(() => deriveCohortPortions(synthetic(paper), manifestWith(['Section 13']))).not.toThrow();
+    }
   });
 
   it('fails closed when no locator has the strict grammar', () => {

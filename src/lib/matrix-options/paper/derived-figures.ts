@@ -11,6 +11,11 @@
  * (PX-2) uses the opening words of each status exactly as written.
  */
 
+import { splitAcceptedFigureSegments } from './accepted-figures';
+import {
+  appendixLSourceMediaContract,
+  appendixLSourceMediaMarkdownLine,
+} from './accepted-source-media';
 import {
   sourceFingerprint,
   splitPaperMarkdown,
@@ -20,6 +25,7 @@ import {
   type PaperMarkdownSegment,
   type QuoteKind,
 } from './figures';
+import { stripPandocAnchorSpans } from './source-presentation';
 
 export interface DerivedFigureSpec {
   readonly id: 'PX-1' | 'PX-2' | 'PX-3' | 'PX-4';
@@ -287,7 +293,7 @@ export function splitQuoteSegments(segments: readonly PaperMarkdownSegment[]): P
  * including derived figures.
  */
 export function paperMarkdownSegments(markdown: string): PaperMarkdownSegment[] {
-  return splitQuoteSegments(applyDerivedFigures(splitPaperMarkdown(markdown)));
+  return splitQuoteSegments(applyDerivedFigures(splitAcceptedFigureSegments(splitPaperMarkdown(stripPandocAnchorSpans(markdown)))));
 }
 
 /**
@@ -299,5 +305,37 @@ export function paperMarkdownSegments(markdown: string): PaperMarkdownSegment[] 
  * skipping applyDerivedFigures.
  */
 export function paperInlineSegments(markdown: string): PaperMarkdownSegment[] {
-  return splitQuoteSegments(splitPaperMarkdown(markdown));
+  // Two content-driven steps join the pipeline for a release that carries them (the R5 working
+  // draft); a release with neither construct (the predecessor) passes through both unchanged:
+  // empty pandoc anchor spans are dropped, and each accepted placement block becomes a segment
+  // that draws the exact accepted PNG (accepted-figures.ts).
+  return splitQuoteSegments(splitAppendixLSourceMediaSegments(splitAcceptedFigureSegments(splitPaperMarkdown(stripPandocAnchorSpans(markdown)))));
+}
+
+function splitAppendixLSourceMediaSegments(segments: readonly PaperMarkdownSegment[]): PaperMarkdownSegment[] {
+  const result: PaperMarkdownSegment[] = [];
+  const marker = 'APPENDIX_L_SOURCE_MEDIA';
+  const expectedLine = appendixLSourceMediaMarkdownLine();
+  const media = appendixLSourceMediaContract();
+  for (const segment of segments) {
+    if (segment.kind !== 'markdown' || !segment.markdown.includes(marker)) {
+      result.push(segment);
+      continue;
+    }
+    const lines = segment.markdown.split('\n');
+    const matches = lines.flatMap((line, index) => line.includes(marker) ? [index] : []);
+    const at = matches[0] ?? -1;
+    if (matches.length !== 1 || at < 0) {
+      result.push({ kind: 'appendix-source-media-unavailable' });
+      continue;
+    }
+    const before = lines.slice(0, at);
+    const after = lines.slice(at + 1);
+    if (before.some((line) => line.trim() !== '')) result.push({ kind: 'markdown', markdown: before.join('\n') });
+    result.push(lines[at] === expectedLine
+      ? { kind: 'appendix-source-media', media }
+      : { kind: 'appendix-source-media-unavailable' });
+    if (after.some((line) => line.trim() !== '')) result.push({ kind: 'markdown', markdown: after.join('\n') });
+  }
+  return result;
 }

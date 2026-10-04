@@ -1,0 +1,42 @@
+{
+  "schemaVersion": "matrix-paper-interface-delta-v1",
+  "releaseIdentity": "v0.9.91",
+  "sources": {
+    "candidateManifestSha256": "d009ab49f108124acbabad5cacab08c41dba4f3a074211a19130348ccb0e4d29",
+    "headingRegistrySha256": "72f9f3e6321bad7acd69b7a84a7f99416c642e65b2770a68d1c3d5671aa469ff",
+    "figurePlacementRegistrySha256": "cc2fe4f3f95432a8bcd4bf8f682bd12c3a940b366602da111bdad06ea132162f",
+    "ownerAdjudicationSha256": "a032c491510737d8537ef9a3bfc277d4d42404a5a3dd5c569c00fc55c7a76911"
+  },
+  "headingCount": 364,
+  "figureAssetCount": 17,
+  "figurePlacementCount": 20,
+  "reviewQuestionCount": 12,
+  "cohortCount": 5,
+  "retiredSectionAnchors": {
+    "sec-scope-note": "sec-status-notice",
+    "sec-audience": "sec-status-notice",
+    "sec-10-0-1": "sec-10-3",
+    "sec-11-6": "sec-18-7",
+    "sec-16-1": "sec-16-0",
+    "sec-16-2": "sec-16-0",
+    "sec-16-3": "sec-16-0"
+  },
+  "secondaryFigureAnchors": {
+    "B-1": "app-b-4",
+    "E-1": "app-e-1-1",
+    "7-5": "sec-7-7"
+  },
+  "questionLineageCandidates": [
+    4,
+    5,
+    12
+  ],
+  "appendixL": {
+    "sourceHeadingId": "app-l",
+    "presentation": "INCLUDED_FROM_AUTHENTICATED_SOURCE",
+    "parsedHeadingCount": 364,
+    "stableHeadingCount": 332,
+    "sourceMediaSha256": "9e511fa96cd4f642b5fd3c06de35fc5891ebb26e838c3e6cc982d88eea5aa7a5"
+  },
+  "stableHeadingCount": 332
+}

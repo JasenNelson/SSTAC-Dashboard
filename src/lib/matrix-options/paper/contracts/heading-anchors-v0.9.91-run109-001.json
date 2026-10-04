@@ -1,0 +1,1999 @@
+{
+  "schemaVersion": "matrix-paper-heading-anchors-v1",
+  "releaseIdentity": "v0.9.91",
+  "sourceRegistrySha256": "72f9f3e6321bad7acd69b7a84a7f99416c642e65b2770a68d1c3d5671aa469ff",
+  "headings": [
+    {
+      "level": 2,
+      "title": "Document Status Notice",
+      "id": "sec-status-notice",
+      "chapter": true
+    },
+    {
+      "level": 2,
+      "title": "Acknowledgements",
+      "id": "sec-acknowledgements",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "1.0 Executive Summary",
+      "id": "sec-1-0",
+      "chapter": true
+    },
+    {
+      "level": 2,
+      "title": "Reviewer's Guide",
+      "id": "sec-reviewers-guide",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "Why you have this",
+      "id": "h-why-you-have-this",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "Reading routes",
+      "id": "h-reading-routes",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "The questions we want answered",
+      "id": "h-the-questions-we-want-answered",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "What we already know is incomplete",
+      "id": "h-what-we-already-know-is-incomplete",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "What is outside this review",
+      "id": "h-what-is-outside-this-review",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "How to send comments",
+      "id": "h-how-to-send-comments",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Table of Contents",
+      "id": "table-of-contents",
+      "chapter": true
+    },
+    {
+      "level": 2,
+      "title": "List of Tables",
+      "id": "list-of-tables",
+      "chapter": true
+    },
+    {
+      "level": 2,
+      "title": "List of Figures",
+      "id": "list-of-figures",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Status Vocabulary and Decision Register",
+      "id": "h-status-vocabulary-and-decision-register",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "2.0 Context and Problem Statement",
+      "id": "sec-2-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "2.1 The Waste Management Act Criteria and the Schedule 9 Baseline",
+      "id": "sec-2-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "2.2 What the Amphipod Tests Do Not Measure",
+      "id": "sec-2-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "2.3 The 2017 Restructuring: Schedule 9 to Schedule 3.4",
+      "id": "sec-2-3",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "3.0 Purpose, Scope, and Role of this Options Paper",
+      "id": "sec-3-0",
+      "chapter": true
+    },
+    {
+      "level": 2,
+      "title": "4.0 Vision for Modernized Sediment Standards",
+      "id": "sec-4-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "4.1 Part 1: Matrix Numerical Sediment Standards & Four Proposed Sediment Uses",
+      "id": "sec-4-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "4.2 Part 2: Generic Numerical Sediment Standards to Protect Human Health",
+      "id": "sec-4-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "4.3 Part 3: Generic Numerical Sediment Standards to Protect Ecological Health",
+      "id": "sec-4-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "4.3.1 The Schedule 3.1 Precedent for Soil",
+      "id": "sec-4-3-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "4.4 Waterbody Applicability: Freshwater, Estuarine and Marine",
+      "id": "sec-4-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "4.4.1 What the framework is intended to cover",
+      "id": "sec-4-4-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "4.4.2 The structure the in-force schedule already uses",
+      "id": "sec-4-4-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "4.4.3 What the draft material assembled so far supports",
+      "id": "sec-4-4-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "4.4.4 The applicability statement",
+      "id": "sec-4-4-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "4.4.5 What is needed to close the gap",
+      "id": "sec-4-4-5",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "4.4.6 How this is carried forward",
+      "id": "sec-4-4-6",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "5.0 Scientific Foundation from Phase 1",
+      "id": "sec-5-0",
+      "chapter": true
+    },
+    {
+      "level": 2,
+      "title": "6.0 Proposed Matrix Standards Framework",
+      "id": "sec-6-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "6.1 Human Health, Direct Exposure (Pathway 1; SedS-contactHH)",
+      "id": "sec-6-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "6.2 Human Health, Food-Pathway Exposure (Pathway 2; SedS-foodHH)",
+      "id": "sec-6-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "6.3 Ecological Health, Direct Exposure (Pathway 3; SedS-contactECO)",
+      "id": "sec-6-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "6.4 Ecological Health, Food-Pathway Exposure (Pathway 4; SedS-foodECO)",
+      "id": "sec-6-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "6.5 Relationship Between Matrix and Generic Standards, and How the Standards Apply",
+      "id": "sec-6-5",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "7.0 Phase 2 Research Topics Supporting the Matrix Options Paper",
+      "id": "sec-7-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "7.1 Bioavailability Adjustment",
+      "id": "sec-7-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.1.1 The Thermodynamic and Geochemical Basis of Bioavailability",
+      "id": "sec-7-1-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.1.2 Non-Ionic Hydrophobic Organic Carbon Partitioning (EqP)",
+      "id": "sec-7-1-2",
+      "chapter": false
+    },
+    {
+      "level": 5,
+      "title": "Proposed boundary rules (working assumptions)",
+      "id": "h-proposed-boundary-rules-working-assumptions",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.1.3 Acid Volatile Sulfide / Simultaneously Extracted Metals (AVS-SEM) Framework",
+      "id": "sec-7-1-3",
+      "chapter": false
+    },
+    {
+      "level": 5,
+      "title": "Candidate decision rules (model predictions)",
+      "id": "h-candidate-decision-rules-model-predictions",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.1.4 Human Health Bioaccessibility Modifiers",
+      "id": "sec-7-1-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "7.2 Bioaccumulation",
+      "id": "sec-7-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "7.3 Substance Classification",
+      "id": "sec-7-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "7.4 Substance Prioritization",
+      "id": "sec-7-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "7.5 Matrix Standards Derivation Options",
+      "id": "sec-7-5",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.5.1 Scope: one derivation approach per pathway",
+      "id": "sec-7-5-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.5.2 Evidence requirements",
+      "id": "sec-7-5-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.5.3 Phase 2 boundary for derived values",
+      "id": "sec-7-5-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "7.6 Generic Standards Adoption Procedure",
+      "id": "sec-7-6",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.6.1 Four-Level Source Hierarchy of Preference",
+      "id": "sec-7-6-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.6.2 Step-by-Step Generic Adoption Procedure",
+      "id": "sec-7-6-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.6.3 Peer-Jurisdiction Values: Non-Numeric Gap Inventory",
+      "id": "sec-7-6-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "7.7 BC Aquatic Database",
+      "id": "sec-7-7",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.7.1 Intended Functions",
+      "id": "sec-7-7-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.7.2 Core Environmental Data Structure",
+      "id": "sec-7-7-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.7.3 Proposed Data Verification and Validation Process",
+      "id": "sec-7-7-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.7.4 Intended Future Use of the Database in Testing Candidate Derivation Approaches",
+      "id": "sec-7-7-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "7.7.5 Relationship to Contaminated Sites Protocols",
+      "id": "sec-7-7-5",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "7.8 Input Parameter Inventory and Selection Options",
+      "id": "sec-7-8",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "8.0 Evaluation Criteria",
+      "id": "sec-8-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "8.1 Scientific Defensibility",
+      "id": "sec-8-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "8.2 Protectiveness",
+      "id": "sec-8-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "8.3 Feasibility",
+      "id": "sec-8-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "8.4 B.C. Representativeness",
+      "id": "sec-8-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "8.5 Transparency",
+      "id": "sec-8-5",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "8.6 Indigenous Use and Rights Considerations",
+      "id": "sec-8-6",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "8.7 Regulatory Alignment & Protocol Harmonization Architecture",
+      "id": "sec-8-7",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "8.8 Scalability & Five-Year Review Cycle",
+      "id": "sec-8-8",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "8.9 Resource Efficiency",
+      "id": "sec-8-9",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "9.0 Technical Options Analysis",
+      "id": "sec-9-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "Applicability and site-assignment boundary",
+      "id": "h-applicability-and-site-assignment-boundary",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "9.1 Bioavailability Adjustment Options",
+      "id": "sec-9-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.1.1 The Alternatives",
+      "id": "sec-9-1-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.1.2 Comparison of the Alternatives",
+      "id": "sec-9-1-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.1.3 Author-Proposed Direction: BIO-3 (Tiered)",
+      "id": "sec-9-1-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "9.2 Bioaccumulation Modeling Options",
+      "id": "sec-9-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "9.3 Substance Classification Options",
+      "id": "sec-9-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "9.4 Substance Prioritization Protocol Options",
+      "id": "sec-9-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "9.5 Matrix Standards Derivation Options",
+      "id": "sec-9-5",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.5.1 Ecological Direct Contact",
+      "id": "sec-9-5-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.5.2 Ecological Food Pathway (Wildlife)",
+      "id": "sec-9-5-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.5.3 Human Health Direct Contact",
+      "id": "sec-9-5-3",
+      "chapter": false
+    },
+    {
+      "level": 5,
+      "title": "9.5.3.1 The exposure parameter option set",
+      "id": "sec-9-5-3-1",
+      "chapter": false
+    },
+    {
+      "level": 5,
+      "title": "9.5.3.2 Dose allocation for the human-health pathways",
+      "id": "sec-9-5-3-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.5.4 Human Health Food Pathway (Seafood Harvesting)",
+      "id": "sec-9-5-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.5.5 A Detectability or Background Floor",
+      "id": "sec-9-5-5",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "9.6 Generic Standards Adoption Options",
+      "id": "sec-9-6",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "9.7 Alternative Schedule 3.4 architectures for review",
+      "id": "sec-9-7",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "9.8 Pathway 4 options for province-wide applicability",
+      "id": "sec-9-8",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.8.1 The parameter catalog",
+      "id": "sec-9-8-1",
+      "chapter": false
+    },
+    {
+      "level": 5,
+      "title": "(a) US EPA Wildlife Exposure Factors Handbook (EPA/600/R-93/187, Vol. I, Dec. 1993)",
+      "id": "h-a-us-epa-wildlife-exposure-factors-handbook-epa-600-r-93-187-vol-i-dec",
+      "chapter": false
+    },
+    {
+      "level": 5,
+      "title": "(b) FCSAP Ecological Risk Assessment Guidance (Environment and Climate Change Canada / DFO)",
+      "id": "h-b-fcsap-ecological-risk-assessment-guidance-environment-and-climate-ch",
+      "chapter": false
+    },
+    {
+      "level": 5,
+      "title": "(c) A Canadian/B.C.-specific equivalent",
+      "id": "h-c-a-canadian-b-c-specific-equivalent",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.8.2 The problem, stated precisely",
+      "id": "sec-9-8-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.8.3 Options for province-wide applicability",
+      "id": "sec-9-8-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.8.4 The B.C. precedent",
+      "id": "sec-9-8-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.8.5 What the TWG needs to choose",
+      "id": "sec-9-8-5",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "9.9 Water lot use classes and their exposure scenarios - options",
+      "id": "sec-9-9",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.9.1 The four alternatives",
+      "id": "sec-9-9-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.9.2 What the alternatives actually differ on",
+      "id": "sec-9-9-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.9.3 The exposure terms, and where they come from",
+      "id": "sec-9-9-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "9.9.4 What the Technical Working Group is asked to decide",
+      "id": "sec-9-9-4",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "10.0 Proposed Framework for Review",
+      "id": "sec-10-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "10.1 Matrix Standards for Priority Substances",
+      "id": "sec-10-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "10.2 Generic Standards for Other Substances",
+      "id": "sec-10-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "10.3 Research-Driven Framework Refinement",
+      "id": "sec-10-3",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "11.0 Indigenous-use Pathway Framing",
+      "id": "sec-11-0",
+      "chapter": true
+    },
+    {
+      "level": 2,
+      "title": "12.0 Governance and Roles",
+      "id": "sec-12-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "12.1 Where This Project Sits",
+      "id": "sec-12-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "12.2 Roles and Decision Authority",
+      "id": "sec-12-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "12.3 Key Advisors and Contributors",
+      "id": "sec-12-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "12.4 Technical Feasibility and Phased Implementation",
+      "id": "sec-12-4",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "13.0 Phase 2 Workstreams, Schedule, and the Status of This Draft",
+      "id": "sec-13-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "13.1 Purpose of This Chapter",
+      "id": "sec-13-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "13.2 The Twelve-Month Calendar",
+      "id": "sec-13-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "13.3 The Ten Tasks, and Where This Paper Meets Them",
+      "id": "sec-13-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "13.4 What \"Drafted Ahead\" Means",
+      "id": "sec-13-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "13.5 What Is Not Yet Complete",
+      "id": "sec-13-5",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "13.6 The Month-9 Integration Workshop",
+      "id": "sec-13-6",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "14.0 Risks, Constraints, and Mitigation",
+      "id": "sec-14-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "14.1 Data Gaps",
+      "id": "sec-14-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "14.2 Technical Feasibility",
+      "id": "sec-14-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "14.3 Phased Implementation",
+      "id": "sec-14-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "14.4 Scope Creep",
+      "id": "sec-14-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "14.5 Laboratory and Analytical Constraints",
+      "id": "sec-14-5",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "14.6 Indigenous Food-Pathway Parameter Adequacy",
+      "id": "sec-14-6",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "14.7 Schedule Compression",
+      "id": "sec-14-7",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "14.8 Defensibility of Standards Derived Through This Framework",
+      "id": "sec-14-8",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "15.0 Limitations of This Draft",
+      "id": "sec-15-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "15.1 Review and endorsement status",
+      "id": "sec-15-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "15.2 Nothing in this draft has been tested against British Columbia occurrence data",
+      "id": "sec-15-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "15.3 Material has been drafted ahead of its scheduled task, and is unreviewed",
+      "id": "sec-15-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "15.4 Framework findings retained after calculation withdrawal",
+      "id": "sec-15-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "15.5 Governing input evidence gaps",
+      "id": "sec-15-5",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "15.6 There is no British Columbia protocol for sediment background concentrations",
+      "id": "sec-15-6",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "15.7 What the in-force Schedule 3.4 derivation method does, and what it does not address",
+      "id": "sec-15-7",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "15.8 Waterbody coverage",
+      "id": "sec-15-8",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "15.9 What closes each limitation",
+      "id": "sec-15-9",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "15.10 Evidence-gap and verification register",
+      "id": "sec-15-10",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "16.0 Phase 2 Deliverables and Technical Appendices",
+      "id": "sec-16-0",
+      "chapter": true
+    },
+    {
+      "level": 2,
+      "title": "17.0 Phased Path Forward",
+      "id": "sec-17-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "17.1 Phase 1: Project Initiation and Scoping",
+      "id": "sec-17-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "17.2 Phase 2: Research, Framework Development, and Matrix Options Paper",
+      "id": "sec-17-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "17.3 Phase 3: Application of Framework and Standards Derivation",
+      "id": "sec-17-3",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "18.0 Preliminary Regulatory Integration Outline",
+      "id": "sec-18-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "18.1 The three-part structure and how its parts relate",
+      "id": "sec-18-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "18.2 The statutory framework that sediment standards sit inside",
+      "id": "sec-18-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "18.3 How a change to Schedule 3.4 would actually be made",
+      "id": "sec-18-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "18.4 Director's Interim Standards",
+      "id": "sec-18-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "18.5 What a future regulatory package would need, and where it comes from",
+      "id": "sec-18-5",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "18.6 Open questions carried forward",
+      "id": "sec-18-6",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "18.7 Interface with federal authorities",
+      "id": "sec-18-7",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "19.0 Conclusions and Next Steps",
+      "id": "sec-19-0",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "19.1 What this paper concludes",
+      "id": "sec-19-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "19.2 What this paper recommends",
+      "id": "sec-19-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "19.3 What this paper does not recommend",
+      "id": "sec-19-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "19.4 What reviewers and the Technical Working Group are asked to test",
+      "id": "sec-19-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "19.5 What happens after this paper, and what is outside its scope",
+      "id": "sec-19-5",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Glossary, Abbreviations and Symbols",
+      "id": "sec-glossary",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "Terms and abbreviations",
+      "id": "h-terms-and-abbreviations",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "Symbols",
+      "id": "h-symbols",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Consolidated Scientific Bibliography",
+      "id": "sec-bibliography",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "Authority classes",
+      "id": "h-authority-classes",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "Instruments cited",
+      "id": "h-instruments-cited",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "References",
+      "id": "h-references",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Technical Appendices",
+      "id": "sec-appendices",
+      "chapter": true
+    },
+    {
+      "level": 2,
+      "title": "Appendix A: Bioavailability Research Report",
+      "id": "app-a",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "A.1 Executive Summary and Scope",
+      "id": "app-a-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.1.1 Scope and Objective",
+      "id": "app-a-1-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.1.2 Summary of Foundational Scientific Findings",
+      "id": "app-a-1-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "A.2 Historical Baseline and Problem Formulation",
+      "id": "app-a-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.2.1 The Waste Management Act (WMA) Groundwork (1999)",
+      "id": "app-a-2-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.2.2 The 2003-2004 Derivation: Bioavailability and Food Chains Outside Its Scope",
+      "id": "app-a-2-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.2.3 Two Limitations of Co-Occurrence Values",
+      "id": "app-a-2-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.2.4 From Schedule 9 Criteria to Schedule 3.4 Standards (2004 to 2023)",
+      "id": "app-a-2-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.2.5 The Two Exposure Pathway Groups: Ecological Benthic Contact and Human Health",
+      "id": "app-a-2-5",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "A.3 Non-Ionic Hydrophobic Organic Carbon Partitioning (EqP) Thermodynamics",
+      "id": "app-a-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.3.1 Fugacity Theory, Chemical Activity, and Equilibrium Partitioning",
+      "id": "app-a-3-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.3.2 Partition Coefficients (K_oc, K_ow) and Organic Carbon Normalization (f_oc)",
+      "id": "app-a-3-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.3.3 Quantitative Derivation of the Ecological Direct Contact Standard (C_sed,EqP)",
+      "id": "app-a-3-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.3.4 Operational Domain and Boundary Conditions (0.2% <= f_oc <= 10.0%)",
+      "id": "app-a-3-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.3.5 Dual-Mode Sorption and Black Carbon",
+      "id": "app-a-3-5",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.3.6 Freely Dissolved Porewater Concentrations (C_free) and Passive Sampling (SPME, POM, LDPE)",
+      "id": "app-a-3-6",
+      "chapter": false
+    },
+    {
+      "level": 5,
+      "title": "Governing Passive Sampling Equations:",
+      "id": "h-governing-passive-sampling-equations",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.3.7 Toxic Unit (TU) Additivity and Mixture Toxicity for Polycyclic Aromatic Hydrocarbons (PAHs)",
+      "id": "app-a-3-7",
+      "chapter": false
+    },
+    {
+      "level": 5,
+      "title": "Decision Rules for PAH Mixtures:",
+      "id": "h-decision-rules-for-pah-mixtures",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "A.4 Cationic Divalent Metals & Acid Volatile Sulfide / Simultaneously Extracted Metals (AVS-SEM)",
+      "id": "app-a-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.4.1 Biogeochemical Mechanisms of Acid Volatile Sulfide Precipitation",
+      "id": "app-a-4-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.4.2 Stoichiometric Metal Sulfide Displacement & Solubility Product (K_sp) Hierarchy",
+      "id": "app-a-4-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.4.3 Simultaneously Extracted Metals (Sigma[SEM]) and Silver Valency Correction (0.5 * SEM_Ag)",
+      "id": "app-a-4-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.4.4 AVS-SEM Screening Interpretation",
+      "id": "app-a-4-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.4.5 Excess SEM Organic Carbon Normalization ((Sigma[SEM] - [AVS])/f_oc) and Risk Bands",
+      "id": "app-a-4-5",
+      "chapter": false
+    },
+    {
+      "level": 5,
+      "title": "US EPA (2005) empirical risk bands",
+      "id": "h-us-epa-2005-empirical-risk-bands",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.4.6 Redox Stratification, Surficial Oxic Horizons (0-2 cm), Bioturbation, and Seasonal Oxidation",
+      "id": "app-a-4-6",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "A.5 Ionizable Organics, Metalloids & Organometallic Speciation",
+      "id": "app-a-5",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.5.1 Ionizable Organics & pH-Dependent Dissociation (Chlorophenols, Phenolics, Organic Acids)",
+      "id": "app-a-5-1",
+      "chapter": false
+    },
+    {
+      "level": 5,
+      "title": "Empirical Example for Pentachlorophenol (pK_a = 4.75):",
+      "id": "h-empirical-example-for-pentachlorophenol-pk-a-4-75",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.5.2 Metalloids & Oxyanions (Arsenic, Antimony, Selenium): Iron Oxyhydroxide vs. Sulfide Controls",
+      "id": "app-a-5-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.5.3 Organometallics: Monomethylmercury (MeHg) and Tributyltin (TBT)",
+      "id": "app-a-5-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.5.4 Per- and Polyfluoroalkyl Substances (PFAS): Anionic Surfactant Sorption and Protein Binding",
+      "id": "app-a-5-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "A.6 Human Health Shoreline Exposure & Bioaccessibility Modifiers",
+      "id": "app-a-6",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.6.1 Oral In Vitro Bioaccessibility (IVBA) and Gastrointestinal Absorption (RAF_oral)",
+      "id": "app-a-6-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.6.2 Dermal Absorption Mechanics & Relative Absorption Factors (RAF_dermal)",
+      "id": "app-a-6-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.6.3 Seafood Preparation",
+      "id": "app-a-6-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "A.7 Jurisdictional Precedents",
+      "id": "app-a-7",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.7.1 US EPA Equilibrium Partitioning Sediment Benchmarks (ESBs)",
+      "id": "app-a-7-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.7.2 Washington State Department of Ecology Sediment Management Standards (SMS)",
+      "id": "app-a-7-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.7.3 Oregon Department of Environmental Quality (DEQ) Bioavailability Guidance",
+      "id": "app-a-7-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.7.4 Australian and New Zealand Guidelines (ANZG 2018) Hierarchical Decision Framework",
+      "id": "app-a-7-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.7.5 Regional Sediment Evaluation Team (RSET 2016/2018) Pacific Northwest Framework",
+      "id": "app-a-7-5",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.7.6 Atlantic RBCA Tier 1 & Tier 2 Sediment Environmental Quality Standards",
+      "id": "app-a-7-6",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "A.8 Options Analysis",
+      "id": "app-a-8",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.8.1 BIO-1: Unadjusted Bulk Concentration (Status Quo)",
+      "id": "app-a-8-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.8.2 BIO-3: Tiered - Baseline plus Site-Specific Adjustment (Author-Proposed Direction)",
+      "id": "app-a-8-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.8.3 BIO-5: Mandatory Universal Measurement",
+      "id": "app-a-8-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.8.4 Comparison",
+      "id": "app-a-8-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.8.5 Proposed Three-Tier Assessment Structure (Draft, for Discussion)",
+      "id": "app-a-8-5",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "A.9 Analytical Laboratory Test Requirements, Verification Protocols & Field Sampling SOPs",
+      "id": "app-a-9",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.9.1 Standardized Analytical Protocols",
+      "id": "app-a-9-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.9.2 Verification and Validation Process Protocols",
+      "id": "app-a-9-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "A.9.3 Field Sediment Core and Surficial Horizon Sampling Protocols",
+      "id": "app-a-9-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "A.10 Uncertainties, Data Gaps & Five-Year Research Roadmap",
+      "id": "app-a-10",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "A.11 References for Appendix A",
+      "id": "app-a-11",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Appendix B: Bioaccumulation Evidence Inventory",
+      "id": "app-b",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "B.1 Scope",
+      "id": "app-b-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "B.2 Evidence categories",
+      "id": "app-b-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "B.3 What each method family needs",
+      "id": "app-b-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "B.4 Withdrawn material",
+      "id": "app-b-4",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Appendix C: Substance Classification Framework (Outline)",
+      "id": "app-c",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "C.1 Purpose and boundary",
+      "id": "app-c-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "C.2 Evidence gates",
+      "id": "app-c-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "C.3 Open review questions",
+      "id": "app-c-3",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Appendix D: Substance Prioritization Framework",
+      "id": "app-d",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "D.1 Purpose and boundary",
+      "id": "app-d-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "D.2 Options for consideration",
+      "id": "app-d-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "PRI-A: hazard-first ordering",
+      "id": "h-pri-a-hazard-first-ordering",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "PRI-B: occurrence-first ordering",
+      "id": "h-pri-b-occurrence-first-ordering",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "PRI-C: evidence-gated multi-criteria ordering",
+      "id": "h-pri-c-evidence-gated-multi-criteria-ordering",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "D.3 Evidence requirements before any scoring",
+      "id": "app-d-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "D.4 Open review questions",
+      "id": "app-d-4",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Appendix E: Matrix Standards Derivation Options Review",
+      "id": "app-e",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "E.1 Structure of the Four-Pathway Matrix",
+      "id": "app-e-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "E.1.1 The Four Receptor-Pathway Combinations",
+      "id": "app-e-1-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "E.1.2 The Four Draft Sediment Use Categories",
+      "id": "app-e-1-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "E.1.3 Working Organic Carbon Baseline",
+      "id": "app-e-1-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "E.2 Ecological Direct Contact (Pathway 3)",
+      "id": "app-e-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "E.2.1 Equilibrium Partitioning (EqP) for Non-Ionic Organics",
+      "id": "app-e-2-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "E.2.2 Acid Volatile Sulfide and Simultaneously Extracted Metals (AVS-SEM)",
+      "id": "app-e-2-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "E.3 Ecological Food Web (Pathway 4)",
+      "id": "app-e-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "E.3.1 Method boundary",
+      "id": "app-e-3-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "E.3.2 Wildlife receptor and trophic-transfer evidence boundary",
+      "id": "app-e-3-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "E.4 Human Health Food Pathway (Pathway 2): Method Boundary",
+      "id": "app-e-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "E.5 Method-Family Registry and Input Categories",
+      "id": "app-e-5",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "E.5.1 Candidate Method-Family Registry",
+      "id": "app-e-5-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "E.5.2 Input-Parameter Categories",
+      "id": "app-e-5-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "E.5.3 Phase 2 boundary for derived values",
+      "id": "app-e-5-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "E.6 Human Direct Contact (Pathway 1): Evidence Boundary",
+      "id": "app-e-6",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "E.7 Uncertainty and future review boundary",
+      "id": "app-e-7",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "E.8 References for Appendix E",
+      "id": "app-e-8",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Appendix F: Generic Standards Adoption Procedure",
+      "id": "app-f",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "F.1 Scope of the Generic Adoption Appendix",
+      "id": "app-f-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "F.2 Candidate Peer Frameworks",
+      "id": "app-f-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "F.3 Source Hierarchy and Scientific Quality Screening Criteria",
+      "id": "app-f-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "F.3.1 Scientific quality screening criteria (candidates)",
+      "id": "app-f-3-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "F.4 Six-Step Adoption Procedure",
+      "id": "app-f-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "F.5 Normalization and Unit Harmonization",
+      "id": "app-f-5",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "F.5.1 Organic carbon normalization: carbon-normalized to dry weight",
+      "id": "app-f-5-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "F.5.2 Equilibrium partitioning back-calculation from a water-column chronic value",
+      "id": "app-f-5-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "F.6 Gap Inventory for Generic Adopted Values (Non-Numeric)",
+      "id": "app-f-6",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "F.7 Uncertainties, Maintenance and Re-Review",
+      "id": "app-f-7",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "F.8 References for Appendix F",
+      "id": "app-f-8",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Appendix G: BC Aquatic Database Evidence Architecture",
+      "id": "app-g",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "G.1 Purpose",
+      "id": "app-g-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "G.2 Evidence requirements",
+      "id": "app-g-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "G.3 Method-testing options",
+      "id": "app-g-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "G.4 Boundary",
+      "id": "app-g-4",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Appendix H: Input Parameter Evidence Registry (Outline)",
+      "id": "app-h",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "H.1 Boundary",
+      "id": "app-h-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "H.2 Human and ecological input categories",
+      "id": "app-h-2",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "H.3 Trophic transfer and site linkage",
+      "id": "app-h-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "H.4 Ecosystem modifiers",
+      "id": "app-h-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "H.5 Minimum record fields and an illustrative example",
+      "id": "app-h-5",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Appendix I: Engagement Summary (Outline)",
+      "id": "app-i",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "I.1 Purpose and Scope of This Appendix",
+      "id": "app-i-1",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "I.2 Participants in the Phase 2 Collaboration",
+      "id": "app-i-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.2.1 The partnership",
+      "id": "app-i-2-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.2.2 ENV project team and advisors",
+      "id": "app-i-2-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.2.3 The Technical Working Group",
+      "id": "app-i-2-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.2.4 CSAP",
+      "id": "app-i-2-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.2.5 Participants and planned review structure",
+      "id": "app-i-2-5",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "I.3 Planned Engagement and Review Points in the Phase 2 Work Plan",
+      "id": "app-i-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.3.1 Scheduled engagement points",
+      "id": "app-i-3-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.3.2 Continuous engagement activities",
+      "id": "app-i-3-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.3.3 The immediate next engagement step",
+      "id": "app-i-3-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "I.4 Indigenous Engagement: Scope Statement",
+      "id": "app-i-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.4.1 Scope",
+      "id": "app-i-4-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.4.2 Indigenous consumption rates elsewhere in this paper are published parameters, not engagement",
+      "id": "app-i-4-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.4.3 TWG membership is not consultation",
+      "id": "app-i-4-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "I.5 Status of Engagement at the Evidence Cutoff of This Draft",
+      "id": "app-i-5",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.5.1 Status of input and review",
+      "id": "app-i-5-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.5.2 This draft carries no endorsement",
+      "id": "app-i-5-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.5.3 Status of each planned engagement point",
+      "id": "app-i-5-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "I.6 Preparation of the Final Engagement Summary",
+      "id": "app-i-6",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.6.1 Requirement",
+      "id": "app-i-6-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.6.2 How it will be written",
+      "id": "app-i-6-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "I.6.3 How the plan defines success for engagement",
+      "id": "app-i-6-3",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Appendix K: Jurisdictional Derivation Basis Compendium",
+      "id": "app-k",
+      "chapter": true
+    },
+    {
+      "level": 3,
+      "title": "What this appendix is, and is not",
+      "id": "h-what-this-appendix-is-and-is-not",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "K.1 B.C.'s own adoption precedent",
+      "id": "app-k-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "K.1.1 What Protocol 28 Chapter 7 says",
+      "id": "app-k-1-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "K.1.2 What the CCME PEL is, from what data, by what method",
+      "id": "app-k-1-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "K.1.3 B.C.'s probability factors (P20 and P50): what the derivation report establishes",
+      "id": "app-k-1-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "K.1.4 The adoption chain, and what it does not do",
+      "id": "app-k-1-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "K.2 North American derivation bases",
+      "id": "app-k-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "K.2.1 CCME ISQG, TEL and PEL",
+      "id": "app-k-2-1",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "K.2.2 US EPA equilibrium partitioning sediment benchmarks (ESBs)",
+      "id": "app-k-2-2",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "K.2.3 NOAA ERL and ERM",
+      "id": "app-k-2-3",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "K.2.4 Washington Sediment Management Standards (SQS, CSL)",
+      "id": "app-k-2-4",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "K.2.5 Oregon DEQ screening level values",
+      "id": "app-k-2-5",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "K.2.6 Atlantic RBCA EQS (Tier I) and PSS (Tier II)",
+      "id": "app-k-2-6",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "K.2.7 Ontario sediment quality guidelines (LEL, SEL)",
+      "id": "app-k-2-7",
+      "chapter": false
+    },
+    {
+      "level": 4,
+      "title": "K.2.8 ECCC Federal Environmental Quality Guidelines",
+      "id": "app-k-2-8",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "K.3 Australia and New Zealand",
+      "id": "app-k-3",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "K.4 Comparability and the adoption modes",
+      "id": "app-k-4",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "K.5 What each jurisdiction's values do not cover",
+      "id": "app-k-5",
+      "chapter": false
+    },
+    {
+      "level": 3,
+      "title": "K.6 Closing note",
+      "id": "app-k-6",
+      "chapter": false
+    },
+    {
+      "level": 2,
+      "title": "Appendix L: Phase 2 Project Plan V2",
+      "id": "app-l",
+      "chapter": true
+    }
+  ]
+}

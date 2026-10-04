@@ -20,7 +20,6 @@ import { owningSectionIndex } from '@/lib/matrix-options/paper/section-window';
 import { paperWorkspaceHref, parsePaperUrlState, serializePaperUrlState } from '@/lib/matrix-options/paper/url-state';
 import type { PaperSearchParams, PaperUrlContext, PaperUrlState } from '@/lib/matrix-options/paper/url-state';
 import type { AssignmentState } from '@/lib/matrix-options/revised-paper-review';
-import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import { cn } from '@/utils/cn';
 
@@ -37,10 +36,21 @@ import { isLgViewport } from './paper-viewport';
 import { ReaderWidthControl } from './ReaderWidthControl';
 import { ReviewCommentsPanel, type ReviewRevealCause } from './ReviewCommentsPanel';
 import { DownloadFilesPanel } from './DownloadFilesPanel';
+import { PaperVersionControl, PaperVersionStatus, PaperWithheldNotice } from './PaperVersionControl';
 import type { VerifiedDownloadManifest } from '@/lib/matrix-options/paper/download-manifest';
+import { isContentsHeading } from '@/lib/matrix-options/paper/paper-nav-groups';
+import { getPaperRelease, PAPER_WITHHELD_NOTICE_ID } from '@/lib/matrix-options/paper/releases';
+import type { ReviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 
 export interface RevisedPaperWorkspaceProps {
   readonly documentVersion: string;
+  /**
+   * The reviewer guide of the draft on screen, with its question text, resolved
+   * and authenticated on the server against that draft's own text. The workspace
+   * never looks a guide up itself: a draft whose text is not in the repository
+   * has no guide text here to look up.
+   */
+  readonly guide: ReviewerGuideContract;
   /** Authenticated release manifest identity passed by the server route. */
   readonly reviewManifestSha256?: string;
   /** Canonical URL state parsed on the server (paper/url-state.ts). */
@@ -60,6 +70,14 @@ export interface RevisedPaperWorkspaceProps {
   readonly children?: ReactNode;
   /** Authenticated opaque-ID PDF/DOCX manifests by cohortId; null remains a visible pending state. */
   readonly downloadManifests?: Readonly<Record<string, VerifiedDownloadManifest>> | null;
+  /**
+   * A successor draft only: the predecessor draft's identity and which of its
+   * questions each question here continues, so Review Comments can show the
+   * reader's earlier answer as read-only reference. Never used to fill an editor.
+   */
+  readonly reviewLineage?: ReviewLineageView;
+  /** Heading anchor -> stable section id, for headings that have one: how the reader's place is carried to another draft. */
+  readonly stableSectionIds?: Readonly<Record<string, string>>;
 }
 
 export const PAPER_NAVIGATION_RAIL_ID = 'paper-navigation-rail';
@@ -328,10 +346,15 @@ function searchParamsRecord(search: string): PaperSearchParams {
   return record;
 }
 
-export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, urlState, assignment, outline, cohortPortions, sectionWindow, children, downloadManifests = null }: RevisedPaperWorkspaceProps) {
+export function RevisedPaperWorkspace({ documentVersion, guide: reviewerGuide, reviewManifestSha256, urlState, assignment, outline, cohortPortions, sectionWindow, children, downloadManifests = null, reviewLineage, stableSectionIds }: RevisedPaperWorkspaceProps) {
   const isMyReview = urlState.mode === 'my-review';
-  const cohortManifest = useMemo(() => getCohortManifest(), []);
-  const reviewerGuide = useMemo(() => getReviewerGuideContract(), []);
+  // The review topics and questions of the draft on screen, never another draft's:
+  // question ids embed their draft, and a response is saved under that id. The
+  // topics are a bundled contract; the questions arrive resolved from the server.
+  const cohortManifest = useMemo(() => getCohortManifest(documentVersion), [documentVersion]);
+  const isDefaultDraft = getPaperRelease(documentVersion)?.activation === 'DEFAULT';
+  /** What this release shows the exact contents heading as, where it names a label (releases.ts). */
+  const contentsHeadingDisplay = getPaperRelease(documentVersion)?.contentsHeadingDisplay ?? null;
   const portions = useMemo(() => cohortPortions ?? [], [cohortPortions]);
   const portionsProvided = cohortPortions !== undefined && cohortPortions.length > 0;
   const workingDraftHref = paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: null, section: null });
@@ -673,7 +696,8 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
    * section but leaves focus in the review panel and the question unchanged.
    * Deep links and Back/Forward carry no intent: they restore, never push.
    */
-  const navIntentRef = useRef<{ readonly anchor: string; readonly push: boolean; readonly focus: boolean; readonly syncQuestion: boolean; readonly scroll: boolean } | null>(null);
+  /** `focusFrom`: focus moves only if it is still on the element with this id when the navigation is applied. */
+  const navIntentRef = useRef<{ readonly anchor: string; readonly push: boolean; readonly focus: boolean; readonly focusFrom?: string; readonly syncQuestion: boolean; readonly scroll: boolean } | null>(null);
 
   /** Brings the section's primary question into the review panel; null when it has none. */
   const syncQuestionToAnchor = useCallback((anchor: string): string | null => {
@@ -684,10 +708,12 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
       setSectionNote(null);
       return question.id;
     }
-    const label = outline?.find((entry) => entry.anchor === anchor)?.label;
+    const entryLabel = outline?.find((entry) => entry.anchor === anchor)?.label;
+    // The outline keeps the authored heading; the note shows what the paper shows.
+    const label = entryLabel !== undefined && contentsHeadingDisplay !== null && isContentsHeading(entryLabel) ? contentsHeadingDisplay : entryLabel;
     setSectionNote(`${label ? `"${label}"` : 'This section'} has no review question of its own, so your current question stays open.`);
     return null;
-  }, [navigation, outline]);
+  }, [contentsHeadingDisplay, navigation, outline]);
 
   const focusSection = useCallback((anchor: string, writeUrl: boolean): boolean => {
     if (!anchors.has(anchor)) return false;
@@ -707,7 +733,8 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
       authority.pin(anchor);
       authority.scrollTargetIntoView(element);
     }
-    if (intent?.focus !== false) element.focus({ preventScroll: true });
+    // A section that loads later is applied later: by then the reader may have moved on.
+    if (intent?.focus !== false && (intent?.focusFrom === undefined || document.activeElement?.id === intent.focusFrom)) element.focus({ preventScroll: true });
     setActiveAnchor(anchor);
     setTargetAnchor(anchor);
     // The synced question is only HIGHLIGHTED; `q` in the URL names an
@@ -730,10 +757,41 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
       const element = document.getElementById(target);
       const root = documentColumnRef.current;
       if (!element || !root) return null;
-      const expectedTop = (isLgViewport() ? root.getBoundingClientRect().top : 0) + scrollMarginTopOf(element);
-      return { element, actualTop: element.getBoundingClientRect().top, expectedTop };
+      // At lg the document column is the scrollport of everything inside it. A target
+      // outside the column (the withheld notice) lands in the page at every width.
+      const scrollportTop = isLgViewport() && root.contains(element) ? root.getBoundingClientRect().top : 0;
+      return { element, actualTop: element.getBoundingClientRect().top, expectedTop: scrollportTop + scrollMarginTopOf(element) };
     });
   }, [authority]);
+
+  /*
+   * A draft that withholds a section shows one notice (PaperWithheldNotice), and a
+   * link to the withheld section lands on it. The fragment may be the withheld
+   * section's own stable id (an old link) or the notice id (where the section
+   * route sends such a link): both are the same landing, in both modes.
+   */
+  const withheldStableSectionId = getPaperRelease(documentVersion)?.withheld?.stableSectionId ?? null;
+  const namesWithheldNotice = useCallback((fragment: string | null): boolean => withheldStableSectionId !== null && fragment !== null && (fragment === withheldStableSectionId || fragment === PAPER_WITHHELD_NOTICE_ID), [withheldStableSectionId]);
+
+  /*
+   * Lands on the withheld notice. Everything goes through the scroll authority:
+   * the notice is PINNED, so its landing is verified now and again whenever the
+   * sticky header height is republished or a section loads (the header grows
+   * after the first commit, which is what moves a deep-link landing); the scroll
+   * is arbitrated like every other one; focus never scrolls. A navigation still
+   * waiting for a section load is dropped: the notice is the later navigation.
+   */
+  const landOnWithheldNotice = useCallback((): boolean => {
+    const notice = document.getElementById(PAPER_WITHHELD_NOTICE_ID);
+    if (!notice) return false;
+    authority.cancelPendingNavigation();
+    navIntentRef.current = null;
+    authority.pin(PAPER_WITHHELD_NOTICE_ID);
+    authority.scrollTargetIntoView(notice);
+    notice.focus({ preventScroll: true });
+    scheduleLandingCheck(PAPER_WITHHELD_NOTICE_ID);
+    return true;
+  }, [authority, scheduleLandingCheck]);
 
   /**
    * S1 navigation to any known anchor. An anchor already in the DOM keeps the
@@ -864,10 +922,12 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
    * not the pixels. Only browser run-004 can confirm the landing itself.
    */
   useEffect(() => {
-    if (isMyReview || publishedStickyHeaderHeight === 0) return;
+    if (publishedStickyHeaderHeight === 0) return;
+    // Both modes: My Review pins nothing but the withheld notice, whose landing the
+    // growing header invalidates in exactly the same way.
     const pinned = authority.pinnedAnchor();
     if (pinned) scheduleLandingCheck(pinned);
-  }, [authority, isMyReview, publishedStickyHeaderHeight, scheduleLandingCheck]);
+  }, [authority, publishedStickyHeaderHeight, scheduleLandingCheck]);
 
   // Deep links. A known `#anchor` that differs from `section` is the identity that
   // was actually followed, so it wins and is mirrored into `section` (M1-04: a
@@ -876,6 +936,9 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
   useEffect(() => {
     if (isMyReview) return;
     const hashAnchor = typeof window === 'undefined' ? null : decodeHashValue(window.location.hash);
+    // A fragment that names the withheld notice is the identity that was followed:
+    // the notice effect below lands it, and no section takes the pin from it.
+    if (namesWithheldNotice(hashAnchor)) return;
     if (hashAnchor && anchors.has(hashAnchor) && hashAnchor !== urlState.section) {
       // The fragment never reaches the server, so the initial question could
       // not be derived from it: sync Review Comments to the section here
@@ -909,6 +972,24 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
     return () => window.removeEventListener('hashchange', onHashChange);
   }, [isMyReview, navigateFromReader]);
 
+  // The withheld notice as a link target, at mount, on every later hash change and on
+  // Back/Forward to an entry whose fragment names it, in both modes. A traversal between
+  // two entries that differ only in their query fires `popstate` and no `hashchange`, so
+  // both are heard. The hash change itself released the earlier pin (it is a reader
+  // activation); landing re-establishes it on the notice.
+  useEffect(() => {
+    const landIfNamed = () => {
+      if (namesWithheldNotice(decodeHashValue(window.location.hash))) landOnWithheldNotice();
+    };
+    landIfNamed();
+    window.addEventListener('hashchange', landIfNamed);
+    window.addEventListener('popstate', landIfNamed);
+    return () => {
+      window.removeEventListener('hashchange', landIfNamed);
+      window.removeEventListener('popstate', landIfNamed);
+    };
+  }, [landOnWithheldNotice, namesWithheldNotice]);
+
   /*
    * Working Draft Back/Forward. Outline and question navigation push history
    * entries, so Back and Forward must restore BOTH panels from the URL: the
@@ -938,18 +1019,24 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
       // question (reopened after a close), and an entry without q is closed.
       setOpenQuestionNumber(navigation.questions.find((candidate) => candidate.id === restored.q)?.number ?? null);
       setSectionNote(null);
+      // An entry whose fragment names the withheld notice is restored by the notice landing
+      // (the effect above), as on arrival: the paper is not also sent to a section.
+      if (namesWithheldNotice(decodeHashValue(window.location.hash))) return;
       const target = restored.section
         ?? (firstEntry ? outline?.[0]?.anchor ?? null : null)
         ?? (question ? navigation.anchorForQuestion(question.number) ?? null : null);
       if (target) {
-        // Restore only: never push, never pull focus out of the review panel.
-        navIntentRef.current = { anchor: target, push: false, focus: false, syncQuestion: false, scroll: true };
+        // Restore only: never push, never pull focus out of the review panel. One case moves
+        // focus: the reader is leaving the withheld notice (focus is still on it), which is
+        // about to scroll out of view, so focus follows to the restored section.
+        const leavingNotice = document.activeElement?.id === PAPER_WITHHELD_NOTICE_ID;
+        navIntentRef.current = { anchor: target, push: false, focus: leavingNotice, ...(leavingNotice ? { focusFrom: PAPER_WITHHELD_NOTICE_ID } : {}), syncQuestion: false, scroll: true };
         if (!navigateRef.current(target, false) && navIntentRef.current?.anchor === target) navIntentRef.current = null;
       }
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [anchors, cohortManifest, isMyReview, navigation, outline]);
+  }, [anchors, cohortManifest, isMyReview, namesWithheldNotice, navigation, outline]);
 
   /*
    * FIX CYCLE 1 / F1 (PLAN-R4 6.C "pushState on question change so Back
@@ -1270,6 +1357,26 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
   const customWidths = panelPreferences.left !== undefined || panelPreferences.right !== undefined;
   const layoutStyle = { [PAPER_LEFT_WIDTH_VAR]: `${panelWidths.left}px`, [PAPER_RIGHT_WIDTH_VAR]: `${panelWidths.right}px` } as CSSProperties;
 
+  /*
+   * Where the reader is, as a STABLE section id: the id of the section being
+   * read, else of its nearest reader ancestor that has one (a subsection such as
+   * "7.5.1" has none of its own). Stable ids are the same in every draft, so
+   * this is what the draft version control carries to another draft.
+   */
+  const stableSectionId = useMemo(() => {
+    if (isMyReview || !stableSectionIds || !outline) return null;
+    const byId = new Map(outline.map((entry) => [entry.id, entry]));
+    let entry = outline.find((candidate) => candidate.anchor === activeAnchor);
+    const guard = new Set<string>();
+    while (entry && !guard.has(entry.id)) {
+      guard.add(entry.id);
+      if (Object.prototype.hasOwnProperty.call(stableSectionIds, entry.anchor)) return stableSectionIds[entry.anchor];
+      entry = entry.parentId === null ? undefined : byId.get(entry.parentId);
+    }
+    return null;
+  }, [activeAnchor, isMyReview, outline, stableSectionIds]);
+  const versionLinkContext = { mode: urlState.mode, cohort: isMyReview ? selectedCohortId : null, stableSectionId } as const;
+
   const headerButton = 'inline-flex min-h-[44px] min-w-[44px] items-center justify-center gap-1.5 rounded-md px-2.5 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]';
   const modeLink = (active: boolean) => cn('flex min-h-[44px] items-center rounded-md px-3 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]', active ? 'bg-[var(--db-surface)] text-[var(--db-text-primary)] shadow-[var(--db-shadow-1)]' : 'text-[var(--db-text-secondary)] hover:text-[var(--db-text-primary)]');
 
@@ -1284,6 +1391,7 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
               <a href={paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: openQuestion?.id ?? null, section: null })} aria-current={isMyReview ? undefined : 'page'} className={modeLink(!isMyReview)}>Working Draft</a>
               <a href={paperWorkspaceHref(documentVersion, { mode: 'my-review', cohort: activeQuestionCohortId, q: openQuestion?.id ?? null, section: null })} aria-current={isMyReview ? 'page' : undefined} className={modeLink(isMyReview)}>My Review</a>
             </nav>
+            <PaperVersionControl documentVersion={documentVersion} buttonClassName={headerButton} onOpen={() => { setDownloadOpen(false); setAboutOpen(false); }} {...versionLinkContext} />
             <button
               ref={downloadToggleRef}
               type="button"
@@ -1322,11 +1430,16 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
             <PaperRailToggle label="Review Comments" testId="review-comments-toggle" open={reviewCommentsOpen} controls={PAPER_REVIEW_COMMENTS_RAIL_ID} buttonRef={reviewCommentsToggleRef} onClick={() => togglePanel('review-comments', reviewCommentsOpen)} icon={reviewCommentsOpen ? <PanelRightClose aria-hidden="true" className="h-4 w-4" /> : <PanelRightOpen aria-hidden="true" className="h-4 w-4" />} />
           </div>
         </div>
+        {/* Shown only for a draft that is not the default, so a reader always knows it is not the draft the workspace opens by default. */}
+        <PaperVersionStatus documentVersion={documentVersion} {...versionLinkContext} />
       </header>
+      {/* One line, outside the header (which does not print) and outside the paper: a section this draft does not include. */}
+      <PaperWithheldNotice documentVersion={documentVersion} mode={urlState.mode} />
 
       {/* keepMounted: a download still in flight keeps its status (and its error) when the popover is closed. */}
       <PaperPopover id={PAPER_DOWNLOAD_PANEL_ID} testId="download-files-popover" open={downloadOpen} keepMounted triggerRef={downloadToggleRef} label="Download files" width={340} onClose={() => setDownloadOpen(false)}>
-        <DownloadFilesPanel groups={downloadGroups} onAnnounce={announceDownload} />
+        {/* Print packages exist for the default draft only; another draft says so plainly instead of "being prepared". */}
+        <DownloadFilesPanel groups={downloadGroups} onAnnounce={announceDownload} pendingText={isDefaultDraft ? undefined : 'Download files are not available for this draft.'} />
       </PaperPopover>
       <p data-testid="download-announcement" role="status" aria-live="polite" className="sr-only">{downloadAnnouncement}</p>
       <PaperPopover id={PAPER_ABOUT_PANEL_ID} testId="about-draft-popover" open={aboutOpen} triggerRef={aboutToggleRef} label="About this draft" width={340} onClose={() => setAboutOpen(false)}>
@@ -1384,7 +1497,7 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
 
         {reviewCommentsOpen ? <PanelResizeHandle side="right" label="Resize review comments panel" controls={PAPER_REVIEW_COMMENTS_RAIL_ID} width={panelWidths.right} max={panelMax('right')} onResize={(width) => resizePanel('right', width)} onCommit={(width) => commitPanel('right', width)} onReset={() => resetPanel('right')} onDragChange={setResizing} /> : null}
         <PaperRail id={PAPER_REVIEW_COMMENTS_RAIL_ID} testId="review-comments-rail" side="right" open={reviewCommentsOpen} heading="Review Comments" headingId="paper-review-comments-rail-heading" headingRef={reviewCommentsHeadingRef} onEscape={() => closePanel('review-comments')}>
-          <ReviewCommentsPanel documentVersion={documentVersion} manifestSha256={reviewManifestSha256 ?? ''} cohortId={activeQuestionCohortId} questions={allQuestionsInCohortOrder} question={openQuestion} highlightQuestionNumber={activeQuestion?.number} onCloseQuestion={closeQuestion} revealElement={revealReviewElement} openRequest={navOpenRequest} responseRef={responseRef} onSelectQuestion={selectQuestion} onPreviousQuestion={() => moveQuestion(-1)} onNextQuestion={() => moveQuestion(1)} topics={navigation.topics} sectionNote={sectionNote} cohortForQuestion={cohortForQuestion} />
+          <ReviewCommentsPanel documentVersion={documentVersion} manifestSha256={reviewManifestSha256 ?? ''} cohortId={activeQuestionCohortId} questions={allQuestionsInCohortOrder} question={openQuestion} highlightQuestionNumber={activeQuestion?.number} onCloseQuestion={closeQuestion} revealElement={revealReviewElement} openRequest={navOpenRequest} responseRef={responseRef} onSelectQuestion={selectQuestion} onPreviousQuestion={() => moveQuestion(-1)} onNextQuestion={() => moveQuestion(1)} topics={navigation.topics} sectionNote={sectionNote} cohortForQuestion={cohortForQuestion} lineage={reviewLineage} />
         </PaperRail>
       </div>
     </div>

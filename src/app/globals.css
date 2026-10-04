@@ -881,6 +881,156 @@ html.dark ::-webkit-scrollbar-thumb:hover,
   .paper-figure__note { margin: 0.75rem 0 0; font-size: 0.8125rem; color: var(--db-text-secondary); }
 
   /*
+   * Accepted figures (AcceptedPaperFigure): the exact accepted PNG of a release.
+   * The artwork is not themed -- it sits on a white plate in light, dark and
+   * print, the ground it was drawn on.
+   *
+   * Its lettering is drawn into the image, so the image is sized by its own
+   * shape (--paper-figure-ratio = width / height, set per figure from the bound
+   * pixel size) rather than by one width for all:
+   * - never taller than 32rem and never wider than 48rem, so a square or
+   *   portrait figure (whose lettering is drawn large) does not fill the screen
+   *   and a wide one does not balloon on a wide screen;
+   * - never shorter than 16rem (the floor: 16rem x ratio wide), so the lettering
+   *   of a wide figure stays legible. In a column clearly narrower than that
+   *   floor the plate scrolls sideways inside the figure (the page never does);
+   * - a column within 15% of the floor just fits the image instead: a figure is
+   *   never clipped by a few pixels behind a scroll hint.
+   * The room is measured on the figure itself (.paper-figure is the query
+   * container), less the plate's padding and border.
+   */
+  .paper-figure__plate {
+    border: 1px solid var(--db-border-strong);
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 0.75rem;
+  }
+  .paper-figure__image {
+    --paper-figure-floor: calc(16rem * var(--paper-figure-ratio, 2.5));
+    --paper-figure-room: calc(100cqi - 1.625rem);
+    display: block;
+    width: 100%;
+    /* A step, not a slope: the floor when the room is under 85% of it, otherwise none. */
+    min-width: clamp(0px, calc((var(--paper-figure-floor) * 0.85 - var(--paper-figure-room)) * 9999), var(--paper-figure-floor));
+    max-width: min(48rem, calc(32rem * var(--paper-figure-ratio, 2.5)));
+    height: auto;
+    margin-inline: auto;
+  }
+  .paper-figure__load-failed {
+    padding: 1.25rem 1rem;
+    font-family: var(--db-font-ui);
+    font-size: 0.875rem;
+    color: #1e293b;
+    text-align: center;
+  }
+  .paper-figure__load-failed > p { margin: 0; }
+  .paper-figure__load-failed > button {
+    margin-top: 0.5rem;
+    min-height: 44px;
+    padding: 0 0.875rem;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    font-weight: 500;
+  }
+  .paper-figure__load-failed > button:hover { background: #f1f5f9; }
+  .paper-figure__load-failed > button:focus-visible { outline: 2px solid var(--db-focus-ring); outline-offset: 2px; }
+  .paper-figure__status-line {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+    color: var(--db-text-muted);
+    overflow-wrap: anywhere;
+  }
+  .paper-figure__actions { margin: 0.375rem 0 0; font-family: var(--db-font-ui); font-size: 0.8125rem; }
+  .paper-figure__actions > a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--db-accent-strong);
+    text-underline-offset: 4px;
+  }
+  .dark .paper-figure__actions > a { color: var(--db-accent); }
+  .paper-figure__actions > a:hover { text-decoration: underline; }
+  .paper-figure__actions > a:focus-visible { outline: 2px solid var(--db-focus-ring); outline-offset: 2px; border-radius: 4px; }
+  /*
+   * The full-size viewer of a private-storage figure (AcceptedFigureViewer): a
+   * button under the figure and a modal dialog in the page. Like the figure
+   * plate, the dialog is not themed: the artwork sits on the white ground it
+   * was drawn on. The dialog fills the window less a small margin at every
+   * width; the image is fitted to it, or shown at its own pixel size and
+   * scrolled inside the stage (the page behind never scrolls sideways).
+   */
+  .paper-figure__viewer { margin: 0.375rem 0 0; font-family: var(--db-font-ui); font-size: 0.8125rem; }
+  .paper-figure__viewer > button {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--db-accent-strong);
+    font: inherit;
+    text-underline-offset: 4px;
+    cursor: pointer;
+  }
+  .dark .paper-figure__viewer > button { color: var(--db-accent); }
+  .paper-figure__viewer > button:hover { text-decoration: underline; }
+  .paper-figure__viewer > button:focus-visible { outline: 2px solid var(--db-focus-ring); outline-offset: 2px; border-radius: 4px; }
+  .paper-figure__viewer > button:disabled { color: var(--db-text-muted); text-decoration: none; cursor: default; }
+  .paper-figure-viewer {
+    width: min(calc(100vw - 1rem), 96rem);
+    height: min(calc(100dvh - 1rem), 64rem);
+    max-width: none;
+    max-height: none;
+    margin: auto;
+    padding: 0;
+    border: 1px solid #475569;
+    border-radius: 12px;
+    background: #ffffff;
+    color: #0f172a;
+    overflow: hidden;
+  }
+  .paper-figure-viewer[open] { display: flex; flex-direction: column; }
+  .paper-figure-viewer::backdrop { background: rgb(15 23 42 / 0.72); }
+  .paper-figure-viewer__bar {
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid #cbd5e1;
+    font-family: var(--db-font-ui);
+  }
+  .paper-figure-viewer__title { margin: 0 auto 0 0; font-size: 0.9375rem; font-weight: 600; color: #0f172a; }
+  .paper-figure-viewer__bar > button {
+    min-height: 44px;
+    padding: 0 0.875rem;
+    border: 1px solid #475569;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  .paper-figure-viewer__bar > button[aria-pressed='true'] { background: #e2e8f0; }
+  .paper-figure-viewer__bar > button:hover { background: #f1f5f9; }
+  .paper-figure-viewer__bar > button:focus-visible { outline: 2px solid var(--db-focus-ring); outline-offset: 2px; }
+  .paper-figure-viewer__stage { display: flex; flex: 1 1 auto; min-height: 0; overflow: auto; padding: 0.75rem; }
+  .paper-figure-viewer__stage:focus-visible { outline: 2px solid var(--db-focus-ring); outline-offset: -2px; }
+  .paper-figure-viewer__image { display: block; flex: none; max-width: none; height: auto; margin: auto; }
+  .paper-figure-viewer__image--fit { width: auto; max-width: 100%; max-height: 100%; object-fit: contain; }
+  .paper-figure-viewer__note { max-width: 32rem; margin: auto; padding: 1rem; font-family: var(--db-font-ui); font-size: 0.875rem; color: #1e293b; text-align: center; }
+  @media print {
+    /* On paper the whole image fits the page width, and a tall one fits the page height
+       with its caption (7in); nothing scrolls and nothing is clipped. */
+    .paper-figure__plate { border-color: #cbd5e1; padding: 0.5rem; }
+    .paper-figure__image { min-width: 0; max-width: min(100%, calc(7in * var(--paper-figure-ratio, 2.5))); }
+  }
+
+  /*
    * Chains (flow, stack): one column of steps joined by downward arrows.
    *
    * TREE_FIT_FIX Revision 5 (2026-09-24), P2-3: a labelled step used to reserve a

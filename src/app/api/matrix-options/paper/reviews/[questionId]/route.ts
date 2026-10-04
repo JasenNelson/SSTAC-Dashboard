@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthAndRateLimit } from '@/app/api/_helpers/rate-limit-wrapper';
 import { resolveMatrixOptionsPaperReviewNavigationGate } from '@/lib/matrix-options/navigation';
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
-import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
-import { getReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
+import { getReviewerGuideBinding } from '@/lib/matrix-options/reviewer-guide';
+import { findReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
 import {
   reviewResponseOutcomeStatus,
   reviewResponseRequestSchema,
@@ -63,10 +63,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const { questionId: encodedQuestionId } = await params;
   let questionId: string;
   try { questionId = decodeURIComponent(encodedQuestionId); } catch { return NextResponse.json({ error: 'Invalid question id' }, { status: 400, headers: { ...noStoreHeaders, ...rateLimitHeaders } }); }
-  const reviewManifest = getReviewManifest();
-  if (parsed.data.documentVersion !== reviewManifest.documentVersion || parsed.data.manifestSha256 !== reviewManifest.sha256) return NextResponse.json({ error: 'Invalid review response' }, { status: 400, headers: noStoreHeaders });
-  const question = getReviewerGuideContract().questions.find((candidate) => candidate.id === questionId);
-  const cohort = getCohortManifest().cohorts.find((candidate) => candidate.id === parsed.data.cohortId && candidate.questionNumbers.includes(question?.number ?? -1));
+  // A write names one bound release by its version AND that release's own
+  // review manifest digest, and its question and cohort must belong to that
+  // same release. A question id of another release (for example a predecessor
+  // question sent under the successor's manifest) is an unknown identity, so a
+  // response can never be saved, copied or re-keyed across releases here.
+  const reviewManifest = findReviewManifest(parsed.data.documentVersion, parsed.data.manifestSha256);
+  if (!reviewManifest) return NextResponse.json({ error: 'Invalid review response' }, { status: 400, headers: noStoreHeaders });
+  // Question ids and numbers only: the stored binding of the release, which needs no paper text.
+  const question = getReviewerGuideBinding(reviewManifest.documentVersion).questions.find((candidate) => candidate.id === questionId);
+  const cohort = getCohortManifest(reviewManifest.documentVersion).cohorts.find((candidate) => candidate.id === parsed.data.cohortId && candidate.questionNumbers.includes(question?.number ?? -1));
   if (!question || !cohort) return NextResponse.json({ outcome: 'unknown_identity' }, { status: reviewResponseOutcomeStatus('unknown_identity'), headers: { ...noStoreHeaders, ...rateLimitHeaders } });
 
   const rpcName = parsed.data.action === 'submit' ? 'matrix_paper_review_submit' : 'matrix_paper_review_save_draft';
