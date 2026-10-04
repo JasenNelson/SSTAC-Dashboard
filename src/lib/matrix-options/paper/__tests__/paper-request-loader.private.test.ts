@@ -109,20 +109,25 @@ describe('where the private suites run', () => {
     vi.resetModules();
   });
 
-  // The helper decides once, when it is loaded: it is loaded afresh here under each setting.
+  // The helper decides once, when loaded: required mode authenticates before any suite runs.
   it.each([
-    ['a directory and the mode `required`', DIRECTORY, 'required', true],
-    ['a directory and no mode', DIRECTORY, undefined, true],
-    ['a directory and the mode `skip`', DIRECTORY, 'skip', false],
-    ['no directory and the mode `required`', undefined, 'required', false],
-    ['no directory and the mode `skip`', undefined, 'skip', false],
-    ['a directory that is not an absolute path', 'relative/fixture', 'required', false],
-  ])('%s: the fixture is used = %s', async (_title, directory, mode, used) => {
+    ['no directory and explicit skip', undefined, 'skip', null],
+    ['a directory and explicit skip', DIRECTORY, 'skip', null],
+    ['an unset local mode', DIRECTORY, undefined, 'MATRIX_PAPER_PRIVATE_FIXTURE must be required or skip for a local run'],
+    ['required mode without a directory', undefined, 'required', 'MATRIX_OPTIONS_PAPER_PRIVATE_ASSET_DIR must be an absolute path in required mode'],
+    ['required mode with a relative directory', 'relative/fixture', 'required', 'MATRIX_OPTIONS_PAPER_PRIVATE_ASSET_DIR must be an absolute path in required mode'],
+    ['required mode with a nonexistent absolute directory', DIRECTORY, 'required', 'Required v0.9.91 presentation missing'],
+  ])('%s', async (_title, directory, mode, expectedError) => {
     vi.resetModules();
+    vi.stubEnv('GITHUB_ACTIONS', 'false');
     vi.stubEnv(PRIVATE_FIXTURE_DIR_ENV, directory);
     vi.stubEnv(PRIVATE_FIXTURE_MODE_ENV, mode);
-    const helper = await import('./private-fixture');
-    expect(helper.privateFixtureAvailable).toBe(used);
-    expect(helper.privateFixtureRequired).toBe(mode === 'required');
+    if (expectedError) {
+      await expect(import('./private-fixture')).rejects.toThrow(expectedError);
+    } else {
+      const helper = await import('./private-fixture');
+      expect(helper.privateFixtureAvailable).toBe(false);
+      expect(helper.privateFixtureRequired).toBe(false);
+    }
   });
 });
