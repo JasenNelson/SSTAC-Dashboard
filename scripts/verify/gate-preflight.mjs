@@ -17,8 +17,8 @@
 // Contract: exit 0 = proceed with e2e. Non-zero = stop, the port is held and the
 // run would fail for a reason that has nothing to do with the tests.
 
-import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { runPowerShellPortPreflight } from './gate-preflight-programdata.mjs';
 
 const isWindows = process.platform === 'win32';
 const isCI = process.env.CI === 'true';
@@ -42,26 +42,4 @@ const scriptPath = fileURLToPath(new URL('./gate-preflight.ps1', import.meta.url
 // script WAS the literal powershell command line and npm appended to it. Dropping
 // them silently would have the script print "Re-run with -Kill to free it" and
 // then ignore the -Kill the caller just passed.
-const result = spawnSync(
-  'powershell',
-  ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', scriptPath, ...process.argv.slice(2)],
-  { stdio: 'inherit' },
-);
-
-if (result.error) {
-  // Failing OPEN here would restore the original problem (a held port producing a
-  // confusing full-suite failure), but failing CLOSED on a missing interpreter
-  // would block a legitimate run. Report loudly and proceed; the e2e run itself
-  // will fail fast and unambiguously if the port really is held.
-  console.warn(`gate-preflight: could not run the PowerShell preflight (${result.error.message}); continuing.`);
-  process.exit(0);
-}
-
-// A signal death reports {status: null}, and `?? 0` would turn that into success,
-// letting the full suite run against an unverified port. Treat it as blocked.
-if (result.signal) {
-  console.warn(`gate-preflight: preflight terminated by ${result.signal}; treating the port as unverified.`);
-  process.exit(1);
-}
-
-process.exit(result.status ?? 0);
+process.exit(runPowerShellPortPreflight({ scriptPath, args: process.argv.slice(2) }));

@@ -44,6 +44,11 @@ export interface DiagramEdge {
   readonly label: string | null;
 }
 
+export interface DiagramGroup {
+  readonly id: string;
+  readonly members: readonly string[];
+}
+
 export interface DiagramModel {
   /** The N of "Diagram summary N." in the source. */
   readonly summaryNumber: number;
@@ -51,6 +56,8 @@ export interface DiagramModel {
   readonly title: string | null;
   readonly nodes: readonly DiagramNode[];
   readonly edges: readonly DiagramEdge[];
+  /** Authenticated native-model memberships; absent from historical summaries. */
+  readonly groups?: readonly DiagramGroup[];
   /** Diagram notes that attach to no node or edge (none in the current release). */
   readonly notes: readonly string[];
   /** The source item texts (after "- "), in order; every one is represented above. */

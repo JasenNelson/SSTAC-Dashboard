@@ -10,6 +10,7 @@ import { createSectionLoader } from '@/lib/matrix-options/paper/section-loader';
 import type { SectionLoaderSnapshot, SectionLoadStatus } from '@/lib/matrix-options/paper/section-loader';
 import { validatePaperSectionContract } from '@/lib/matrix-options/paper/section-window';
 import type { PaperSectionContract, PaperSectionSummary } from '@/lib/matrix-options/paper/section-window';
+import type { NativeFigureSet } from '@/lib/matrix-options/paper/native-figures';
 import { advancePrint, cancelPrint, INITIAL_PRINT_STATE, isPrintBusy, printStatusMessage, requestPrint } from '@/lib/matrix-options/paper/print-orchestrator';
 import type { PrintLoaderView, PrintState } from '@/lib/matrix-options/paper/print-orchestrator';
 import { cn } from '@/utils/cn';
@@ -189,11 +190,12 @@ function PaperSectionPlaceholder({ section, status, error, onLoad, register }: {
   );
 }
 
-export function PaperSectionWindowView({ sectionWindow, api, scrollRootRef, children }: {
+export function PaperSectionWindowView({ sectionWindow, api, scrollRootRef, children, nativeFigures }: {
   readonly sectionWindow: PaperSectionWindowData;
   readonly api: PaperSectionWindowApi;
   readonly scrollRootRef?: RefObject<HTMLElement | null>;
   readonly children?: ReactNode;
+  readonly nativeFigures?: NativeFigureSet;
 }) {
   const placeholders = useRef(new Map<number, HTMLElement>());
   const { ensureLoaded, loadedKey, snapshot } = api;
@@ -242,7 +244,7 @@ export function PaperSectionWindowView({ sectionWindow, api, scrollRootRef, chil
         if (contract) {
           return (
             <div key={section.anchor} data-paper-section={section.anchor} className="min-w-0 space-y-2">
-              {contract.chunks.map((chunk) => <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={sectionWindow.linkMap} region={sectionRegion(sectionLabels, section.index, APPENDIX_BOUNDARY_LABEL)} />)}
+              {contract.chunks.map((chunk) => <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={sectionWindow.linkMap} region={sectionRegion(sectionLabels, section.index, APPENDIX_BOUNDARY_LABEL)} nativeFigures={nativeFigures} />)}
             </div>
           );
         }

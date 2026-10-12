@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 export default function ScrollToTop() {
   const [isVisible, setIsVisible] = useState(false);
+  const pathname = usePathname();
+  const paperRoute = pathname?.startsWith('/matrix-options/paper/');
 
   // Show button when page is scrolled up to given distance
   const toggleVisibility = () => {
@@ -35,7 +38,7 @@ export default function ScrollToTop() {
       {isVisible && (
         <button
           onClick={scrollToTop}
-          className="fixed bottom-8 right-8 z-40 p-3 bg-sky-700 text-white rounded-full shadow-lg hover:bg-sky-800 transition-all duration-300 ease-in-out transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+          className={`fixed bottom-8 right-8 z-40 p-3 bg-sky-700 text-white rounded-full shadow-lg hover:bg-sky-800 transition-all duration-300 ease-in-out transform hover:scale-110 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2${paperRoute ? ' max-lg:hidden' : ''}`}
           aria-label="Scroll to top"
         >
           <svg

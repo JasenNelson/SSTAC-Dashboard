@@ -7,6 +7,9 @@ const MATRIX_OPTIONS_PAPER_TRACE_FILES = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // The localhost native-figure evidence run captures paper pages. Hide only
+  // Next's development badge there so it cannot cover a figure or caption.
+  devIndicators: process.env.MATRIX_NATIVE_LOCAL_E2E === 'true' ? false : undefined,
   // Runtime fs reads of the authenticated revised paper and its sha256 sidecar
   // (src/lib/matrix-options/revised-paper.ts REVISED_PAPER_RELATIVE_PATH and
   // REVISED_PAPER_SIDECAR_RELATIVE_PATH) are invisible to the bundler, so Vercel

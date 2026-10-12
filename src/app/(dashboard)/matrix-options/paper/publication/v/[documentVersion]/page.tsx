@@ -225,6 +225,7 @@ export default async function PublicationPage({
     throw error;
   }
   const { structure, supabase, servedTo } = loaded;
+  const nativeFigures = loaded.nativeFigures;
   let context: PaperUrlContext;
   try {
     context = buildPaperUrlContext(structure, documentVersion);
@@ -295,7 +296,7 @@ export default async function PublicationPage({
   // gate shows nothing. A repository release is returned as it is: no gate, no id.
   const gated = (workspace: JSX.Element): JSX.Element => (release.delivery === 'private-storage' ? <PrivateReleaseSessionGate servedTo={servedTo ?? ''}>{workspace}</PrivateReleaseSessionGate> : workspace);
   if (state.mode === 'my-review') {
-    return gated(<RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} guide={guide} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} cohortPortions={cohortPortions} downloadManifests={downloadManifests} reviewLineage={reviewLineage} stableSectionIds={stableSectionIds} />);
+    return gated(<RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} guide={guide} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} cohortPortions={cohortPortions} nativeFigures={nativeFigures} downloadManifests={downloadManifests} reviewLineage={reviewLineage} stableSectionIds={stableSectionIds} />);
   }
 
   // S1 incremental section window: only the initial (or deep-linked) depth-1
@@ -324,8 +325,8 @@ export default async function PublicationPage({
     throw error;
   }
   return gated(
-    <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} guide={guide} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} outline={getPaperNavOutline(structure)} sectionWindow={sectionWindow} downloadManifests={downloadManifests} reviewLineage={reviewLineage} stableSectionIds={stableSectionIds}>
-      <PaperDocument model={documentModel} layout="chunks" region={initialRegion} />
+    <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} guide={guide} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} outline={getPaperNavOutline(structure)} sectionWindow={sectionWindow} nativeFigures={nativeFigures} downloadManifests={downloadManifests} reviewLineage={reviewLineage} stableSectionIds={stableSectionIds}>
+      <PaperDocument model={documentModel} layout="chunks" region={initialRegion} nativeFigures={nativeFigures} />
     </RevisedPaperWorkspace>,
   );
 }

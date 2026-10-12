@@ -3,7 +3,8 @@ import 'server-only';
 import { notFound } from 'next/navigation';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { isPrivatePaperRelease, loadPaperStructureForRequest, loadPrivatePaperStructure } from '@/lib/matrix-options/paper/paper-request-loader';
+import { isPrivatePaperRelease, loadPaperStructureForRequest, loadPrivatePaperBundle } from '@/lib/matrix-options/paper/paper-request-loader';
+import type { NativeFigureSet } from '@/lib/matrix-options/paper/native-figures';
 import { PaperReaderDeniedError, requirePaperReader } from '@/lib/matrix-options/paper/private-release-assets';
 import type { PaperReader } from '@/lib/matrix-options/paper/private-release-assets';
 import type { RevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
@@ -35,6 +36,7 @@ import { createAuthenticatedClient } from '@/lib/supabase-auth';
 
 export interface PaperStructureForPage {
   readonly structure: RevisedPaperStructure;
+  readonly nativeFigures?: NativeFigureSet;
   readonly supabase: SupabaseClient;
   /**
    * The id of the reader this load was authorized for: set for a private-storage
@@ -55,8 +57,8 @@ export async function loadPaperStructureForPage(
       const reader = await requirePaperReader(supabase);
       // A page may retain this request-local proof if the storage load fails.
       onPrivateReader?.(reader, supabase);
-      const structure = await loadPrivatePaperStructure(documentVersion, reader);
-      return { structure, supabase, servedTo: reader.userId };
+      const bundle = await loadPrivatePaperBundle(documentVersion, reader);
+      return { ...bundle, supabase, servedTo: reader.userId };
     }
     return { structure: await loadPaperStructureForRequest(documentVersion, supabase), supabase, servedTo: null };
   } catch (error) {

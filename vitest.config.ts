@@ -56,6 +56,9 @@ export default defineConfig({
       // node:test file owned by the print lane (scripts/build-review-package.mjs);
       // it uses node's built-in test runner, not Vitest, and must not be collected here.
       'scripts/build-review-package.test.mjs',
+      // node:test ProgramData regression runs first in test:ci under Node's native runner;
+      // Vitest must not collect it as a file without Vitest tests.
+      'scripts/verify/__tests__/gate-preflight-programdata.test.mjs',
     ],
     coverage: {
       provider: 'v8',
