@@ -19,7 +19,13 @@ import { SESSION_TEARDOWN_GREP, SESSION_TEARDOWN_PROJECT } from './e2e/session-t
 // that are NOT already present in process.env (see node_modules/@next/env's
 // processEnv/populate logic), so real environment variables -- e.g. secrets
 // CI injects directly -- always take precedence over .env.local.
-loadEnvConfig(process.cwd());
+const nativeLocalE2E = process.env.MATRIX_NATIVE_LOCAL_E2E === 'true';
+if (nativeLocalE2E) {
+  // This check runs while Playwright loads its config, before a browser,
+  // auth setup, or webServer can start. The wrapper checks the same contract.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require('./e2e/fixtures/native-local-runtime.cjs').assertNativeInvocation(process.env);
+} else loadEnvConfig(process.cwd());
 
 const playwrightPort = Number(process.env.PLAYWRIGHT_TEST_PORT || '3100');
 const playwrightHost = process.env.PLAYWRIGHT_TEST_HOST || '127.0.0.1';
@@ -150,7 +156,7 @@ export default defineConfig({
         ]
       : []),
   ],
-  webServer: {
+  webServer: nativeLocalE2E ? undefined : {
     // Use webpack dev server for hermetic worktree e2e runs. The app's
     // default `npm run dev` uses Turbopack, which rejects the worktree
     // node_modules junction because it points to the main checkout.

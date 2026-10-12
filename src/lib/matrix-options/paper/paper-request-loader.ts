@@ -5,6 +5,7 @@ import { compileAuthenticatedRelease, loadRevisedPaperStructure, type RevisedPap
 import {
   copyVerifiedFigure,
   getVerifiedPrivateRelease,
+  nativeDeliveryPrepared,
   PrivateReleaseUnavailableError,
   requirePaperReader,
   type PaperReader,
@@ -12,6 +13,7 @@ import {
   type VerifiedPrivateRelease,
 } from './private-release-assets';
 import { getPaperRelease, type PaperRelease } from './releases';
+import type { NativeFigureSet } from './native-figures';
 
 /*
  * How a page or a route gets a release's compiled structure and figure bytes
@@ -58,7 +60,7 @@ function privateRelease(documentVersion: string): PaperRelease {
   return release;
 }
 
-/** True when the version names a bound release whose bytes are read from private storage. */
+/** True when the version names a bound release whose bytes use private delivery. */
 export function isPrivatePaperRelease(documentVersion: string): boolean {
   return getPaperRelease(documentVersion)?.delivery === 'private-storage';
 }
@@ -67,6 +69,18 @@ export function isPrivatePaperRelease(documentVersion: string): boolean {
 export async function loadPrivatePaperStructure(documentVersion: string, reader: PaperReader): Promise<RevisedPaperStructure> {
   const release = privateRelease(documentVersion);
   return compiledStructure(release, await getVerifiedPrivateRelease(reader, release));
+}
+
+/** One authenticated load supplies both the compiled manuscript and its native model. */
+export async function loadPrivatePaperBundle(documentVersion: string, reader: PaperReader): Promise<{
+  readonly structure: RevisedPaperStructure;
+  readonly nativeFigures?: NativeFigureSet;
+}> {
+  const release = privateRelease(documentVersion);
+  const assets = await getVerifiedPrivateRelease(reader, release);
+  const structure = compiledStructure(release, assets);
+  if (nativeDeliveryPrepared(release) && !assets.nativeFigures) throw new PrivateReleaseUnavailableError('STRUCTURE');
+  return { structure, ...(assets.nativeFigures ? { nativeFigures: assets.nativeFigures } : {}) };
 }
 
 /**

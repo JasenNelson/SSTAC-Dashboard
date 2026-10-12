@@ -4,7 +4,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-const { redirectMock, notFoundMock, workspaceMock, structureMock, requestLoadSpy, privateLoadSpy, defaultStructure, resolveReviewerGuideMock, cohortManifestMock, defaultManifest, downloadServerMock, supabaseMock, createAuthenticatedClientMock, roleMaybeSingleMock, roleEqMock } = vi.hoisted(() => {
+const { redirectMock, notFoundMock, workspaceMock, structureMock, requestLoadSpy, privateBundleSpy, defaultStructure, resolveReviewerGuideMock, cohortManifestMock, defaultManifest, downloadServerMock, supabaseMock, createAuthenticatedClientMock, roleMaybeSingleMock, roleEqMock } = vi.hoisted(() => {
   const labels = ['4.1 Categories and uses', '9.9 Water lot use classes', '6.0 Proposed framework', '18.1 Three-part structure', '7.5.1 Scope', '7.5.2 Evidence', '7.5.3 Boundary', '7.8 Exposure terms', '9.5 Matrix derivation options', '7.7 BC Aquatic Database', '15.0 Limitations of this draft', '4.4.2 Existing schedule structure', 'Technical Appendices Compendium', 'unrelated-sentinel'];
   // Depth-1 headings are the S1 section boundaries: sections are [0,1], [2..9], [10,11], [12].
   const TOP_LEVEL_LABELS = ['4.1 Categories and uses', '6.0 Proposed framework', '15.0 Limitations of this draft', 'Technical Appendices Compendium'];
@@ -47,7 +47,7 @@ const { redirectMock, notFoundMock, workspaceMock, structureMock, requestLoadSpy
     workspaceMock: vi.fn((..._args: any[]) => <div data-testid="revised-workspace" />),
     structureMock: vi.fn(buildStructure),
     requestLoadSpy: vi.fn(),
-    privateLoadSpy: vi.fn(),
+    privateBundleSpy: vi.fn(),
     defaultStructure: buildStructure,
     resolveReviewerGuideMock: vi.fn((_structure: unknown): unknown => undefined),
     cohortManifestMock: vi.fn(buildManifest),
@@ -68,12 +68,12 @@ vi.mock('@/components/matrix-options/paper/RevisedPaperWorkspace', () => ({ Revi
 vi.mock('@/lib/matrix-options/revised-paper-structure', () => ({ loadRevisedPaperStructure: structureMock }));
 // The real loaders behind spies: the default release goes through the request loader to
 // structureMock; one test stands a structure in for a private-storage release (loaded by
-// loadPrivatePaperStructure for the reader the page's own check issued), whose bytes are not here.
+// loadPrivatePaperBundle for the reader the page's own check issued), whose bytes are not here.
 vi.mock('@/lib/matrix-options/paper/paper-request-loader', async () => {
   const actual = await vi.importActual<typeof import('@/lib/matrix-options/paper/paper-request-loader')>('@/lib/matrix-options/paper/paper-request-loader');
   requestLoadSpy.mockImplementation(actual.loadPaperStructureForRequest);
-  privateLoadSpy.mockImplementation(actual.loadPrivatePaperStructure);
-  return { ...actual, loadPaperStructureForRequest: requestLoadSpy, loadPrivatePaperStructure: privateLoadSpy };
+  privateBundleSpy.mockImplementation(actual.loadPrivatePaperBundle);
+  return { ...actual, loadPaperStructureForRequest: requestLoadSpy, loadPrivatePaperBundle: privateBundleSpy };
 });
 vi.mock('@/lib/matrix-options/cohort-contract', async () => {
   const actual = await vi.importActual<typeof import('@/lib/matrix-options/cohort-contract')>('@/lib/matrix-options/cohort-contract');
@@ -111,7 +111,8 @@ interface WorkspaceElement {
     readonly outline?: readonly { anchor: string }[];
     readonly sectionWindow?: { paperSha256: string; initialIndex: number; sections: readonly { index: number; anchor: string; label: string; bytes: number }[]; linkMap: Record<string, string> };
     readonly cohortPortions?: readonly { cohortId: string; status: string; sourceNodeId?: string; sectionLabel?: string; sectionNumber: string; startByte?: number; endByte?: number; text?: string }[];
-    readonly children?: { type: unknown; props: { layout?: string; model: { chunks: readonly { anchor: string | null; markdown: string; startByte: number; endByte: number }[] } } };
+    readonly nativeFigures?: unknown;
+    readonly children?: { type: unknown; props: { layout?: string; nativeFigures?: unknown; model: { chunks: readonly { anchor: string | null; markdown: string; startByte: number; endByte: number }[] } } };
   };
 }
 
@@ -133,7 +134,7 @@ describe('paper publication V16 route', () => {
     vi.clearAllMocks();
     const loaderModule = await vi.importActual<typeof import('@/lib/matrix-options/paper/paper-request-loader')>('@/lib/matrix-options/paper/paper-request-loader');
     requestLoadSpy.mockImplementation(loaderModule.loadPaperStructureForRequest);
-    privateLoadSpy.mockImplementation(loaderModule.loadPrivatePaperStructure);
+    privateBundleSpy.mockImplementation(loaderModule.loadPrivatePaperBundle);
     structureMock.mockImplementation(defaultStructure);
     cohortManifestMock.mockImplementation(defaultManifest);
     // The resolved guide of the default release is its stored contract.
@@ -501,7 +502,7 @@ describe('paper publication V16 route', () => {
     // stand-in for the private release: the default synthetic text under that release's identity.
     supabaseMock.auth.getUser.mockResolvedValue({ data: { user: { id: READER_ID, is_anonymous: false } }, error: null } as never);
     const resolved = syntheticResolvedR5Guide();
-    privateLoadSpy.mockImplementation(async () => ({ ...defaultStructure(), manifest: { source: { version: R5_PAPER_VERSION, sha256: 'f'.repeat(64) } } }));
+    privateBundleSpy.mockImplementation(async () => ({ structure: { ...defaultStructure(), manifest: { source: { version: R5_PAPER_VERSION, sha256: 'f'.repeat(64) } } } }));
     cohortManifestMock.mockImplementation(() => ({ ...defaultManifest(), releaseIdentity: R5_PAPER_VERSION }) as never);
     resolveReviewerGuideMock.mockImplementation(() => resolved);
     for (const mode of ['working-draft', 'my-review']) {
@@ -513,7 +514,7 @@ describe('paper publication V16 route', () => {
       // The page is bound to the reader of THIS load: the id the reader check issued, which is
       // the very reader the loader was called with.
       expect(result.props.servedTo, mode).toBe(READER_ID);
-      expect(privateLoadSpy.mock.calls[privateLoadSpy.mock.calls.length - 1][1], mode).toMatchObject({ userId: READER_ID });
+      expect(privateBundleSpy.mock.calls[privateBundleSpy.mock.calls.length - 1][1], mode).toMatchObject({ userId: READER_ID });
       const workspace = result.props.children;
       expect(workspace.type, mode).toBe(workspaceMock);
       expect(workspace.props.documentVersion, mode).toBe(R5_PAPER_VERSION);
@@ -532,7 +533,7 @@ describe('paper publication V16 route', () => {
 
     // The default release: the workspace itself is the page's root, exactly as before, and
     // carries no reader id.
-    privateLoadSpy.mockClear();
+    privateBundleSpy.mockClear();
     cohortManifestMock.mockImplementation(defaultManifest);
     resolveReviewerGuideMock.mockImplementation(() => getReviewerGuideContract());
     for (const mode of ['working-draft', 'my-review']) {
@@ -542,7 +543,7 @@ describe('paper publication V16 route', () => {
       expect(result.props.documentVersion, mode).toBe(version);
       expect(Object.keys(result.props), mode).not.toContain('servedTo');
     }
-    expect(privateLoadSpy).not.toHaveBeenCalled();
+    expect(privateBundleSpy).not.toHaveBeenCalled();
   });
 
   it('hides the complete manifest map from anonymous readers', async () => {
@@ -565,7 +566,7 @@ describe('paper publication V16 route', () => {
     });
 
     it.each(['STATUS', 'STRUCTURE', 'SHA256'] as const)('shows only an allowlisted %s code to a verified admin on the bound release', async (code) => {
-      privateLoadSpy.mockRejectedValue(new PrivateReleaseUnavailableError(code));
+      privateBundleSpy.mockRejectedValue(new PrivateReleaseUnavailableError(code));
       const result = await request();
       expect(result.type).toBe(PrivateReleaseSessionGate);
       expect(result.props.servedTo).toBe(readerId);
@@ -578,14 +579,14 @@ describe('paper publication V16 route', () => {
       expect(supabaseMock.auth.getUser).toHaveBeenCalledTimes(2);
       expect(supabaseMock.from).toHaveBeenCalledWith('user_roles');
       expect(roleEqMock.mock.calls).toEqual([['user_id', readerId], ['role', 'admin']]);
-      expect(privateLoadSpy).toHaveBeenCalledTimes(1);
+      expect(privateBundleSpy).toHaveBeenCalledTimes(1);
       expect(requestLoadSpy).not.toHaveBeenCalled();
       expect(workspaceMock).not.toHaveBeenCalled();
     });
 
     it('never grants access from a substituted second client', async () => {
       const failure = new PrivateReleaseUnavailableError('STATUS');
-      privateLoadSpy.mockRejectedValue(failure);
+      privateBundleSpy.mockRejectedValue(failure);
       roleMaybeSingleMock.mockResolvedValue({ data: null, error: null } as never);
       const secondClient = {
         auth: { getUser: vi.fn(async () => ({ data: { user: { id: 'substituted-admin', is_anonymous: false } }, error: null })) },
@@ -599,7 +600,7 @@ describe('paper publication V16 route', () => {
 
     it('fails closed if the authenticated user changes on the same client after the load fails', async () => {
       const failure = new PrivateReleaseUnavailableError('STATUS');
-      privateLoadSpy.mockRejectedValue(failure);
+      privateBundleSpy.mockRejectedValue(failure);
       supabaseMock.auth.getUser
         .mockResolvedValueOnce({ data: { user: { id: readerId, is_anonymous: false } }, error: null } as never)
         .mockResolvedValueOnce({ data: { user: { id: 'changed-reader', is_anonymous: false } }, error: null } as never);
@@ -610,21 +611,24 @@ describe('paper publication V16 route', () => {
 
     it('preserves the successful bound private-release path without consulting the admin role', async () => {
       const resolved = syntheticResolvedR5Guide();
-      privateLoadSpy.mockImplementation(async () => ({ ...defaultStructure(), manifest: { source: { version: V0991_PAPER_VERSION, sha256: 'f'.repeat(64) } } }));
+      const nativeFigures = { sentinel: 'native-figure-set' };
+      privateBundleSpy.mockImplementation(async () => ({ structure: { ...defaultStructure(), manifest: { source: { version: V0991_PAPER_VERSION, sha256: 'f'.repeat(64) } } }, nativeFigures }));
       cohortManifestMock.mockImplementation(() => ({ ...defaultManifest(), releaseIdentity: V0991_PAPER_VERSION }) as never);
       resolveReviewerGuideMock.mockImplementation(() => resolved);
       const result = await request();
       expect(result.type).toBe(PrivateReleaseSessionGate);
       expect(result.props.servedTo).toBe(readerId);
       expect(result.props.children.type).toBe(workspaceMock);
-      expect(privateLoadSpy).toHaveBeenCalledTimes(1);
+      expect(result.props.children.props.nativeFigures).toBe(nativeFigures);
+      expect(result.props.children.props.children?.props.nativeFigures).toBe(nativeFigures);
+      expect(privateBundleSpy).toHaveBeenCalledTimes(1);
       expect(createAuthenticatedClientMock).toHaveBeenCalledTimes(1);
       expect(supabaseMock.auth.getUser).toHaveBeenCalledTimes(1);
       expect(supabaseMock.from).not.toHaveBeenCalled();
     });
 
     it('hides the gated diagnostic for a signed-out or changed browser session', async () => {
-      privateLoadSpy.mockRejectedValue(new PrivateReleaseUnavailableError('STATUS'));
+      privateBundleSpy.mockRejectedValue(new PrivateReleaseUnavailableError('STATUS'));
       const result = await request();
       expect(result.type).toBe(PrivateReleaseSessionGate);
       expect(result.props.servedTo).toBe(readerId);
@@ -634,7 +638,7 @@ describe('paper publication V16 route', () => {
 
     it('keeps the original generic failure for an ordinary reader', async () => {
       const failure = new PrivateReleaseUnavailableError('STATUS');
-      privateLoadSpy.mockRejectedValue(failure);
+      privateBundleSpy.mockRejectedValue(failure);
       roleMaybeSingleMock.mockResolvedValue({ data: null, error: null } as never);
       await expect(request()).rejects.toBe(failure);
       expect(workspaceMock).not.toHaveBeenCalled();
@@ -643,41 +647,41 @@ describe('paper publication V16 route', () => {
     it('keeps anonymous readers out before the private loader and admin lookup', async () => {
       supabaseMock.auth.getUser.mockResolvedValue({ data: { user: { id: readerId, is_anonymous: true } }, error: null } as never);
       await expect(request()).rejects.toThrow('NEXT_NOT_FOUND');
-      expect(privateLoadSpy).not.toHaveBeenCalled();
+      expect(privateBundleSpy).not.toHaveBeenCalled();
       expect(supabaseMock.from).not.toHaveBeenCalled();
     });
 
     it('fails closed when the admin role lookup errors', async () => {
       const failure = new PrivateReleaseUnavailableError('STATUS');
-      privateLoadSpy.mockRejectedValue(failure);
+      privateBundleSpy.mockRejectedValue(failure);
       roleMaybeSingleMock.mockResolvedValue({ data: { role: 'admin' }, error: new Error('role sentinel') } as never);
       await expect(request()).rejects.toBe(failure);
     });
 
     it('does not expose a diagnostic for a different bound release', async () => {
       const failure = new PrivateReleaseUnavailableError('STATUS');
-      privateLoadSpy.mockRejectedValue(failure);
+      privateBundleSpy.mockRejectedValue(failure);
       await expect(request(R5_PAPER_VERSION)).rejects.toBe(failure);
       expect(supabaseMock.from).not.toHaveBeenCalled();
     });
 
     it('does not expose a diagnostic for an unbound version', async () => {
       await expect(request('v0.9.91-wrong-hash')).rejects.toThrow('NEXT_NOT_FOUND');
-      expect(privateLoadSpy).not.toHaveBeenCalled();
+      expect(privateBundleSpy).not.toHaveBeenCalled();
       expect(supabaseMock.from).not.toHaveBeenCalled();
     });
 
     it('rejects an unknown forged code and never reflects its sentinel', async () => {
       const failure = new PrivateReleaseUnavailableError('STATUS');
       Object.defineProperty(failure, 'code', { value: 'SENTINEL_PRIVATE_BYTES_URL_TOKEN' });
-      privateLoadSpy.mockRejectedValue(failure);
+      privateBundleSpy.mockRejectedValue(failure);
       await expect(request()).rejects.toBe(failure);
       expect(supabaseMock.from).not.toHaveBeenCalled();
       expect(workspaceMock).not.toHaveBeenCalled();
     });
 
     it('does not mask unrelated errors or change a successful repository release', async () => {
-      privateLoadSpy.mockRejectedValue(new TypeError('unrelated sentinel'));
+      privateBundleSpy.mockRejectedValue(new TypeError('unrelated sentinel'));
       await expect(request()).rejects.toThrow('unrelated sentinel');
       expect(supabaseMock.from).not.toHaveBeenCalled();
       const result = await page({ mode: 'working-draft' });

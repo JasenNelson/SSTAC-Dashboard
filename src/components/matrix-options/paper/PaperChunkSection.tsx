@@ -1,6 +1,7 @@
 import { presentChunkLabel, presentChunkMarkdown } from '@/lib/matrix-options/paper/contents-heading';
 import type { PaperRegion } from '@/lib/matrix-options/paper/contents-heading';
 import type { PaperSectionContractChunk } from '@/lib/matrix-options/paper/section-window';
+import type { NativeFigureSet } from '@/lib/matrix-options/paper/native-figures';
 
 import { PAPER_DOCUMENT_HEADING_OFFSET, PaperText } from './PaperText';
 
@@ -50,12 +51,12 @@ export function paperSectionLabelId(anchor: string): string {
  * anchor (the section id) are unchanged. A release with its own contents display
  * label never reaches that relabel: its chunk already carries the display label.
  */
-export function PaperChunkSection({ chunk, linkMap, region = 'main' }: { readonly chunk: PaperChunkView; readonly linkMap?: Readonly<Record<string, string>>; readonly region?: PaperRegion }) {
+export function PaperChunkSection({ chunk, linkMap, region = 'main', nativeFigures }: { readonly chunk: PaperChunkView; readonly linkMap?: Readonly<Record<string, string>>; readonly region?: PaperRegion; readonly nativeFigures?: NativeFigureSet }) {
   const markdown = presentChunkMarkdown(chunk.markdown, chunk.label, region);
   if (chunk.anchor === null) {
     return (
       <section data-paper-preamble="" className={PAPER_CHUNK_CLASSES}>
-        <PaperText markdown={markdown} linkMap={linkMap} headingOffset={PAPER_DOCUMENT_HEADING_OFFSET} />
+        <PaperText markdown={markdown} linkMap={linkMap} nativeFigures={nativeFigures} headingOffset={PAPER_DOCUMENT_HEADING_OFFSET} />
       </section>
     );
   }
@@ -71,7 +72,7 @@ export function PaperChunkSection({ chunk, linkMap, region = 'main' }: { readonl
       className={PAPER_CHUNK_CLASSES}
     >
       <span id={labelId} hidden>{presentChunkLabel(chunk.label, region)}</span>
-      <PaperText markdown={markdown} linkMap={linkMap} headingOffset={PAPER_DOCUMENT_HEADING_OFFSET} />
+      <PaperText markdown={markdown} linkMap={linkMap} nativeFigures={nativeFigures} headingOffset={PAPER_DOCUMENT_HEADING_OFFSET} />
     </section>
   );
 }

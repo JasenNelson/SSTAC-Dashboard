@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MockInstance } from 'vitest';
 
-const { redirectMock, notFoundMock, workspaceMock, downloadStateMock, getUserMock, createClientMock, loadStructureSpy, requestLoadSpy, privateLoadSpy } = vi.hoisted(() => ({
+const { redirectMock, notFoundMock, workspaceMock, downloadStateMock, getUserMock, createClientMock, loadStructureSpy, requestLoadSpy, privateBundleSpy } = vi.hoisted(() => ({
   redirectMock: vi.fn((_url: string) => { throw new Error('NEXT_REDIRECT'); }),
   notFoundMock: vi.fn(() => { throw new Error('NEXT_NOT_FOUND'); }),
   workspaceMock: vi.fn((..._args: unknown[]) => null),
@@ -10,7 +10,7 @@ const { redirectMock, notFoundMock, workspaceMock, downloadStateMock, getUserMoc
   createClientMock: vi.fn(),
   loadStructureSpy: vi.fn(),
   requestLoadSpy: vi.fn(),
-  privateLoadSpy: vi.fn(),
+  privateBundleSpy: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({ redirect: redirectMock, notFound: notFoundMock }));
@@ -24,12 +24,12 @@ vi.mock('@/lib/matrix-options/revised-paper-structure', async () => {
 });
 // The real loaders behind spies: a test can see whether either ran, and can stand a structure
 // or a failure in for the private bytes where there is no fixture. A private-storage release
-// is loaded by loadPrivatePaperStructure, for the reader the page's own check issued.
+// is loaded by loadPrivatePaperBundle, for the reader the page's own check issued.
 vi.mock('@/lib/matrix-options/paper/paper-request-loader', async () => {
   const actual = await vi.importActual<typeof import('@/lib/matrix-options/paper/paper-request-loader')>('@/lib/matrix-options/paper/paper-request-loader');
   requestLoadSpy.mockImplementation(actual.loadPaperStructureForRequest);
-  privateLoadSpy.mockImplementation(actual.loadPrivatePaperStructure);
-  return { ...actual, loadPaperStructureForRequest: requestLoadSpy, loadPrivatePaperStructure: privateLoadSpy };
+  privateBundleSpy.mockImplementation(actual.loadPrivatePaperBundle);
+  return { ...actual, loadPaperStructureForRequest: requestLoadSpy, loadPrivatePaperBundle: privateBundleSpy };
 });
 
 import { MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH } from '@/lib/matrix-options/navigation';
@@ -148,7 +148,7 @@ beforeEach(async () => {
   const loaderModule = await vi.importActual<typeof import('@/lib/matrix-options/paper/paper-request-loader')>('@/lib/matrix-options/paper/paper-request-loader');
   loadStructureSpy.mockImplementation(structureModule.loadRevisedPaperStructure);
   requestLoadSpy.mockImplementation(loaderModule.loadPaperStructureForRequest);
-  privateLoadSpy.mockImplementation(loaderModule.loadPrivatePaperStructure);
+  privateBundleSpy.mockImplementation(loaderModule.loadPrivatePaperBundle);
   getUserMock.mockResolvedValue(ALLOWED);
   createClientMock.mockImplementation(async () => ({ auth: { getUser: getUserMock, getSession: vi.fn(async () => ({ data: { session: { access_token: 'synthetic-session-token-for-tests' } }, error: null })) } }));
   consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
@@ -188,14 +188,14 @@ describe('private-storage release: every page that loads it checks the reader fi
     expect(createClientMock).toHaveBeenCalledTimes(pages.length);
     expect(getUserMock).toHaveBeenCalledTimes(pages.length);
     expect(requestLoadSpy).not.toHaveBeenCalled();
-    expect(privateLoadSpy).not.toHaveBeenCalled();
+    expect(privateBundleSpy).not.toHaveBeenCalled();
     expect(loadStructureSpy).not.toHaveBeenCalled();
     expect(downloadStateMock).not.toHaveBeenCalled();
     expect(consoleError).not.toHaveBeenCalled();
   });
 
   it('a release that cannot be read right now is thrown to the error boundary on every page: never "not found", never a redirect', async () => {
-    privateLoadSpy.mockRejectedValue(new PrivateReleaseUnavailableError('STATUS'));
+    privateBundleSpy.mockRejectedValue(new PrivateReleaseUnavailableError('STATUS'));
     for (const [name, run] of pages) {
       await expect(run(), name).rejects.toBeInstanceOf(PrivateReleaseUnavailableError);
     }
@@ -207,25 +207,25 @@ describe('private-storage release: every page that loads it checks the reader fi
   });
 
   it('an unexpected failure of the load surfaces as itself', async () => {
-    privateLoadSpy.mockRejectedValue(new TypeError('loader is not a function'));
+    privateBundleSpy.mockRejectedValue(new TypeError('loader is not a function'));
     for (const [name, run] of pages) await expect(run(), name).rejects.toBeInstanceOf(TypeError);
     expect(notFoundMock).not.toHaveBeenCalled();
   });
 
   it('hands the loader the exact version and the reader its own check issued on this request\'s session client: one user check', async () => {
-    privateLoadSpy.mockResolvedValue(syntheticStructure());
+    privateBundleSpy.mockResolvedValue({ structure: syntheticStructure() });
     await expect(PublicationNodePage({ params: Promise.resolve({ documentVersion: R5_PAPER_VERSION, canonicalNodeId: encodeURIComponent('node:two') }) })).rejects.toThrow('NEXT_REDIRECT');
     expect(redirectMock).toHaveBeenCalledWith(`${r5Base}?mode=working-draft&section=two`);
     expect(createClientMock).toHaveBeenCalledTimes(1);
     expect(getUserMock).toHaveBeenCalledTimes(1);
-    expect(privateLoadSpy).toHaveBeenCalledTimes(1);
-    expect(privateLoadSpy.mock.calls[0][0]).toBe(R5_PAPER_VERSION);
-    expect(privateLoadSpy.mock.calls[0][1]).toMatchObject({ userId: READER_ID });
+    expect(privateBundleSpy).toHaveBeenCalledTimes(1);
+    expect(privateBundleSpy.mock.calls[0][0]).toBe(R5_PAPER_VERSION);
+    expect(privateBundleSpy.mock.calls[0][1]).toMatchObject({ userId: READER_ID });
     expect(requestLoadSpy).not.toHaveBeenCalled();
   });
 
   it('never renders a loaded structure whose text is not the bound release: the guide check refuses it', async () => {
-    privateLoadSpy.mockResolvedValue(syntheticStructure());
+    privateBundleSpy.mockResolvedValue({ structure: syntheticStructure() });
     await expectNotFound(() => publication(R5_PAPER_VERSION, { mode: 'working-draft' }));
     expect(consoleError).toHaveBeenCalledWith('[matrix-options-paper] publication route unavailable: GUIDE_AUTHENTICATION_FAILED');
     expect(workspaceMock).not.toHaveBeenCalled();
@@ -238,7 +238,7 @@ describe('private-storage release: every page that loads it checks the reader fi
     await expectNotFound(() => PaperSectionPage({ params: Promise.resolve({ documentVersion: version, stableSectionId: 'sec-7-8' }) }));
     expect(createClientMock).not.toHaveBeenCalled();
     expect(requestLoadSpy).not.toHaveBeenCalled();
-    expect(privateLoadSpy).not.toHaveBeenCalled();
+    expect(privateBundleSpy).not.toHaveBeenCalled();
     expect(loadStructureSpy).not.toHaveBeenCalled();
     expect(workspaceMock).not.toHaveBeenCalled();
   });
@@ -253,7 +253,7 @@ describe('private-storage release: every page that loads it checks the reader fi
     expect(target).not.toContain(R5_PAPER_VERSION);
     expect(createClientMock).not.toHaveBeenCalled();
     expect(requestLoadSpy).not.toHaveBeenCalled();
-    expect(privateLoadSpy).not.toHaveBeenCalled();
+    expect(privateBundleSpy).not.toHaveBeenCalled();
     expect(loadStructureSpy).not.toHaveBeenCalled();
   });
 });
@@ -261,7 +261,7 @@ describe('private-storage release: every page that loads it checks the reader fi
 describe('release-scoped identities (no private byte needed)', () => {
   beforeEach(() => {
     // Whatever R5 structure is loaded, ids and versions are scoped by the contracts.
-    privateLoadSpy.mockResolvedValue(syntheticStructure());
+    privateBundleSpy.mockResolvedValue({ structure: syntheticStructure() });
   });
 
   it('never accepts a question id of the other release', async () => {
@@ -298,7 +298,7 @@ describe('release-scoped identities (no private byte needed)', () => {
     await expectNotFound(() => PaperVersionPage({ params: Promise.resolve({ documentVersion: 'unknown' }) }));
     await expectNotFound(() => ReviewVersionPage({ params: Promise.resolve({ documentVersion: 'unknown' }) }));
     expect(requestLoadSpy).not.toHaveBeenCalled();
-    expect(privateLoadSpy).not.toHaveBeenCalled();
+    expect(privateBundleSpy).not.toHaveBeenCalled();
     expect(createClientMock).not.toHaveBeenCalled();
   });
 
@@ -311,7 +311,7 @@ describe('release-scoped identities (no private byte needed)', () => {
     await expectNotFound(() => PaperVersionPage({ params: Promise.resolve({ documentVersion: R5_PAPER_VERSION }) }));
     await expectNotFound(() => PaperSectionPage({ params: Promise.resolve({ documentVersion: R5_PAPER_VERSION, stableSectionId: 'sec-7-8' }) }));
     expect(requestLoadSpy).not.toHaveBeenCalled();
-    expect(privateLoadSpy).not.toHaveBeenCalled();
+    expect(privateBundleSpy).not.toHaveBeenCalled();
     expect(loadStructureSpy).not.toHaveBeenCalled();
   });
 });

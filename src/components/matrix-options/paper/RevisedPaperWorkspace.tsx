@@ -13,6 +13,7 @@ import { DEFAULT_READER_WIDTH, readReaderWidth, writeReaderWidth } from '@/lib/m
 import type { ReaderWidth } from '@/lib/matrix-options/paper/reader-width';
 import { reviewTopicLabel } from '@/lib/matrix-options/paper/topic-labels';
 import type { PanelPreferences, PanelSide } from '@/lib/matrix-options/paper/panel-layout';
+import type { NativeFigureSet } from '@/lib/matrix-options/paper/native-figures';
 import { buildReviewNavigation, portionMatchesQuestion } from '@/lib/matrix-options/paper/review-navigation';
 import { PAPER_LANDING_TOLERANCE_PX, PaperScrollAuthority, panelRevealScrollDelta } from '@/lib/matrix-options/paper/scroll-authority';
 import type { PaperRevealCause } from '@/lib/matrix-options/paper/scroll-authority';
@@ -66,6 +67,8 @@ export interface RevisedPaperWorkspaceProps {
    * labels and byte sizes, never paper markdown.
    */
   readonly sectionWindow?: PaperSectionWindowData;
+  /** Authenticated private native figures for this release, when its delivery is prepared. */
+  readonly nativeFigures?: NativeFigureSet;
   /** Working Draft only: the server-rendered initial section (<PaperDocument layout="chunks">). */
   readonly children?: ReactNode;
   /** Authenticated opaque-ID PDF/DOCX manifests by cohortId; null remains a visible pending state. */
@@ -264,7 +267,7 @@ function pushUrlState(state: PaperUrlState): void {
   window.history.pushState(window.history.state, '', `${window.location.pathname}${serializePaperUrlState(state)}`);
 }
 
-function CohortPaperPortion({ cohort, portion, headingRef, headingId = 'cohort-paper-heading', documentVersion, questionId = null }: { readonly cohort: CohortManifest['cohorts'][number] | undefined; readonly portion: CohortPortion | undefined; readonly headingRef: Ref<HTMLHeadingElement>; readonly headingId?: string; readonly documentVersion: string; readonly questionId?: string | null }) {
+function CohortPaperPortion({ cohort, portion, headingRef, headingId = 'cohort-paper-heading', documentVersion, questionId = null, nativeFigures }: { readonly cohort: CohortManifest['cohorts'][number] | undefined; readonly portion: CohortPortion | undefined; readonly headingRef: Ref<HTMLHeadingElement>; readonly headingId?: string; readonly documentVersion: string; readonly questionId?: string | null; readonly nativeFigures?: NativeFigureSet }) {
   if (!cohort || !portion) return <section data-testid="cohort-paper" aria-labelledby={headingId} className="rounded-md border border-[var(--db-border)] p-5"><h2 ref={headingRef} tabIndex={-1} id={headingId} className="text-lg font-semibold">{(cohort ? reviewTopicLabel(cohort.id, cohort.name) : null) ?? 'Review topic'}</h2><p className="mt-2 text-sm text-[var(--db-text-secondary)]">No paper section is linked to this topic yet.</p></section>;
   if (portion.status === 'unavailable') return <section data-testid="cohort-paper" aria-labelledby={headingId} className="min-w-0 rounded-md border border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] p-5 print:hidden"><h2 ref={headingRef} tabIndex={-1} id={headingId} className="text-lg font-semibold">{portion.sectionLabel ?? `Section ${portion.sectionNumber}`}</h2><p className="mt-2 text-sm">Section {portion.sectionNumber} is referenced by this review topic but is not part of this draft.</p></section>;
   const topicName = reviewTopicLabel(cohort.id, cohort.name);
@@ -278,7 +281,7 @@ function CohortPaperPortion({ cohort, portion, headingRef, headingId = 'cohort-p
       </div>
       {portion.sectionAnchor ? <OpenInWorkingDraftLink documentVersion={documentVersion} sectionAnchor={portion.sectionAnchor} title={title} questionId={questionId} /> : null}
     </header>
-    <PaperText markdown={displayPortionText} className="mt-4" headingOffset={portionHeadingOffset(displayPortionText)} headingVariant="portion" />
+    <PaperText markdown={displayPortionText} nativeFigures={nativeFigures} className="mt-4" headingOffset={portionHeadingOffset(displayPortionText)} headingVariant="portion" />
   </section>;
 }
 
@@ -346,7 +349,7 @@ function searchParamsRecord(search: string): PaperSearchParams {
   return record;
 }
 
-export function RevisedPaperWorkspace({ documentVersion, guide: reviewerGuide, reviewManifestSha256, urlState, assignment, outline, cohortPortions, sectionWindow, children, downloadManifests = null, reviewLineage, stableSectionIds }: RevisedPaperWorkspaceProps) {
+export function RevisedPaperWorkspace({ documentVersion, guide: reviewerGuide, reviewManifestSha256, urlState, assignment, outline, cohortPortions, sectionWindow, nativeFigures, children, downloadManifests = null, reviewLineage, stableSectionIds }: RevisedPaperWorkspaceProps) {
   const isMyReview = urlState.mode === 'my-review';
   // The review topics and questions of the draft on screen, never another draft's:
   // question ids embed their draft, and a response is saved under that id. The
@@ -1483,14 +1486,14 @@ export function RevisedPaperWorkspace({ documentVersion, guide: reviewerGuide, r
                       {/* PLAN-R4 3.B.2: every authenticated portion for the selected cohort is rendered in full -- stacked, not paginated. */}
                       {selectedPortions.map((portion) => (
                         <div key={portion.id}>
-                          <CohortPaperPortion cohort={selectedCohort} portion={portion} headingId={`cohort-paper-heading-${portion.id}`} headingRef={portionHeadingRef(portion.id)} documentVersion={documentVersion} questionId={openQuestion?.id ?? null} />
+                          <CohortPaperPortion cohort={selectedCohort} portion={portion} headingId={`cohort-paper-heading-${portion.id}`} headingRef={portionHeadingRef(portion.id)} documentVersion={documentVersion} questionId={openQuestion?.id ?? null} nativeFigures={nativeFigures} />
                         </div>
                       ))}
                     </div>
-                  : <CohortPaperPortion cohort={selectedCohort} portion={undefined} headingRef={(element) => { noPortionHeadingRef.current = element; }} documentVersion={documentVersion} />)
+                  : <CohortPaperPortion cohort={selectedCohort} portion={undefined} headingRef={(element) => { noPortionHeadingRef.current = element; }} documentVersion={documentVersion} nativeFigures={nativeFigures} />)
                 : <CohortPortionsUnavailable workingDraftHref={workingDraftHref} />
               : sectionWindow && children
-                ? <PaperSectionWindowView sectionWindow={sectionWindow} api={sectionApi} scrollRootRef={documentColumnRef}>{children}</PaperSectionWindowView>
+                ? <PaperSectionWindowView sectionWindow={sectionWindow} api={sectionApi} scrollRootRef={documentColumnRef} nativeFigures={nativeFigures}>{children}</PaperSectionWindowView>
                 : children ?? <section data-testid="paper-document-unavailable" className="rounded-md border border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] p-5 text-sm"><h2 className="text-lg font-semibold">Paper text unavailable</h2><p role="status" className="mt-2">The paper text could not be loaded for this view. Try reloading the page.</p></section>}
           </div>
         </div>

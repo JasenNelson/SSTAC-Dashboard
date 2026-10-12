@@ -34,8 +34,9 @@ export type PaperReleaseActivation = 'DEFAULT' | 'SELECTABLE_NON_DEFAULT';
  * How a release's bytes reach the server.
  * - `repository`: the Markdown is a tracked file under candidate/paper/.
  * - `private-storage`: the Markdown and figures are NOT in the repository. They
- *   are read from private storage with the signed-in reader's own session and
- *   verified against this entry before use (./private-release-assets.ts).
+ *   are read from the release's private storage or application-table source
+ *   with the signed-in reader's own session and verified against this entry
+ *   before use (./private-release-assets.ts).
  */
 export type PaperReleaseDelivery = 'repository' | 'private-storage';
 

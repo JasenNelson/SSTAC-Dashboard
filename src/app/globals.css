@@ -1368,6 +1368,13 @@ html.dark ::-webkit-scrollbar-thumb:hover,
     vertical-align: top;
   }
   .reader-prose .math-renderer tbody > tr:nth-child(even) { background: var(--paper-table-band); }
+  .reader-prose .math-renderer .paper-table-caption-row td {
+    background: transparent;
+    color: var(--db-text-primary);
+    border: 0;
+    padding: 0 0 0.5rem;
+    font-weight: 500;
+  }
   .reader-prose .math-renderer :is(th, td):first-child { min-width: 9rem; }
 
   /* ---- Quoted material -----------------------------------------------------
@@ -1410,7 +1417,9 @@ html.dark ::-webkit-scrollbar-thumb:hover,
  * (the global print block forces element colours but not custom properties),
  * the table header prints like the reference PDF and repeats on each page, and
  * a figure is never split. Literal values mirror the light :root tokens. */
+@page matrix-paper { margin: 0.5in; }
 @media print {
+  [data-testid='paper-document-column'] { page: matrix-paper; }
   html.dark .reader-prose,
   .reader-prose {
     --db-surface: #ffffff;
@@ -1448,6 +1457,14 @@ html.dark ::-webkit-scrollbar-thumb:hover,
     print-color-adjust: exact;
   }
   .reader-prose .math-renderer :is(th, td) { font-size: 9pt; padding: 4px 6px; line-height: 1.25; }
+  .reader-prose .math-renderer .paper-captioned-table { break-inside: avoid; page-break-inside: avoid; }
+  .reader-prose .math-renderer .paper-captioned-table table { break-inside: avoid; page-break-inside: avoid; }
+  .reader-prose .math-renderer .paper-table-caption-row td {
+    background: transparent !important;
+    color: var(--db-text-primary) !important;
+    border: 0 !important;
+    padding: 0 0 0.5rem;
+  }
   .paper-figure__canvas,
   .paper-figure__status,
   .reader-prose [data-quote-kind='note'] > .math-renderer > blockquote {

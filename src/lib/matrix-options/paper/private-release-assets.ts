@@ -2,15 +2,18 @@ import 'server-only';
 
 import { createHash, timingSafeEqual } from 'node:crypto';
 
-import { getAcceptedFiguresContract } from './accepted-figures';
+import { findAcceptedFigureBlocks, getAcceptedFiguresContract } from './accepted-figures';
+import { authenticateAcceptedFigures } from './accepted-figures-server';
 import { appendixLSourceMediaContract } from './accepted-source-media';
+import { validateNativeFigureSet, type NativeFigureSet } from './native-figures';
 import { paperReleaseIdentity, type PaperRelease } from './releases';
 
 /*
  * The one server boundary for a `private-storage` release (./releases.ts).
  *
  * A private release's Markdown and figures are not in the repository. They are
- * read from a private storage bucket with the signed-in reader's OWN session,
+ * read from private storage or the release-specific application table with the
+ * signed-in reader's OWN session,
  * and nothing is parsed or returned until every byte has been verified against
  * the release entry and the figures contract.
  *
@@ -18,8 +21,8 @@ import { paperReleaseIdentity, type PaperRelease } from './releases';
  * 1. requirePaperReader runs FIRST on every path, cached or not: a request with
  *    no user, an anonymous user, or a user check that errored gets nothing. It
  *    is the "signed in, not anonymous" part of the storage read policy. The
- *    policy itself decides too: every reader is admitted by storage under the
- *    reader's own session before being given anything (getVerifiedPrivateRelease),
+ *    source policy itself decides too: every reader is admitted by the source
+ *    under the reader's own session before being given anything,
  *    so a policy that later admits fewer readers is honoured without a change here.
  * 2. Only the allowlisted objects of the release are ever requested: one
  *    Markdown object and the figures contract's asset files. No listing, no
@@ -29,10 +32,10 @@ import { paperReleaseIdentity, type PaperRelease } from './releases';
  *    exact length, SHA-256, media type, and content form (UTF-8 text with no
  *    BOM and no CR; or a PNG of the declared dimensions).
  * 4. Verified assets are kept in process memory for a short fixed time
- *    (PRIVATE_RELEASE_CACHE_TTL_MS), and so is each reader's admission by
- *    storage. After that time the assets are read again under the current
- *    reader's session, and the new read takes the entry's place at once; a failed
- *    re-read is "unavailable", never stale content.
+ *    (PRIVATE_RELEASE_CACHE_TTL_MS). Storage admissions are session-bound and
+ *    cached for that time; table admissions are fresh on every request.
+ *    After expiry the assets are read again under the current reader's session,
+ *    and a failed re-read is "unavailable", never stale content.
  *
  * Errors carry a constant code and message. Nothing from an object, a storage
  * response body or a credential is ever put in an error or a log line.
@@ -136,7 +139,7 @@ export async function requirePaperReader(supabase: PaperSessionClient): Promise<
   return reader;
 }
 
-type PrivateMediaType = 'text/markdown' | 'image/png';
+type PrivateMediaType = 'text/markdown' | 'image/png' | 'application/json';
 
 /** One allowlisted object: where it is, and exactly what its bytes must be. */
 export interface PrivateReleaseObject {
@@ -155,10 +158,22 @@ interface PrivateFigureObject extends PrivateReleaseObject {
 interface PrivateReleaseCatalog {
   readonly markdown: PrivateReleaseObject;
   readonly figures: readonly PrivateFigureObject[];
+  readonly nativeModel: PrivateReleaseObject | null;
 }
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 const FIGURE_FILE = /^[A-Za-z0-9-]+\.png$/;
+const DECIMAL_BYTES = /^[1-9][0-9]*$/;
+
+/** This revision is prepared in code but remains disabled until separately activated. */
+export function nativeDeliveryPrepared(release: PaperRelease): boolean {
+  if (release.documentVersion !== 'v0.9.91' || process.env.MATRIX_OPTIONS_PAPER_NATIVE_DELIVERY !== 'reviewed') return false;
+  const sha256 = process.env.MATRIX_OPTIONS_PAPER_NATIVE_MODEL_SHA256;
+  const size = process.env.MATRIX_OPTIONS_PAPER_NATIVE_MODEL_BYTES;
+  if (!sha256 || !SHA256_HEX.test(sha256) || !size || !DECIMAL_BYTES.test(size)) unavailable('CONFIGURATION');
+  declaredSize(Number(size));
+  return true;
+}
 
 function declaredSize(bytes: number): number {
   if (!Number.isInteger(bytes) || bytes <= 0 || bytes > MAX_OBJECT_BYTES) unavailable('CONFIGURATION');
@@ -173,7 +188,15 @@ function privateReleaseCatalog(release: PaperRelease): PrivateReleaseCatalog {
   const markdown: PrivateReleaseObject = { path: `${prefix}/presentation.md`, bytes: declaredSize(release.bytes), sha256: release.sha256, mediaType: 'text/markdown' };
   const contract = release.acceptedFigures ? getAcceptedFiguresContract(release.documentVersion) : null;
   if (release.acceptedFigures && !contract) unavailable('CONFIGURATION');
-  const figures = (contract?.assets ?? []).map((asset): PrivateFigureObject => {
+  const native = nativeDeliveryPrepared(release);
+  let nativeModel: PrivateReleaseObject | null = null;
+  if (native) {
+    const sha256 = process.env.MATRIX_OPTIONS_PAPER_NATIVE_MODEL_SHA256;
+    const bytes = Number(process.env.MATRIX_OPTIONS_PAPER_NATIVE_MODEL_BYTES);
+    if (!sha256 || !SHA256_HEX.test(sha256) || !Number.isInteger(bytes)) unavailable('CONFIGURATION');
+    nativeModel = { path: `${prefix}/figures/native-figure-models.json`, bytes: declaredSize(bytes), sha256, mediaType: 'application/json' };
+  }
+  const figures = (native ? [] : (contract?.assets ?? [])).map((asset): PrivateFigureObject => {
     if (!FIGURE_FILE.test(asset.file) || !SHA256_HEX.test(asset.sha256)) unavailable('CONFIGURATION');
     return { file: asset.file, path: `${prefix}/figures/${asset.file}`, bytes: declaredSize(asset.bytes), sha256: asset.sha256, mediaType: 'image/png', width: asset.width, height: asset.height };
   });
@@ -189,7 +212,7 @@ function privateReleaseCatalog(release: PaperRelease): PrivateReleaseCatalog {
     height: sourceMedia.height,
   });
   if (new Set(figures.map((figure) => figure.file)).size !== figures.length) unavailable('CONFIGURATION');
-  return { markdown, figures };
+  return { markdown, figures, nativeModel };
 }
 
 /**
@@ -306,13 +329,27 @@ function storageSource(accessToken: string): PrivateAssetSource {
  * any other process (a production build, or one that states no mode) this
  * branch does not exist.
  */
-async function chooseSource(accessToken: string): Promise<PrivateAssetSource> {
+function usesTableSource(release: PaperRelease): boolean {
+  const localFixture = (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') &&
+    Boolean(process.env.MATRIX_OPTIONS_PAPER_PRIVATE_ASSET_DIR);
+  return release.documentVersion === 'v0.9.91' && !localFixture;
+}
+
+async function chooseSource(release: PaperRelease, supabase: PaperSessionClient, accessToken: string): Promise<PrivateAssetSource> {
   if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
     const directory = process.env.MATRIX_OPTIONS_PAPER_PRIVATE_ASSET_DIR;
     if (directory) {
       const { localDirectorySource } = await import('./private-release-local-source');
       return localDirectorySource(directory);
     }
+  }
+  if (usesTableSource(release)) {
+    if (nativeDeliveryPrepared(release)) {
+      const { nativePrivateReleaseTableSource } = await import('./native-private-release-table-source');
+      return nativePrivateReleaseTableSource(supabase);
+    }
+    const { privateReleaseTableSource } = await import('./private-release-table-source');
+    return privateReleaseTableSource(supabase);
   }
   return storageSource(accessToken);
 }
@@ -367,6 +404,8 @@ export interface VerifiedPrivateRelease {
   readonly releaseIdentity: string;
   /** The exact Markdown text (verified length, hash, encoding). */
   readonly markdown: string;
+  /** Present only after all native assets and manuscript captions passed verification. */
+  readonly nativeFigures?: NativeFigureSet;
   /** The asset file names whose verified bytes are held, in contract order. */
   readonly figureFiles: readonly string[];
 }
@@ -422,9 +461,8 @@ async function readVerified(source: PrivateAssetSource, object: PrivateReleaseOb
   keep(verifyObject(object, result.bytes, result.mediaType));
 }
 
-async function coldLoad(release: PaperRelease, accessToken: string): Promise<VerifiedPrivateRelease> {
+async function coldLoad(release: PaperRelease, source: PrivateAssetSource, tableBacked: boolean): Promise<VerifiedPrivateRelease> {
   const catalog = privateReleaseCatalog(release);
-  const source = await chooseSource(accessToken);
   // One failure ends the whole load: the first object that cannot be read or verified aborts
   // every read still in flight, so no response body is left open behind a failed load.
   const firstFailure = new AbortController();
@@ -436,16 +474,41 @@ async function coldLoad(release: PaperRelease, accessToken: string): Promise<Ver
       markdown = decodeMarkdown(verified);
     });
     if (markdown === null) unavailable('ENCODING');
+    let nativeFigures: NativeFigureSet | undefined;
+    if (catalog.nativeModel) {
+      await readVerified(source, catalog.nativeModel, releaseSignal, (verified) => {
+        if (verified.includes(13) || verified.some((byte) => byte > 127) || verified[verified.length - 1] !== 10) unavailable('ENCODING');
+        try {
+          const contract = authenticateAcceptedFigures({ content: markdown!, manifest: { source: { version: release.documentVersion, sha256: release.sha256 } } });
+          const candidate = validateNativeFigureSet(JSON.parse(verified.toString('ascii')) as unknown, contract);
+          const blocks = findAcceptedFigureBlocks(markdown!.split('\n'));
+          if (blocks.length !== candidate.placements.length || candidate.placements.some((placement, index) =>
+            placement.figureId !== blocks[index].figureId || placement.caption !== blocks[index].content?.caption)) unavailable('STRUCTURE');
+          nativeFigures = candidate;
+        } catch {
+          unavailable('STRUCTURE');
+        }
+      });
+      if (!nativeFigures) unavailable('STRUCTURE');
+    }
     const figuresToRead = catalog.figures;
     const figures = new Map<string, Buffer>();
-    await Promise.all(figuresToRead.map((figure) => readVerified(source, figure, releaseSignal, (verified) => {
-      verifyPng(figure, verified);
-      figures.set(figure.file, verified);
-    })));
+    let nextFigure = 0;
+    const workers = tableBacked ? Math.min(3, figuresToRead.length) : figuresToRead.length;
+    await Promise.all(Array.from({ length: workers }, async () => {
+      while (nextFigure < figuresToRead.length) {
+        const figure = figuresToRead[nextFigure++];
+        await readVerified(source, figure, releaseSignal, (verified) => {
+          verifyPng(figure, verified);
+          figures.set(figure.file, verified);
+        });
+      }
+    }));
     const verifiedRelease: VerifiedPrivateRelease = Object.freeze({
       documentVersion: release.documentVersion,
       releaseIdentity: paperReleaseIdentity(release),
       markdown,
+      ...(nativeFigures ? { nativeFigures } : {}),
       figureFiles: Object.freeze(figuresToRead.map((figure) => figure.file)),
     });
     verifiedFigureBytes.set(verifiedRelease, figures);
@@ -466,8 +529,8 @@ interface CacheEntry {
 const verifiedReleases = new Map<string, CacheEntry>();
 
 /**
- * The reader's CURRENT session token, looked up ONCE per call. The token is only forwarded
- * to storage, which verifies it; the reader was already validated by requirePaperReader.
+ * The reader's CURRENT session token, looked up ONCE per call. Storage verifies
+ * it; the table source uses the same request-bound client and a fresh RLS query.
  */
 async function readSessionToken(supabase: PaperSessionClient): Promise<string> {
   let accessToken: string | undefined;
@@ -526,7 +589,7 @@ function logUnavailable(error: unknown): PrivateReleaseUnavailableError {
 }
 
 /** Resolves once the source has admitted this session, under the very token that names it, for this release. */
-function sourceAdmission(admission: string, release: PaperRelease, accessToken: string, readerId: string): Promise<void> {
+function sourceAdmission(admission: string, release: PaperRelease, source: PrivateAssetSource, readerId: string): Promise<void> {
   const until = admittedReaders.get(admission);
   if (until !== undefined && until > Date.now()) return Promise.resolve();
   admittedReaders.delete(admission);
@@ -541,7 +604,6 @@ function sourceAdmission(admission: string, release: PaperRelease, accessToken: 
   }
   const asked: Promise<void> = (async () => {
     const catalog = privateReleaseCatalog(release);
-    const source = await chooseSource(accessToken);
     const signal = AbortSignal.timeout(OBJECT_DEADLINE_MS);
     await settledBy(source.admits(catalog.markdown, signal), signal);
     rememberAdmission(admission);
@@ -565,12 +627,11 @@ function sourceAdmission(admission: string, release: PaperRelease, accessToken: 
  * `reader` must be one requirePaperReader issued, so no caller can reach the
  * cache or the storage without the reader check having run.
  *
- * Every SESSION is admitted by the source under its own token before being
- * given anything: the session that loads the release is admitted by that load;
- * any other session (another reader, or the same reader signed in again), by the
- * source's answer to a first-byte request of the Markdown object with that
- * session's token. An admission is remembered for the cache time, per session,
- * and is asked again after it.
+ * Every Storage SESSION is admitted under its own token before being given
+ * anything: the loader's own session by its load, another session by a first-byte
+ * Markdown request. Storage admission is remembered for the cache time.
+ * A table-backed release makes a fresh RLS metadata query on every request,
+ * including one served from the verified-byte cache.
  */
 export function getVerifiedPrivateRelease(reader: PaperReader, release: PaperRelease): Promise<VerifiedPrivateRelease> {
   const supabase = issuedReaders.get(reader);
@@ -592,17 +653,34 @@ async function admittedRelease(release: PaperRelease, supabase: PaperSessionClie
     throw logUnavailable(error);
   }
   const session = sessionFingerprint(accessToken);
-  const key = paperReleaseIdentity(release);
+  const key = nativeDeliveryPrepared(release)
+    ? `${paperReleaseIdentity(release)}:native-v1:${process.env.MATRIX_OPTIONS_PAPER_NATIVE_MODEL_SHA256 ?? ''}`
+    : paperReleaseIdentity(release);
+  const source = await chooseSource(release, supabase, accessToken);
+  const tableBacked = usesTableSource(release);
+  if (tableBacked) {
+    // A cache hit still proves current grants, RLS and row presence for every native object.
+    const signal = AbortSignal.timeout(OBJECT_DEADLINE_MS);
+    try {
+      const catalog = privateReleaseCatalog(release);
+      const admissionObjects = catalog.nativeModel
+        ? [catalog.markdown, catalog.nativeModel, ...catalog.figures]
+        : [catalog.markdown];
+      await settledBy(Promise.all(admissionObjects.map((object) => source.admits(object, signal))).then(() => undefined), signal);
+    } catch (error) {
+      throw logUnavailable(error);
+    }
+  }
   const entry = verifiedReleases.get(key);
   if (entry && entry.expiresAt > Date.now()) {
     const held = entry.assets;
     // The same session's own load (finished or still running) is that session's admission.
-    if (entry.loadedBy !== session) await sourceAdmission(`${key}\n${session}`, release, accessToken, readerId);
+    if (!tableBacked && entry.loadedBy !== session) await sourceAdmission(`${key}\n${session}`, release, source, readerId);
     return held;
   }
   // Absent or expired: the new load takes the entry's place at once (below), so an expired
   // entry is never read again, and a failed re-read removes itself and leaves nothing behind.
-  const assets: Promise<VerifiedPrivateRelease> = coldLoad(release, accessToken).catch((error: unknown) => {
+  const assets: Promise<VerifiedPrivateRelease> = coldLoad(release, source, tableBacked).catch((error: unknown) => {
     if (verifiedReleases.get(key)?.assets === assets) verifiedReleases.delete(key);
     throw logUnavailable(error);
   });

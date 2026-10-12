@@ -1,9 +1,11 @@
 import MathRenderer from '@/components/MathRenderer';
 import { paperInlineSegments } from '@/lib/matrix-options/paper/derived-figures';
 import { demoteMarkdownHeadings, markdownHeadingLevels } from '@/lib/matrix-options/paper/full-document';
+import type { NativeFigureSet } from '@/lib/matrix-options/paper/native-figures';
 import { cn } from '@/utils/cn';
 
 import { AcceptedPaperFigure, AcceptedPaperFigureUnavailable } from './AcceptedPaperFigure';
+import { NativeAcceptedPaperFigure } from './NativeAcceptedPaperFigure';
 import { PaperFigure } from './PaperFigure';
 
 /** Heading levels paper markdown is demoted by inside the Working Draft. */
@@ -70,6 +72,7 @@ export function portionHeadingOffset(markdown: string): number {
 
 export interface PaperTextProps {
   readonly markdown: string;
+  readonly nativeFigures?: NativeFigureSet;
   readonly linkMap?: Readonly<Record<string, string>>;
   readonly className?: string;
   /**
@@ -85,23 +88,26 @@ export interface PaperTextProps {
  * Paper markdown through the shared MathRenderer (not modified). No
  * directive: usable from the server PaperDocument and from client components.
  *
- * The release carries its figures as flattened "Diagram summary N" lists; each
- * one that parses is drawn as a figure between the prose segments around it
- * (lib/matrix-options/paper/figures.ts), with its own current-paper labels and no label
- * override (owner decision 2026-09-24). The derived PX-1..PX-4 re-drawings of a few tables and
+ * Historical releases carry figures as flattened "Diagram summary N" lists; each
+ * one that parses is drawn between prose segments (lib/matrix-options/paper/figures.ts).
+ * The v0.9.91 private release can instead draw accepted placements from its
+ * authenticated native model, with current-paper labels and no label override
+ * (owner decision 2026-09-24). The derived PX-1..PX-4 re-drawings of a few tables and
  * lists (derived-figures.ts) are figure-lab only and are never applied here; their source tables
  * and lists render as plain text, exactly as before derived figures existed. The markdown text
  * itself is unchanged.
  */
-export function PaperText({ markdown, linkMap, className, headingOffset = 0, headingVariant }: PaperTextProps) {
+export function PaperText({ markdown, nativeFigures, linkMap, className, headingOffset = 0, headingVariant }: PaperTextProps) {
   const segments = paperInlineSegments(markdown);
   return (
     // Inside the reading frame, body text and wide blocks share the frame's full width (globals.css .paper-reading-frame).
     <div className={cn('reader-prose min-w-0 max-w-none', paperHeadingClasses(headingOffset, headingVariant), className)}>
       {segments.map((segment, index) =>
         segment.kind === 'accepted-figure' ? (
-          // The exact accepted PNG of this release (accepted-figures.ts), never a redraw.
-          <AcceptedPaperFigure key={`accepted-figure-${segment.figure.placement.figureId}`} figure={segment.figure} />
+          // The verified private model can come from the authenticated release or a local test candidate.
+          nativeFigures && segment.figure.releaseIdentity === nativeFigures.releaseIdentity
+            ? <NativeAcceptedPaperFigure key={`native-figure-${segment.figure.placement.figureId}`} figure={segment.figure} nativeFigures={nativeFigures} />
+            : <AcceptedPaperFigure key={`accepted-figure-${segment.figure.placement.figureId}`} figure={segment.figure} />
         ) : segment.kind === 'accepted-figure-unavailable' ? (
           <AcceptedPaperFigureUnavailable key={`accepted-figure-unavailable-${segment.figureId}-${index}`} figureId={segment.figureId} />
         ) : segment.kind === 'appendix-source-media' ? (
@@ -122,10 +128,10 @@ export function PaperText({ markdown, linkMap, className, headingOffset = 0, hea
           segment.quote ? (
             // A blockquote in its own segment, tagged from its source text (note or quotation) for styling.
             <div key={`quote-${index}`} data-quote-kind={segment.quote}>
-              <MathRenderer content={demoteMarkdownHeadings(segment.markdown, headingOffset)} internalLinkMap={linkMap} />
+              <MathRenderer content={demoteMarkdownHeadings(segment.markdown, headingOffset)} internalLinkMap={linkMap} paperDisplayMarkup />
             </div>
           ) : (
-            <MathRenderer key={`prose-${index}`} content={demoteMarkdownHeadings(segment.markdown, headingOffset)} internalLinkMap={linkMap} />
+            <MathRenderer key={`prose-${index}`} content={demoteMarkdownHeadings(segment.markdown, headingOffset)} internalLinkMap={linkMap} paperDisplayMarkup />
           )
         ),
       )}

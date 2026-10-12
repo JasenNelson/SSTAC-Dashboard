@@ -5,10 +5,12 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import ScrollFadeRegion from './ScrollFadeRegion';
+import { paperDisplayMarkupPlugin } from '@/lib/matrix-options/paper/display-markup';
 
 interface MathRendererProps {
   content: string;
   internalLinkMap?: Readonly<Record<string, string>>;
+  paperDisplayMarkup?: boolean;
   /**
    * Tailwind `from-*`/`dark:from-*` classes forwarded to every ScrollFadeRegion this
    * renderer creates (tables + display equations).
@@ -42,6 +44,7 @@ interface MathRendererProps {
 export default function MathRenderer({
   content,
   internalLinkMap,
+  paperDisplayMarkup = false,
   fadeFrom = 'from-white dark:from-slate-900',
 }: MathRendererProps) {
   // Memoised on `fadeFrom` so the override functions keep a stable identity across
@@ -57,11 +60,22 @@ export default function MathRenderer({
   // relayout.
   const markdownComponents = React.useMemo(
     () => ({
-      table: ({ node: _node, ...props }: { node?: unknown } & React.ComponentPropsWithoutRef<'table'>) => (
-        <ScrollFadeRegion className="math-renderer-table-wrapper max-w-full my-6" fadeFrom={fadeFrom}>
-          <table {...props} />
-        </ScrollFadeRegion>
-      ),
+      table: ({ node: _node, ...props }: { node?: unknown } & React.ComponentPropsWithoutRef<'table'>) => {
+        const { 'data-paper-caption': caption, 'data-paper-columns': columns, children, ...tableProps } = props as React.ComponentPropsWithoutRef<'table'> & { 'data-paper-caption'?: string; 'data-paper-columns'?: string };
+        const body = caption ? React.Children.map(children, (child) => {
+          if (!React.isValidElement<{ children?: React.ReactNode }>(child) || child.type !== 'thead') return child;
+          return React.cloneElement(child, {},
+            <tr className="paper-table-caption-row" role="presentation" aria-hidden="true">
+              <td colSpan={Number(columns) || 1} role="presentation">{caption}</td>
+            </tr>,
+            child.props.children);
+        }) : children;
+        return (
+          <ScrollFadeRegion className={`math-renderer-table-wrapper max-w-full my-6${caption ? ' paper-captioned-table' : ''}`} fadeFrom={fadeFrom}>
+            <table {...tableProps}>{caption ? <caption className="sr-only">{caption}</caption> : null}{body}</table>
+          </ScrollFadeRegion>
+        );
+      },
       // rehype-katex replaces remark-math's `math-display` node with its
       // own KaTeX output, whose real overflow-prone wrapper carries the
       // `katex-display` class (block/display-mode equations only --
@@ -129,7 +143,7 @@ export default function MathRenderer({
       ].join(' ')}
     >
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkMath]}
+        remarkPlugins={paperDisplayMarkup ? [remarkGfm, remarkMath, paperDisplayMarkupPlugin] : [remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={markdownComponents}
       >

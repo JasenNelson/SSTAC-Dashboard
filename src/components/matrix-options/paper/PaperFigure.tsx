@@ -12,9 +12,9 @@ import {
 } from '@/lib/matrix-options/paper/figures';
 
 /*
- * One paper figure, drawn from a parsed "Diagram summary" block (see
- * lib/matrix-options/paper/figures.ts). No directive: rendered by PaperText on
- * the server document and in the client section window alike.
+ * One paper figure, drawn from a parsed historical "Diagram summary" block or
+ * an authenticated native model. PaperText renders it in the server document
+ * and client section window alike.
  *
  * Every box is real text in real lists, so the figure reads in order without
  * the drawing: a tree is nested lists (parent, then its branches), a chain is an
@@ -71,7 +71,12 @@ function TreeBranch({ branch, notation }: { readonly branch: DiagramTreeNode; re
   );
 }
 
-export function PaperFigure({ model: source, binding }: { readonly model: DiagramModel; readonly binding: FigureBinding | null }) {
+export function PaperFigure({ model: source, binding, domId, nativeFigureId }: {
+  readonly model: DiagramModel;
+  readonly binding: FigureBinding | null;
+  readonly domId?: string;
+  readonly nativeFigureId?: string;
+}) {
   const model = modelForBinding(source, binding);
   const notation: NotationMode = binding?.notation ?? 'plain';
   const structure = diagramStructure(model);
@@ -94,8 +99,9 @@ export function PaperFigure({ model: source, binding }: { readonly model: Diagra
   const labelOf = new Map(model.nodes.map((node) => [node.id, node.label]));
   return (
     <figure
-      id={binding ? `figure-${key}` : undefined}
+      id={domId ?? (binding ? `figure-${key}` : undefined)}
       className="paper-figure"
+      data-native-figure={nativeFigureId}
       data-paper-figure={binding?.kind === 'restored' ? binding.id : undefined}
       data-derived-figure={binding?.kind === 'derived' ? binding.id : undefined}
       data-diagram-summary={model.summaryNumber > 0 ? model.summaryNumber : undefined}
