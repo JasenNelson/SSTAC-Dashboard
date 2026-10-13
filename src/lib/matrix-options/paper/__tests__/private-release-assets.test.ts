@@ -73,7 +73,7 @@ import {
   type PaperSessionClient,
   type PrivateReleaseFailureCode,
 } from '../private-release-assets';
-import { DEFAULT_PAPER_VERSION, PAPER_RELEASES, paperReleaseIdentity, R5_PAPER_VERSION, type PaperRelease } from '../releases';
+import { PREDECESSOR_PAPER_VERSION, PAPER_RELEASES, paperReleaseIdentity, R5_PAPER_VERSION, type PaperRelease } from '../releases';
 import { PRIVATE_FIXTURE_DIR_ENV } from './private-fixture';
 
 const VERSION = R5_PAPER_VERSION;
@@ -456,7 +456,7 @@ describe('getVerifiedPrivateRelease: who may read', () => {
 
   it('answers a repository release as not private, without a read', async () => {
     const storage = stubStorage(healthyObjects());
-    const repository = PAPER_RELEASES.find((release) => release.documentVersion === DEFAULT_PAPER_VERSION) as PaperRelease;
+    const repository = PAPER_RELEASES.find((release) => release.documentVersion === PREDECESSOR_PAPER_VERSION) as PaperRelease;
     expectUnavailable(await failureOf(getVerifiedPrivateRelease(await allowedReader(), repository)), 'NOT_A_PRIVATE_RELEASE');
     expect(storage.calls).toHaveLength(0);
     expect((await getVerifiedPrivateRelease(await allowedReader(), markdownRelease())).documentVersion).toBe(VERSION);

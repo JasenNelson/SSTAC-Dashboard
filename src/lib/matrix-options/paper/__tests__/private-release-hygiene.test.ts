@@ -14,7 +14,7 @@ import figuresContractJson from '../contracts/accepted-figures-v0.9.88-r4-presen
 import cohortsContractJson from '../contracts/cohorts-v0.9.88-r4-presentation-001.json';
 import receiptJson from '../contracts/private-release-receipt-v0.9.88-r4-presentation-001.json';
 import guideContractJson from '../contracts/reviewer-guide-v0.9.88-r4-presentation-001.json';
-import { getDefaultPaperRelease, getPaperRelease, paperReleaseRelativePath, R5_PAPER_VERSION, V0991_PAPER_VERSION, type PaperRelease } from '../releases';
+import { getPaperRelease, paperReleaseRelativePath, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION, type PaperRelease } from '../releases';
 import { getReviewManifest } from '../review-manifest';
 import { resolveReviewerGuide } from '../reviewer-guide-server';
 import { describePrivate, PRIVATE_FIXTURE_DIR_ENV, readPrivatePresentation } from './private-fixture';
@@ -135,7 +135,7 @@ function privatePathReason(file: string): string | null {
   const name = file.slice(file.lastIndexOf('/') + 1);
   if ([R5_PAPER_VERSION, SOURCE_VERSION, V0991_PAPER_VERSION].some((version) => name.includes(version)) && /\.(?:md|sha256|png)$/i.test(name)) return 'private version in a paper or asset file name';
   // The candidate paper folder holds the default release's two files and nothing else.
-  const defaultPath = paperReleaseRelativePath(getDefaultPaperRelease());
+  const defaultPath = paperReleaseRelativePath(getPaperRelease(PREDECESSOR_PAPER_VERSION)!);
   if (file.startsWith('candidate/paper/') && file !== defaultPath && file !== `${defaultPath}.sha256`) return 'candidate paper folder';
   return null;
 }
@@ -169,7 +169,7 @@ describe('commit-eligible inventory', () => {
       'private version in a paper or asset file name', 'private version in a paper or asset file name', 'private version in a paper or asset file name',
       'candidate paper folder', 'candidate paper folder', 'candidate paper folder',
     ]);
-    const defaultPath = paperReleaseRelativePath(getDefaultPaperRelease()) ?? '';
+    const defaultPath = paperReleaseRelativePath(getPaperRelease(PREDECESSOR_PAPER_VERSION)!) ?? '';
     const contracts = 'src/lib/matrix-options/paper/contracts';
     const allowed = [
       defaultPath,
@@ -239,7 +239,7 @@ describe('ignored paths', () => {
       '.tmp/matrix-paper-private/x',
       `.tmp/matrix-paper-private/${R5_PAPER_VERSION}/presentation.md`,
     ].map(ignored)).toEqual([true, true, true, true, true, true, true, true]);
-    const defaultPath = paperReleaseRelativePath(getDefaultPaperRelease()) ?? '';
+    const defaultPath = paperReleaseRelativePath(getPaperRelease(PREDECESSOR_PAPER_VERSION)!) ?? '';
     expect(defaultPath).toMatch(/^candidate\/paper\/.+\.md$/);
     expect([defaultPath, `${defaultPath}.sha256`, 'src/lib/matrix-options/paper/releases.ts'].map(ignored)).toEqual([false, false, false]);
   }, 30_000);

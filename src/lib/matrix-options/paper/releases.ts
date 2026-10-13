@@ -1,12 +1,9 @@
 /*
  * The Matrix Options Paper releases this application can address.
  *
- * Two bound releases, as literals. The predecessor stays the DEFAULT: the
- * landing route, the review route and every caller that names no version
- * resolve to it. The current review draft is addressable and selectable, never
- * substituted for the default (interface overlay
- * MATRIX_RUN106_R5_L2_INTERFACE_OVERLAY_001, version_contract:
- * SELECTABLE_NON_DEFAULT_UNTIL_OWNER_ACTIVATION_DECISION).
+ * Bound releases retain their own source identities. The normal paper entry
+ * selects v0.9.91; explicit predecessor URLs and review identities remain
+ * addressable. Default selection does not confer scientific finality.
  *
  * Isomorphic: no fs, no crypto, no server-only import, and NOTHING that locates
  * private bytes (no bucket, no object name, no file path of a private release).
@@ -16,17 +13,18 @@
  * a private-storage release.
  */
 
-export const DEFAULT_PAPER_VERSION = '1.0.11-remediated-7-8-successor-20260918-D' as const;
+export const PREDECESSOR_PAPER_VERSION = '1.0.11-remediated-7-8-successor-20260918-D' as const;
 /**
- * The current review draft. Its release artifact is the PRESENTATION of the
+ * The interim review draft. Its release artifact is the PRESENTATION of the
  * Matrix MC R4 candidate: the exact bytes shown to readers, which end before
  * Appendix L. The artifact has its own identity; the R4 source it was derived
  * from is named only in `provenance`, by hash. (The constant keeps its code name.)
  */
 export const R5_PAPER_VERSION = 'v0.9.88-r4-presentation-001' as const;
 export const V0991_PAPER_VERSION = 'v0.9.91' as const;
+export const DEFAULT_PAPER_VERSION = V0991_PAPER_VERSION;
 
-export type PaperReleaseVersion = typeof DEFAULT_PAPER_VERSION | typeof R5_PAPER_VERSION | typeof V0991_PAPER_VERSION;
+export type PaperReleaseVersion = typeof PREDECESSOR_PAPER_VERSION | typeof R5_PAPER_VERSION | typeof V0991_PAPER_VERSION;
 
 export type PaperReleaseActivation = 'DEFAULT' | 'SELECTABLE_NON_DEFAULT';
 
@@ -117,17 +115,17 @@ export interface PaperRelease {
   readonly contentsHeadingDisplay: string | null;
 }
 
-const DEFAULT_RELEASE: PaperRelease = Object.freeze({
-  documentVersion: DEFAULT_PAPER_VERSION,
+const PREDECESSOR_RELEASE: PaperRelease = Object.freeze({
+  documentVersion: PREDECESSOR_PAPER_VERSION,
   sha256: 'feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337',
   bytes: 541959,
   delivery: 'repository',
   filename: 'BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md',
   provenance: null,
-  activation: 'DEFAULT',
-  label: 'Earlier draft (default)',
+  activation: 'SELECTABLE_NON_DEFAULT',
+  label: 'Earlier draft',
   shortLabel: 'Earlier draft',
-  summary: 'The earlier draft of the paper. It is still the default draft. Responses to it are separate from responses to the current review draft.',
+  summary: 'The earlier draft of the paper. Responses to it remain separate from the current collaborative expert-review draft.',
   headingDepthShift: 0,
   frontMatter: false,
   acceptedFigures: false,
@@ -151,13 +149,13 @@ const R5_RELEASE: PaperRelease = Object.freeze({
     derivation: 'source-prefix',
   }),
   activation: 'SELECTABLE_NON_DEFAULT',
-  label: 'Current review draft',
-  shortLabel: 'Current draft',
-  summary: 'The current review draft of the paper, shown as a preview. It is not the default draft. Responses to it are separate from responses to the earlier draft.',
+  label: 'Interim review draft',
+  shortLabel: 'Interim draft',
+  summary: 'The interim review draft of the paper. Responses to it remain separate from other paper versions.',
   headingDepthShift: 1,
   frontMatter: true,
   acceptedFigures: true,
-  predecessorVersion: DEFAULT_PAPER_VERSION,
+  predecessorVersion: PREDECESSOR_PAPER_VERSION,
   retiredSectionAnchors: Object.freeze({ 'sec-7-8-1': 'sec-7-8', 'sec-7-8-2': 'sec-7-8' }),
   // Appendix L is under revision (owner direction, interim release) and is not part of this
   // artifact. A link to it lands on the notice that says so.
@@ -175,10 +173,10 @@ const V0991_RELEASE: PaperRelease = Object.freeze({
   delivery: 'private-storage',
   filename: null,
   provenance: null,
-  activation: 'SELECTABLE_NON_DEFAULT',
-  label: 'v0.9.91 review draft',
-  shortLabel: 'v0.9.91 draft',
-  summary: 'The v0.9.91 collaborative expert-review working draft. Responses to it are separate from other paper versions.',
+  activation: 'DEFAULT',
+  label: 'Current collaborative expert-review draft',
+  shortLabel: 'Current draft',
+  summary: 'The complete v0.9.91 working draft includes Appendix L. Responses to it remain separate from other paper versions; it is not a final standards decision.',
   headingDepthShift: 1,
   frontMatter: true,
   acceptedFigures: true,
@@ -197,8 +195,8 @@ const V0991_RELEASE: PaperRelease = Object.freeze({
   contentsHeadingDisplay: null,
 });
 
-/** Default first: the order the version control lists them in. */
-export const PAPER_RELEASES: readonly PaperRelease[] = Object.freeze([DEFAULT_RELEASE, R5_RELEASE, V0991_RELEASE]);
+/** Current entry first: the order the version control lists them in. */
+export const PAPER_RELEASES: readonly PaperRelease[] = Object.freeze([V0991_RELEASE, PREDECESSOR_RELEASE, R5_RELEASE]);
 
 export function isPaperReleaseVersion(value: unknown): value is PaperReleaseVersion {
   return typeof value === 'string' && PAPER_RELEASES.some((release) => release.documentVersion === value);
@@ -210,7 +208,7 @@ export function getPaperRelease(documentVersion: string | undefined | null): Pap
 }
 
 export function getDefaultPaperRelease(): PaperRelease {
-  return DEFAULT_RELEASE;
+  return V0991_RELEASE;
 }
 
 /** `matrix-options-paper:<version>:<sha256>`, the identity structure ids are hashed with. */

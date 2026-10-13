@@ -11,7 +11,7 @@ import { getProductionAssignment } from '@/lib/matrix-options/revised-paper-revi
 import { getPaperSectionWindowModel, paperSectionIdentity, summarizePaperSections } from '../../paper/section-window';
 import { getReviewLineage, reviewLineageView } from '../../paper/review-lineage';
 import { getReviewManifest } from '../../paper/review-manifest';
-import { getPaperRelease, DEFAULT_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '../releases';
+import { getPaperRelease, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '../releases';
 import { describeAuthenticatedPaper } from '../../revised-paper';
 import { compileAuthenticatedRelease } from '../../revised-paper-structure';
 import { getAcceptedFiguresContract } from '../accepted-figures';
@@ -28,7 +28,7 @@ describePrivateV0991('v0.9.91 private review draft (exact private fixture)', () 
     const release = getPaperRelease(V0991_PAPER_VERSION);
     expect(release).not.toBeNull();
     expect(release).toMatchObject({
-      activation: 'SELECTABLE_NON_DEFAULT',
+      activation: 'DEFAULT',
       predecessorVersion: R5_PAPER_VERSION,
       withheld: null,
       acceptedFigures: true,
@@ -42,7 +42,7 @@ describePrivateV0991('v0.9.91 private review draft (exact private fixture)', () 
       'sec-16-2': 'sec-16-0',
       'sec-16-3': 'sec-16-0',
     });
-    expect(getPaperRelease(DEFAULT_PAPER_VERSION)?.activation).toBe('DEFAULT');
+    expect(getPaperRelease(PREDECESSOR_PAPER_VERSION)?.activation).toBe('SELECTABLE_NON_DEFAULT');
     expect(getPaperRelease(R5_PAPER_VERSION)).not.toBeNull();
 
     const source = readPrivatePresentation(V0991_PAPER_VERSION);

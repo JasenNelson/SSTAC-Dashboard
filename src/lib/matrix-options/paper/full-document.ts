@@ -401,7 +401,7 @@ function anchorOfHeadingDirectlyAbove(
  *    N.N... (for example sec-10-2 -> a heading starting "10.2 ").
  * 3b. Failing 2 and 3, a numeric id whose div sits directly under the heading
  *    that states exactly its number maps to that heading
- *    (anchorOfHeadingDirectlyAbove): the default draft authors Section 7.8 and
+ *    (anchorOfHeadingDirectlyAbove): the predecessor authors Section 7.8 and
  *    its two subsections this way.
  * 4. An id that resolves to different anchors at different occurrences is
  *    dropped. An id that is itself an existing heading anchor is dropped

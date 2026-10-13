@@ -19,7 +19,7 @@ vi.mock('@/lib/matrix-options/paper/releases', async (importOriginal) => {
   return { ...original, getPaperRelease: vi.fn(original.getPaperRelease) };
 });
 
-const { R5_PAPER_VERSION, DEFAULT_PAPER_VERSION } = releases;
+const { R5_PAPER_VERSION, PREDECESSOR_PAPER_VERSION } = releases;
 // The module as it really is: the lookup the mocked one stands in front of.
 const realGetPaperRelease = (await vi.importActual<typeof import('@/lib/matrix-options/paper/releases')>('@/lib/matrix-options/paper/releases')).getPaperRelease;
 
@@ -76,7 +76,7 @@ describe('AcceptedPaperFigure: a link that opens the image in a tab of its own',
 
   it('follows the delivery of the release and nothing else', () => {
     expect(acceptedFigureOpensInOwnTab(R5_PAPER_VERSION)).toBe(false);
-    expect(acceptedFigureOpensInOwnTab(DEFAULT_PAPER_VERSION)).toBe(true);
+    expect(acceptedFigureOpensInOwnTab(PREDECESSOR_PAPER_VERSION)).toBe(true);
     expect(acceptedFigureOpensInOwnTab('no-such-release')).toBe(false);
     expect(acceptedFigureOpensInOwnTab('')).toBe(false);
   });

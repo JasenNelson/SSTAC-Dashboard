@@ -101,7 +101,7 @@ import {
   type PaperSessionClient,
   type PrivateReleaseFailureCode,
 } from '../private-release-assets';
-import { DEFAULT_PAPER_VERSION, R5_PAPER_VERSION } from '../releases';
+import { PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION } from '../releases';
 import { PRIVATE_FIXTURE_DIR_ENV } from './private-fixture';
 
 const { sha, VERSION, QUESTIONS, FIGURES, lines: LINES, content: CONTENT } = synthetic;
@@ -192,14 +192,14 @@ describe('loadPaperStructureForRequest: a repository release', () => {
     // Any session, even one a private release would deny: the default release's pages keep the checks they had.
     for (const user of [null, { id: 'reader-user-2', is_anonymous: true }]) {
       const { client, getUser, getSession } = sessionClient(user);
-      expect(await loadPaperStructureForRequest(DEFAULT_PAPER_VERSION, client)).toBe(structure);
+      expect(await loadPaperStructureForRequest(PREDECESSOR_PAPER_VERSION, client)).toBe(structure);
       expect(getUser).not.toHaveBeenCalled();
       expect(getSession).not.toHaveBeenCalled();
     }
-    expect(vi.mocked(loadRevisedPaperStructure).mock.calls).toEqual([[DEFAULT_PAPER_VERSION], [DEFAULT_PAPER_VERSION]]);
+    expect(vi.mocked(loadRevisedPaperStructure).mock.calls).toEqual([[PREDECESSOR_PAPER_VERSION], [PREDECESSOR_PAPER_VERSION]]);
     expect(compileAuthenticatedRelease).not.toHaveBeenCalled();
     expect(storage.fetch).not.toHaveBeenCalled();
-    expect(isPrivatePaperRelease(DEFAULT_PAPER_VERSION)).toBe(false);
+    expect(isPrivatePaperRelease(PREDECESSOR_PAPER_VERSION)).toBe(false);
   });
 
   it('answers an unknown version with the synchronous loader\'s unavailable error, with no reader check', async () => {
@@ -216,7 +216,7 @@ describe('loadPaperStructureForRequest: a repository release', () => {
   it('is not a private release for the private loaders', async () => {
     const storage = stubStorage(CONTENT);
     const reader = await requirePaperReader(sessionClient().client);
-    for (const version of [DEFAULT_PAPER_VERSION, 'no-such-version']) {
+    for (const version of [PREDECESSOR_PAPER_VERSION, 'no-such-version']) {
       expectUnavailable(await failureOf(loadPrivatePaperStructure(version, reader)), 'NOT_A_PRIVATE_RELEASE');
       expectUnavailable(await failureOf(loadPrivatePaperFigure(version, 'FIG1-1.png', reader)), 'NOT_A_PRIVATE_RELEASE');
     }

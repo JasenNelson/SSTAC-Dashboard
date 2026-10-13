@@ -27,7 +27,7 @@ const printPackageIds: string[] = (JSON.parse(
 const realVersion = '1.0.11-remediated-7-8-successor-20260918-D';
 
 /*
- * The current review draft is a PRIVATE release: its Markdown and figures are not in the
+ * The interim R5 review draft is a PRIVATE release: its Markdown and figures are not in the
  * repository. A non-production server reads them from the directory this variable names (the
  * private fixture, <dir>/<version>/presentation.md and <dir>/<version>/figures/<ID>.png);
  * without it the release cannot be rendered here at all.
@@ -316,7 +316,7 @@ test.describe('Matrix Options Paper disabled-route regressions', () => {
 
 test.describe('Matrix Options Paper real V16 acceptance', () => {
   test.beforeEach(async ({ page }, testInfo) => {
-    // These journeys are the default draft's. Its version control lists the private draft, so
+    // These journeys exercise the versioned predecessor. Its version control lists private drafts, so
     // a request that names it is aborted here rather than trusted not to happen.
     if (!PRIVATE_RELEASE_JOURNEYS) await blockPrivateRelease(page);
     holdNavigationsUntilHydrated(page, testInfo);
@@ -334,7 +334,6 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
   test('authenticated real release lands every legacy entry on the canonical Working Draft', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
     for (const entry of [
-      '/matrix-options/paper',
       `/matrix-options/paper/v/${realVersion}`,
       `/matrix-options/paper/v/${realVersion}/ignored-section`,
       realReviewPath,
@@ -1563,7 +1562,7 @@ test.describe('Matrix Options Paper private draft journeys', () => {
   const shows = (page: Page, selector: string, pattern: RegExp) => page.locator(selector).first().evaluate((element, source) => new RegExp(source).test((element.textContent ?? '').replace(/\s+/g, ' ').trim()), pattern.source);
   const sectionOf = (href: string | null) => new URLSearchParams((href ?? '').replace(/^\?/, '')).get('section') ?? '';
 
-  test('authenticated real release offers the private draft as a selectable non-default draft and draws all 20 figure placements', async ({ page, playwright, baseURL }, testInfo) => {
+  test('authenticated predecessor offers the interim R5 draft and draws all 20 figure placements', async ({ page, playwright, baseURL }, testInfo) => {
     requireJourney(testInfo.project.name);
     test.setTimeout(420000);
     await page.setViewportSize({ width: 1440, height: 900 });
@@ -1583,11 +1582,11 @@ test.describe('Matrix Options Paper private draft journeys', () => {
     const figureListAnchor = headings.filter((heading) => heading.level === 2 && heading.index < firstFigureLink).at(-1)?.anchor ?? '';
     expect(figureListAnchor.length).toBeGreaterThan(0);
 
-    // The default entry is still the predecessor, with no working-draft status line.
-    await page.goto('/matrix-options/paper', { waitUntil: 'domcontentloaded' });
+    // The predecessor remains at its explicit versioned address.
+    await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
     await expect.poll(() => pathAndQuery(page.url()), { timeout: 30000 }).toBe(canonicalWorkingDraft);
-    await expect(page.getByTestId('paper-version-status')).toHaveCount(0);
+    await expect(page.getByTestId('paper-version-status')).toContainText('You are viewing an earlier draft.');
     const toggle = page.getByTestId('paper-version-toggle');
     await expect(toggle).toContainText('Earlier draft');
     await expect(page.getByTestId('paper-document').locator('figure[data-accepted-figure]')).toHaveCount(0);
@@ -1601,10 +1600,10 @@ test.describe('Matrix Options Paper private draft journeys', () => {
     await popover.getByTestId(`paper-version-option-${R5_PAPER_VERSION}`).click();
     await expect.poll(() => new RegExp(`^${privateWorkspacePattern}[?]mode=working-draft`).test(pathAndQuery(page.url())), { timeout: 60000 }).toBe(true);
     await waitForHydratedWorkspace(page);
-    await expect(page.getByTestId('paper-version-toggle')).toContainText('Current draft');
+    await expect(page.getByTestId('paper-version-toggle')).toContainText('Interim draft');
     const status = page.getByTestId('paper-version-status');
     await expect(status).toBeVisible();
-    await expect(status).toContainText('Current review draft. A preview: not the default draft. Responses to this draft are separate from the earlier draft.');
+    await expect(status).toContainText('Interim review draft. You are viewing an earlier draft. Responses to this draft are separate from the current collaborative expert-review draft.');
     await expect(page.getByRole('link', { name: 'Working Draft', exact: true })).toHaveAttribute('href', privateStart);
     await expect(page.locator('h1')).toHaveCount(1);
 
@@ -1824,7 +1823,7 @@ test.describe('Matrix Options Paper private draft journeys', () => {
     await expect(phoneViewer).toHaveCount(0);
     await expect(phoneViewButton).toBeFocused();
 
-    // A retired predecessor id lands where the section that replaced it lands; the status line returns to the default draft.
+    // A retired predecessor id lands where the section that replaced it lands.
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`/matrix-options/paper/v/${R5_PAPER_VERSION}/sec-7-8`, { waitUntil: 'domcontentloaded' });
     await expect.poll(() => /[?]mode=working-draft&section=[a-z0-9-]+$/.test(pathAndQuery(page.url())), { timeout: 60000 }).toBe(true);
@@ -1834,10 +1833,12 @@ test.describe('Matrix Options Paper private draft journeys', () => {
     // Hydrated first, like every other interaction here (without this wait the click failed
     // to navigate in 1 of 4 runs).
     await waitForHydratedWorkspace(page);
-    await page.getByTestId('paper-version-status').getByRole('link', { name: 'Go to the earlier draft' }).click();
+    await page.getByTestId('paper-version-toggle').click();
+    await page.getByTestId(`paper-version-option-${realVersion}`).click();
     await expect.poll(() => new RegExp(`^${workspacePath.replace(/[.]/g, '[.]')}[?]mode=working-draft`).test(pathAndQuery(page.url())), { timeout: 60000 }).toBe(true);
     await waitForHydratedWorkspace(page);
-    await expect(page.getByTestId('paper-version-status')).toHaveCount(0);
+    await expect(page.getByTestId('paper-version-status')).toContainText('You are viewing an earlier draft.');
+    await expect(page.getByTestId('paper-version-status').getByRole('link', { name: 'Go to the current draft' })).toHaveAttribute('href', /\/matrix-options\/paper\/publication\/v\/v0[.]9[.]91/);
   });
 
   // Session-ending, so it runs ONLY in the session-teardown project, and the one request the
@@ -1945,7 +1946,7 @@ test.describe('Matrix Options Paper private draft journeys', () => {
 
     await page.goto(`${privateWorkspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
-    await expect(page.getByTestId('paper-version-status')).toContainText('Responses to this draft are separate from the earlier draft.');
+    await expect(page.getByTestId('paper-version-status')).toContainText('Responses to this draft are separate from the current collaborative expert-review draft.');
     await expect(page.getByTestId('review-progress-count')).toHaveText('0 of 12 complete');
 
     // Q1: identical wording, so the earlier answer is shown for reference and the editor is empty.
@@ -2005,16 +2006,16 @@ test.describe('Matrix Options Paper private draft journeys', () => {
     expect(writes).toHaveLength(1);
     await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue(typedMore);
 
-    // The default draft is unchanged: its own questions (its Q11 is not this draft's reworded
-    // one), no lineage note, no working-draft status.
+    // The predecessor is unchanged: its own questions (its Q11 is not this draft's reworded
+    // one) and no lineage note.
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByTestId('paper-version-status')).toHaveCount(0);
+    await expect(page.getByTestId('paper-version-status')).toContainText('You are viewing an earlier draft.');
     await openQuestion(page, 11);
     await expect(page.locator(heading)).toHaveText(/^Question 11: On water type/);
     expect(sha256Hex(await page.locator(heading).innerText()) === privateQuestion11).toBe(false);
     await expect(page.getByTestId('review-lineage-changed')).toHaveCount(0);
     await expect(page.getByTestId('review-lineage-reference')).toHaveCount(0);
-    // Viewing the default draft sent nothing either: still only the one intercepted save.
+    // Viewing the predecessor sent nothing either: still only the one intercepted save.
     expect(writes).toHaveLength(1);
   });
 
@@ -2150,7 +2151,7 @@ test.describe('Matrix Options Paper private draft journeys', () => {
     await expect(notice).toHaveCSS('display', 'none');
     await page.emulateMedia({ media: 'screen' });
 
-    // 8. The default draft is unchanged: no notice, and its own Appendix L still opens.
+    // 8. The predecessor is unchanged: no notice, and its own Appendix L still opens.
     await page.goto(`/matrix-options/paper/v/${realVersion}/${withheldStableSectionId}`, { waitUntil: 'domcontentloaded' });
     await expect.poll(() => pathAndQuery(page.url()), { timeout: 60000 }).toMatch(new RegExp(`^${workspacePath.replace(/[.]/g, '[.]')}[?]mode=working-draft&section=appendix-l`));
     await waitForHydratedWorkspace(page);
@@ -2388,8 +2389,11 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion', () => {
     const media = appendixLSourceMediaContract();
     const canonicalPath = `/matrix-options/paper/publication/v/${V0991_PAPER_VERSION}`;
     const imageResponsePromise = page.waitForResponse((response) => response.url().includes(`/figures/${encodeURIComponent(media.file)}?sha256=${media.sha256}`), { timeout: 60000 });
-    await page.goto(`${canonicalPath}?mode=working-draft`, { waitUntil: 'domcontentloaded' });
+    await page.goto('/matrix-options/paper', { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
+    await expect.poll(() => pathAndQuery(page.url()), { timeout: 60000 }).toBe(`${canonicalPath}?mode=working-draft`);
+    await expect(page.getByTestId('paper-version-toggle')).toContainText('Current draft');
+    await expect(page.getByTestId('paper-version-status')).toHaveCount(0);
     await waitForHydratedWorkspace(page);
     await openOutlineGroup(page, 'Appendices');
     const appendixLLink = page.getByTestId('paper-outline-desktop').getByRole('link', { name: 'Appendix L: Phase 2 Project Plan V2', exact: true });

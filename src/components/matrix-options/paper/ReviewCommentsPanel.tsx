@@ -11,7 +11,7 @@ import { reviewResponseRowSchema, reviewResponseStatusLabel } from '@/lib/matrix
 import type { ReviewResponseRow } from '@/lib/matrix-options/paper/review-responses';
 import { questionPromptSummary } from '@/lib/matrix-options/paper/review-navigation';
 import type { ReviewNavTopic } from '@/lib/matrix-options/paper/review-navigation';
-import { DEFAULT_PAPER_VERSION, PAPER_RELEASES } from '@/lib/matrix-options/paper/releases';
+import { PAPER_RELEASES, PREDECESSOR_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import type { ReviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import { cn } from '@/utils/cn';
@@ -25,12 +25,12 @@ export const REVIEW_COMMENTS_CHAR_COUNT_LIVE_THRESHOLD = 1000;
 /** A save request that has not answered after this long is treated as offline. */
 export const REVIEW_SAVE_TIMEOUT_MS = 30000;
 /*
- * 'not-provisioned': a NON-DEFAULT draft whose save the review record refused because it
+ * 'not-provisioned': a draft other than the predecessor whose save was refused because the review record
  * does not hold this draft's questions under this draft's identity (unknown_identity, or
  * stale_manifest: the record holds them under another digest). Neither is retryable from
  * the page and neither is fixed by a reload (a page whose own digest is out of date is
  * refused by the route before the record is asked), so saving stops for the session and
- * no "Try again" is offered. The default draft never enters this state: it keeps the
+ * no "Try again" is offered. The predecessor never enters this state: it keeps the
  * behaviour it had before a second draft existed (the generic "Could not save ... Try again").
  */
 type PersistenceState = 'loading' | 'available' | 'unavailable' | 'not-provisioned' | 'unauthenticated' | 'identity-changed';
@@ -596,12 +596,12 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
           setPersistence('unauthenticated');
           return;
         }
-        if (documentVersion !== DEFAULT_PAPER_VERSION && (payload.outcome === 'unknown_identity' || payload.outcome === 'stale_manifest')) {
+        if (documentVersion !== PREDECESSOR_PAPER_VERSION && (payload.outcome === 'unknown_identity' || payload.outcome === 'stale_manifest')) {
           // The review record does not hold this draft's questions under this draft's
           // identity (not provisioned, or provisioned under another digest). Sending the
           // same save again can never succeed, so nothing is queued or retried: saving
-          // stops for this page and the text stays exactly where it is. Only a non-default
-          // draft takes this path; the default draft's handling is unchanged.
+          // stops for this page and the text stays exactly where it is. The
+          // predecessor's established handling is unchanged.
           queueRef.current.delete(questionId);
           setOutcome(questionId, 'offline');
           setPersistence('not-provisioned');

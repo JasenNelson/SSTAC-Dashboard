@@ -86,7 +86,7 @@ import type { PrivateCatalogDocument } from './print-packages-catalog-contract';
 export const EXPECTED_CATALOG_PAYLOAD_SHA256 =
   '984f6a8031162c3d43dbf7bb2de77d36904d46a7bc674443ed78f7ddae2fa5da';
 export const EXPECTED_V0991_CATALOG_PAYLOAD_SHA256 =
-  '33dda6b10518c18238ea6012dcea6b10c3f4332ce71e40b709c4ee1b3ae45e12';
+  '19ed0173d70b7b2f81a808e594f9748826a60a544e50231e2182a62943836190';
 
 /**
  * Upper bound on how many artifact entries will even be examined. The pinned
