@@ -4,6 +4,7 @@ import {
   contentDispositionForCatalog,
   loadAuthenticatedPrintPackageCatalog,
   loadDownloadManifestMapState,
+  buildValidatedDownloadManifest,
   parseDownloadRequestBinding,
   selectOpaquePackageArtifact,
   streamAuthenticatedPrintPackageArtifact,
@@ -13,11 +14,13 @@ import {
 } from '@/lib/matrix-options/paper/download-manifest-server';
 import {
   EXPECTED_CATALOG_PAYLOAD_SHA256,
+  EXPECTED_V0991_CATALOG_PAYLOAD_SHA256,
   canonicalizePrintPackageCatalogPayload,
   digestPrintPackageCatalogPayload,
 } from '@/lib/matrix-options/paper/print-packages-catalog-authentication';
 import type { PrivateCatalogDocument } from '@/lib/matrix-options/paper/print-packages-catalog-contract';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import v0991Catalog from '@/lib/matrix-options/paper/contracts/print-packages-v0991.json';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
@@ -546,6 +549,50 @@ describe('release binding against the authenticated catalog', () => {
     await expect(loadAuthenticatedPrintPackageCatalog(realContext(), 'categories')).rejects.toThrow(
       DownloadBoundaryError,
     );
+  });
+});
+
+describe('v0.9.91 selectable private print catalog', () => {
+  const context = realContext({
+    documentVersion: 'v0.9.91',
+    paperSha256: 'a5b1d81d11af23d3437bba4cadcf0a0fa555001be27e9227c6015ff0bad6599e',
+    manifestSha256: '6d336b08b7214a17456ff943eb6f56f33e90d3477f4bd9fe1488c5fe0846a272',
+  });
+
+  it('pins inert JSON and builds five separately bound PDF/DOCX manifests', async () => {
+    expect(digestPrintPackageCatalogPayload(v0991Catalog as PrivateCatalogDocument)).toBe(EXPECTED_V0991_CATALOG_PAYLOAD_SHA256);
+    const artifacts = await loadAuthenticatedPrintPackageCatalog(context);
+    expect(artifacts).toHaveLength(10);
+    expect(new Set(artifacts!.map((entry) => entry.packageId)).size).toBe(10);
+    for (const cohortId of ALL_COHORTS) {
+      const pair = await loadAuthenticatedPrintPackageCatalog(context, cohortId);
+      const manifest = buildValidatedDownloadManifest(pair!, context, cohortId);
+      expect(manifest.documentVersion).toBe('v0.9.91');
+      expect(manifest.manifestSha256).toBe(context.manifestSha256);
+      expect(manifest.packages.map((entry) => entry.packageId)).toEqual([`v0991-${cohortId}-pdf`, `v0991-${cohortId}-docx`]);
+      expect(JSON.stringify(manifest)).not.toContain('private-packages/');
+    }
+  });
+
+  it('rejects a wrong release, paper hash, and manifest hash before exposing packages', async () => {
+    for (const mismatch of [
+      { documentVersion: REAL_VERSION },
+      { paperSha256: REAL_PAPER_HASH },
+      { manifestSha256: REAL_MANIFEST_HASH },
+    ]) {
+      await expect(loadAuthenticatedPrintPackageCatalog({ ...context, ...mismatch })).rejects.toThrow(DownloadBoundaryError);
+    }
+    await expect(loadAuthenticatedPrintPackageCatalog(context, 'unknown-cohort')).rejects.toThrow(DownloadBoundaryError);
+  });
+
+  it('fails closed for absent and wrong-hash versioned private storage bytes', async () => {
+    const pair = await loadAuthenticatedPrintPackageCatalog(context, 'categories');
+    const artifact = pair![0];
+    const missing = {
+      storage: { from: vi.fn(() => ({ download: vi.fn(async () => ({ data: null, error: new Error('missing') })) })) },
+    } as unknown as SupabaseClient;
+    await expect(streamAuthenticatedPrintPackageArtifact(artifact, missing)).rejects.toThrow(DownloadBoundaryError);
+    await expect(streamAuthenticatedPrintPackageArtifact(artifact, storageDouble(Buffer.alloc(artifact.byteLength)))).rejects.toThrow(DownloadBoundaryError);
   });
 });
 

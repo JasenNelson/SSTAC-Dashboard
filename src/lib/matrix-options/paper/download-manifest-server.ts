@@ -14,9 +14,12 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 // edit to this data can only change VALUES - which is precisely what the pinned
 // payload digest detects.
 import printPackagesCatalog from './contracts/print-packages-v1.json';
+import v0991PrintPackagesCatalog from './contracts/print-packages-v0991.json';
 import {
   authenticatePrintPackageCatalogPayload,
   EXPECTED_CATALOG_PROVENANCE_LABEL,
+  EXPECTED_V0991_CATALOG_PAYLOAD_SHA256,
+  EXPECTED_V0991_CATALOG_PROVENANCE_LABEL,
 } from './print-packages-catalog-authentication';
 import type { PrivateCatalogDocument } from './print-packages-catalog-contract';
 
@@ -32,13 +35,12 @@ import {
   validateDownloadManifest,
 } from '@/lib/matrix-options/paper/download-manifest';
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
-import {
-  authenticateReviewerGuideAgainstPaper,
-  getReviewerGuideContract,
-  REVIEW_GUIDE_RELEASE_IDENTITY,
-} from '@/lib/matrix-options/reviewer-guide';
+import { authenticateReviewerGuideAgainstPaper, getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import { getReviewManifest, type ReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
 import { loadRevisedPaper, REVISED_PAPER_RELEASE_IDENTITY, REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
+import { getPaperRelease, paperReleaseIdentity, V0991_PAPER_VERSION } from './releases';
+import { loadPaperStructureForRequest } from './paper-request-loader';
+import { resolveReviewerGuide } from './reviewer-guide-server';
 
 export const DOWNLOAD_API_PREFIX = '/api/matrix-options/paper/downloads';
 export const PRINT_PACKAGE_ARTIFACTS_STATE = 'UNAVAILABLE_MISSING_AUTHENTICATED_ARTIFACTS' as const;
@@ -48,7 +50,7 @@ const SHA256_PATTERN = /^[a-f0-9]{64}$/;
 const STABLE_ID_PATTERN = /^[a-z0-9][a-z0-9._-]*$/;
 const DOCUMENT_VERSION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const FILE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*\.(pdf|docx)$/;
-const QUESTION_ID_PREFIX = `rpq:${REVIEW_GUIDE_RELEASE_IDENTITY}:q`;
+const QUESTION_ID_PATTERN = /^rpq:[A-Za-z0-9][A-Za-z0-9._-]*:q[0-9]{2}$/;
 const PRIVATE_LOCATOR_PATTERN = /^private-print-package:[a-z0-9][a-z0-9._:-]*$/;
 const CATALOG_PATH_PREFIX = 'private-packages/';
 export const PRIVATE_PACKAGE_BUCKET = 'matrix-twg-packages' as const;
@@ -143,7 +145,7 @@ function isStableId(value: string): boolean {
 }
 
 function isAuthenticatedQuestionId(value: string): boolean {
-  return value.startsWith(QUESTION_ID_PREFIX) && /^\d{2}$/.test(value.slice(QUESTION_ID_PREFIX.length));
+  return QUESTION_ID_PATTERN.test(value);
 }
 
 function rawQueryValues(url: URL, key: string): readonly string[] {
@@ -227,8 +229,38 @@ function releaseContextFrom(
   };
 }
 
-export async function loadTrustedDownloadReleaseContext(): Promise<TrustedDownloadContext> {
+export async function loadTrustedDownloadReleaseContext(
+  documentVersion: string = REVISED_PAPER_VERSION,
+  supabase?: SupabaseClient,
+): Promise<TrustedDownloadContext> {
   try {
+    if (documentVersion === V0991_PAPER_VERSION) {
+      if (!supabase) boundaryFailure('TRUSTED_RELEASE_UNAVAILABLE', 'An authenticated reader is required.', 503);
+      const release = getPaperRelease(documentVersion);
+      if (!release || release.delivery !== 'private-storage') boundaryFailure('TRUSTED_RELEASE_UNAVAILABLE', 'Private release is unavailable.', 503);
+      const structure = await loadPaperStructureForRequest(documentVersion, supabase);
+      const guide = resolveReviewerGuide(structure);
+      const cohorts = getCohortManifest(documentVersion);
+      const reviewManifest = getReviewManifest(documentVersion);
+      if (structure.releaseIdentity !== paperReleaseIdentity(release) ||
+          structure.manifest.source.version !== documentVersion ||
+          structure.manifest.source.sha256 !== release.sha256 ||
+          guide.releaseIdentity !== documentVersion ||
+          cohorts.releaseIdentity !== documentVersion || cohorts.cohorts.length !== 5 ||
+          reviewManifest.paperSha256 !== release.sha256) {
+        boundaryFailure('RELEASE_IDENTITY_MISMATCH', 'Private package release identity mismatch.', 409);
+      }
+      for (const cohort of cohorts.cohorts) {
+        if (!Array.isArray(reviewManifest.cohortQuestionIds[cohort.id])) boundaryFailure('COHORT_MANIFEST_MISMATCH', 'Trusted cohort membership is incomplete.', 503);
+      }
+      return {
+        documentVersion, manifestSha256: reviewManifest.sha256, paperSha256: release.sha256,
+        releaseIdentity: `matrix-options-paper-${documentVersion}-${release.sha256}`,
+        paperReleaseIdentity: structure.releaseIdentity,
+        cohortQuestionIds: reviewManifest.cohortQuestionIds, reviewManifest,
+      };
+    }
+    if (documentVersion !== REVISED_PAPER_VERSION) boundaryFailure('RELEASE_IDENTITY_MISMATCH', 'Unknown package release.', 409);
     const paper = loadRevisedPaper(REVISED_PAPER_VERSION);
     await authenticateReviewerGuideAgainstPaper(getReviewerGuideContract(), paper.content);
     const cohorts = getCohortManifest();
@@ -244,8 +276,8 @@ export async function loadTrustedDownloadReleaseContext(): Promise<TrustedDownlo
   }
 }
 
-export async function loadTrustedDownloadContext(binding: DownloadRequestBinding): Promise<TrustedDownloadContext> {
-  const context = await loadTrustedDownloadReleaseContext();
+export async function loadTrustedDownloadContext(binding: DownloadRequestBinding, supabase?: SupabaseClient): Promise<TrustedDownloadContext> {
+  const context = await loadTrustedDownloadReleaseContext(binding.documentVersion, supabase);
   if (context.documentVersion !== binding.documentVersion || context.manifestSha256 !== binding.manifestSha256) {
     boundaryFailure('RELEASE_IDENTITY_MISMATCH', 'Request is not bound to the trusted paper release.', 409);
   }
@@ -340,7 +372,8 @@ export async function loadAuthenticatedPrintPackageCatalog(
     // Read the imported binding HERE, once per call, rather than aliasing it to a
     // module-level const. The alias would freeze whatever the binding resolved to at
     // import time, which also made the value unobservable to test substitution.
-    const catalog = printPackagesCatalog as PrivateCatalogDocument;
+    const native = context.documentVersion === V0991_PAPER_VERSION;
+    const catalog = (native ? v0991PrintPackagesCatalog : printPackagesCatalog) as PrivateCatalogDocument;
 
     // STEP 1 - CONTENT AUTHENTICATION, before anything reads the artifact list.
     // Hashes the actual imported catalog payload (provenance identity plus every
@@ -362,7 +395,7 @@ export async function loadAuthenticatedPrintPackageCatalog(
     // ever regained the ability to execute.
     let authenticated;
     try {
-      authenticated = authenticatePrintPackageCatalogPayload(catalog);
+      authenticated = authenticatePrintPackageCatalogPayload(catalog, native ? EXPECTED_V0991_CATALOG_PAYLOAD_SHA256 : undefined);
     } catch (authenticationError) {
       logBoundaryEvent('PRIVATE_CATALOG_PAYLOAD_AUTHENTICATION_FAILED', {
         reason: authenticationError instanceof Error ? authenticationError.message : 'unknown',
@@ -384,7 +417,7 @@ export async function loadAuthenticatedPrintPackageCatalog(
       authenticated.status !== 'NON_CANONICAL_PREVIEW' ||
       authenticated.sourceRelease !== context.documentVersion ||
       authenticated.sourcePaperSha256 !== context.paperSha256 ||
-      authenticated.sourceCatalogSha256 !== EXPECTED_CATALOG_PROVENANCE_LABEL ||
+      authenticated.sourceCatalogSha256 !== (native ? EXPECTED_V0991_CATALOG_PROVENANCE_LABEL : EXPECTED_CATALOG_PROVENANCE_LABEL) ||
       authenticated.sourceReviewManifestSha256 !== context.manifestSha256
     ) {
       boundaryFailure('INVALID_PRINT_PACKAGE_CATALOG', 'Private package catalog metadata does not match trusted context.', 503);
@@ -594,9 +627,10 @@ export type DownloadManifestMapLoadState =
 
 export async function loadDownloadManifestMapState(
   documentVersion: string,
-  manifestSha256: string
+  manifestSha256: string,
+  supabase?: SupabaseClient,
 ): Promise<DownloadManifestMapLoadState> {
-  const context = await loadTrustedDownloadReleaseContext();
+  const context = await loadTrustedDownloadReleaseContext(documentVersion, supabase);
   if (context.documentVersion !== documentVersion || context.manifestSha256 !== manifestSha256) {
     boundaryFailure('RELEASE_IDENTITY_MISMATCH', 'Request is not bound to the trusted paper release.', 409);
   }

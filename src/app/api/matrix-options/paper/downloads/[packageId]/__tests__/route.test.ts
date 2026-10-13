@@ -10,6 +10,13 @@ import { GET } from '@/app/api/matrix-options/paper/downloads/[packageId]/route'
 const user = { id: 'user-1', is_anonymous: false }; const context = { releaseIdentity: 'release' }; const artifact = { packageId: 'full-paper-pdf', fileName: 'paper.pdf' }; const request = new NextRequest('https://example.test/api/matrix-options/paper/downloads/full-paper-pdf');
 beforeEach(() => { vi.clearAllMocks(); authMock.mockResolvedValue({ user, supabase: 'mock-supabase', rateLimitResponse: null, rateLimitHeaders: {} }); serverMock.validateOpaquePackageId.mockImplementation((id: string) => { if (!id || id !== id.toLowerCase() || /[%/\\]|\.\./.test(id)) throw new MockDownloadBoundaryError('rejected', 400, 'UNSAFE_PACKAGE_ID'); return id; }); serverMock.loadTrustedDownloadReleaseContext.mockResolvedValue(context); serverMock.loadAuthenticatedPrintPackageCatalog.mockResolvedValue([artifact]); serverMock.selectOpaquePackageArtifact.mockReturnValue(artifact); serverMock.contentDispositionForCatalog.mockReturnValue('attachment; filename="paper.pdf"'); serverMock.streamAuthenticatedPrintPackageArtifact.mockRejectedValue(new MockDownloadBoundaryError('private transport unavailable', 503, 'PRIVATE_ASSET_MECHANISM_UNBOUND')); });
 describe('opaque artifact endpoint', () => {
+  it('routes only the versioned package prefix through the v0.9.91 release context', async () => {
+    await GET(request, { params: Promise.resolve({ packageId: 'v0991-categories-pdf' }) });
+    expect(serverMock.loadTrustedDownloadReleaseContext).toHaveBeenCalledWith('v0.9.91', 'mock-supabase');
+    serverMock.loadTrustedDownloadReleaseContext.mockClear();
+    await GET(request, { params: Promise.resolve({ packageId: 'categories-pdf' }) });
+    expect(serverMock.loadTrustedDownloadReleaseContext).toHaveBeenCalledWith(undefined, 'mock-supabase');
+  });
   it('authenticates before any catalog/path work and preserves 429 headers', async () => {
     authMock.mockResolvedValueOnce({ user: null, rateLimitResponse: null, rateLimitHeaders: {} }); expect((await GET(request, { params: Promise.resolve({ packageId: 'full-paper-pdf' }) })).status).toBe(401);
     authMock.mockResolvedValueOnce({ user: { id: 'anon', is_anonymous: true }, rateLimitResponse: null, rateLimitHeaders: {} }); expect((await GET(request, { params: Promise.resolve({ packageId: 'full-paper-pdf' }) })).status).toBe(401);

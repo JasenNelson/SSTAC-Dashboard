@@ -85,6 +85,8 @@ import type { PrivateCatalogDocument } from './print-packages-catalog-contract';
  */
 export const EXPECTED_CATALOG_PAYLOAD_SHA256 =
   '984f6a8031162c3d43dbf7bb2de77d36904d46a7bc674443ed78f7ddae2fa5da';
+export const EXPECTED_V0991_CATALOG_PAYLOAD_SHA256 =
+  '33dda6b10518c18238ea6012dcea6b10c3f4332ce71e40b709c4ee1b3ae45e12';
 
 /**
  * Upper bound on how many artifact entries will even be examined. The pinned
@@ -105,6 +107,8 @@ const MAX_CATALOG_ARTIFACTS = 1000;
  */
 export const EXPECTED_CATALOG_PROVENANCE_LABEL =
   '3dd253316b177dfe3f962070c24e95ad29e0abf4971eca33813b157f0876619f';
+export const EXPECTED_V0991_CATALOG_PROVENANCE_LABEL =
+  'ea9d37e72bc882505a925301022f8af54c9bb57750e11b0b0163a078babeae09';
 
 /** Own keys permitted on the catalog document and on each artifact. */
 const ALLOWED_DOCUMENT_KEYS: readonly string[] = [
@@ -347,11 +351,12 @@ export function digestPrintPackageCatalogPayload(catalog: PrivateCatalogDocument
  */
 export function authenticatePrintPackageCatalogPayload(
   catalog: PrivateCatalogDocument,
+  expectedSha256: string = EXPECTED_CATALOG_PAYLOAD_SHA256,
 ): AuthenticatedCatalogSnapshot {
   const snapshot = snapshotCatalog(catalog);
   const actual = createHash('sha256').update(serializeSnapshot(snapshot), 'utf8').digest('hex');
   const actualBytes = Buffer.from(actual, 'hex');
-  const expectedBytes = Buffer.from(EXPECTED_CATALOG_PAYLOAD_SHA256, 'hex');
+  const expectedBytes = Buffer.from(expectedSha256, 'hex');
   if (
     actualBytes.length !== expectedBytes.length ||
     !timingSafeEqual(actualBytes, expectedBytes)

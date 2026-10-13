@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthAndRateLimit } from '@/app/api/_helpers/rate-limit-wrapper';
+import { V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import {
   DownloadBoundaryError,
   contentDispositionForCatalog,
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest, routeContext: { params: Promise<
   try {
     const { packageId } = await routeContext.params;
     const validatedPackageId = validateOpaquePackageId(packageId);
-    const context = await loadTrustedDownloadReleaseContext();
+    const context = await loadTrustedDownloadReleaseContext(validatedPackageId.startsWith('v0991-') ? V0991_PAPER_VERSION : undefined, supabase);
     const artifacts = await loadAuthenticatedPrintPackageCatalog(context);
     const artifact = selectOpaquePackageArtifact(artifacts, validatedPackageId, context);
     const contentDisposition = contentDispositionForCatalog(artifact);
