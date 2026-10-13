@@ -339,7 +339,7 @@ describe('publication workspace: the predecessor is still the default and is unc
     expect(props.sectionWindow?.sections).toHaveLength(17);
     expect(props.reviewLineage).toBeUndefined();
     expect(downloadStateMock).toHaveBeenCalledTimes(1);
-    expect(downloadStateMock).toHaveBeenCalledWith(REVISED_PAPER_VERSION, PREDECESSOR_MANIFEST_SHA256);
+    expect(downloadStateMock).toHaveBeenCalledWith(REVISED_PAPER_VERSION, PREDECESSOR_MANIFEST_SHA256, await createClientMock.mock.results[0].value);
     expect(props.downloadManifests).toEqual({ sentinel: true });
     // Rendering the default never loads, authenticates or depends on R5.
     expect(loadStructureSpy).toHaveBeenCalledWith(REVISED_PAPER_VERSION);

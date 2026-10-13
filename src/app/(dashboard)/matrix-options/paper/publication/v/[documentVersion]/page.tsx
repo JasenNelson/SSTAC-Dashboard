@@ -276,15 +276,14 @@ export default async function PublicationPage({
   // That is a real trade-off, but reversing it would mean rewriting the
   // regression test that encodes the current intent, so it is an OWNER decision
   // and is recorded in the handoff rather than changed here.
-  // Print packages exist for the default release only (the download catalog is
-  // bound to its review manifest). Another release has none provisioned, so
-  // neither the session nor the boundary is consulted for it and the panel shows
-  // its pending state. An anonymous session gets no manifests.
+  // Print packages are bound separately to the default and v0.9.91 review
+  // manifests. An anonymous session gets no manifests.
   let downloadState: Awaited<ReturnType<typeof loadDownloadManifestMapState>> | null = null;
-  if (release.activation === 'DEFAULT') {
+  if (release.activation === 'DEFAULT' || documentVersion === V0991_PAPER_VERSION) {
     const { data: { user } } = await supabase.auth.getUser();
     const isAnonymous = user?.is_anonymous ?? true;
-    if (!isAnonymous) downloadState = await loadDownloadManifestMapState(documentVersion, reviewManifestSha256);
+    if (documentVersion === V0991_PAPER_VERSION && (isAnonymous || !servedTo || user?.id !== servedTo)) notFound();
+    if (!isAnonymous) downloadState = await loadDownloadManifestMapState(documentVersion, reviewManifestSha256, supabase);
   }
   const downloadManifests = downloadState?.status === 'ready' ? downloadState.manifests : null;
   const workspaceModule = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');

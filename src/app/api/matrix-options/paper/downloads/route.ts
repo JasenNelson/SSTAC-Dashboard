@@ -28,12 +28,12 @@ function errorResponse(error: DownloadBoundaryError | { status: number; code: st
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  const { user, rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'default');
+  const { user, supabase, rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'default');
   if (rateLimitResponse) return noStore(rateLimitResponse);
   if (!user || user.is_anonymous !== false) return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401, headers: { ...NO_STORE_HEADERS, ...rateLimitHeaders } });
   try {
     const binding = parseDownloadRequestBinding(new URL(request.url));
-    const context = await loadTrustedDownloadContext(binding);
+    const context = await loadTrustedDownloadContext(binding, supabase);
     const artifacts = await loadAuthenticatedPrintPackageCatalog(context, binding.cohortId);
     if (!artifacts) return NextResponse.json({ error: 'Authenticated PDF/DOCX print-package artifacts are unavailable.', code: 'PRINT_PACKAGE_ARTIFACTS_UNAVAILABLE', dependency: PRINT_PACKAGE_ARTIFACT_DEPENDENCY, state: PRINT_PACKAGE_ARTIFACTS_STATE }, { status: 503, headers: { ...NO_STORE_HEADERS, ...rateLimitHeaders } });
     const manifest = buildValidatedDownloadManifest(artifacts, context, binding.cohortId);

@@ -10,6 +10,17 @@ import { GET } from '@/app/api/matrix-options/paper/downloads/route';
 const user = { id: 'user-1', is_anonymous: false };
 beforeEach(() => { vi.clearAllMocks(); authMock.mockResolvedValue({ user, rateLimitResponse: null, rateLimitHeaders: {} }); serverMock.parseDownloadRequestBinding.mockReturnValue({ documentVersion: 'v', manifestSha256: 'a'.repeat(64), cohortId: 'categories' }); serverMock.loadTrustedDownloadContext.mockResolvedValue({ releaseIdentity: 'release' }); });
 describe('manifest endpoint', () => {
+  it('passes the request-bound authenticated client to a versioned manifest lookup', async () => {
+    const client = { marker: 'request-client' };
+    authMock.mockResolvedValueOnce({ user, supabase: client, rateLimitResponse: null, rateLimitHeaders: {} });
+    serverMock.parseDownloadRequestBinding.mockReturnValueOnce({ documentVersion: 'v0.9.91', manifestSha256: 'a'.repeat(64), cohortId: 'categories' });
+    serverMock.loadAuthenticatedPrintPackageCatalog.mockResolvedValueOnce([{ packageId: 'v0991-categories-pdf' }]);
+    serverMock.buildValidatedDownloadManifest.mockReturnValueOnce({ documentVersion: 'v0.9.91', packages: [] });
+    const response = await GET(new NextRequest('https://example.test/api/matrix-options/paper/downloads'));
+    expect(response.status).toBe(200);
+    expect(serverMock.loadTrustedDownloadContext).toHaveBeenCalledWith(expect.objectContaining({ documentVersion: 'v0.9.91' }), client);
+    expect(serverMock.loadAuthenticatedPrintPackageCatalog).toHaveBeenCalledWith(expect.anything(), 'categories');
+  });
   it('authenticates before release work and preserves helper 429 headers', async () => {
     authMock.mockResolvedValueOnce({ user: null, rateLimitResponse: null, rateLimitHeaders: {} });
     expect((await GET(new NextRequest('https://example.test/api/matrix-options/paper/downloads'))).status).toBe(401);

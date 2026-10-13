@@ -622,9 +622,25 @@ describe('paper publication V16 route', () => {
       expect(result.props.children.props.nativeFigures).toBe(nativeFigures);
       expect(result.props.children.props.children?.props.nativeFigures).toBe(nativeFigures);
       expect(privateBundleSpy).toHaveBeenCalledTimes(1);
+      expect(downloadServerMock.loadDownloadManifestMapState).toHaveBeenCalledWith(
+        V0991_PAPER_VERSION,
+        getReviewManifest(V0991_PAPER_VERSION).sha256,
+        supabaseMock,
+      );
       expect(createAuthenticatedClientMock).toHaveBeenCalledTimes(1);
-      expect(supabaseMock.auth.getUser).toHaveBeenCalledTimes(1);
+      expect(supabaseMock.auth.getUser).toHaveBeenCalledTimes(2);
       expect(supabaseMock.from).not.toHaveBeenCalled();
+    });
+
+    it('rejects a private reader whose session changes before download manifests load', async () => {
+      privateBundleSpy.mockImplementation(async () => ({ structure: { ...defaultStructure(), manifest: { source: { version: V0991_PAPER_VERSION, sha256: 'f'.repeat(64) } } }, nativeFigures: null }));
+      cohortManifestMock.mockImplementation(() => ({ ...defaultManifest(), releaseIdentity: V0991_PAPER_VERSION }) as never);
+      resolveReviewerGuideMock.mockImplementation(() => syntheticResolvedR5Guide());
+      supabaseMock.auth.getUser
+        .mockResolvedValueOnce({ data: { user: { id: readerId, is_anonymous: false } }, error: null } as never)
+        .mockResolvedValueOnce({ data: { user: { id: 'changed-reader', is_anonymous: false } }, error: null } as never);
+      await expect(request()).rejects.toThrow('NEXT_NOT_FOUND');
+      expect(downloadServerMock.loadDownloadManifestMapState).not.toHaveBeenCalled();
     });
 
     it('hides the gated diagnostic for a signed-out or changed browser session', async () => {
@@ -648,6 +664,7 @@ describe('paper publication V16 route', () => {
       supabaseMock.auth.getUser.mockResolvedValue({ data: { user: { id: readerId, is_anonymous: true } }, error: null } as never);
       await expect(request()).rejects.toThrow('NEXT_NOT_FOUND');
       expect(privateBundleSpy).not.toHaveBeenCalled();
+      expect(downloadServerMock.loadDownloadManifestMapState).not.toHaveBeenCalled();
       expect(supabaseMock.from).not.toHaveBeenCalled();
     });
 
