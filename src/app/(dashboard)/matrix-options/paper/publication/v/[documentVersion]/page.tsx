@@ -6,7 +6,7 @@ import {
   resolveMatrixOptionsPaperReviewNavigationGate,
 } from '@/lib/matrix-options/navigation';
 import { REVISED_PAPER_ROUTE } from '@/lib/matrix-options/revised-paper';
-import { getPaperRelease, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, PREDECESSOR_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { PrivateReleaseUnavailableError } from '@/lib/matrix-options/paper/private-release-assets';
 import type { PrivateReleaseFailureCode } from '@/lib/matrix-options/paper/private-release-assets';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -276,10 +276,10 @@ export default async function PublicationPage({
   // That is a real trade-off, but reversing it would mean rewriting the
   // regression test that encodes the current intent, so it is an OWNER decision
   // and is recorded in the handoff rather than changed here.
-  // Print packages are bound separately to the default and v0.9.91 review
+  // Print packages are bound separately to the predecessor and v0.9.91 review
   // manifests. An anonymous session gets no manifests.
   let downloadState: Awaited<ReturnType<typeof loadDownloadManifestMapState>> | null = null;
-  if (release.activation === 'DEFAULT' || documentVersion === V0991_PAPER_VERSION) {
+  if (documentVersion === PREDECESSOR_PAPER_VERSION || documentVersion === V0991_PAPER_VERSION) {
     const { data: { user } } = await supabase.auth.getUser();
     const isAnonymous = user?.is_anonymous ?? true;
     if (documentVersion === V0991_PAPER_VERSION && (isAnonymous || !servedTo || user?.id !== servedTo)) notFound();

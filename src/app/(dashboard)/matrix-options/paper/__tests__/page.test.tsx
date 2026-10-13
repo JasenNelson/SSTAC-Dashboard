@@ -38,7 +38,7 @@ describe('/matrix-options/paper', () => {
     process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'true';
     await expect(MatrixOptionsPaperResolverPage()).rejects.toThrow('NEXT_REDIRECT');
     expect(redirectMock).toHaveBeenCalledTimes(1);
-    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/1.0.11-remediated-7-8-successor-20260918-D?mode=working-draft');
+    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/v0.9.91?mode=working-draft');
   });
 
   it('lands on the canonical Working Draft URL when both flags are absent', async () => {
@@ -48,7 +48,7 @@ describe('/matrix-options/paper', () => {
     expect(screen.getByText('workspace child')).toBeInTheDocument();
     await expect(MatrixOptionsPaperResolverPage()).rejects.toThrow('NEXT_REDIRECT');
     expect(redirectMock).toHaveBeenCalledTimes(1);
-    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/1.0.11-remediated-7-8-successor-20260918-D?mode=working-draft');
+    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/v0.9.91?mode=working-draft');
   });
 
   it('F-06: gives the header actions slot a named group role and hides it while empty', () => {
@@ -80,8 +80,8 @@ describe('/matrix-options/paper', () => {
 
   it('uses truthful authenticated-release wording for missing paper identities', () => {
     render(<MatrixOptionsPaperNotFound />);
-    expect(screen.getByText(/authenticated V16 paper release/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open the current verified paper' })).toHaveAttribute('href', '/matrix-options/paper');
+    expect(screen.getByText(/requested paper version or section is not available/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open the current collaborative expert-review draft' })).toHaveAttribute('href', '/matrix-options/paper');
     expect(screen.queryByText(/synthetic release|current fixture/i)).not.toBeInTheDocument();
   });
 });

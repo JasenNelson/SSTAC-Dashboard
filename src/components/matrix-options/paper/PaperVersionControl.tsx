@@ -17,9 +17,8 @@ import { PaperPopover } from './PaperPopover';
  * Two parts, both small:
  * - a header button that names the draft on screen and opens a popover listing
  *   the bound drafts (the same anchored popover Download Files uses);
- * - a one-line status under the header, shown ONLY for a draft that is not the
- *   default, so a reader always knows the draft on screen is not the one the
- *   workspace opens by default.
+ * - a one-line status under the header for an earlier draft, so a reader knows
+ *   the workspace now opens the current collaborative expert-review draft.
  *
  * Switching drafts is plain navigation (a link), so it works with a new tab,
  * middle click and a copied address. The reader's place is carried by STABLE
@@ -129,8 +128,7 @@ export function PaperVersionControl({ documentVersion, buttonClassName, onOpen, 
 }
 
 /**
- * The status line for a draft that is not the default. Nothing is rendered for
- * the default draft, so its header is exactly what it was.
+ * The status line for an earlier draft. The current entry draft has no status line.
  */
 export function PaperVersionStatus({ documentVersion, ...context }: { readonly documentVersion: string } & PaperVersionLinkContext) {
   const current = getPaperRelease(documentVersion);
@@ -139,11 +137,11 @@ export function PaperVersionStatus({ documentVersion, ...context }: { readonly d
   return (
     <p data-testid="paper-version-status" role="note" className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] px-4 py-1.5 text-sm text-[var(--db-text-primary)] sm:px-6 print:hidden">
       <span className="min-w-0">
-        <strong className="font-semibold">{current.label}.</strong> A preview: not the default draft. Responses to this draft are separate from the earlier draft.
+        <strong className="font-semibold">{current.label}.</strong> You are viewing an earlier draft. Responses to this draft are separate from the current collaborative expert-review draft.
       </span>
       {/* A full 44px touch target on phones and tablets; from lg up the line stays one compact row. */}
       <a href={paperVersionHref(fallback, context)} data-testid="paper-version-status-default-link" className="inline-flex min-h-[44px] items-center font-medium lg:min-h-[32px] text-[var(--db-accent-strong)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] dark:text-[var(--db-accent)]">
-        Go to the earlier draft
+        Go to the current draft
       </a>
     </p>
   );

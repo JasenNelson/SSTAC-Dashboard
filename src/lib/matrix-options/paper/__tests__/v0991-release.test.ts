@@ -12,7 +12,7 @@ vi.mock('../releases', async (importOriginal) => {
     ...actual,
     getPaperRelease: (documentVersion: string | undefined | null) => {
       const release = actual.getPaperRelease(documentVersion);
-      return release && syntheticRelease.active && release.documentVersion === actual.DEFAULT_PAPER_VERSION
+      return release && syntheticRelease.active && release.documentVersion === actual.PREDECESSOR_PAPER_VERSION
         ? { ...release, ...syntheticRelease.patch }
         : release;
     },
@@ -31,7 +31,7 @@ import { appendixLSourceMediaContract, appendixLSourceMediaMarkdownLine, assertA
 import { paperInlineSegments } from '../derived-figures';
 import { getReviewManifest } from '../review-manifest';
 import { getPaperSectionWindowModel } from '../section-window';
-import { getPaperRelease, DEFAULT_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '../releases';
+import { getPaperRelease, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '../releases';
 import headingContract from '../contracts/heading-anchors-v0.9.91-run109-001.json';
 import interfaceDelta from '../contracts/interface-delta-v0.9.91-run109-001.json';
 
@@ -51,14 +51,14 @@ describe('v0.9.91 release contracts (clean checkout)', () => {
       bytes: 607464,
       delivery: 'private-storage',
       filename: null,
-      activation: 'SELECTABLE_NON_DEFAULT',
+      activation: 'DEFAULT',
       predecessorVersion: R5_PAPER_VERSION,
       withheld: null,
       acceptedFigures: true,
       frontMatter: true,
       headingDepthShift: 1,
     });
-    expect(getPaperRelease(DEFAULT_PAPER_VERSION)?.activation).toBe('DEFAULT');
+    expect(getPaperRelease(PREDECESSOR_PAPER_VERSION)?.activation).toBe('SELECTABLE_NON_DEFAULT');
     expect(release?.retiredSectionAnchors).toEqual(interfaceDelta.retiredSectionAnchors);
     expect(interfaceDelta.releaseIdentity).toBe(V0991_PAPER_VERSION);
     expect(interfaceDelta.headingCount).toBe(364);
@@ -127,7 +127,7 @@ describe('v0.9.91 release contracts (clean checkout)', () => {
     const content = '# 1.0 Synthetic Overview\n\nSynthetic introduction.\n\n# 2.0 Synthetic Context\n\nSynthetic body.\n\n# Technical Appendices Compendium\n\n# Appendix A: Synthetic Plan\n\nSynthetic ending.\n';
     syntheticRelease.active = true;
     syntheticRelease.patch = { bytes: Buffer.byteLength(content, 'utf8'), sha256: sha(content), frontMatter: false, headingDepthShift: 0, acceptedFigures: false, withheld: null };
-    const descriptor = describeAuthenticatedPaper(getPaperRelease(DEFAULT_PAPER_VERSION)!, content);
+    const descriptor = describeAuthenticatedPaper(getPaperRelease(PREDECESSOR_PAPER_VERSION)!, content);
     const structure = compileRevisedPaperStructure(descriptor);
     const outline = getPaperNavOutline(structure);
     const window = getPaperSectionWindowModel(structure);

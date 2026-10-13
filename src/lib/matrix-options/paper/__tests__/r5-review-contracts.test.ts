@@ -318,7 +318,7 @@ describe('R5 cohorts', () => {
     expect(() => getCohortManifest('unknown')).toThrow(/release or status/);
   });
 
-  it('changes no predecessor portion: every range of the default release is exactly what it was', () => {
+  it('changes no predecessor portion: every range of the predecessor release is exactly what it was', () => {
     const ranges = deriveCohortPortions(loadRevisedPaperStructure(), getCohortManifest()).map((portion) => [portion.id, portion.startByte, portion.endByte, portion.sectionLabel]);
     expect(ranges).toEqual([
       ['categories:4.1', 46365, 52105, '4.1 Part 1: Matrix Numerical Sediment Standards & Four Proposed Sediment Uses'],

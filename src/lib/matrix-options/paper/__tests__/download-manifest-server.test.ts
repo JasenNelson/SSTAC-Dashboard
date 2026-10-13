@@ -560,6 +560,7 @@ describe('v0.9.91 selectable private print catalog', () => {
   });
 
   it('pins inert JSON and builds five separately bound PDF/DOCX manifests', async () => {
+    expect(EXPECTED_V0991_CATALOG_PAYLOAD_SHA256).toBe('19ed0173d70b7b2f81a808e594f9748826a60a544e50231e2182a62943836190');
     expect(digestPrintPackageCatalogPayload(v0991Catalog as PrivateCatalogDocument)).toBe(EXPECTED_V0991_CATALOG_PAYLOAD_SHA256);
     const artifacts = await loadAuthenticatedPrintPackageCatalog(context);
     expect(artifacts).toHaveLength(10);
@@ -572,6 +573,17 @@ describe('v0.9.91 selectable private print catalog', () => {
       expect(manifest.packages.map((entry) => entry.packageId)).toEqual([`v0991-${cohortId}-pdf`, `v0991-${cohortId}-docx`]);
       expect(JSON.stringify(manifest)).not.toContain('private-packages/');
     }
+  });
+
+  it('binds all ten non-preview delivery names to their exact cohort storage keys', async () => {
+    const expected = ALL_COHORTS.flatMap((cohortId) => (['pdf', 'docx'] as const).map((extension) => ({
+      fileName: `matrix-options-v0991-${cohortId}.${extension}`,
+      path: `private-packages/${cohortId}/matrix-options-v0991-${cohortId}.${extension}`,
+    })));
+    expect(v0991Catalog.artifacts.map(({ fileName, path }) => ({ fileName, path }))).toEqual(expected);
+    const artifacts = await loadAuthenticatedPrintPackageCatalog(context);
+    expect(artifacts!.map(({ fileName, storagePath }) => ({ fileName, path: `private-packages/${storagePath}` })).sort((a, b) => a.fileName.localeCompare(b.fileName))).toEqual(expected.sort((a, b) => a.fileName.localeCompare(b.fileName)));
+    expect(artifacts!.every(({ fileName, storagePath }) => !fileName.includes('preview') && !storagePath.includes('preview'))).toBe(true);
   });
 
   it('rejects a wrong release, paper hash, and manifest hash before exposing packages', async () => {

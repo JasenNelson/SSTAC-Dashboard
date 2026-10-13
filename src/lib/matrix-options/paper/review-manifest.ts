@@ -36,8 +36,8 @@ export function computeReviewManifestSha256(identity: ReviewManifestIdentity): s
  * its text for a text-form release, with its text hashes for a hash-form one.
  * Either way a change to a question's wording changes the digest.
  *
- * With no argument this is the DEFAULT release, whose digest is the one the
- * persisted review rows are keyed on; it does not change when another release
+ * With no argument this is the predecessor release for historical callers;
+ * its persisted review-row identity does not change when another release
  * is bound. Each release has its own manifest, so a response is always written
  * and read under the exact release it answers.
  */

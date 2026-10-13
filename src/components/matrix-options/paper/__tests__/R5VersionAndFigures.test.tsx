@@ -241,18 +241,16 @@ describe('paperVersionHref', () => {
 
 describe('PaperVersionControl and PaperVersionStatus', () => {
   const context = { mode: 'working-draft', cohort: null, stableSectionId: 'sec-7-8' } as const;
-  // Owner decision (interim release): the working draft is named "Current review draft" and the
-  // default predecessor "Earlier draft (default)". No name carries a version number, none says
-  // responses are kept or saved, and none says the working draft will become the default.
-  const DEFAULT_OPTION_TEXT = 'Earlier draft (default)The earlier draft of the paper. It is still the default draft. Responses to it are separate from responses to the current review draft.';
-  const R5_OPTION_TEXT = 'Current review draftThe current review draft of the paper, shown as a preview. It is not the default draft. Responses to it are separate from responses to the earlier draft.';
-  const R5_STATUS_TEXT = 'Current review draft. A preview: not the default draft. Responses to this draft are separate from the earlier draft.';
+  const DEFAULT_OPTION_TEXT = 'Earlier draftThe earlier draft of the paper. Responses to it remain separate from the current collaborative expert-review draft.';
+  const R5_OPTION_TEXT = 'Interim review draftThe interim review draft of the paper. Responses to it remain separate from other paper versions.';
+  const R5_STATUS_TEXT = 'Interim review draft. You are viewing an earlier draft. Responses to this draft are separate from the current collaborative expert-review draft.';
 
   it('binds exactly these names, and none of them names a version, a saved response or a future default', () => {
-    const [defaultRelease, r5Release] = PAPER_RELEASES;
-    expect(defaultRelease).toMatchObject({ documentVersion: REVISED_PAPER_VERSION, label: 'Earlier draft (default)', shortLabel: 'Earlier draft', summary: 'The earlier draft of the paper. It is still the default draft. Responses to it are separate from responses to the current review draft.' });
-    expect(r5Release).toMatchObject({ documentVersion: R5_PAPER_VERSION, label: 'Current review draft', shortLabel: 'Current draft', summary: 'The current review draft of the paper, shown as a preview. It is not the default draft. Responses to it are separate from responses to the earlier draft.' });
-    for (const text of [DEFAULT_OPTION_TEXT, R5_OPTION_TEXT, R5_STATUS_TEXT, 'Go to the earlier draft']) {
+    const [currentRelease, defaultRelease, r5Release] = PAPER_RELEASES;
+    expect(currentRelease).toMatchObject({ documentVersion: V0991_PAPER_VERSION, label: 'Current collaborative expert-review draft', shortLabel: 'Current draft', activation: 'DEFAULT' });
+    expect(defaultRelease).toMatchObject({ documentVersion: REVISED_PAPER_VERSION, label: 'Earlier draft', shortLabel: 'Earlier draft', summary: 'The earlier draft of the paper. Responses to it remain separate from the current collaborative expert-review draft.' });
+    expect(r5Release).toMatchObject({ documentVersion: R5_PAPER_VERSION, label: 'Interim review draft', shortLabel: 'Interim draft', summary: 'The interim review draft of the paper. Responses to it remain separate from other paper versions.' });
+    for (const text of [DEFAULT_OPTION_TEXT, R5_OPTION_TEXT, R5_STATUS_TEXT, 'Go to the current draft']) {
       expect(text).not.toMatch(/0\.9\.8|1\.0\.11|\bkept\b|\bsaved\b|\byet\b/i);
     }
   });
@@ -292,11 +290,11 @@ describe('PaperVersionControl and PaperVersionStatus', () => {
     expect(toggle).toHaveFocus();
   });
 
-  it('on the working draft, offers the default draft as the link and marks the working draft current', () => {
+  it('on the interim draft, offers the current entry as a link and marks the interim draft selected', () => {
     const onOpen = vi.fn();
     render(<PaperVersionControl documentVersion={R5_PAPER_VERSION} buttonClassName="btn" onOpen={onOpen} {...context} />);
     const toggle = screen.getByTestId('paper-version-toggle');
-    expect(toggle).toHaveAccessibleName('Draft version: Current draft');
+    expect(toggle).toHaveAccessibleName('Draft version: Interim draft');
     fireEvent.click(toggle);
     expect(onOpen).toHaveBeenCalledTimes(1);
     const popover = screen.getByTestId('paper-version-popover');
@@ -318,21 +316,21 @@ describe('PaperVersionControl and PaperVersionStatus', () => {
   });
 
   it('shows the status line only for a draft that is not the default', () => {
-    const none = render(<PaperVersionStatus documentVersion={REVISED_PAPER_VERSION} {...context} />);
+    const none = render(<PaperVersionStatus documentVersion={V0991_PAPER_VERSION} {...context} />);
     expect(none.container).toBeEmptyDOMElement();
     none.unmount();
     render(<PaperVersionStatus documentVersion={R5_PAPER_VERSION} {...context} />);
     const status = screen.getByTestId('paper-version-status');
     expect(status).toHaveAttribute('role', 'note');
-    expect(status.textContent).toBe(`${R5_STATUS_TEXT}Go to the earlier draft`);
+    expect(status.textContent).toBe(`${R5_STATUS_TEXT}Go to the current draft`);
     expect(within(status).getAllByRole('link')).toHaveLength(1);
-    expect(within(status).getByRole('link', { name: 'Go to the earlier draft' })).toHaveAttribute('href', `/matrix-options/paper/v/${REVISED_PAPER_VERSION}/sec-7-8`);
+    expect(within(status).getByRole('link', { name: 'Go to the current draft' })).toHaveAttribute('href', `/matrix-options/paper/v/${V0991_PAPER_VERSION}/sec-7-8`);
     expect(status.className).toContain('print:hidden');
   });
 });
 
 describe('RevisedPaperWorkspace: draft version in the header', () => {
-  const R5_STATUS_TEXT = 'Current review draft. A preview: not the default draft. Responses to this draft are separate from the earlier draft.';
+  const R5_STATUS_TEXT = 'Interim review draft. You are viewing an earlier draft. Responses to this draft are separate from the current collaborative expert-review draft.';
   const WITHHELD_NOTICE = 'Appendix L is under revision and is not included in this presentation.';
   const outline: readonly PaperOutlineNavEntry[] = [
     { id: 'n1', anchor: 'intro', label: '1 Introduction', depth: 1, level: 1, parentId: null, childIds: ['n2'] },
@@ -365,11 +363,11 @@ describe('RevisedPaperWorkspace: draft version in the header', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  it('default draft: the control is in the header controls, and there is no status line', () => {
+  it('earlier draft: the control is in the header and links to the current entry', () => {
     render(<RevisedPaperWorkspace guide={defaultGuide} documentVersion={REVISED_PAPER_VERSION} urlState={state()} assignment={getProductionAssignment()} outline={outline} stableSectionIds={stableSectionIds}><FakeDocument /></RevisedPaperWorkspace>);
     const controls = screen.getByTestId('workspace-header-controls');
     expect(within(controls).getByTestId('paper-version-toggle')).toHaveAccessibleName('Draft version: Earlier draft');
-    expect(screen.queryByTestId('paper-version-status')).toBeNull();
+    expect(within(screen.getByTestId('paper-version-status')).getByRole('link', { name: 'Go to the current draft' })).toHaveAttribute('href', `/matrix-options/paper/publication/v/${V0991_PAPER_VERSION}?mode=working-draft`);
     // The other header actions are still there, in the same group.
     expect(within(controls).getByRole('button', { name: 'Download Files' })).toBeInTheDocument();
     expect(within(controls).getByRole('link', { name: 'Working Draft' })).toHaveAttribute('href', `${predecessorBase}?mode=working-draft`);
@@ -378,13 +376,13 @@ describe('RevisedPaperWorkspace: draft version in the header', () => {
   it('working draft: says it is not the default, links its own modes, and carries the section being read to the default draft', () => {
     render(<RevisedPaperWorkspace guide={r5Guide} documentVersion={R5_PAPER_VERSION} urlState={state({ section: 'detail' })} assignment={getProductionAssignment()} outline={outline} stableSectionIds={stableSectionIds}><FakeDocument /></RevisedPaperWorkspace>);
     const controls = screen.getByTestId('workspace-header-controls');
-    expect(within(controls).getByTestId('paper-version-toggle')).toHaveAccessibleName('Draft version: Current draft');
+    expect(within(controls).getByTestId('paper-version-toggle')).toHaveAccessibleName('Draft version: Interim draft');
     expect(within(controls).getByRole('link', { name: 'Working Draft' })).toHaveAttribute('href', `${r5Base}?mode=working-draft`);
     expect(within(controls).getByRole('link', { name: 'My Review' }).getAttribute('href')).toContain(`${r5Base}?mode=my-review`);
     const status = screen.getByTestId('paper-version-status');
     expect(status).toHaveTextContent(R5_STATUS_TEXT);
     // "1.1.1 Detail" has no stable id of its own: its nearest numbered ancestor "1.1 Scope" does.
-    expect(within(status).getByRole('link', { name: 'Go to the earlier draft' })).toHaveAttribute('href', `/matrix-options/paper/v/${REVISED_PAPER_VERSION}/sec-1-1`);
+    expect(within(status).getByRole('link', { name: 'Go to the current draft' })).toHaveAttribute('href', `/matrix-options/paper/v/${V0991_PAPER_VERSION}/sec-1-1`);
   });
 
   it('working draft: Download Files says plainly that this draft has none', () => {
@@ -394,8 +392,8 @@ describe('RevisedPaperWorkspace: draft version in the header', () => {
     expect(popover).toHaveTextContent('Download files are not available for this draft.');
     expect(popover).not.toHaveTextContent('being prepared');
     expect(within(popover).queryByRole('link')).toBeNull();
-    // Without stable ids the default draft is opened at its start.
-    expect(within(screen.getByTestId('paper-version-status')).getByRole('link')).toHaveAttribute('href', `${predecessorBase}?mode=working-draft`);
+    // Without stable ids the current draft is opened at its start.
+    expect(within(screen.getByTestId('paper-version-status')).getByRole('link')).toHaveAttribute('href', `/matrix-options/paper/publication/v/${V0991_PAPER_VERSION}?mode=working-draft`);
   });
 
   it('working draft My Review: asks the questions of the guide it was handed, and marks the reworded Q11 as needing a new response', () => {
@@ -426,7 +424,7 @@ describe('RevisedPaperWorkspace: draft version in the header', () => {
     expect(screen.getByTestId('review-lineage-changed')).toBeInTheDocument();
     expect(screen.getByTestId('paper-version-status')).toBeInTheDocument();
     // Switching drafts from My Review keeps the topic and drops the question (its id belongs to this draft).
-    expect(within(screen.getByTestId('paper-version-status')).getByRole('link')).toHaveAttribute('href', `${predecessorBase}?mode=my-review&cohort=methods-water-type`);
+    expect(within(screen.getByTestId('paper-version-status')).getByRole('link')).toHaveAttribute('href', `/matrix-options/paper/publication/v/${V0991_PAPER_VERSION}?mode=my-review&cohort=methods-water-type`);
     first.unmount();
     // Two-sided: Q10, in the same topic, has identical text and carries no such note.
     const q10 = r5Guide.questions[9];

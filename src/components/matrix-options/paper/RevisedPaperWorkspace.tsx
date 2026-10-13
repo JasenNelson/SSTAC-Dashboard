@@ -40,7 +40,7 @@ import { DownloadFilesPanel } from './DownloadFilesPanel';
 import { PaperVersionControl, PaperVersionStatus, PaperWithheldNotice } from './PaperVersionControl';
 import type { VerifiedDownloadManifest } from '@/lib/matrix-options/paper/download-manifest';
 import { isContentsHeading } from '@/lib/matrix-options/paper/paper-nav-groups';
-import { getPaperRelease, PAPER_WITHHELD_NOTICE_ID } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, PAPER_WITHHELD_NOTICE_ID, PREDECESSOR_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import type { ReviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 
 export interface RevisedPaperWorkspaceProps {
@@ -355,7 +355,7 @@ export function RevisedPaperWorkspace({ documentVersion, guide: reviewerGuide, r
   // question ids embed their draft, and a response is saved under that id. The
   // topics are a bundled contract; the questions arrive resolved from the server.
   const cohortManifest = useMemo(() => getCohortManifest(documentVersion), [documentVersion]);
-  const isDefaultDraft = getPaperRelease(documentVersion)?.activation === 'DEFAULT';
+  const hasPrintCatalog = documentVersion === PREDECESSOR_PAPER_VERSION || documentVersion === V0991_PAPER_VERSION;
   /** What this release shows the exact contents heading as, where it names a label (releases.ts). */
   const contentsHeadingDisplay = getPaperRelease(documentVersion)?.contentsHeadingDisplay ?? null;
   const portions = useMemo(() => cohortPortions ?? [], [cohortPortions]);
@@ -1441,8 +1441,8 @@ export function RevisedPaperWorkspace({ documentVersion, guide: reviewerGuide, r
 
       {/* keepMounted: a download still in flight keeps its status (and its error) when the popover is closed. */}
       <PaperPopover id={PAPER_DOWNLOAD_PANEL_ID} testId="download-files-popover" open={downloadOpen} keepMounted triggerRef={downloadToggleRef} label="Download files" width={340} onClose={() => setDownloadOpen(false)}>
-        {/* Print packages exist for the default draft only; another draft says so plainly instead of "being prepared". */}
-        <DownloadFilesPanel groups={downloadGroups} onAnnounce={announceDownload} pendingText={isDefaultDraft ? undefined : 'Download files are not available for this draft.'} />
+        {/* Print catalogs exist for the predecessor and v0.9.91; other drafts state their absence. */}
+        <DownloadFilesPanel groups={downloadGroups} onAnnounce={announceDownload} pendingText={hasPrintCatalog ? undefined : 'Download files are not available for this draft.'} />
       </PaperPopover>
       <p data-testid="download-announcement" role="status" aria-live="polite" className="sr-only">{downloadAnnouncement}</p>
       <PaperPopover id={PAPER_ABOUT_PANEL_ID} testId="about-draft-popover" open={aboutOpen} triggerRef={aboutToggleRef} label="About this draft" width={340} onClose={() => setAboutOpen(false)}>

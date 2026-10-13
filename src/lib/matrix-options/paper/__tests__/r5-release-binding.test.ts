@@ -7,6 +7,7 @@ vi.mock('server-only', () => ({}));
 
 import {
   DEFAULT_PAPER_VERSION,
+  PREDECESSOR_PAPER_VERSION,
   getDefaultPaperRelease,
   getPaperRelease,
   isPaperReleaseVersion,
@@ -45,9 +46,9 @@ import { privateR5Descriptor, privateR5Structure } from './private-structure';
 /*
  * Unit 1: exact release binding.
  *
- * The current review draft (R5 in the code) is bound beside the predecessor as a
- * second, SELECTABLE release whose bytes are NOT in the repository: it is a
- * `private-storage` release. The predecessor stays the default and is unchanged.
+ * The interim review draft (R5 in the code) is bound beside the predecessor as a
+ * SELECTABLE private release. The predecessor source identity remains unchanged;
+ * v0.9.91 is the current entry draft.
  *
  * What can be shown without the private bytes runs everywhere: the release
  * entry, the absence of any repository loader for it, and the failure of every
@@ -66,23 +67,24 @@ afterEach(() => {
   resetRevisedPaperStructureCacheForTests();
 });
 
-describe('paper releases: review drafts are selectable and non-default', () => {
-  it('binds the three releases in lineage order, with the predecessor as the only default', () => {
-    expect(PAPER_RELEASES.map((release) => release.documentVersion)).toEqual([DEFAULT_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION]);
-    expect(PAPER_RELEASES.filter((release) => release.activation === 'DEFAULT').map((release) => release.documentVersion)).toEqual([DEFAULT_PAPER_VERSION]);
-    expect(getDefaultPaperRelease().documentVersion).toBe(DEFAULT_PAPER_VERSION);
+describe('paper releases: current entry and preserved predecessor identities', () => {
+  it('lists the current entry first and binds it as the only default', () => {
+    expect(PAPER_RELEASES.map((release) => release.documentVersion)).toEqual([V0991_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION]);
+    expect(PAPER_RELEASES.filter((release) => release.activation === 'DEFAULT').map((release) => release.documentVersion)).toEqual([V0991_PAPER_VERSION]);
+    expect(getDefaultPaperRelease().documentVersion).toBe(V0991_PAPER_VERSION);
     expect(r5Release.activation).toBe('SELECTABLE_NON_DEFAULT');
     expect(R5_PAPER_VERSION).toBe('v0.9.88-r4-presentation-001');
     expect(getPaperRelease(V0991_PAPER_VERSION)).toMatchObject({
       delivery: 'private-storage',
       filename: null,
-      activation: 'SELECTABLE_NON_DEFAULT',
+      activation: 'DEFAULT',
       predecessorVersion: R5_PAPER_VERSION,
     });
   });
 
-  it('keeps every default constant, route and review route on the predecessor', () => {
-    expect(DEFAULT_PAPER_VERSION).toBe(REVISED_PAPER_VERSION);
+  it('keeps historical predecessor constants and versioned routes bound to the predecessor', () => {
+    expect(DEFAULT_PAPER_VERSION).toBe(V0991_PAPER_VERSION);
+    expect(PREDECESSOR_PAPER_VERSION).toBe(REVISED_PAPER_VERSION);
     expect(REVISED_PAPER_VERSION).toBe('1.0.11-remediated-7-8-successor-20260918-D');
     expect(REVISED_PAPER_ROUTE).toBe(`/matrix-options/paper/v/${REVISED_PAPER_VERSION}`);
     expect(MATRIX_OPTIONS_PAPER_REVIEW_ROUTE).toBe(`/matrix-options/paper/review/v/${REVISED_PAPER_VERSION}`);

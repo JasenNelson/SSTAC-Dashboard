@@ -30,7 +30,7 @@ vi.mock('../releases', async (importOriginal) => {
 import { describeAuthenticatedPaper, loadRevisedPaper } from '../../revised-paper';
 import type { RevisedPaperDescriptor } from '../../revised-paper';
 import { compileRevisedPaperStructure } from '../../revised-paper-structure';
-import { DEFAULT_PAPER_VERSION, getPaperRelease, R5_PAPER_VERSION } from '../releases';
+import { PREDECESSOR_PAPER_VERSION, getPaperRelease, R5_PAPER_VERSION } from '../releases';
 import { describePrivate, readPrivatePresentation } from './private-fixture';
 
 const sha = (value: string): string => createHash('sha256').update(value, 'utf8').digest('hex');
@@ -56,23 +56,23 @@ afterEach(() => {
 
 describe('release table shape checks: the default release (real bytes, one table field wrong)', () => {
   it('two-sided: the default release compiles when the table is as bound', () => {
-    expect(compileRevisedPaperStructure(loadRevisedPaper(DEFAULT_PAPER_VERSION)).nodes.length).toBeGreaterThan(0);
+    expect(compileRevisedPaperStructure(loadRevisedPaper(PREDECESSOR_PAPER_VERSION)).nodes.length).toBeGreaterThan(0);
   });
 
   it('refuses the default paper when the table says it opens with front matter', () => {
-    const predecessor = loadRevisedPaper(DEFAULT_PAPER_VERSION);
-    withTable(DEFAULT_PAPER_VERSION, { frontMatter: true });
+    const predecessor = loadRevisedPaper(PREDECESSOR_PAPER_VERSION);
+    withTable(PREDECESSOR_PAPER_VERSION, { frontMatter: true });
     expect(() => compileRevisedPaperStructure(predecessor)).toThrow(/front matter does not match the release/);
   });
 
   it('refuses the default paper under a heading depth shift that does not put its shallowest heading at depth 1', () => {
-    const predecessor = loadRevisedPaper(DEFAULT_PAPER_VERSION);
-    withTable(DEFAULT_PAPER_VERSION, { headingDepthShift: 1 });
+    const predecessor = loadRevisedPaper(PREDECESSOR_PAPER_VERSION);
+    withTable(PREDECESSOR_PAPER_VERSION, { headingDepthShift: 1 });
     expect(() => compileRevisedPaperStructure(predecessor)).toThrow(/heading depth shift does not match the source/);
   });
 
   it('carries no figure placement marker, which is why it compiles with no figure contract', () => {
-    expect(loadRevisedPaper(DEFAULT_PAPER_VERSION).content.includes('MATRIX_FIGURE_PLACEMENT')).toBe(false);
+    expect(loadRevisedPaper(PREDECESSOR_PAPER_VERSION).content.includes('MATRIX_FIGURE_PLACEMENT')).toBe(false);
   });
 });
 

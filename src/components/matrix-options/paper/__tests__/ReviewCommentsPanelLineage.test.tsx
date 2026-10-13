@@ -282,7 +282,7 @@ describe('review lineage in the response panel', () => {
     expect(screen.queryByTestId('review-lineage-reference')).toBeNull();
   });
 
-  it('does nothing at all for a draft with no predecessor (the default draft)', async () => {
+  it('does nothing at all for a draft with no predecessor (the versioned predecessor draft)', async () => {
     const guide = getReviewerGuideContract();
     const requests = stubFetch();
     render(
@@ -604,7 +604,7 @@ describe('a draft the review record does not know (not provisioned)', () => {
     expect(screen.getByRole('button', { name: 'Submit response' })).not.toBeDisabled();
   });
 
-  it.each(['unknown_identity', 'stale_manifest'])('leaves the DEFAULT draft as it was on the same refusal (%s): a retryable error, saving still offered', async (outcome) => {
+  it.each(['unknown_identity', 'stale_manifest'])('leaves the predecessor as it was on the same refusal (%s): a retryable error, saving still offered', async (outcome) => {
     const guide = getReviewerGuideContract();
     const requests = stubFetch({ put: { status: outcome === 'unknown_identity' ? 404 : 409, body: { outcome } } });
     render(

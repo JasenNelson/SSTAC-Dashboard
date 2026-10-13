@@ -52,7 +52,7 @@ import PaperSectionPage from '../v/[documentVersion]/[stableSectionId]/page';
 /*
  * The paper routes with both bound releases.
  *
- * The predecessor stays the default and behaves as before, on its real bytes.
+ * The predecessor remains addressable and behaves as before, on its real bytes.
  * R5 is addressable by its own version only and is a PRIVATE-STORAGE release:
  * its bytes are not in the repository, a page reads them with the request's own
  * session, and only for a signed-in, non-anonymous reader.
@@ -316,9 +316,9 @@ describe('release-scoped identities (no private byte needed)', () => {
   });
 });
 
-describe('publication workspace: the predecessor is still the default and is unchanged', () => {
-  it('is the default release, and R5 is selectable but not the default', () => {
-    expect(getPaperRelease(REVISED_PAPER_VERSION)?.activation).toBe('DEFAULT');
+describe('publication workspace: the predecessor remains versioned and readable', () => {
+  it('keeps the predecessor and R5 selectable without changing predecessor URLs', () => {
+    expect(getPaperRelease(REVISED_PAPER_VERSION)?.activation).toBe('SELECTABLE_NON_DEFAULT');
     expect(r5Release.activation).toBe('SELECTABLE_NON_DEFAULT');
     expect(REVISED_PAPER_ROUTE).toContain(REVISED_PAPER_VERSION);
     expect(REVISED_PAPER_ROUTE).not.toContain(R5_PAPER_VERSION);
@@ -327,7 +327,7 @@ describe('publication workspace: the predecessor is still the default and is unc
   it('opens with the predecessor structure, its own guide, its persisted manifest digest, its downloads and no lineage', async () => {
     const result = await publication(REVISED_PAPER_VERSION, { mode: 'working-draft' });
     const props = result.props;
-    // The workspace is the page's root: the default release is not put behind the session gate.
+    // The versioned predecessor stays available under its established access gate.
     expect(result.type).toBe(workspaceMock);
     expect(result.gated).toBe(false);
     expect(result.servedTo).toBeUndefined();

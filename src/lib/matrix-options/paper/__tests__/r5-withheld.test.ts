@@ -43,16 +43,16 @@ const NOTICE = 'Appendix L is under revision and is not included in this present
 const sha = (value: string): string => createHash('sha256').update(value, 'utf8').digest('hex');
 
 const r5Release = getPaperRelease(R5_PAPER_VERSION)!;
-const defaultRelease = getPaperRelease(REVISED_PAPER_VERSION)!;
+const predecessorRelease = getPaperRelease(REVISED_PAPER_VERSION)!;
 
 describe('release contract: the section left out and the contents label are release entries', () => {
-  it('binds the stable id and the notice for R5, and nothing for the default release', () => {
+  it('binds the stable id and the notice for R5, and nothing for the predecessor', () => {
     expect(r5Release.withheld).toEqual({ stableSectionId: 'app-l', notice: NOTICE });
     expect(r5Release.contentsHeadingDisplay).toBe('Table of Contents');
-    expect(defaultRelease.withheld).toBeNull();
-    expect(defaultRelease.contentsHeadingDisplay).toBeNull();
+    expect(predecessorRelease.withheld).toBeNull();
+    expect(predecessorRelease.contentsHeadingDisplay).toBeNull();
     expect(r5Release).toMatchObject({ activation: 'SELECTABLE_NON_DEFAULT', delivery: 'private-storage', bytes: ARTIFACT_BYTES, sha256: 'c215b125757bbc0294f6ea904f7e4236a39d8912c137f226bb6148cced804c84' });
-    expect(defaultRelease.activation).toBe('DEFAULT');
+    expect(predecessorRelease.activation).toBe('SELECTABLE_NON_DEFAULT');
   });
 
   it('carries no offset, no hash of a part and no fallback target: the artifact is whole, and a link to the section lands on the notice', () => {

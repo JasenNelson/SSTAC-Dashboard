@@ -41,7 +41,7 @@ vi.mock('@/lib/matrix-options/paper/releases', async (importOriginal) => {
   return { ...original, getPaperRelease: vi.fn(original.getPaperRelease) };
 });
 
-const { R5_PAPER_VERSION, DEFAULT_PAPER_VERSION } = releases;
+const { R5_PAPER_VERSION, PREDECESSOR_PAPER_VERSION } = releases;
 const realGetPaperRelease = (await vi.importActual<typeof import('@/lib/matrix-options/paper/releases')>('@/lib/matrix-options/paper/releases')).getPaperRelease;
 
 const READER_ID = '11111111-1111-4111-8111-111111111111';
@@ -127,8 +127,8 @@ describe('which figure has the viewer', () => {
   it('follows the delivery of the release: the viewer for private storage, the link for the repository, neither for an unknown release', () => {
     expect(acceptedFigureViewsInPage(R5_PAPER_VERSION)).toBe(true);
     expect(acceptedFigureOpensInOwnTab(R5_PAPER_VERSION)).toBe(false);
-    expect(acceptedFigureViewsInPage(DEFAULT_PAPER_VERSION)).toBe(false);
-    expect(acceptedFigureOpensInOwnTab(DEFAULT_PAPER_VERSION)).toBe(true);
+    expect(acceptedFigureViewsInPage(PREDECESSOR_PAPER_VERSION)).toBe(false);
+    expect(acceptedFigureOpensInOwnTab(PREDECESSOR_PAPER_VERSION)).toBe(true);
     for (const unknown of ['no-such-release', '']) {
       expect(acceptedFigureViewsInPage(unknown)).toBe(false);
       expect(acceptedFigureOpensInOwnTab(unknown)).toBe(false);
