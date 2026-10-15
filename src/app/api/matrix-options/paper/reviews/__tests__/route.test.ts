@@ -11,17 +11,23 @@ vi.mock('@/app/api/_helpers/rate-limit-wrapper', () => ({ getAuthAndRateLimit: g
 vi.mock('server-only', () => ({}));
 
 import { getReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
+import { V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
 import { GET } from '../route';
 import { PUT } from '../[questionId]/route';
 
 const user = { id: '11111111-1111-4111-8111-111111111111', is_anonymous: false };
+// Plan R4: only v0.9.91 collects responses, so PUT (save) mechanics run against v0.9.91. GET is unchanged for every
+// release, so the read tests keep reading the predecessor under its own identity.
 const manifest = getReviewManifest();
-const questionId = 'rpq:1.0.11-remediated-7-8-successor-20260918-D:q01';
+const putManifest = getReviewManifest(V0991_PAPER_VERSION);
+const readQuestionId = 'rpq:1.0.11-remediated-7-8-successor-20260918-D:q01';
+const questionId = 'rpq:v0.9.91:q01';
 const validQuery = `?documentVersion=${encodeURIComponent(REVISED_PAPER_VERSION)}&manifestSha256=${manifest.sha256}`;
-const validRow = () => ({ document_version: REVISED_PAPER_VERSION, manifest_sha256: manifest.sha256, cohort_id: 'categories', question_id: questionId, draft_text: 'saved', submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null });
+const readRow = () => ({ document_version: REVISED_PAPER_VERSION, manifest_sha256: manifest.sha256, cohort_id: 'categories', question_id: readQuestionId, draft_text: 'saved', submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null });
+const validRow = () => ({ document_version: V0991_PAPER_VERSION, manifest_sha256: putManifest.sha256, cohort_id: 'categories', question_id: questionId, draft_text: 'saved', submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null });
 const requestFor = (url: string, init?: RequestInit) => new Request(url, init) as unknown as NextRequest;
-const putBody = (overrides: Record<string, unknown> = {}) => JSON.stringify({ documentVersion: REVISED_PAPER_VERSION, manifestSha256: manifest.sha256, cohortId: 'categories', action: 'save-draft', text: 'hello', expectedRevision: null, ...overrides });
+const putBody = (overrides: Record<string, unknown> = {}) => JSON.stringify({ documentVersion: V0991_PAPER_VERSION, manifestSha256: putManifest.sha256, cohortId: 'categories', action: 'save-draft', text: 'hello', expectedRevision: null, ...overrides });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -46,7 +52,7 @@ describe('Matrix paper review response API', () => {
   });
 
   it('fails closed when the database returns a malformed or wrong-identity row', async () => {
-    queryMock.order.mockResolvedValue({ data: [{ ...validRow(), manifest_sha256: 'a'.repeat(64) }], error: null });
+    queryMock.order.mockResolvedValue({ data: [{ ...readRow(), manifest_sha256: 'a'.repeat(64) }], error: null });
     const response = await GET(requestFor(`https://example.test/api/matrix-options/paper/reviews${validQuery}`));
     expect(response.status).toBe(503);
     expect((await response.json()).outcome).toBe('persistence_unavailable');

@@ -17,10 +17,12 @@ const userAuthState = path.join(__dirname, 'e2e', '.auth', 'user.json');
 export default defineConfig({
   testDir: './e2e',
   testMatch: /matrix-options-paper\.spec\.ts/,
+  testIgnore: /matrix-options-paper-canary\.spec\.ts/,
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  reporter: [['html', { open: 'never', outputFolder: 'playwright-report-paper' }]],
+  // See playwright.config.ts: E2E_PRIVATE_REPORTER=list keeps credential-bearing step titles off disk.
+  reporter: process.env.E2E_PRIVATE_REPORTER === 'list' ? [['list']] : [['html', { open: 'never', outputFolder: 'playwright-report-paper' }]],
   use: {
     baseURL,
     trace: 'retain-on-failure',

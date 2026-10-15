@@ -247,6 +247,114 @@ const failOnLogin = (url: string) => {
 };
 const waitForHydratedWorkspace = (page: Page) => page.waitForFunction(() => document.querySelector('[data-testid="workspace-shell"]')?.getAttribute('data-hydrated') === 'true', null, { timeout: 180000 });
 
+/*
+ * REVIEW-WRITE SAFETY (commit d5012d77). Only v0.9.91 collects responses; every earlier release is
+ * a read-only editor that never sends a PUT. The local dev server talks to PRODUCTION Supabase, so
+ * no journey below may reach the per-question review API over the network:
+ * - watchReviewApiRequests counts, from a listener installed BEFORE navigation, every PUT and every
+ *   request to the per-question review API (the 'request' event fires even for a request a route
+ *   then aborts or fulfils, so it counts attempts, not only what escaped);
+ * - abortReviewWrites aborts anything that reaches the per-question API, so a defect would still
+ *   write nothing;
+ * - mockReviewBootstrap answers the bootstrap GET deterministically. Only the signed-in reviewer's
+ *   own id is read, once, from the real (read-only) route: a made-up id would be a different
+ *   reviewer and the page's identity guard would rightly stop.
+ */
+const v0991WorkspacePath = `/matrix-options/paper/publication/v/${V0991_PAPER_VERSION}`;
+const REVIEW_QUESTION_API_PREFIX = '/api/matrix-options/paper/reviews/';
+const REVIEW_BUFFER_ENTRY_PREFIX = 'mtwg-draft-v1:';
+const REVIEW_BUFFER_KEY_PREFIX = 'mtwg-paper-review:';
+const reviewBufferKey = (userKey: string, version: string, questionId: string) => `${REVIEW_BUFFER_KEY_PREFIX}${userKey}:${version}:${questionId}`;
+const watchReviewApiRequests = (page: Page) => {
+  const seen = { puts: [] as string[], questionApi: [] as string[] };
+  page.on('request', (request) => {
+    const { pathname } = new URL(request.url());
+    const label = `${request.method()} ${decodeURIComponent(pathname)}`;
+    // Only a PUT to the review API on the dev server's own origin counts as a review write.
+    const sameOrigin = new URL(request.url()).origin === new URL(page.url() === 'about:blank' ? request.url() : page.url()).origin;
+    if (request.method() === 'PUT' && sameOrigin && pathname.startsWith(REVIEW_QUESTION_API_PREFIX)) seen.puts.push(label);
+    if (pathname.startsWith(REVIEW_QUESTION_API_PREFIX)) seen.questionApi.push(label);
+  });
+  return seen;
+};
+const abortReviewWrites = (page: Page) => page.route('**/api/matrix-options/paper/reviews/**', (route) => route.abort());
+const mockReviewBootstrap = async (page: Page, persistence: 'available' | 'unavailable', pageVersion: string) => {
+  const bootstrap = { userKey: '', reads: 0 };
+  await page.route('**/api/matrix-options/paper/reviews?*', async (route) => {
+    // Counted for the page's own release bootstrap only; a predecessor lineage read is answered the same way.
+    if (new URL(route.request().url()).searchParams.get('documentVersion') === pageVersion) bootstrap.reads += 1;
+    if (!bootstrap.userKey) {
+      const real = await route.fetch();
+      bootstrap.userKey = String(((await real.json().catch(() => ({}))) as { userKey?: unknown }).userKey ?? '');
+    }
+    // The real route answers 200 {persistence:'available', userKey, rows} or, when persistence is
+    // unavailable, 503 {outcome:'persistence_unavailable', rows:[], persistence:'unavailable', userKey}.
+    const body = persistence === 'available' ? { persistence, userKey: bootstrap.userKey, rows: [] } : { outcome: 'persistence_unavailable', rows: [], persistence, userKey: bootstrap.userKey };
+    await route.fulfill({ status: persistence === 'available' ? 200 : 503, headers: { 'Cache-Control': 'no-store' }, contentType: 'application/json', body: JSON.stringify(body) });
+  });
+  return bootstrap;
+};
+/**
+ * The read-only, zero-write proof for an earlier release (the 1.0.11 predecessor and R5), run on a
+ * My Review page that is already loaded with watchReviewApiRequests installed before navigation:
+ * a browser copy seeded for Q2 is shown and left as it was, a typing attempt, blur, Save/Submit,
+ * Previous/Next, the topic jump and a debounce window (3 s, twice the 1.5 s autosave delay) send
+ * no PUT, and the page says plainly that the draft does not collect responses and links to the
+ * current review.
+ */
+const exerciseReadOnlyReviewEditor = async (page: Page, options: { version: string; userKey: string; seen: ReturnType<typeof watchReviewApiRequests> }) => {
+  const { version, userKey, seen } = options;
+  expect(userKey).toMatch(/\S/);
+  const seeded = 'E2E browser copy kept for a draft that does not collect responses.';
+  const seededKey = reviewBufferKey(userKey, version, `rpq:${version}:q02`);
+  await page.evaluate(([key, value]) => window.localStorage.setItem(key, value), [seededKey, `${REVIEW_BUFFER_ENTRY_PREFIX}${JSON.stringify({ b: null, t: seeded, u: Date.now() })}`]);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  failOnLogin(page.url());
+
+  const textbox = page.getByRole('textbox', { name: 'Your response' });
+  const status = page.getByTestId('review-save-status');
+  await openQuestion(page, 1);
+  await expect(status).toContainText('This earlier draft does not collect responses.', { timeout: 30000 });
+  await expect(textbox).toHaveAttribute('readonly', '');
+  // Typing into a read-only editor changes nothing (a fill would time out, so keys are sent).
+  const untouched = await textbox.inputValue();
+  await textbox.click();
+  await page.keyboard.type('typing into a read-only editor');
+  await expect(textbox).toHaveValue(untouched);
+  await expect(page.getByTestId('review-comment-char-count')).toHaveText(`${untouched.length} / 20000`);
+  await textbox.blur();
+  await expect(page.getByTestId('review-save-draft')).toBeDisabled();
+  await expect(page.getByTestId('review-submit')).toBeDisabled();
+  await expect(page.getByTestId('review-action-reason')).toContainText('This earlier draft does not collect responses.');
+  await expect(page.getByTestId('review-action-reason')).not.toContainText('cannot be saved');
+  await expect(page.getByTestId('review-persistence-retry')).toHaveCount(0);
+  const link = page.getByTestId('review-current-draft-link');
+  await expect(link).toHaveText('Go to the current review draft');
+  expect(await link.getAttribute('href')).toContain(encodeURIComponent(V0991_PAPER_VERSION));
+
+  // Question navigation: the seeded browser copy of Q2 is still displayed, read-only.
+  const headingBeforeNext = await page.locator('#active-question-heading').innerText();
+  await page.getByRole('button', { name: 'Next question' }).click();
+  await expect(page.locator('#active-question-heading')).not.toHaveText(headingBeforeNext);
+  // Which question Next lands on is not assumed (topic order is per release): Q2 is opened by number.
+  await openQuestion(page, 2);
+  await expect(textbox).toHaveValue(seeded);
+  await expect(textbox).toHaveAttribute('readonly', '');
+  await expect(status).toContainText('This earlier draft does not collect responses. Your text is kept in this browser only, and is cleared when you sign out.');
+  await expect(page.getByTestId('review-save-draft')).toBeDisabled();
+  await expect(page.getByTestId('review-submit')).toBeDisabled();
+  await page.getByRole('combobox', { name: 'Jump to topic' }).selectOption('11');
+  await expect(page.locator('#active-question-heading')).toHaveText(/^Question 11:/);
+  await page.waitForTimeout(3000);
+
+  expect(seen.puts).toEqual([]);
+  expect(seen.questionApi).toEqual([]);
+  // The browser copy is exactly what was seeded: the same one key, the same text.
+  const stored = await page.evaluate((prefix) => Object.keys(window.localStorage).filter((key) => key.startsWith(prefix)).map((key) => [key, window.localStorage.getItem(key)] as const), REVIEW_BUFFER_KEY_PREFIX);
+  expect(stored.map(([key]) => key)).toEqual([seededKey]);
+  expect(JSON.parse((stored[0][1] ?? '').slice(REVIEW_BUFFER_ENTRY_PREFIX.length)).t).toBe(seeded);
+};
+
 test.describe('Matrix Options Paper disabled-route regressions', () => {
   test.beforeEach(async ({ page }) => {
     if (!PRIVATE_RELEASE_JOURNEYS) await blockPrivateRelease(page);
@@ -674,37 +782,24 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
   });
 
   /*
-   * M2 (PLAN-R4 3.B.3): local-buffer-only draft text, the saved-questions
-   * resume chip, and Prev/Next spanning all 12 questions in cohort order.
+   * Since commit d5012d77 only v0.9.91 collects responses. The M2 typing journey and the M3
+   * save/submit/CAS journey therefore moved to the 'v0.9.91 Appendix L inclusion -- review write
+   * journeys' describe (the private-fixture leg); this release proves the read-only editor.
    */
-  test('M2: authenticated real release question index opens a question, a typed draft survives a reload, and the char count/progress update', async ({ page }, testInfo) => {
+  test('authenticated real release the predecessor review editor is read-only: a seeded browser copy is kept and displayed, no PUT is sent, and the page says it does not collect responses', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
+    // Every listener and route is installed before navigation. The bootstrap says 'available' on
+    // purpose: even then this release must not become writable.
+    const seen = watchReviewApiRequests(page);
+    await abortReviewWrites(page);
+    const bootstrap = await mockReviewBootstrap(page, 'available', realVersion);
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
-
-    const questionIndex = page.getByTestId('review-question-index');
-    await expect(questionIndex.getByTestId(/^review-question-toggle-q/)).toHaveCount(12);
-    await openQuestion(page, 4);
-    await expect(page.getByTestId('review-save-status')).not.toHaveText('Loading your saved responses...', { timeout: 30000 });
-    await expect.poll(() => new URL(page.url()).searchParams.get('q')).toBe(`rpq:${realVersion}:q04`);
-    await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
-
-    const textarea = page.getByRole('textbox', { name: 'Your response' });
-    await textarea.fill('E2E authenticated draft text for question 4.');
-    await expect(page.getByTestId('review-comment-char-count')).toHaveText(/^44 \/ 20000$/);
-    // review-progress no longer names the active question ("N of 12 submitted"
-    // [, drafts] is a whole-review summary); the active question is read from
-    // the question heading and the topic combobox instead.
-    await expect(page.locator('#active-question-heading')).toHaveText(/^Question 4:/);
-    await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
-    await expect(page.getByTestId('review-progress-count')).toHaveText(/^\d+ of 12 complete$/);
-    await page.getByTestId('review-progress-toggle').click();
-    await expect(page.getByTestId('review-progress')).toContainText(/^\d+ of 12 submitted/);
-    await expect(page.getByTestId('review-progress')).toContainText(/1 draft\b/);
-    await expect(questionIndex.getByTestId('review-question-toggle-q4')).toContainText(/Draft in this browser only|Draft saved|Unsaved changes/);
-
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('E2E authenticated draft text for question 4.');
+    await expect.poll(() => bootstrap.userKey, { timeout: 60000 }).toMatch(/\S/);
+    await exerciseReadOnlyReviewEditor(page, { version: realVersion, userKey: bootstrap.userKey, seen });
+    expect(bootstrap.reads).toBeGreaterThan(0);
+    expect(seen.puts).toHaveLength(0);
+    expect(seen.questionApi).toHaveLength(0);
   });
 
   test('M2: authenticated real release per-portion "Open in Working Draft" link opens the canonical Working Draft on that section', async ({ page }, testInfo) => {
@@ -758,61 +853,6 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await previous.click();
     await expect(next).toBeEnabled();
     await expect(select).toHaveValue('10');
-  });
-
-  test('M3: intercepted response save, submit, reload and CAS conflict expose the authenticated workflow', async ({ page }, testInfo) => {
-    requireJourney(testInfo.project.name);
-    const questionId = `rpq:${realVersion}:q01`;
-    // The signed-in E2E reviewer's own id, read from the real route (which names
-    // it even while persistence is unavailable): a made-up id would be a
-    // different reviewer, and the page's identity guard would rightly stop saving.
-    let userKey = '';
-    let reviewManifestSha256 = '';
-    let savedRow: Record<string, unknown> | null = null;
-    let forceConflict = false;
-    await page.route('**/api/matrix-options/paper/reviews?*', async (route) => {
-      reviewManifestSha256 = new URL(route.request().url()).searchParams.get('manifestSha256') ?? '';
-      if (!userKey) {
-        const real = await route.fetch();
-        userKey = String(((await real.json().catch(() => ({}))) as { userKey?: unknown }).userKey ?? '');
-        expect(userKey).toMatch(/\S/);
-      }
-      await route.fulfill({ status: 200, headers: { 'Cache-Control': 'no-store' }, contentType: 'application/json', body: JSON.stringify({ persistence: 'available', userKey, rows: savedRow ? [savedRow] : [] }) });
-    });
-    await page.route('**/api/matrix-options/paper/reviews/**', async (route) => {
-      const body = JSON.parse(route.request().postData() ?? '{}') as { action?: string; text?: string; expectedRevision?: number | null };
-      if (forceConflict) {
-        await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ outcome: 'stale_revision', row: { ...savedRow, draft_text: 'saved in another tab', revision: 9 } }) });
-        return;
-      }
-      const revision = Number(savedRow?.revision ?? 0) + 1;
-      savedRow = { id: 'response-1', document_version: realVersion, manifest_sha256: reviewManifestSha256, cohort_id: 'categories', question_id: questionId, draft_text: body.text ?? '', submitted_text: body.action === 'submit' ? body.text ?? '' : (savedRow?.submitted_text ?? null), revision, submitted_revision: body.action === 'submit' ? revision : (savedRow?.submitted_revision ?? null), submitted_at: body.action === 'submit' ? new Date().toISOString() : (savedRow?.submitted_at ?? null), updated_at: new Date().toISOString() };
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ outcome: 'ok', row: savedRow }) });
-    });
-    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
-    failOnLogin(page.url());
-    await openQuestion(page, 1);
-    const textarea = page.getByRole('textbox', { name: 'Your response' });
-    await textarea.fill('intercepted M3 response');
-    await page.getByRole('button', { name: 'Save draft' }).click();
-    await expect(page.getByTestId('review-save-status')).toContainText(/Draft saved/);
-    await page.getByRole('button', { name: 'Submit response' }).click();
-    await expect(page.getByRole('button', { name: 'Re-submit response' })).toBeVisible();
-    await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('intercepted M3 response');
-    forceConflict = true;
-    await page.getByRole('textbox', { name: 'Your response' }).fill('local conflict text');
-    await page.getByRole('button', { name: 'Save draft' }).click();
-    await expect(page.getByTestId('review-conflict')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Keep mine' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Use saved' })).toBeVisible();
-    await page.getByRole('button', { name: 'Use saved' }).click();
-    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('saved in another tab');
-    // The Logout assertion that used to end this test now lives in the dedicated
-    // SESSION_TEARDOWN_TAG test below. Logout calls supabase.auth.signOut() with the default
-    // GLOBAL scope, which revokes every session of the E2E user - including the shared
-    // storage-state session every later test in this project starts from. Run here, it sent
-    // each subsequent authenticated test to /login.
   });
 
   test('M2: authenticated real release rails keep review and download controls usable across phone, tablet, desktop, and wide layouts', async ({ page }, testInfo) => {
@@ -1908,16 +1948,17 @@ test.describe('Matrix Options Paper private draft journeys', () => {
     expect(refused.headers()['content-type'] ?? '').not.toContain('image/');
   });
 
-  test('authenticated real release private draft My Review keeps responses separate: earlier answers are read-only reference, Q11 needs a new response, and a save carries only what was typed', async ({ page }, testInfo) => {
+  test('authenticated real release private draft My Review keeps responses separate: earlier answers are read-only reference, Q11 needs a new response, and the editor is read-only with zero PUTs', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
     test.setTimeout(240000);
     await page.setViewportSize({ width: 1440, height: 900 });
     const earlier = 'E2E earlier answer to the previous draft.';
-    const response = '[data-testid="active-question-response"]';
     const heading = '#active-question-heading';
     let userKey = '';
     const reads: Array<{ version: string | null; method: string }> = [];
     const writes: string[] = [];
+    // Installed before navigation: counts every PUT and every per-question review API request.
+    const seen = watchReviewApiRequests(page);
     await page.route('**/api/matrix-options/paper/reviews?*', async (route) => {
       const url = new URL(route.request().url());
       const version = url.searchParams.get('documentVersion');
@@ -1934,13 +1975,11 @@ test.describe('Matrix Options Paper private draft journeys', () => {
       const rows = version === realVersion ? [earlierRow(1, 'categories'), earlierRow(11, 'methods-water-type')] : [];
       await route.fulfill({ status: 200, headers: { 'Cache-Control': 'no-store' }, contentType: 'application/json', body: JSON.stringify({ persistence: 'available', userKey, rows }) });
     });
-    // Every save or submit is answered HERE and never reaches the server, so this journey writes
-    // nothing to the review record. It is answered the way a record that has not been provisioned
-    // for this draft answers: unknown_identity.
-    const writeBodies: Array<Record<string, unknown>> = [];
+    // R5 no longer collects responses, so NOTHING should reach the per-question API. Anything that
+    // does is recorded here and answered HERE (never the server), so a defect still writes nothing
+    // to the review record; the journey then fails on the recorded request.
     await page.route('**/api/matrix-options/paper/reviews/**', async (route) => {
       writes.push(`${route.request().method()} ${decodeURIComponent(new URL(route.request().url()).pathname)}`);
-      writeBodies.push(JSON.parse(route.request().postData() ?? '{}') as Record<string, unknown>);
       await route.fulfill({ status: 404, contentType: 'application/json', headers: { 'Cache-Control': 'no-store' }, body: JSON.stringify({ outcome: 'unknown_identity' }) });
     });
 
@@ -1976,35 +2015,21 @@ test.describe('Matrix Options Paper private draft journeys', () => {
     expect(new Set(reads.map((read) => read.version))).toEqual(new Set([R5_PAPER_VERSION, realVersion]));
     expect(writes).toEqual([]);
 
-    // Now a real save attempt on Q1, whose earlier answer is on screen as reference. The save
-    // carries ONLY what was typed, under this draft's identity: never the earlier answer.
+    // Now the read-only proof (R5 does not collect responses). Q1's earlier answer is on screen as
+    // reference and stays only a reference; the shared proof then covers a typing attempt, blur,
+    // Save/Submit (disabled), Previous/Next, the topic jump and a debounce window, with a seeded
+    // browser copy of Q2 retained, zero PUTs, and the honest non-collecting copy plus the link.
     await openQuestion(page, 1);
     await expect(page.getByTestId('review-lineage-reference')).toBeVisible({ timeout: 30000 });
-    const typed = 'E2E typed answer for the current review draft.';
-    // Nothing is clicked: the save is sent by the autosave timer (1.5 s after typing stops), so
-    // this test proves the timer is live here before it proves that it stops.
-    await page.getByRole('textbox', { name: 'Your response' }).fill(typed);
-    expect(writes).toHaveLength(0);
-    await expect.poll(() => writes.length, { timeout: 30000 }).toBe(1);
-    expect(writes[0]).toBe(`PUT /api/matrix-options/paper/reviews/rpq:${R5_PAPER_VERSION}:q01`);
-    expect(writeBodies[0]).toMatchObject({ documentVersion: R5_PAPER_VERSION, cohortId: 'categories', action: 'save-draft', text: typed });
-    expect(JSON.stringify(writeBodies[0]).includes(earlier)).toBe(false);
-    expect(JSON.stringify(writeBodies[0]).includes(realVersion)).toBe(false);
-    // A record that does not know this draft is said plainly, not as a retryable error, and the text stays.
-    await expect.poll(() => shows(page, response, /Responses to this draft cannot be saved to the review record yet[.] What you type is kept in this browser only, and is cleared when you sign out[.]/), { timeout: 30000 }).toBe(true);
-    expect(await shows(page, response, /Could not save/)).toBe(false);
-    await expect(page.getByTestId('review-persistence-retry')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Save draft' })).toBeDisabled();
-    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue(typed);
-    // The earlier answer is still only a reference.
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveAttribute('readonly', '');
+    await exerciseReadOnlyReviewEditor(page, { version: R5_PAPER_VERSION, userKey, seen });
+    expect(writes).toEqual([]);
+    // After the read-only proof the earlier answer is still only a reference, with its text unchanged.
+    await openQuestion(page, 1);
+    const referenceAfter = page.getByTestId('review-lineage-reference');
+    await expect(referenceAfter).toBeVisible({ timeout: 30000 });
+    await referenceAfter.locator('summary').click();
     await expect(page.getByTestId('review-lineage-text')).toHaveText(earlier);
-    // No retry and no further autosave: the reviewer keeps typing after the refusal, twice the
-    // autosave delay passes, and it is still exactly the one refused save. The text stays.
-    const typedMore = `${typed} More, typed after the refusal.`;
-    await page.getByRole('textbox', { name: 'Your response' }).fill(typedMore);
-    await page.waitForTimeout(3000);
-    expect(writes).toHaveLength(1);
-    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue(typedMore);
 
     // The predecessor is unchanged: its own questions (its Q11 is not this draft's reworded
     // one) and no lineage note.
@@ -2015,8 +2040,10 @@ test.describe('Matrix Options Paper private draft journeys', () => {
     expect(sha256Hex(await page.locator(heading).innerText()) === privateQuestion11).toBe(false);
     await expect(page.getByTestId('review-lineage-changed')).toHaveCount(0);
     await expect(page.getByTestId('review-lineage-reference')).toHaveCount(0);
-    // Viewing the predecessor sent nothing either: still only the one intercepted save.
-    expect(writes).toHaveLength(1);
+    // Viewing the predecessor sent nothing either: still zero requests to the per-question API.
+    expect(writes).toEqual([]);
+    expect(seen.puts).toHaveLength(0);
+    expect(seen.questionApi).toHaveLength(0);
   });
 
   test('authenticated real release private draft has no Appendix L: one notice, no Appendix L in the paper or its navigation, and old Appendix L addresses land on the notice', async ({ page }, testInfo) => {
@@ -2426,4 +2453,137 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion', () => {
     expect(sha256Hex(await response.body())).toBe(media.sha256);
   });
 
+});
+
+/*
+ * The review WRITE journeys, moved here from the 1.0.11 predecessor (commit d5012d77 made every
+ * release except v0.9.91 read-only). The title carries 'v0.9.91 Appendix L inclusion' so the
+ * private-fixture wrapper leg (--grep 'v0.9.91 Appendix L inclusion') runs them, and the gate is
+ * the same as the Appendix L journey above (V0991_APPENDIX_L_JOURNEY, the review flags, the
+ * recording-off check).
+ *
+ * SAFETY: the local dev server talks to PRODUCTION Supabase, so neither journey makes a real
+ * write. Every request to the per-question review API is intercepted BEFORE navigation: M3 answers
+ * it with its own mocked rows; M2 (the local-buffer journey) answers the bootstrap as
+ * 'unavailable' itself and aborts any PUT, then asserts that the page never even attempted one
+ * (the 'request' listener counts attempts, so a real-network PUT count of 0 is proven, not assumed).
+ */
+test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion -- review write journeys', () => {
+  test.skip(!V0991_APPENDIX_L_JOURNEY, 'The private v0.9.91 source fixture is required and is never requested in a public or fixture-free run.');
+  test.skip(!reviewNavigationEnabled, 'The standard E2E harness supplies both exact-true paper flags for this journey.');
+  test.beforeEach(({ page, trace, screenshot, video }, testInfo) => {
+    if (trace !== 'off' || screenshot !== 'off' || video !== 'off') throw new Error(PRIVATE_RECORDING_MESSAGE);
+    holdNavigationsUntilHydrated(page, testInfo);
+  });
+
+  /*
+   * M2 (PLAN-R4 3.B.3): local-buffer-only draft text. The bootstrap is answered 'unavailable' here,
+   * so the editor accepts typing into the browser copy and nothing is ever sent.
+   */
+  test('v0.9.91 Appendix L inclusion M2: question index opens a question, a typed draft survives a reload, and the char count/progress update', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    const seen = watchReviewApiRequests(page);
+    await abortReviewWrites(page);
+    const bootstrap = await mockReviewBootstrap(page, 'unavailable', V0991_PAPER_VERSION);
+    await page.goto(`${v0991WorkspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+
+    const questionIndex = page.getByTestId('review-question-index');
+    await expect(questionIndex.getByTestId(/^review-question-toggle-q/)).toHaveCount(12);
+    await openQuestion(page, 4);
+    await expect(page.getByTestId('review-save-status')).not.toHaveText('Loading your saved responses...', { timeout: 30000 });
+    await expect.poll(() => new URL(page.url()).searchParams.get('q')).toBe(`rpq:${V0991_PAPER_VERSION}:q04`);
+    await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
+
+    const textarea = page.getByRole('textbox', { name: 'Your response' });
+    await textarea.fill('E2E authenticated draft text for question 4.');
+    await expect(page.getByTestId('review-comment-char-count')).toHaveText(/^44 \/ 20000$/);
+    // review-progress no longer names the active question ("N of 12 submitted"
+    // [, drafts] is a whole-review summary); the active question is read from
+    // the question heading and the topic combobox instead.
+    await expect(page.locator('#active-question-heading')).toHaveText(/^Question 4:/);
+    await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
+    await expect(page.getByTestId('review-progress-count')).toHaveText(/^\d+ of 12 complete$/);
+    await page.getByTestId('review-progress-toggle').click();
+    await expect(page.getByTestId('review-progress')).toContainText(/^\d+ of 12 submitted/);
+    await expect(page.getByTestId('review-progress')).toContainText(/1 draft\b/);
+    await expect(questionIndex.getByTestId('review-question-toggle-q4')).toContainText(/Draft in this browser only|Draft saved|Unsaved changes/);
+    // Past the 1.5 s autosave delay: the 'unavailable' editor still sends nothing.
+    await page.waitForTimeout(3000);
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('E2E authenticated draft text for question 4.');
+    expect(bootstrap.reads).toBeGreaterThan(0);
+    expect(seen.puts).toHaveLength(0);
+    expect(seen.questionApi).toHaveLength(0);
+  });
+
+  test('v0.9.91 Appendix L inclusion M3: intercepted response save, submit, reload and CAS conflict expose the authenticated workflow', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    const questionId = `rpq:${V0991_PAPER_VERSION}:q01`;
+    // Every PUT is answered by the mock below; the request listener proves each one was a request
+    // the mock fulfilled (none reached the network), and the counts are asserted at the end.
+    const seen = watchReviewApiRequests(page);
+    let fulfilledWrites = 0;
+    // The signed-in E2E reviewer's own id, read from the real route (which names
+    // it even while persistence is unavailable): a made-up id would be a
+    // different reviewer, and the page's identity guard would rightly stop saving.
+    let userKey = '';
+    let reviewManifestSha256 = '';
+    let savedRow: Record<string, unknown> | null = null;
+    let forceConflict = false;
+    await page.route('**/api/matrix-options/paper/reviews?*', async (route) => {
+      const requestUrl = new URL(route.request().url());
+      const isCurrentDraft = requestUrl.searchParams.get('documentVersion') === V0991_PAPER_VERSION;
+      // Only the v0.9.91 read names the manifest the saved row carries; the panel also reads the
+      // predecessor's lineage (a different documentVersion and manifest), which must not overwrite it.
+      if (isCurrentDraft) reviewManifestSha256 = requestUrl.searchParams.get('manifestSha256') ?? '';
+      if (!userKey) {
+        const real = await route.fetch();
+        userKey = String(((await real.json().catch(() => ({}))) as { userKey?: unknown }).userKey ?? '');
+        expect(userKey).toMatch(/\S/);
+      }
+      await route.fulfill({ status: 200, headers: { 'Cache-Control': 'no-store' }, contentType: 'application/json', body: JSON.stringify({ persistence: 'available', userKey, rows: isCurrentDraft && savedRow ? [savedRow] : [] }) });
+    });
+    await page.route('**/api/matrix-options/paper/reviews/**', async (route) => {
+      fulfilledWrites += 1;
+      const body = JSON.parse(route.request().postData() ?? '{}') as { action?: string; text?: string; expectedRevision?: number | null };
+      if (forceConflict) {
+        await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ outcome: 'stale_revision', row: { ...savedRow, draft_text: 'saved in another tab', revision: 9 } }) });
+        return;
+      }
+      const revision = Number(savedRow?.revision ?? 0) + 1;
+      savedRow = { id: 'response-1', document_version: V0991_PAPER_VERSION, manifest_sha256: reviewManifestSha256, cohort_id: 'categories', question_id: questionId, draft_text: body.text ?? '', submitted_text: body.action === 'submit' ? body.text ?? '' : (savedRow?.submitted_text ?? null), revision, submitted_revision: body.action === 'submit' ? revision : (savedRow?.submitted_revision ?? null), submitted_at: body.action === 'submit' ? new Date().toISOString() : (savedRow?.submitted_at ?? null), updated_at: new Date().toISOString() };
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ outcome: 'ok', row: savedRow }) });
+    });
+    await page.goto(`${v0991WorkspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    await openQuestion(page, 1);
+    const textarea = page.getByRole('textbox', { name: 'Your response' });
+    await textarea.fill('intercepted M3 response');
+    await page.getByRole('button', { name: 'Save draft' }).click();
+    await expect(page.getByTestId('review-save-status')).toContainText(/Draft saved/);
+    await page.getByRole('button', { name: 'Submit response' }).click();
+    await expect(page.getByRole('button', { name: 'Re-submit response' })).toBeVisible();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('intercepted M3 response');
+    forceConflict = true;
+    await page.getByRole('textbox', { name: 'Your response' }).fill('local conflict text');
+    await page.getByRole('button', { name: 'Save draft' }).click();
+    await expect(page.getByTestId('review-conflict')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Keep mine' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Use saved' })).toBeVisible();
+    await page.getByRole('button', { name: 'Use saved' }).click();
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('saved in another tab');
+    // Every write the page attempted was one the mock fulfilled: none reached the network.
+    expect(fulfilledWrites).toBeGreaterThanOrEqual(3);
+    expect(seen.questionApi).toHaveLength(fulfilledWrites);
+    expect(seen.puts).toHaveLength(fulfilledWrites);
+    expect(seen.questionApi.every((label) => label.startsWith('PUT '))).toBe(true);
+    // The Logout assertion that used to end this test now lives in the dedicated
+    // SESSION_TEARDOWN_TAG tests in this file. Logout calls supabase.auth.signOut() with the default
+    // GLOBAL scope, which revokes every session of the E2E user - including the shared
+    // storage-state session every later test in this project starts from. Run here, it sent
+    // each subsequent authenticated test to /login.
+  });
 });

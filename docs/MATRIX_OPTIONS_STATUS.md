@@ -375,19 +375,43 @@ regulatory-value selection or promotion.
 
 ### 3.5 Options Paper -- Working Draft + My Review longform UX (M1 + M2)
 
-**Status: IMPLEMENTED ON BRANCH `design/matrix-paper-longform-ux-20260903`, UNCOMMITTED (staged
-working tree only). M1 (Working Draft) is pending its own L2 gate; M2 (My Review) is pending
-CP-M2 (L2 + HITL). Run root `.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/`. Do not describe
-either M1 or M2 as merged or deployed.**
+**Status (current truth, written before review activation): v0.9.91 is the default paper in
+production and READING WORKS. The review backend (the three `matrix_paper_review_*` tables and
+the save-draft / submit functions) is NOT yet applied to the live database: its activation is
+pending explicit owner approval, and until then the review routes answer 503
+(`persistence_unavailable`) and My Review stays a browser-local buffer. Only v0.9.91 collects
+responses; every earlier draft (including the predecessor 1.0.11) is read-only and does not
+collect responses. R5 is not offered in the version selector (its registry entry and historical
+read-only contracts are preserved). Do not describe review saving, submission or the admin review
+view as live until the owner-approved activation and the production canary have both been
+reported.**
 
 This is a distinct sub-lane from the Matrix Options calculators (sections 2-3 above): a longform
 reader/review workspace for the Options Paper itself, under
 `src/app/(dashboard)/matrix-options/paper/**`, `src/components/matrix-options/paper/**`, and
-`src/lib/matrix-options/paper/**`. PLAN-R4's full acceptance criteria (`.tmp/mission-control/
-MATRIX-TWG-FRONTEND-COMPLETION-PLAN-001/PLAN-R4.md` section 3) cover M1 (Working Draft), M2 (My
-Review), M3 (persistence), M5 (Admin) and M6 (quality). As of this candidate, M1 (Working Draft)
-and M2 (My Review) are both implemented; M3 (persistence/save/submit/autosave), M5 (Admin) and M6
-(quality sign-off) are not.
+`src/lib/matrix-options/paper/**`. The Working Draft (M1) and My Review (M2) workspaces are merged
+and deployed. The server-side pieces (M3 persistence/save/submit/autosave and M5 admin view plus
+CSV export at `/admin/matrix-options-paper-reviews`) are implemented in code but dormant until the
+database activation above; the production canary package that proves them after activation is
+`e2e/canary/CANARY_PACKAGE.md` (excluded from default e2e; run once, only on owner approval).
+
+**Paper environment flags** (names and meaning only; values are set in the deployment, never
+committed; see the commented block in `.env.example`):
+- `MATRIX_OPTIONS_PAPER_WORKSPACE`: master gate for the paper workspace; off redirects to the
+  legacy TWG Review view.
+- `MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION`: second gate; with the workspace flag also on it
+  resolves `REVIEW_NAVIGATION` and the review routes are served (otherwise they answer 404).
+- `MATRIX_OPTIONS_PAPER_NATIVE_DELIVERY`: set to `reviewed` to serve the owner-reviewed native
+  figure model for v0.9.91 (anything else keeps native delivery off).
+- `MATRIX_OPTIONS_PAPER_NATIVE_MODEL_SHA256` and `MATRIX_OPTIONS_PAPER_NATIVE_MODEL_BYTES`: the
+  expected SHA-256 and byte size of the native figure model; delivery fails closed if they do not
+  match the file.
+- `MATRIX_OPTIONS_PAPER_PRIVATE_ASSET_DIR`: absolute path of a local private paper-asset root;
+  honoured only in development/test (production reads private storage).
+- `MATRIX_OPTIONS_NATIVE_FIGURE_CANDIDATE`: set to `local` to enable the local native-figure
+  candidate path; honoured only in development/test.
+- `MATRIX_PAPER_PRIVATE_FIXTURE`: test-harness mode (`required` or `skip`) for the private-fixture
+  suites; `skip` is mandatory in GitHub Actions. Not read by the app at runtime.
 
 - **Feature flags** (both read server-side from `process.env`, gated in this order):
   - `MATRIX_OPTIONS_PAPER_WORKSPACE` (`isMatrixOptionsPaperWorkspaceEnabled` /

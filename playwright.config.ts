@@ -63,6 +63,8 @@ const adminAuthState = path.join(__dirname, 'e2e', '.auth', 'admin.json');
 
 export default defineConfig({
   testDir: './e2e',
+  // The production canary is run ONLY via playwright.paper-canary.config.ts, never by default e2e.
+  testIgnore: /matrix-options-paper-canary\.spec\.ts/,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -74,7 +76,9 @@ export default defineConfig({
   // forever and downstream gates never run. The report is still written to
   // disk (default playwright-report/) for manual `npx playwright show-report`
   // inspection -- only the auto-serve-and-block behavior is disabled.
-  reporter: [['html', { open: 'never' }]],
+  // E2E_PRIVATE_REPORTER=list (set only by the credentialed local push-gate runner) writes no report
+  // to disk: the HTML report stores fill() step titles, which for the setup projects hold credentials.
+  reporter: process.env.E2E_PRIVATE_REPORTER === 'list' ? [['list']] : [['html', { open: 'never' }]],
   timeout: 60000,
   expect: {
     timeout: 30000,
@@ -96,17 +100,17 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: /(global|admin)\.setup\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts/,
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      testIgnore: /(global|admin)\.setup\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts/,
     },
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      testIgnore: /(global|admin)\.setup\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts/,
     },
     ...(runAuthenticatedE2E
       ? [

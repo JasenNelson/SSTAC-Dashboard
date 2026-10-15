@@ -11,7 +11,8 @@ import { reviewResponseRowSchema, reviewResponseStatusLabel } from '@/lib/matrix
 import type { ReviewResponseRow } from '@/lib/matrix-options/paper/review-responses';
 import { questionPromptSummary } from '@/lib/matrix-options/paper/review-navigation';
 import type { ReviewNavTopic } from '@/lib/matrix-options/paper/review-navigation';
-import { PAPER_RELEASES, PREDECESSOR_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { PAPER_RELEASES, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import type { ReviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import { cn } from '@/utils/cn';
@@ -25,15 +26,21 @@ export const REVIEW_COMMENTS_CHAR_COUNT_LIVE_THRESHOLD = 1000;
 /** A save request that has not answered after this long is treated as offline. */
 export const REVIEW_SAVE_TIMEOUT_MS = 30000;
 /*
- * 'not-provisioned': a draft other than the predecessor whose save was refused because the review record
+ * 'not-provisioned': a v0.9.91 save that was refused because the review record
  * does not hold this draft's questions under this draft's identity (unknown_identity, or
  * stale_manifest: the record holds them under another digest). Neither is retryable from
  * the page and neither is fixed by a reload (a page whose own digest is out of date is
  * refused by the route before the record is asked), so saving stops for the session and
- * no "Try again" is offered. The predecessor never enters this state: it keeps the
- * behaviour it had before a second draft existed (the generic "Could not save ... Try again").
+ * no "Try again" is offered. Only v0.9.91 can enter this state: every other release is
+ * 'not-collecting' and never sends a save.
+ *
+ * 'not-collecting': every release other than v0.9.91 (zero-write gate). It is derived from the
+ * release, not from the server, so it holds from the first render and a bootstrap that reports
+ * persistence 'available' can never make such a release writable.
  */
-type PersistenceState = 'loading' | 'available' | 'unavailable' | 'not-provisioned' | 'unauthenticated' | 'identity-changed';
+type PersistenceState = 'loading' | 'available' | 'unavailable' | 'not-provisioned' | 'unauthenticated' | 'identity-changed' | 'not-collecting';
+/** How one persist() request ended (the recovery flush reads it; nothing else does). */
+type PersistResult = 'saved' | 'throttled' | 'stopped' | 'failed' | 'skipped';
 /** Result of the last save attempt for one question (in-flight state is tracked separately). */
 type SaveOutcome = 'saved' | 'offline' | 'error' | 'throttled';
 /** Unsaved text for one question and the server revision it was typed against (null: no row existed). */
@@ -144,7 +151,10 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
    *   row's. While one is open only Keep mine / Use saved write; typing keeps
    *   the conflict and updates the text Keep mine will save.
    */
-  const [persistence, setPersistence] = useState<PersistenceState>(manifestSha256 ? 'loading' : 'unavailable');
+  // The one write predicate: only the current v0.9.91 draft collects responses.
+  const writable = documentVersion === V0991_PAPER_VERSION;
+  const [serverPersistence, setPersistence] = useState<PersistenceState>(manifestSha256 ? 'loading' : 'unavailable');
+  const persistence: PersistenceState = writable ? serverPersistence : 'not-collecting';
   const [userKey, setUserKey] = useState<string | null>(null);
   const [rows, setRows] = useState<ReadonlyMap<string, ReviewResponseRow>>(() => new Map());
   const rowsRef = useRef(rows);
@@ -157,6 +167,28 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
   const pendingMutationQuestionIdsRef = useRef<ReadonlySet<string>>(new Set());
   const inFlightRef = useRef(new Map<string, { readonly controller: AbortController; readonly text: string }>());
   const queueRef = useRef(new Map<string, QueuedAction[]>());
+  // Per-question idle waiters: a recovery flush advances only when the question is fully idle
+  // (no request in flight AND nothing queued), so a re-base retry is part of the same step.
+  const idleWaitersRef = useRef(new Map<string, Array<() => void>>());
+  const requestCountRef = useRef(new Map<string, number>());
+  const lastResultRef = useRef(new Map<string, PersistResult>());
+  const notifyIdle = useCallback((questionId: string) => {
+    if (inFlightRef.current.has(questionId) || queueRef.current.has(questionId)) return;
+    const waiters = idleWaitersRef.current.get(questionId);
+    idleWaitersRef.current.delete(questionId);
+    waiters?.forEach((resolve) => resolve());
+  }, []);
+  const releaseAllIdleWaiters = useCallback(() => {
+    const all = [...idleWaitersRef.current.values()];
+    idleWaitersRef.current.clear();
+    all.forEach((waiters) => waiters.forEach((resolve) => resolve()));
+  }, []);
+  const waitForQuestionIdle = useCallback((questionId: string): Promise<void> => {
+    if (!inFlightRef.current.has(questionId) && !queueRef.current.has(questionId)) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      idleWaitersRef.current.set(questionId, [...(idleWaitersRef.current.get(questionId) ?? []), resolve]);
+    });
+  }, []);
   const lastSavedAtRef = useRef(new Map<string, string>());
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -413,13 +445,15 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
     const inFlight = inFlightRef.current;
     return () => {
       mountedRef.current = false;
+      releaseAllIdleWaiters();
       sessionGenerationRef.current += 1;
       bootstrapAbortRef.current?.abort();
       inFlight.forEach(({ controller }) => controller.abort());
       inFlight.clear();
+      releaseAllIdleWaiters();
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, []);
+  }, [releaseAllIdleWaiters]);
 
   useEffect(() => {
     const onSignedOut = () => {
@@ -428,6 +462,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
       inFlightRef.current.forEach(({ controller }) => controller.abort());
       inFlightRef.current.clear();
       queueRef.current.clear();
+      releaseAllIdleWaiters();
       if (debounceRef.current) clearTimeout(debounceRef.current);
       const previousUserKey = userKeyRef.current;
       if (previousUserKey) knownUserKeysRef.current.add(previousUserKey);
@@ -464,7 +499,25 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
       // The server bootstrap remains authoritative if a browser client cannot initialize.
     }
     return () => { window.removeEventListener('matrix-options-auth-signed-out', onSignedOut); subscription?.unsubscribe(); };
-  }, [commitDrafts, commitRows, documentVersion, manifestSha256]);
+  }, [commitDrafts, commitRows, documentVersion, manifestSha256, releaseAllIdleWaiters]);
+
+  /**
+   * ONE panel-level recovery-flush session. Set when a flush pass starts; it stays set until the
+   * pass has finished AND nothing it queued is still in flight or queued. Any save that settles
+   * without success while it is active stops it (see persist). There is no per-action marker.
+   */
+  const flushSessionRef = useRef<{ stopped: boolean; loopDone: boolean } | null>(null);
+  const stopFlushSession = useCallback((): boolean => {
+    const session = flushSessionRef.current;
+    if (!session) return false;
+    session.stopped = true;
+    flushSessionRef.current = null;
+    return true;
+  }, []);
+  const endFlushSessionIfIdle = useCallback(() => {
+    const session = flushSessionRef.current;
+    if (session && session.loopDone && inFlightRef.current.size === 0 && queueRef.current.size === 0) flushSessionRef.current = null;
+  }, []);
 
   /**
    * Another reviewer is now signed in on this browser (an auth event, or the
@@ -474,10 +527,12 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
    */
   const markIdentityChangedRef = useRef<() => void>(() => {});
   markIdentityChangedRef.current = () => {
+    stopFlushSession();
     sessionGenerationRef.current += 1;
     inFlightRef.current.forEach(({ controller }) => controller.abort());
     inFlightRef.current.clear();
     queueRef.current.clear();
+    releaseAllIdleWaiters();
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = null;
     pendingMutationQuestionIdsRef.current = new Set();
@@ -499,11 +554,13 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
     debounceRef.current = null;
   }, []);
 
-  const persistRef = useRef<(questionId: string, action: 'save-draft' | 'submit', submitText?: string, options?: { readonly duringConflict?: boolean }) => void>(() => {});
-  const persist = useCallback((questionId: string, action: 'save-draft' | 'submit', submitText?: string, options?: { readonly duringConflict?: boolean }) => {
+  const persistRef = useRef<(questionId: string, action: 'save-draft' | 'submit', submitText?: string, options?: { readonly duringConflict?: boolean }) => Promise<PersistResult>>(() => Promise.resolve('skipped'));
+  const persist = useCallback((questionId: string, action: 'save-draft' | 'submit', submitText?: string, options?: { readonly duringConflict?: boolean }): Promise<PersistResult> => {
+    // Zero-write gate: first statement, before any request is built.
+    if (!writable) return Promise.resolve('skipped');
     const questionCohortId = cohortForQuestion ? cohortForQuestion(questionId) : cohortId;
-    if (!userKey || !manifestSha256 || !questionCohortId) { setOutcome(questionId, 'offline'); return; }
-    if (conflictsRef.current.has(questionId) && !options?.duringConflict) return;
+    if (!userKey || !manifestSha256 || !questionCohortId) { setOutcome(questionId, 'offline'); return Promise.resolve('skipped'); }
+    if (conflictsRef.current.has(questionId) && !options?.duringConflict) return Promise.resolve('skipped');
     const inFlight = inFlightRef.current.get(questionId);
     if (inFlight) {
       const queue = queueRef.current.get(questionId) ?? [];
@@ -511,26 +568,45 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
       // A queued draft save reads the newest draft when it is sent; one is enough.
       else if (queue.at(-1)?.action !== 'save-draft' && !(queue.length === 0 && draftsRef.current.get(questionId)?.text === inFlight.text)) queue.push({ action: 'save-draft' });
       queueRef.current.set(questionId, queue);
-      return;
+      return Promise.resolve('skipped');
     }
     const draft = draftsRef.current.get(questionId);
     const text = action === 'submit' ? submitText : draft?.text;
-    if (text === undefined) return;
+    if (text === undefined) return Promise.resolve('skipped');
     const row = rowsRef.current.get(questionId) ?? null;
     // Typed back to exactly the saved text: nothing to save (and a submitted
     // response must not be marked "changed" for unchanged text).
     if (action === 'save-draft' && draft && row && draft.base === row.revision && draft.text === rowText(row)) {
       setDraft(questionId, null, userKeyRef.current);
-      return;
+      return Promise.resolve('skipped');
     }
     const expectedRevision = draft ? draft.base : row ? row.revision : null;
     const generation = sessionGenerationRef.current;
     const controller = new AbortController();
     inFlightRef.current.set(questionId, { controller, text });
+    requestCountRef.current.set(questionId, (requestCountRef.current.get(questionId) ?? 0) + 1);
     markMutationPending(questionId, true);
     setOutcome(questionId, null);
+    // ONE rule for every stop/failure path. Page-wide stop (401, identity change, not provisioned):
+    // every queue is cleared and the scheduled autosave is cancelled. A recovery-flush save that
+    // ends without success (any save that settles without success while the panel-level flush
+    // session is active) stops the session, clears its question's queue and cancels the scheduled autosave too.
+    // Text and drafts are never touched; the autosave re-arms on the reviewer's next edit.
+    const stopQueued = (pageWide: boolean) => {
+      if (pageWide) queueRef.current.clear(); else queueRef.current.delete(questionId);
+      if (pageWide) { cancelScheduledAutosave(); stopFlushSession(); }
+    };
+    // A queued Submit must never run after the save ahead of it failed in transit (it did NOT happen).
+    const dropQueuedSubmits = () => {
+      const queue = queueRef.current.get(questionId);
+      if (!queue) return;
+      const kept = queue.filter((queued) => queued.action !== 'submit');
+      if (kept.length === 0) queueRef.current.delete(questionId); else queueRef.current.set(questionId, kept);
+    };
+    let transportFailed = false;
+    let retrying = false;
     const settle = () => {
-      if (inFlightRef.current.get(questionId)?.controller !== controller) return;
+      if (inFlightRef.current.get(questionId)?.controller !== controller) { notifyIdle(questionId); return; }
       inFlightRef.current.delete(questionId);
       markMutationPending(questionId, false);
       const queue = queueRef.current.get(questionId) ?? [];
@@ -540,12 +616,15 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
       if (nextAction && allowed && mountedRef.current && generation === sessionGenerationRef.current) {
         persistRef.current(questionId, nextAction.action, nextAction.action === 'submit' ? nextAction.text : undefined, nextAction.action === 'save-draft' && nextAction.duringConflict ? { duringConflict: true } : undefined);
       }
+      endFlushSessionIfIdle();
+      notifyIdle(questionId);
     };
     // A hung request must not leave the question 'Saving...' forever (a timer,
     // so it works in every browser; its abort is told apart from a session abort).
     let timedOut = false;
+    let result: PersistResult = 'failed';
     const timer = setTimeout(() => { timedOut = true; controller.abort(); }, REVIEW_SAVE_TIMEOUT_MS);
-    void (async () => {
+    return (async () => {
       try {
         const response = await fetch(`/api/matrix-options/paper/reviews/${encodeURIComponent(questionId)}`, { method: 'PUT', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ documentVersion, manifestSha256, cohortId: questionCohortId, action, text, expectedRevision, expectedUserId: userKey }), signal: controller.signal });
         const payload = await response.json().catch(() => ({})) as { outcome?: string; row?: ReviewResponseRow | null };
@@ -561,6 +640,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
             setDraft(questionId, { text: current?.text ?? text, base: null, source: 'typed' }, userKeyRef.current);
             const retry: QueuedAction = action === 'submit' ? { action: 'submit', text } : { action: 'save-draft', duringConflict: options?.duringConflict === true };
             queueRef.current.set(questionId, [retry, ...(queueRef.current.get(questionId) ?? [])]);
+            retrying = true;
           } else {
             setOutcome(questionId, 'error');
           }
@@ -574,6 +654,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
           else setDraft(questionId, { ...current, base: savedRow.revision }, userKeyRef.current);
           updateConflict(questionId, null);
           setOutcome(questionId, 'saved');
+          result = 'saved';
           return;
         }
         if (response.status === 409 && payload.outcome === 'stale_revision' && savedRow) {
@@ -589,31 +670,56 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
         if (response.status === 409 && payload.outcome === 'identity_changed') {
           // Another reviewer signed in on this browser: nothing was written.
           markIdentityChangedRef.current();
+          result = 'stopped';
           return;
         }
         if (response.status === 401) {
           // The session expired: the text stays; saving asks the reviewer to sign in again.
+          // Stop condition: nothing queued may be sent after it (a queued Submit did NOT happen),
+          // for any question, and no scheduled autosave may fire. Text and drafts stay.
+          stopQueued(true);
+          setOutcome(questionId, 'offline');
           setPersistence('unauthenticated');
+          result = 'stopped';
           return;
         }
-        if (documentVersion !== PREDECESSOR_PAPER_VERSION && (payload.outcome === 'unknown_identity' || payload.outcome === 'stale_manifest')) {
+        if (payload.outcome === 'unknown_identity' || payload.outcome === 'stale_manifest') {
           // The review record does not hold this draft's questions under this draft's
           // identity (not provisioned, or provisioned under another digest). Sending the
           // same save again can never succeed, so nothing is queued or retried: saving
-          // stops for this page and the text stays exactly where it is. The
-          // predecessor's established handling is unchanged.
-          queueRef.current.delete(questionId);
+          // stops for this page and the text stays exactly where it is.
+          stopQueued(true);
           setOutcome(questionId, 'offline');
           setPersistence('not-provisioned');
+          result = 'stopped';
           return;
         }
         if (!response.ok || (payload.outcome !== 'ok' && payload.outcome !== 'noop_already_submitted') || !savedRow) {
+          transportFailed = true;
+          if (response.status === 429) {
+            // Rate limited: a queued write must not be sent into the limit (a queued Submit did
+            // NOT happen; the 'throttled' status says so). The reviewer retries by editing or Save.
+            result = 'throttled';
+            stopQueued(false);
+            cancelScheduledAutosave();
+          }
           setOutcome(questionId, response.status === 503 ? 'offline' : response.status === 429 ? 'throttled' : 'error');
           return;
         }
         mergeRow(savedRow);
         const current = draftsRef.current.get(questionId);
         const uKey = userKeyRef.current;
+        // A draft is dropped only when the server row holds EXACTLY the text sent AND the
+        // draft still equals it. A row that differs from what was sent is never taken as
+        // saved: the text stays a draft, based on the revision this request produced.
+        if (rowText(savedRow) !== text) {
+          if (current) setDraft(questionId, { ...current, base: savedRow.revision }, uKey);
+          else setDraft(questionId, { text, base: savedRow.revision, source: 'typed' }, uKey);
+          // No autosave until the reviewer edits again (else this would re-PUT every 1.5 s).
+          mismatchTextRef.current.set(questionId, text);
+          setOutcome(questionId, 'error');
+          return;
+        }
         // Sent text still current: nothing is unsaved. Newer typing stays a
         // draft, now based on the revision this save produced.
         if (!current || current.text === text) setDraft(questionId, null, uKey);
@@ -621,16 +727,24 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
         updateConflict(questionId, null);
         lastSavedAtRef.current.set(questionId, new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
         setOutcome(questionId, 'saved');
+        result = 'saved';
       } catch {
         // A user/session abort is silent; a timeout is an offline save.
         if (!timedOut && controller.signal.aborted) return;
+        transportFailed = true;
         if (mountedRef.current && generation === sessionGenerationRef.current) setOutcome(questionId, 'offline');
       } finally {
         clearTimeout(timer);
+        if (!retrying) lastResultRef.current.set(questionId, result);
+        const sessionAbort = controller.signal.aborted && !timedOut;
+        if (result !== 'saved' && !retrying && !sessionAbort) {
+          if (stopFlushSession()) { stopQueued(false); cancelScheduledAutosave(); }
+          else if (transportFailed) dropQueuedSubmits();
+        }
         settle();
       }
-    })();
-  }, [cohortForQuestion, cohortId, documentVersion, manifestSha256, markMutationPending, mergeRow, setDraft, setOutcome, updateConflict, userKey]);
+    })().then(() => result);
+  }, [cancelScheduledAutosave, cohortForQuestion, cohortId, documentVersion, endFlushSessionIfIdle, manifestSha256, markMutationPending, mergeRow, notifyIdle, setDraft, setOutcome, stopFlushSession, updateConflict, userKey, writable]);
   // A layout effect for the same reason as persistenceRef: a Submit pressed in the commit
   // that verifies the reviewer must reach the save that knows the reviewer, not the one before it.
   useLayoutEffect(() => { persistRef.current = persist; }, [persist]);
@@ -645,6 +759,86 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
     loadedQuestionIdRef.current = question?.id;
     activeQuestionIdRef.current = question?.id;
   }, [question]);
+
+  /*
+   * RECOVERY FLUSH (v0.9.91 only). On each transition of persistence to 'available', every
+   * unsaved, non-conflicted draft of the CURRENT reviewer (restored from an earlier page load
+   * OR typed on this page during an outage) is saved as a DRAFT, one request at
+   * a time, through the ordinary persist path (so each carries expectedUserId and its own
+   * expectedRevision). Never a submit. A draft leaves the buffer only through persist's own
+   * success rule (server text equals the text sent and the draft still equals it), so a lost
+   * response, a timeout, a 5xx or a 429 keeps the buffer for the next transition. A 429 stops
+   * the pass. Text edited during the pass stays a draft and gets ONE more save afterwards
+   * (bounded; never a loop). The active question's debounce autosave cannot double-send: both go
+   * through persist, which queues behind an in-flight request and skips equal text. Unmount, sign-out, an identity change or any session change ends the
+   * pass at its next step. A buffer of unknown base next to a saved row is a conflict
+   * (reconcileBufferedDrafts) and is skipped here.
+   */
+  const flushTokenRef = useRef(0);
+  const mismatchTextRef = useRef(new Map<string, string>());
+  useEffect(() => {
+    if (!writable || persistence !== 'available') return undefined;
+    const flushUserKey = userKeyRef.current;
+    if (!flushUserKey) return undefined;
+    const token = flushTokenRef.current + 1;
+    flushTokenRef.current = token;
+    const generation = sessionGenerationRef.current;
+    const live = () => mountedRef.current && flushTokenRef.current === token && generation === sessionGenerationRef.current && userKeyRef.current === flushUserKey && persistenceRef.current === 'available';
+    let session = { stopped: false, loopDone: false };
+    flushSessionRef.current = session;
+    // A failure of the pass's OWN awaited save stops the session's effects (queues, autosave) but the
+    // pass goes on to the next question under a fresh session; anything else that stops it ends the pass.
+    const reopenAfterOwnFailure = () => { if (!live()) return false; session = { stopped: false, loopDone: false }; flushSessionRef.current = session; return true; };
+    void (async () => {
+      try {
+      const sent = new Map<string, string>();
+      const pending = [...draftsRef.current].filter(([questionId]) => !conflictsRef.current.has(questionId)).map(([questionId]) => questionId);
+      for (const questionId of pending) {
+        if (!live() || session.stopped) return;
+        const draft = draftsRef.current.get(questionId);
+        if (!draft || conflictsRef.current.has(questionId)) continue;
+        sent.set(questionId, draft.text);
+        const countBefore = requestCountRef.current.get(questionId) ?? 0;
+        let result = await persistRef.current(questionId, 'save-draft');
+        // Advance only when this question is fully idle (a re-base retry is part of the same step).
+        await waitForQuestionIdle(questionId);
+        if (!live()) return;
+        if ((requestCountRef.current.get(questionId) ?? 0) - countBefore > 1) {
+          // The step ran more than one request: its outcome is the LAST request's, and a
+          // non-success there ends the pass (nothing further is sent).
+          result = lastResultRef.current.get(questionId) ?? 'failed';
+          if (result !== 'saved' || session.stopped) return;
+        }
+        if (result === 'throttled' || result === 'stopped') return;
+        if (result === 'failed') { sent.delete(questionId); if (session.stopped && !reopenAfterOwnFailure()) return; }
+        else if (session.stopped) return;
+        else if (result !== 'saved') sent.delete(questionId);
+      }
+      for (const [questionId, text] of sent) {
+        if (!live() || session.stopped) return;
+        const draft = draftsRef.current.get(questionId);
+        if (!draft || draft.text === text || conflictsRef.current.has(questionId)) continue;
+        const countBefore = requestCountRef.current.get(questionId) ?? 0;
+        let again = await persistRef.current(questionId, 'save-draft');
+        await waitForQuestionIdle(questionId);
+        if (!live()) return;
+        if ((requestCountRef.current.get(questionId) ?? 0) - countBefore > 1) {
+          again = lastResultRef.current.get(questionId) ?? 'failed';
+          if (again !== 'saved' || session.stopped) return;
+        }
+        if (again === 'throttled' || again === 'stopped') return;
+        if (again === 'failed') { if (session.stopped && !reopenAfterOwnFailure()) return; }
+        else if (session.stopped) return;
+      }
+      } finally {
+        // The pass is over. The session itself ends once nothing it queued is still pending.
+        session.loopDone = true;
+        if (!live()) { if (flushSessionRef.current === session) flushSessionRef.current = null; session.stopped = true; }
+        else endFlushSessionIfIdle();
+      }
+    })();
+    return () => { flushTokenRef.current += 1; if (flushSessionRef.current === session) { session.stopped = true; flushSessionRef.current = null; } };
+  }, [endFlushSessionIfIdle, persistence, waitForQuestionIdle, writable]);
 
   const activeRow = rowForQuestion(rows, question?.id);
   const activeDraft = question ? drafts.get(question.id) : undefined;
@@ -670,6 +864,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
     if (!question || !activeDraft || persistence !== 'available' || conflicts.has(question.id)) return undefined;
     cancelScheduledAutosave();
     const questionId = question.id;
+    if (mismatchTextRef.current.get(questionId) === activeDraft.text) return undefined;
     debounceRef.current = setTimeout(() => { persistRef.current(questionId, 'save-draft'); }, 1500);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [activeDraft, cancelScheduledAutosave, conflicts, persistence, question]);
@@ -684,8 +879,10 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
   const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     // Once another reviewer is signed in, nothing typed here belongs to the
     // page's reviewer (the editor is read-only too; this guards the handler).
-    if (!question || persistenceRef.current === 'identity-changed') return;
+    // Only the writable release takes input; an earlier draft never changes a buffer.
+    if (!question || !writable || persistenceRef.current === 'identity-changed' || persistenceRef.current === 'not-collecting') return;
     const next = clampReviewText(event.target.value, REVIEW_COMMENTS_TEXT_LIMIT);
+    mismatchTextRef.current.delete(question.id);
     caretRef.current.set(question.id, event.target.selectionStart ?? next.length);
     const existing = draftsRef.current.get(question.id);
     const row = rowsRef.current.get(question.id) ?? null;
@@ -785,6 +982,16 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
   // The browser copy is removed at sign-out (so the next person at this browser cannot read
   // it). Wherever that copy is the ONLY copy, the reader is told so before they sign out.
   const keptWhere = storedInBrowser ? 'Your text is kept in this browser only, and is cleared when you sign out.' : 'Your text is kept on this page only -- this browser is not storing it, so do not reload.';
+  const readOnlyRowStatus = activeState === 'submitted'
+    ? `Submitted${submittedAt ? ` ${submittedAt}` : ''}.`
+    : activeState === 'changed'
+      ? `Changed since submission${submittedAt ? ` (submitted ${submittedAt})` : ''}.`
+      : activeState === 'draft'
+        ? `Draft saved${updatedAt ? ` ${updatedAt}` : ''}.`
+        : '';
+  const notCollectingStatus = activeDraft
+    ? 'This earlier draft does not collect responses. Your text is kept in this browser only, and is cleared when you sign out.'
+    : `${readOnlyRowStatus ? `${readOnlyRowStatus} ` : ''}This earlier draft does not collect responses.`;
   const rowStatusText = activeState === 'submitted'
     ? `Submitted${submittedAt ? ` ${submittedAt}` : ''}. Editing creates a new draft; re-submit to replace it.`
     : activeState === 'changed'
@@ -792,7 +999,8 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
       : activeState === 'draft'
         ? `Draft saved${activeOutcome === 'saved' && lastSavedAt ? ` ${lastSavedAt}` : updatedAt ? ` ${updatedAt}` : ''}. Not submitted yet.`
         : 'Not started';
-  const statusText = conflict ? 'Conflict: choose which version to keep'
+  const statusText = persistence === 'not-collecting' ? notCollectingStatus
+    : conflict ? 'Conflict: choose which version to keep'
     : activePending ? 'Saving...'
       : activeOutcome === 'offline' ? `Not saved to the review record. ${keptWhere}`
         : activeOutcome === 'error' ? `Could not save. ${keptWhere} Try again.`
@@ -804,6 +1012,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
     : persistence === 'loading' ? 'Saving becomes available once your saved responses have loaded.'
       : persistence === 'unauthenticated' ? (storedInBrowser ? 'Sign in again in another tab, then select Try again here. Until then, what you type is kept in this browser only.' : 'Sign in again in another tab, then select Try again here. What you type is on this page only and is lost if you reload or leave.')
         : persistence === 'identity-changed' ? (userKey && !hasPageOnlyDrafts ? 'A different reviewer is now signed in on this browser, so saving here is stopped. Reload the page to continue. Unsaved text stays in this browser for the reviewer who typed it.' : 'A different reviewer is now signed in on this browser, so saving here is stopped. This browser is not storing your unsaved text -- copy it before you reload.')
+        : persistence === 'not-collecting' ? 'This earlier draft does not collect responses.'
         : persistence === 'not-provisioned' ? (storedInBrowser ? 'Responses to this draft cannot be saved to the review record yet. What you type is kept in this browser only, and is cleared when you sign out.' : 'Responses to this draft cannot be saved to the review record yet. What you type is on this page only and is lost if you reload or leave.')
         : storedInBrowser ? 'Saving to the review record is not available yet. What you type is kept in this browser only, and is cleared when you sign out.' :'Saving to the review record is not available yet. What you type is on this page only and is lost if you reload or leave.';
   // Lineage for the open question: `undefined` = this draft has no predecessor (or the
@@ -943,7 +1152,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
                         onSelect={(event) => { if (question) caretRef.current.set(question.id, event.currentTarget.selectionStart ?? 0); }}
                         onBlur={saveDraftNow}
                         disabled={!question}
-                        readOnly={persistence === 'loading' || persistence === 'identity-changed'}
+                        readOnly={persistence === 'loading' || persistence === 'identity-changed' || persistence === 'not-collecting'}
                         aria-busy={persistence === 'loading' || undefined}
                         maxLength={REVIEW_COMMENTS_TEXT_LIMIT}
                         aria-describedby="review-save-status"
@@ -965,6 +1174,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
                       {actionReason ? (
                         <div data-testid="review-action-reason" className="flex flex-wrap items-center gap-2">
                           <p id="review-action-reason" className="min-w-0 flex-1 text-xs text-[var(--db-text-secondary)]">{actionReason}</p>
+                          {persistence === 'not-collecting' ? <a href={paperWorkspaceHref(V0991_PAPER_VERSION, { mode: 'my-review', cohort: null, q: null, section: null })} data-testid="review-current-draft-link" className="inline-flex min-h-[44px] items-center text-xs font-medium text-[var(--db-accent-strong)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] dark:text-[var(--db-accent)]">Go to the current review draft</a> : null}
                           {(persistence === 'unavailable' || persistence === 'unauthenticated') && manifestSha256 ? <button type="button" data-testid="review-persistence-retry" onClick={retryPersistence} className={cn(secondaryButton, 'text-xs')}>Try again</button> : null}
                         </div>
                       ) : null}

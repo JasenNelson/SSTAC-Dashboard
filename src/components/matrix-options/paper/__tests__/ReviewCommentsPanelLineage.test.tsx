@@ -1,11 +1,11 @@
 import { createRef, Profiler } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { R5_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { R5_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { readReviewLocalDraft, writeReviewLocalDraft, writeReviewLocalDraftEntry } from '@/lib/matrix-options/paper/review-local-buffer';
 import { getReviewLineage, reviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
-import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
+import { getReviewerGuideBinding, getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import { REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
 
 import { lineageResponseText, REVIEW_SAVE_TIMEOUT_MS, ReviewCommentsPanel } from '../ReviewCommentsPanel';
@@ -36,17 +36,45 @@ vi.mock('@/lib/supabase/client', () => ({
 
 const REVIEWER = 'user-a';
 const R5_MANIFEST = 'b'.repeat(64);
+const V0991_MANIFEST = 'e'.repeat(64);
 const PREDECESSOR_MANIFEST = 'c'.repeat(64);
 // The R5 draft's own guide text is in no file of the repository (the server derives it from the
 // verified paper), so the panel is handed a guide with the bound ids and synthetic text.
 const r5Guide = syntheticResolvedR5Guide();
-const lineage = reviewLineageView(getReviewLineage(R5_PAPER_VERSION)!, PREDECESSOR_MANIFEST);
-const r5Question = (number: number) => r5Guide.questions[number - 1];
-const predecessorQuestionId = (number: number) => `rpq:${REVISED_PAPER_VERSION}:q${String(number).padStart(2, '0')}`;
+const r5Lineage = reviewLineageView(getReviewLineage(R5_PAPER_VERSION)!, PREDECESSOR_MANIFEST);
+
+/*
+ * Plan R4: only v0.9.91 collects responses. The read-only lineage display tests keep running against the R5
+ * draft (its GET is unchanged); every test of save mechanics (CAS, queue, sign-out, not-provisioned, timeout)
+ * runs against v0.9.91 through the same helpers. The v0.9.91 fixture reuses the R5 guide text and the
+ * Q1-Q10/Q12 "identical question" map these mechanics tests were written against, under v0.9.91's real
+ * question ids, with the R5 draft as the earlier draft. It is a panel-mechanics fixture, not the real
+ * v0.9.91 lineage (which is covered by the lineage library tests).
+ */
+interface BoundDraft {
+  readonly version: string;
+  readonly manifest: string;
+  readonly predecessor: string;
+  readonly guide: typeof r5Guide;
+  readonly lineage: typeof r5Lineage;
+}
+const v0991Ids = getReviewerGuideBinding(V0991_PAPER_VERSION).questions.map((question) => question.id);
+const v0991Guide = { ...r5Guide, questions: r5Guide.questions.map((question, index) => ({ ...question, id: v0991Ids[index] })) } as typeof r5Guide;
+// SYNTHETIC panel-mechanics fixture, NOT the real v0.9.91 lineage (the real one identifies only Q4, Q5 and Q12; asserted below).
+const SYNTHETIC_V0991_LINEAGE = reviewLineageView({
+  documentVersion: V0991_PAPER_VERSION,
+  predecessorVersion: R5_PAPER_VERSION,
+  questions: v0991Guide.questions.map((question) => ({ number: question.number, questionId: question.id, equivalence: question.number === 11 ? 'MATERIALLY_CHANGED_NO_AUTOMATIC_RESPONSE_CARRY_FORWARD' : 'EXACT_HEADING_AND_PROMPT_TEXT', predecessorQuestionId: question.number === 11 ? null : `rpq:${R5_PAPER_VERSION}:q${String(question.number).padStart(2, '0')}` })),
+}, PREDECESSOR_MANIFEST);
+const R5_DRAFT: BoundDraft = { version: R5_PAPER_VERSION, manifest: R5_MANIFEST, predecessor: REVISED_PAPER_VERSION, guide: r5Guide, lineage: r5Lineage };
+const V0991_DRAFT: BoundDraft = { version: V0991_PAPER_VERSION, manifest: V0991_MANIFEST, predecessor: R5_PAPER_VERSION, guide: v0991Guide, lineage: SYNTHETIC_V0991_LINEAGE };
+let bound: BoundDraft = R5_DRAFT;
+const r5Question = (number: number) => bound.guide.questions[number - 1];
+const predecessorQuestionId = (number: number) => `rpq:${bound.predecessor}:q${String(number).padStart(2, '0')}`;
 const EARLIER = 'My answer to the earlier draft.';
 
 function predecessorRow(number: number, overrides: Record<string, unknown> = {}) {
-  return { document_version: REVISED_PAPER_VERSION, manifest_sha256: PREDECESSOR_MANIFEST, cohort_id: 'categories', question_id: predecessorQuestionId(number), draft_text: null, submitted_text: EARLIER, revision: 2, submitted_revision: 2, submitted_at: '2026-09-20T10:00:00.000Z', updated_at: '2026-09-20T10:00:00.000Z', ...overrides };
+  return { document_version: bound.predecessor, manifest_sha256: PREDECESSOR_MANIFEST, cohort_id: 'categories', question_id: predecessorQuestionId(number), draft_text: null, submitted_text: EARLIER, revision: 2, submitted_revision: 2, submitted_at: '2026-09-20T10:00:00.000Z', updated_at: '2026-09-20T10:00:00.000Z', ...overrides };
 }
 
 interface Recorded { readonly url: string; readonly init?: RequestInit; resolve?: (response: Response) => void }
@@ -62,7 +90,7 @@ function stubFetch(options: { readonly predecessor?: { readonly status?: number;
   const fetchMock = vi.fn((url: string, init?: RequestInit) => {
     const record: Recorded = { url, init };
     requests.push(record);
-    if (url.includes(`?documentVersion=${encodeURIComponent(REVISED_PAPER_VERSION)}`)) {
+    if (url.includes(`?documentVersion=${encodeURIComponent(bound.predecessor)}`)) {
       if (options.predecessor === 'hang') {
         // Settles only when its own AbortSignal fires, like a real hung request.
         return new Promise<Response>((_resolve, reject) => { init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError'))); });
@@ -91,16 +119,16 @@ function stubFetch(options: { readonly predecessor?: { readonly status?: number;
 function panelElement(number: number, overrides: Partial<Parameters<typeof ReviewCommentsPanel>[0]> = {}) {
   return (
     <ReviewCommentsPanel
-      documentVersion={R5_PAPER_VERSION}
-      manifestSha256={R5_MANIFEST}
+      documentVersion={bound.version}
+      manifestSha256={bound.manifest}
       cohortId={number === 11 ? 'methods-water-type' : 'categories'}
-      questions={r5Guide.questions}
+      questions={bound.guide.questions}
       question={r5Question(number)}
       responseRef={createRef<HTMLElement>()}
       onSelectQuestion={vi.fn()}
       onPreviousQuestion={vi.fn()}
       onNextQuestion={vi.fn()}
-      lineage={lineage}
+      lineage={bound.lineage}
       {...overrides}
     />
   );
@@ -130,8 +158,13 @@ function renderPanelWithCommitLog(number: number, ownText: string) {
 }
 
 const editor = () => screen.getByRole('textbox', { name: 'Your response' }) as HTMLTextAreaElement;
+// Plan R4: only v0.9.91 collects responses, so an R5 or predecessor editor stays read-only for good. The panel is
+// ready once the editor is writable (v0.9.91) or the honest 'does not collect responses' notice is showing.
 async function editorReady() {
-  await waitFor(() => expect(editor()).not.toHaveAttribute('readonly'));
+  await waitFor(() => {
+    if (screen.queryByTestId('review-current-draft-link')) return;
+    expect(editor()).not.toHaveAttribute('readonly');
+  });
 }
 /** Everything written to browser storage, as one string. */
 const storedValues = (setItem: { readonly mock: { readonly calls: readonly (readonly unknown[])[] } }) => setItem.mock.calls.map((call) => String(call[1])).join('\n');
@@ -139,6 +172,7 @@ const reads = (requests: readonly Recorded[]) => requests.filter((request) => re
 const writes = (requests: readonly Recorded[]) => requests.filter((request) => !request.url.includes('?documentVersion='));
 
 afterEach(() => {
+  bound = R5_DRAFT;
   window.localStorage.clear();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -159,13 +193,13 @@ describe('review lineage in the response panel', () => {
     // Reference only: nothing editable carries it, and this draft has no copy of it.
     expect(reference.querySelector('textarea, input, button, [contenteditable]')).toBeNull();
     expect(editor()).toHaveValue('');
-    expect(readReviewLocalDraft({ documentVersion: R5_PAPER_VERSION, questionId: r5Question(1).id, userKey: REVIEWER })).toBe('');
+    expect(readReviewLocalDraft({ documentVersion: bound.version, questionId: r5Question(1).id, userKey: REVIEWER })).toBe('');
     expect(storedValues(setItem)).not.toContain(EARLIER);
     expect(writes(requests)).toEqual([]);
     // Exactly two reads: this draft under its own identity, the predecessor under its own.
     expect(reads(requests).map((request) => request.url).sort()).toEqual([
-      `/api/matrix-options/paper/reviews?documentVersion=${encodeURIComponent(REVISED_PAPER_VERSION)}&manifestSha256=${PREDECESSOR_MANIFEST}`,
-      `/api/matrix-options/paper/reviews?documentVersion=${encodeURIComponent(R5_PAPER_VERSION)}&manifestSha256=${R5_MANIFEST}`,
+      `/api/matrix-options/paper/reviews?documentVersion=${encodeURIComponent(bound.predecessor)}&manifestSha256=${PREDECESSOR_MANIFEST}`,
+      `/api/matrix-options/paper/reviews?documentVersion=${encodeURIComponent(bound.version)}&manifestSha256=${bound.manifest}`,
     ].sort());
     expect(reads(requests).every((request) => (request.init?.method ?? 'GET') === 'GET')).toBe(true);
   });
@@ -213,7 +247,7 @@ describe('review lineage in the response panel', () => {
         expect(screen.queryByTestId('review-lineage-changed')).toBeNull();
       }
       expect(editor()).toHaveValue('');
-      expect(readReviewLocalDraft({ documentVersion: R5_PAPER_VERSION, questionId: r5Question(number).id, userKey: REVIEWER })).toBe('');
+      expect(readReviewLocalDraft({ documentVersion: bound.version, questionId: r5Question(number).id, userKey: REVIEWER })).toBe('');
       view.unmount();
       vi.unstubAllGlobals();
     }
@@ -222,6 +256,7 @@ describe('review lineage in the response panel', () => {
   });
 
   it('saves only what the reviewer types, under this draft only', async () => {
+    bound = V0991_DRAFT; // Plan R4: only v0.9.91 collects responses.
     const requests = stubFetch({ predecessor: { body: { persistence: 'available', userKey: REVIEWER, rows: [predecessorRow(1)] } } });
     renderPanel(1);
     await editorReady();
@@ -233,18 +268,18 @@ describe('review lineage in the response panel', () => {
     const [save] = writes(requests);
     expect(save.url).toBe(`/api/matrix-options/paper/reviews/${encodeURIComponent(r5Question(1).id)}`);
     expect(save.init?.method).toBe('PUT');
-    expect(JSON.parse(String(save.init?.body))).toEqual({ documentVersion: R5_PAPER_VERSION, manifestSha256: R5_MANIFEST, cohortId: 'categories', action: 'save-draft', text: 'A new answer for this draft.', expectedRevision: null, expectedUserId: REVIEWER });
+    expect(JSON.parse(String(save.init?.body))).toEqual({ documentVersion: bound.version, manifestSha256: bound.manifest, cohortId: 'categories', action: 'save-draft', text: 'A new answer for this draft.', expectedRevision: null, expectedUserId: REVIEWER });
     expect(String(save.init?.body)).not.toContain(EARLIER);
-    expect(String(save.init?.body)).not.toContain(REVISED_PAPER_VERSION);
+    expect(String(save.init?.body)).not.toContain(bound.predecessor);
     // The browser copy is this draft's, and holds only the typed text.
-    expect(readReviewLocalDraft({ documentVersion: R5_PAPER_VERSION, questionId: r5Question(1).id, userKey: REVIEWER })).toBe('A new answer for this draft.');
-    expect(readReviewLocalDraft({ documentVersion: REVISED_PAPER_VERSION, questionId: predecessorQuestionId(1), userKey: REVIEWER })).toBe('');
+    expect(readReviewLocalDraft({ documentVersion: bound.version, questionId: r5Question(1).id, userKey: REVIEWER })).toBe('A new answer for this draft.');
+    expect(readReviewLocalDraft({ documentVersion: bound.predecessor, questionId: predecessorQuestionId(1), userKey: REVIEWER })).toBe('');
     // The reference is still there, unchanged.
     expect(screen.getByTestId('review-lineage-text')).toHaveTextContent(EARLIER);
   });
 
   it('shows this draft\'s own saved response in the editor, beside (not replaced by) the earlier one', async () => {
-    const own = { document_version: R5_PAPER_VERSION, manifest_sha256: R5_MANIFEST, cohort_id: 'categories', question_id: r5Question(1).id, draft_text: 'Saved under this draft.', submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null };
+    const own = { document_version: bound.version, manifest_sha256: bound.manifest, cohort_id: 'categories', question_id: r5Question(1).id, draft_text: 'Saved under this draft.', submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null };
     stubFetch({ r5Rows: [own], predecessor: { body: { persistence: 'available', userKey: REVIEWER, rows: [predecessorRow(1)] } } });
     renderPanel(1);
     await editorReady();
@@ -256,10 +291,11 @@ describe('review lineage in the response panel', () => {
     ['another reviewer answers the predecessor read', { body: { persistence: 'available', userKey: 'user-b', rows: [predecessorRow(1)] } }],
     ['the predecessor read is unavailable', { status: 503, body: { outcome: 'persistence_unavailable', persistence: 'unavailable', rows: [], userKey: REVIEWER } }],
     ['the predecessor read is refused', { status: 401, body: { error: 'Unauthorized' } }],
-    ['the rows belong to another release identity', { body: { persistence: 'available', userKey: REVIEWER, rows: [predecessorRow(1, { manifest_sha256: 'd'.repeat(64) }), predecessorRow(1, { document_version: R5_PAPER_VERSION })] } }],
+    ['the rows belong to another release identity', { body: { persistence: 'available', userKey: REVIEWER, rows: [predecessorRow(1, { manifest_sha256: 'd'.repeat(64) }), predecessorRow(1, { document_version: bound.version })] } }],
     ['the earlier row is for another question', { body: { persistence: 'available', userKey: REVIEWER, rows: [predecessorRow(2)] } }],
     ['the earlier row has no text', { body: { persistence: 'available', userKey: REVIEWER, rows: [predecessorRow(1, { submitted_text: null, submitted_revision: null, submitted_at: null })] } }],
   ])('shows no reference when %s, and the editor still works', async (_name, predecessor) => {
+    bound = V0991_DRAFT; // the writable release: the editor must really accept typing here
     const requests = stubFetch({ predecessor });
     renderPanel(1);
     await editorReady();
@@ -268,8 +304,17 @@ describe('review lineage in the response panel', () => {
     expect(screen.queryByTestId('review-lineage-reference')).toBeNull();
     expect(screen.queryByText(EARLIER)).toBeNull();
     expect(screen.queryByTestId('review-lineage-changed')).toBeNull();
+    expect(editor()).not.toHaveAttribute('readonly');
     fireEvent.change(editor(), { target: { value: 'still editable' } });
     expect(editor()).toHaveValue('still editable');
+  });
+
+  it('the real v0.9.91 lineage identifies exactly questions 4, 5 and 12 as identical (the synthetic fixture is not it)', () => {
+    const real = getReviewLineage(V0991_PAPER_VERSION)!;
+    const identical = real.questions.filter((question) => question.equivalence === 'EXACT_HEADING_AND_PROMPT_TEXT').map((question) => question.number);
+    expect(identical).toEqual([4, 5, 12]);
+    // Two-sided: the fixture the panel tests use claims far more, so it must stay clearly labelled synthetic.
+    expect(Object.values(SYNTHETIC_V0991_LINEAGE.predecessorQuestionIds).filter((id) => id !== null).length).toBeGreaterThan(identical.length);
   });
 
   it('never reads the predecessor for a signed-out reader', async () => {
@@ -278,7 +323,7 @@ describe('review lineage in the response panel', () => {
     await waitFor(() => expect(reads(requests)).toHaveLength(1));
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(reads(requests)).toHaveLength(1);
-    expect(reads(requests)[0].url).toContain(encodeURIComponent(R5_PAPER_VERSION));
+    expect(reads(requests)[0].url).toContain(encodeURIComponent(bound.version));
     expect(screen.queryByTestId('review-lineage-reference')).toBeNull();
   });
 
@@ -307,12 +352,14 @@ describe('review lineage in the response panel', () => {
 });
 
 describe('sign-out with responses on screen', () => {
+  // Plan R4: only v0.9.91 collects responses.
+  beforeEach(() => { bound = V0991_DRAFT; });
   // Sign-out must leave no review response on the page in ANY render, the first one
   // included: the person at the screen after a sign-out need not be the reviewer.
   const OWN = 'Saved under this draft.';
-  const ownRow = { document_version: R5_PAPER_VERSION, manifest_sha256: R5_MANIFEST, cohort_id: 'categories', question_id: r5Question(1).id, draft_text: OWN, submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null };
-  const earlierBody = { persistence: 'available', userKey: REVIEWER, rows: [predecessorRow(1)] };
-  const isPredecessorRead = (request: Recorded) => request.url.includes(`?documentVersion=${encodeURIComponent(REVISED_PAPER_VERSION)}`);
+  const ownRow = () => ({ document_version: bound.version, manifest_sha256: bound.manifest, cohort_id: 'categories', question_id: r5Question(1).id, draft_text: OWN, submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null });
+  const earlierBody = () => ({ persistence: 'available', userKey: REVIEWER, rows: [predecessorRow(1)] });
+  const isPredecessorRead = (request: Recorded) => request.url.includes(`?documentVersion=${encodeURIComponent(bound.predecessor)}`);
   const shown: CommitView = { signedOut: false, earlier: true, own: true };
   const cleared: CommitView = { signedOut: true, earlier: false, own: false };
 
@@ -324,7 +371,7 @@ describe('sign-out with responses on screen', () => {
     ['the window event', signOutByWindowEvent],
     ['the Supabase SIGNED_OUT callback', signOutBySupabase],
   ])('removes this draft\'s response and the earlier-draft reference in the render that signs the reviewer out, not one render later (%s)', async (_source, signOut) => {
-    stubFetch({ r5Rows: [ownRow], predecessor: { body: earlierBody } });
+    stubFetch({ r5Rows: [ownRow()], predecessor: { body: earlierBody() } });
     const commits = renderPanelWithCommitLog(1, OWN);
     await editorReady();
     await waitFor(() => expect(editor()).toHaveValue(OWN));
@@ -344,7 +391,7 @@ describe('sign-out with responses on screen', () => {
   });
 
   it('drops an earlier-draft read that answers after sign-out, so a late answer never reaches the signed-out page', async () => {
-    const requests = stubFetch({ r5Rows: [ownRow], predecessor: 'hold' });
+    const requests = stubFetch({ r5Rows: [ownRow()], predecessor: 'hold' });
     const commits = renderPanelWithCommitLog(1, OWN);
     await editorReady();
     await waitFor(() => expect(editor()).toHaveValue(OWN));
@@ -360,7 +407,7 @@ describe('sign-out with responses on screen', () => {
       expect(lineageRead.init?.signal?.aborted).toBe(true);
       // Answered once the sign-out handler has run, while React has neither rendered the
       // signed-out page nor run the effect that abandons the read.
-      lineageRead.resolve!(new Response(JSON.stringify(earlierBody), { status: 200 }));
+      lineageRead.resolve!(new Response(JSON.stringify(earlierBody()), { status: 200 }));
       await new Promise((resolve) => setTimeout(resolve, 20));
     });
     const after = commits.slice(before);
@@ -370,14 +417,14 @@ describe('sign-out with responses on screen', () => {
   });
 
   it('control: the same held read, answered while the reviewer is still signed in, is shown', async () => {
-    const requests = stubFetch({ r5Rows: [ownRow], predecessor: 'hold' });
+    const requests = stubFetch({ r5Rows: [ownRow()], predecessor: 'hold' });
     const commits = renderPanelWithCommitLog(1, OWN);
     await editorReady();
     await waitFor(() => expect(editor()).toHaveValue(OWN));
     await waitFor(() => expect(reads(requests)).toHaveLength(2));
     expect(commits.at(-1)).toEqual({ signedOut: false, earlier: false, own: true });
     await act(async () => {
-      reads(requests).find(isPredecessorRead)!.resolve!(new Response(JSON.stringify(earlierBody), { status: 200 }));
+      reads(requests).find(isPredecessorRead)!.resolve!(new Response(JSON.stringify(earlierBody()), { status: 200 }));
       await new Promise((resolve) => setTimeout(resolve, 20));
     });
     expect(commits.at(-1)).toEqual(shown);
@@ -387,12 +434,12 @@ describe('sign-out with responses on screen', () => {
   const TYPED = 'Typed here and not saved yet.';
   // Longer than the panel's autosave delay (1.5 s after the draft last changed).
   const PAST_AUTOSAVE_MS = 1600;
-  const typedBrowserCopy = () => readReviewLocalDraft({ documentVersion: R5_PAPER_VERSION, questionId: r5Question(1).id, userKey: REVIEWER });
+  const typedBrowserCopy = () => readReviewLocalDraft({ documentVersion: bound.version, questionId: r5Question(1).id, userKey: REVIEWER });
 
   it('removes text typed and not yet saved in the render that signs the reviewer out, and neither sends nor keeps it afterwards', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
-      const requests = stubFetch({ predecessor: { body: earlierBody } });
+      const requests = stubFetch({ predecessor: { body: earlierBody() } });
       const commits = renderPanelWithCommitLog(1, TYPED);
       await editorReady();
       await screen.findByTestId('review-lineage-reference');
@@ -421,7 +468,7 @@ describe('sign-out with responses on screen', () => {
   it('control: the same typed text, with no sign-out, stays in the browser copy and is sent once the autosave delay passes', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
-      const requests = stubFetch({ predecessor: { body: earlierBody } });
+      const requests = stubFetch({ predecessor: { body: earlierBody() } });
       renderPanel(1);
       await editorReady();
       await screen.findByTestId('review-lineage-reference');
@@ -454,7 +501,7 @@ describe('sign-out with responses on screen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
     await waitFor(() => expect(writes(requests)).toHaveLength(1));
     // Another tab saved first: the record answers with its newer row and the box opens.
-    await act(async () => { writes(requests)[0].resolve?.(new Response(JSON.stringify({ outcome: 'stale_revision', row: { ...ownRow, draft_text: SAVED_ELSEWHERE, revision: 4 } }), { status: 409 })); });
+    await act(async () => { writes(requests)[0].resolve?.(new Response(JSON.stringify({ outcome: 'stale_revision', row: { ...ownRow(), draft_text: SAVED_ELSEWHERE, revision: 4 } }), { status: 409 })); });
     expect(await screen.findByTestId('review-conflict')).toHaveTextContent(`Saved response: ${SAVED_ELSEWHERE}`);
     // The box, the other tab's response and this tab's text are all on the page and the log
     // sees them, so their absence below is a finding and not a probe that cannot see.
@@ -469,7 +516,7 @@ describe('sign-out with responses on screen', () => {
   });
 
   it('reads the earlier draft again once the reviewer has signed back in and selected Try again', async () => {
-    const requests = stubFetch({ r5Rows: [ownRow], predecessor: { body: earlierBody } });
+    const requests = stubFetch({ r5Rows: [ownRow()], predecessor: { body: earlierBody() } });
     renderPanel(1);
     await editorReady();
     await screen.findByTestId('review-lineage-reference');
@@ -486,6 +533,8 @@ describe('sign-out with responses on screen', () => {
 });
 
 describe('a draft the review record does not know (not provisioned)', () => {
+  // Plan R4: only v0.9.91 collects responses.
+  beforeEach(() => { bound = V0991_DRAFT; });
   // Both refusals mean the same thing to the reader: the record does not hold this draft's
   // questions under this draft's identity. Neither is fixed by a reload (a page whose own
   // digest is out of date is refused by the route before the record is asked), so both get
@@ -517,7 +566,7 @@ describe('a draft the review record does not know (not provisioned)', () => {
     expect(screen.getByRole('button', { name: 'Submit response' })).toBeDisabled();
     // The text is still on screen and in this draft's browser copy, and the editor still accepts typing.
     expect(editor()).toHaveValue('An answer to this draft.');
-    expect(readReviewLocalDraft({ documentVersion: R5_PAPER_VERSION, questionId: r5Question(1).id, userKey: REVIEWER })).toBe('An answer to this draft.');
+    expect(readReviewLocalDraft({ documentVersion: bound.version, questionId: r5Question(1).id, userKey: REVIEWER })).toBe('An answer to this draft.');
     expect(editor()).not.toHaveAttribute('readonly');
     expect(writes(requests)).toHaveLength(1);
   });
@@ -528,6 +577,9 @@ describe('a draft the review record does not know (not provisioned)', () => {
       const requests = stubFetch({ put: { status, body: { outcome } } });
       renderPanel(1);
       await editorReady();
+      // Typed before the bootstrap answers would be sent by the recovery flush at once; wait for it so the autosave timer is what sends.
+      await waitFor(() => expect(reads(requests).length).toBeGreaterThanOrEqual(1));
+      await act(async () => { await vi.advanceTimersByTimeAsync(0); });
       fireEvent.change(editor(), { target: { value: 'An answer to this draft.' } });
       // Two-sided: nothing is clicked. The one save is sent by the autosave timer itself, so
       // this test really crosses the autosave delay before it shows that the timer stops.
@@ -543,7 +595,7 @@ describe('a draft the review record does not know (not provisioned)', () => {
       // Exactly the one refused PUT, ever; the newest text is on screen and in the browser copy.
       expect(writes(requests)).toHaveLength(1);
       expect(editor()).toHaveValue('An answer to this draft, extended twice.');
-      expect(readReviewLocalDraft({ documentVersion: R5_PAPER_VERSION, questionId: r5Question(1).id, userKey: REVIEWER })).toBe('An answer to this draft, extended twice.');
+      expect(readReviewLocalDraft({ documentVersion: bound.version, questionId: r5Question(1).id, userKey: REVIEWER })).toBe('An answer to this draft, extended twice.');
     } finally {
       vi.useRealTimers();
     }
@@ -570,7 +622,7 @@ describe('a draft the review record does not know (not provisioned)', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(writes(requests)).toHaveLength(1);
     expect(editor()).toHaveValue('An answer to this draft, extended.');
-    expect(readReviewLocalDraft({ documentVersion: R5_PAPER_VERSION, questionId: r5Question(1).id, userKey: REVIEWER })).toBe('An answer to this draft, extended.');
+    expect(readReviewLocalDraft({ documentVersion: bound.version, questionId: r5Question(1).id, userKey: REVIEWER })).toBe('An answer to this draft, extended.');
   });
 
   it.each(['Save draft', 'Submit response'] as const)('two-sided: the same queued "%s" IS sent when the first save is accepted', async (button) => {
@@ -584,7 +636,7 @@ describe('a draft the review record does not know (not provisioned)', () => {
     fireEvent.change(editor(), { target: { value: 'An answer to this draft, extended.' } });
     fireEvent.click(screen.getByRole('button', { name: button }));
     expect(writes(requests)).toHaveLength(1);
-    const saved = { document_version: R5_PAPER_VERSION, manifest_sha256: R5_MANIFEST, cohort_id: 'categories', question_id: r5Question(1).id, draft_text: 'An answer to this draft.', submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null };
+    const saved = { document_version: bound.version, manifest_sha256: bound.manifest, cohort_id: 'categories', question_id: r5Question(1).id, draft_text: 'An answer to this draft.', submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null };
     await act(async () => { writes(requests)[0].resolve?.(new Response(JSON.stringify({ outcome: 'ok', row: saved }), { status: 200 })); });
     // The queue was real: the second action goes out once the first has answered.
     await waitFor(() => expect(writes(requests)).toHaveLength(2));
@@ -592,7 +644,7 @@ describe('a draft the review record does not know (not provisioned)', () => {
   });
 
   it('two-sided: a save the record accepts shows no such message and keeps saving available', async () => {
-    const saved = { document_version: R5_PAPER_VERSION, manifest_sha256: R5_MANIFEST, cohort_id: 'categories', question_id: r5Question(1).id, draft_text: 'An answer to this draft.', submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null };
+    const saved = { document_version: bound.version, manifest_sha256: bound.manifest, cohort_id: 'categories', question_id: r5Question(1).id, draft_text: 'An answer to this draft.', submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null };
     stubFetch({ put: { status: 200, body: { outcome: 'ok', row: saved } } });
     renderPanel(1);
     await editorReady();
@@ -604,7 +656,9 @@ describe('a draft the review record does not know (not provisioned)', () => {
     expect(screen.getByRole('button', { name: 'Submit response' })).not.toBeDisabled();
   });
 
-  it.each(['unknown_identity', 'stale_manifest'])('leaves the predecessor as it was on the same refusal (%s): a retryable error, saving still offered', async (outcome) => {
+  // Plan R4: only v0.9.91 collects responses. The predecessor draft no longer saves at all, so a refusal can never
+  // reach it: it makes zero PUTs, says so honestly, and never shows the not-provisioned (v0.9.91) message.
+  it.each(['unknown_identity', 'stale_manifest'])('leaves the predecessor as it was when the record would refuse (%s): no save is ever sent, honest copy, no not-provisioned message', async (outcome) => {
     const guide = getReviewerGuideContract();
     const requests = stubFetch({ put: { status: outcome === 'unknown_identity' ? 404 : 409, body: { outcome } } });
     render(
@@ -621,18 +675,21 @@ describe('a draft the review record does not know (not provisioned)', () => {
       />,
     );
     await editorReady();
+    // The earlier draft's editor is read-only and its change handler refuses input: nothing typed is kept or sent.
+    expect(editor()).toHaveAttribute('readonly');
     fireEvent.change(editor(), { target: { value: 'An answer to the current draft.' } });
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Save draft' })).not.toBeDisabled());
-    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
-    await waitFor(() => expect(writes(requests)).toHaveLength(1));
-    await waitFor(() => expect(screen.getByTestId('review-save-status')).toHaveTextContent('Could not save.'));
-    expect(screen.getByTestId('review-save-status')).toHaveTextContent('Try again.');
+    expect(editor()).toHaveValue('');
+    expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Submit response' })).toBeDisabled();
+    fireEvent.blur(editor());
+    await new Promise((resolve) => setTimeout(resolve, PAST_AUTOSAVE_MS));
+    expect(writes(requests)).toEqual([]);
     const panel = screen.getByTestId('active-question-response');
+    expect(panel).toHaveTextContent('This earlier draft does not collect responses.');
     expect(panel).not.toHaveTextContent('cannot be saved to the review record yet');
+    expect(panel).not.toHaveTextContent('Could not save.');
     expect(panel).not.toHaveTextContent('This page is out of date');
-    // Saving is still offered, as before a second draft existed.
-    expect(screen.getByRole('button', { name: 'Save draft' })).not.toBeDisabled();
-    expect(editor()).toHaveValue('An answer to the current draft.');
+    expect(editor()).toHaveValue('');
   });
 });
 
@@ -681,6 +738,8 @@ describe('sign-out with two bound drafts', () => {
 });
 
 describe('an earlier response that could not be loaded', () => {
+  // Plan R4: only v0.9.91 collects responses.
+  beforeEach(() => { bound = V0991_DRAFT; });
   it('says so when this draft\'s record is reachable but the earlier read fails', async () => {
     stubFetch({ predecessor: { status: 503, body: { outcome: 'persistence_unavailable', persistence: 'unavailable', rows: [], userKey: REVIEWER } } });
     renderPanel(1);
@@ -696,7 +755,7 @@ describe('an earlier response that could not be loaded', () => {
     renderPanel(1);
     await editorReady();
     await waitFor(() => expect(reads(requests)).toHaveLength(2));
-    expect(reads(requests).some((request) => request.url.includes(encodeURIComponent(REVISED_PAPER_VERSION)))).toBe(true);
+    expect(reads(requests).some((request) => request.url.includes(encodeURIComponent(bound.predecessor)))).toBe(true);
     await waitFor(() => expect(screen.getByTestId('active-question-response')).toHaveTextContent('Saving to the review record is not available yet. What you type is kept in this browser only, and is cleared when you sign out.'));
     await new Promise((resolve) => setTimeout(resolve, 30));
     expect(screen.queryByTestId('review-lineage-unavailable')).toBeNull();
@@ -720,7 +779,7 @@ describe('an earlier response that could not be loaded', () => {
       await editorReady();
       await waitFor(() => expect(reads(requests)).toHaveLength(2));
       expect(screen.queryByTestId('review-lineage-unavailable')).toBeNull();
-      const hung = reads(requests).find((request) => request.url.includes(encodeURIComponent(REVISED_PAPER_VERSION)))!;
+      const hung = reads(requests).find((request) => request.url.includes(encodeURIComponent(bound.predecessor)))!;
       await act(async () => { await vi.advanceTimersByTimeAsync(REVIEW_SAVE_TIMEOUT_MS + 10); });
       expect((hung.init?.signal as AbortSignal).aborted).toBe(true);
       expect(screen.getByTestId('review-lineage-unavailable')).toBeInTheDocument();
