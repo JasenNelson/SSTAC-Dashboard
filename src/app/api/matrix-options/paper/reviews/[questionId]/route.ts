@@ -4,6 +4,7 @@ import { getAuthAndRateLimit } from '@/app/api/_helpers/rate-limit-wrapper';
 import { resolveMatrixOptionsPaperReviewNavigationGate } from '@/lib/matrix-options/navigation';
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
 import { getReviewerGuideBinding } from '@/lib/matrix-options/reviewer-guide';
+import { V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { findReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
 import {
   reviewResponseOutcomeStatus,
@@ -57,6 +58,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400, headers: noStoreHeaders }); }
   const parsed = reviewResponseRequestSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: 'Invalid review response' }, { status: 400, headers: noStoreHeaders });
+  // Zero-write gate: only the current v0.9.91 draft collects responses. Every other release is
+  // refused here, before any manifest lookup or RPC, whatever the client sent.
+  if (parsed.data.documentVersion !== V0991_PAPER_VERSION) return NextResponse.json({ outcome: 'release_read_only' }, { status: reviewResponseOutcomeStatus('release_read_only'), headers: { ...noStoreHeaders, ...rateLimitHeaders } });
   // Identity pin: a page opened by one reviewer never writes as another who has
   // since signed in on the same browser (the cookie is shared by every tab).
   if (parsed.data.expectedUserId !== undefined && parsed.data.expectedUserId !== user.id) return NextResponse.json({ outcome: 'identity_changed' }, { status: reviewResponseOutcomeStatus('identity_changed'), headers: { ...noStoreHeaders, ...rateLimitHeaders } });

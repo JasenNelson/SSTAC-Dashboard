@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { Check, ChevronDown, Layers } from 'lucide-react';
 
-import { getPaperRelease, PAPER_RELEASES, PAPER_WITHHELD_NOTICE_ID } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, PAPER_RELEASES, PAPER_WITHHELD_NOTICE_ID, SELECTABLE_PAPER_RELEASES } from '@/lib/matrix-options/paper/releases';
 import type { PaperRelease } from '@/lib/matrix-options/paper/releases';
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import type { PaperMode } from '@/lib/matrix-options/paper/url-state';
@@ -89,7 +89,8 @@ export function PaperVersionControl({ documentVersion, buttonClassName, onOpen, 
         <div className="space-y-2 p-2 text-sm">
           <h2 className="font-semibold">Draft version</h2>
           <ul className="space-y-1">
-            {PAPER_RELEASES.map((release) => {
+            {/* R5 is not offered, but a page that IS R5 (direct address) still lists it as the current entry. */}
+            {PAPER_RELEASES.filter((release) => release.documentVersion === current.documentVersion || SELECTABLE_PAPER_RELEASES.includes(release)).map((release) => {
               const selected = release.documentVersion === current.documentVersion;
               const body = (
                 <>

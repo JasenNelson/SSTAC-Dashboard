@@ -11,7 +11,7 @@ const { getAuthAndRateLimitMock, queryMock, rpcMock, fromMock } = vi.hoisted(() 
 vi.mock('@/app/api/_helpers/rate-limit-wrapper', () => ({ getAuthAndRateLimit: getAuthAndRateLimitMock }));
 vi.mock('server-only', () => ({}));
 
-import { R5_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { R5_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { getReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
 import { REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
 import { GET } from '../route';
@@ -28,6 +28,11 @@ import { PUT } from '../[questionId]/route';
 const user = { id: '11111111-1111-4111-8111-111111111111', is_anonymous: false };
 const predecessor = getReviewManifest(REVISED_PAPER_VERSION);
 const r5 = getReviewManifest(R5_PAPER_VERSION);
+const v0991 = getReviewManifest(V0991_PAPER_VERSION);
+const v0991Question = (number: number) => `rpq:${V0991_PAPER_VERSION}:q${String(number).padStart(2, '0')}`;
+// The topic that asks a v0.9.91 question, and one topic that does not.
+const v0991CohortOf = (number: number) => Object.entries(v0991.cohortQuestionIds).find(([, ids]) => ids.includes(v0991Question(number)))![0];
+const v0991WrongCohortFor = (number: number) => Object.entries(v0991.cohortQuestionIds).find(([, ids]) => !ids.includes(v0991Question(number)))![0];
 const r5Question = (number: number) => `rpq:${R5_PAPER_VERSION}:q${String(number).padStart(2, '0')}`;
 const predecessorQuestion = (number: number) => `rpq:${REVISED_PAPER_VERSION}:q${String(number).padStart(2, '0')}`;
 const requestFor = (url: string, init?: RequestInit) => new Request(url, init) as unknown as NextRequest;
@@ -45,7 +50,7 @@ beforeEach(() => {
   queryMock.eq.mockReturnValue(queryMock);
   queryMock.order.mockResolvedValue({ data: [], error: null });
   fromMock.mockReturnValue(queryMock);
-  rpcMock.mockResolvedValue({ data: { outcome: 'ok', row: row(R5_PAPER_VERSION, r5.sha256, r5Question(1)) }, error: null });
+  rpcMock.mockResolvedValue({ data: { outcome: 'ok', row: row(V0991_PAPER_VERSION, v0991.sha256, v0991Question(1), v0991CohortOf(1)) }, error: null });
   getAuthAndRateLimitMock.mockResolvedValue({ user, supabase: { from: fromMock, rpc: rpcMock }, rateLimitResponse: null, rateLimitHeaders: {} });
 });
 
@@ -111,78 +116,90 @@ describe('review responses: reads are bound to one release', () => {
   });
 });
 
+// Plan R4: only v0.9.91 collects responses. The write-binding cases that guarded R5/predecessor saves now guard the
+// same identity binding for v0.9.91, and the R5/predecessor save paths assert the new 403 release_read_only contract.
 describe('review responses: writes are bound to one release', () => {
-  it('sends an R5 save to the database under the R5 identity only', async () => {
-    const response = await put(r5Question(1), body(R5_PAPER_VERSION, r5.sha256));
+  const c1 = v0991CohortOf(1);
+  it('sends a v0.9.91 save to the database under the v0.9.91 identity only', async () => {
+    const response = await put(v0991Question(1), body(V0991_PAPER_VERSION, v0991.sha256, { cohortId: c1 }));
     expect(response.status).toBe(200);
     expect(rpcMock).toHaveBeenCalledTimes(1);
-    expect(rpcMock).toHaveBeenCalledWith('matrix_paper_review_save_draft', { p_document_version: R5_PAPER_VERSION, p_manifest_sha256: r5.sha256, p_cohort_id: 'categories', p_question_id: r5Question(1), p_text: 'hello', p_expected_revision: null });
-    expect((await response.json()).row.question_id).toBe(r5Question(1));
+    expect(rpcMock).toHaveBeenCalledWith('matrix_paper_review_save_draft', { p_document_version: V0991_PAPER_VERSION, p_manifest_sha256: v0991.sha256, p_cohort_id: c1, p_question_id: v0991Question(1), p_text: 'hello', p_expected_revision: null });
+    expect((await response.json()).row.question_id).toBe(v0991Question(1));
   });
 
-  it('sends the changed question Q11 under its R5 topic, as a fresh R5 response', async () => {
-    rpcMock.mockResolvedValue({ data: { outcome: 'ok', row: row(R5_PAPER_VERSION, r5.sha256, r5Question(11), 'methods-water-type') }, error: null });
-    const response = await put(r5Question(11), body(R5_PAPER_VERSION, r5.sha256, { cohortId: 'methods-water-type', action: 'submit', text: 'a fresh answer', expectedRevision: null }));
+  it('sends the changed question Q11 under its v0.9.91 topic, as a fresh response', async () => {
+    const c11 = v0991CohortOf(11);
+    rpcMock.mockResolvedValue({ data: { outcome: 'ok', row: row(V0991_PAPER_VERSION, v0991.sha256, v0991Question(11), c11) }, error: null });
+    const response = await put(v0991Question(11), body(V0991_PAPER_VERSION, v0991.sha256, { cohortId: c11, action: 'submit', text: 'a fresh answer', expectedRevision: null }));
     expect(response.status).toBe(200);
-    expect(rpcMock).toHaveBeenCalledWith('matrix_paper_review_submit', expect.objectContaining({ p_document_version: R5_PAPER_VERSION, p_manifest_sha256: r5.sha256, p_question_id: r5Question(11), p_cohort_id: 'methods-water-type', p_text: 'a fresh answer', p_expected_revision: null }));
+    expect(rpcMock).toHaveBeenCalledWith('matrix_paper_review_submit', expect.objectContaining({ p_document_version: V0991_PAPER_VERSION, p_manifest_sha256: v0991.sha256, p_question_id: v0991Question(11), p_cohort_id: c11, p_text: 'a fresh answer', p_expected_revision: null }));
   });
 
-  it('surfaces the database refusal for an unseeded R5 manifest as unknown_identity, with no row', async () => {
-    // Until the R5 questions are provisioned in the database, the save RPC
+  it('surfaces the database refusal for an unseeded v0.9.91 manifest as unknown_identity, with no row', async () => {
+    // Until the questions are provisioned in the database, the save RPC
     // answers unknown_identity. The route passes that through: nothing is
     // written, and nothing is retried under another release.
     rpcMock.mockResolvedValue({ data: { outcome: 'unknown_identity', row: null }, error: null });
-    const response = await put(r5Question(1), body(R5_PAPER_VERSION, r5.sha256));
+    const response = await put(v0991Question(1), body(V0991_PAPER_VERSION, v0991.sha256, { cohortId: c1 }));
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ outcome: 'unknown_identity' });
     expect(rpcMock).toHaveBeenCalledTimes(1);
     expect(JSON.stringify(rpcMock.mock.calls)).not.toContain(REVISED_PAPER_VERSION);
+    expect(JSON.stringify(rpcMock.mock.calls)).not.toContain(R5_PAPER_VERSION);
   });
 
-  it.each([
-    ['a predecessor question id under the R5 identity', predecessorQuestion(1), R5_PAPER_VERSION, 'r5'],
-    ['an R5 question id under the predecessor identity', r5Question(1), REVISED_PAPER_VERSION, 'predecessor'],
-  ])('refuses %s as an unknown identity, before the database', async (_name, questionId, version, which) => {
-    const sha = which === 'r5' ? r5.sha256 : predecessor.sha256;
-    const response = await put(questionId, body(version, sha));
-    expect(response.status).toBe(404);
-    expect(await response.json()).toEqual({ outcome: 'unknown_identity' });
+  it('refuses a predecessor or R5 question id under the v0.9.91 identity as an unknown identity, before the database', async () => {
+    for (const questionId of [predecessorQuestion(1), r5Question(1)]) {
+      const response = await put(questionId, body(V0991_PAPER_VERSION, v0991.sha256, { cohortId: c1 }));
+      expect(response.status).toBe(404);
+      expect(await response.json()).toEqual({ outcome: 'unknown_identity' });
+    }
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
   it.each([
-    ['the R5 version with the predecessor manifest', R5_PAPER_VERSION, 'predecessor'],
-    ['the predecessor version with the R5 manifest', REVISED_PAPER_VERSION, 'r5'],
-    ['an unknown version', 'some-other-version', 'r5'],
-  ])('refuses %s (400), before the database', async (_name, version, which) => {
-    const sha = which === 'r5' ? r5.sha256 : predecessor.sha256;
-    const response = await put(r5Question(1), body(version, sha));
+    ['the v0.9.91 version with the predecessor manifest', predecessor.sha256],
+    ['the v0.9.91 version with the R5 manifest', r5.sha256],
+  ])('refuses %s (400), before the database', async (_name, sha) => {
+    const response = await put(v0991Question(1), body(V0991_PAPER_VERSION, sha, { cohortId: c1 }));
     expect(response.status).toBe(400);
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
-  it('refuses an R5 question filed under a topic that does not ask it', async () => {
-    const response = await put(r5Question(11), body(R5_PAPER_VERSION, r5.sha256, { cohortId: 'categories' }));
+  it('refuses a v0.9.91 question filed under a topic that does not ask it', async () => {
+    const response = await put(v0991Question(11), body(V0991_PAPER_VERSION, v0991.sha256, { cohortId: v0991WrongCohortFor(11) }));
     expect(response.status).toBe(404);
     expect(await response.json()).toEqual({ outcome: 'unknown_identity' });
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
-  it('treats a database row of the other release as unavailable, never as a saved R5 response', async () => {
+  it('treats a database row of the other release as unavailable, never as a saved v0.9.91 response', async () => {
     rpcMock.mockResolvedValue({ data: { outcome: 'ok', row: row(REVISED_PAPER_VERSION, predecessor.sha256, predecessorQuestion(1)) }, error: null });
-    const response = await put(r5Question(1), body(R5_PAPER_VERSION, r5.sha256));
+    const response = await put(v0991Question(1), body(V0991_PAPER_VERSION, v0991.sha256, { cohortId: c1 }));
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ outcome: 'persistence_unavailable' });
   });
 
-  it('leaves predecessor saves and submits exactly as they were', async () => {
-    rpcMock.mockResolvedValue({ data: { outcome: 'ok', row: row(REVISED_PAPER_VERSION, predecessor.sha256, predecessorQuestion(1)) }, error: null });
-    const save = await put(predecessorQuestion(1), body(REVISED_PAPER_VERSION, predecessor.sha256));
-    expect(save.status).toBe(200);
-    expect(rpcMock).toHaveBeenLastCalledWith('matrix_paper_review_save_draft', { p_document_version: REVISED_PAPER_VERSION, p_manifest_sha256: predecessor.sha256, p_cohort_id: 'categories', p_question_id: predecessorQuestion(1), p_text: 'hello', p_expected_revision: null });
-    const submit = await put(predecessorQuestion(1), body(REVISED_PAPER_VERSION, predecessor.sha256, { action: 'submit', expectedRevision: 1 }));
-    expect(submit.status).toBe(200);
-    expect(rpcMock).toHaveBeenLastCalledWith('matrix_paper_review_submit', expect.objectContaining({ p_document_version: REVISED_PAPER_VERSION, p_manifest_sha256: predecessor.sha256, p_expected_revision: 1 }));
-    expect(JSON.stringify(rpcMock.mock.calls)).not.toContain(R5_PAPER_VERSION);
+  it.each([
+    ['an R5 save', r5Question(1), R5_PAPER_VERSION, () => r5.sha256],
+    ['a predecessor save', predecessorQuestion(1), REVISED_PAPER_VERSION, () => predecessor.sha256],
+    ['an R5 save with the predecessor manifest', r5Question(1), R5_PAPER_VERSION, () => predecessor.sha256],
+    ['a save for an unknown version', r5Question(1), 'some-other-version', () => r5.sha256],
+  ])('refuses %s with 403 release_read_only before any manifest check or database call', async (_name, questionId, version, sha) => {
+    for (const action of ['save-draft', 'submit']) {
+      const response = await put(questionId, body(version, sha(), { action, expectedRevision: action === 'submit' ? 1 : null }));
+      expect(response.status).toBe(403);
+      expect(await response.json()).toEqual({ outcome: 'release_read_only' });
+    }
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses a v0.9.91 question id under the predecessor or R5 identity as read-only too', async () => {
+    for (const [version, sha] of [[REVISED_PAPER_VERSION, predecessor.sha256], [R5_PAPER_VERSION, r5.sha256]] as const) {
+      const response = await put(v0991Question(1), body(version, sha, { cohortId: c1 }));
+      expect(response.status).toBe(403);
+    }
+    expect(rpcMock).not.toHaveBeenCalled();
   });
 });

@@ -237,3 +237,10 @@ export function paperReleaseRelativePath(release: Pick<PaperRelease, 'delivery' 
 export function paperReleaseSidecarRelativePath(release: Pick<PaperRelease, 'delivery' | 'filename'>): string | null {
   return release.delivery === 'repository' && release.filename ? `candidate/paper/${release.filename}.sha256` : null;
 }
+
+/**
+ * The releases the version control offers as a place to go. The interim review draft (R5) stays in
+ * PAPER_RELEASES (registry, lineage and its historical contracts are preserved and its URL still
+ * opens) but is no longer offered for selection.
+ */
+export const SELECTABLE_PAPER_RELEASES: readonly PaperRelease[] = Object.freeze(PAPER_RELEASES.filter((release) => release.documentVersion !== R5_PAPER_VERSION));

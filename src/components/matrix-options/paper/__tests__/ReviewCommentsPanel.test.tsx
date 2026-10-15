@@ -3,7 +3,8 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { readReviewLocalDraft, writeReviewLocalDraft, writeReviewLocalDraftEntry } from '@/lib/matrix-options/paper/review-local-buffer';
-import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
+import { getReviewerGuideBinding, getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
+import { V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
 import { buildReviewNavigation } from '@/lib/matrix-options/paper/review-navigation';
 
@@ -21,9 +22,12 @@ vi.mock('@/lib/supabase/client', () => ({
   }),
 }));
 
-const version = '1.0.11-remediated-7-8-successor-20260918-D';
+// Plan R4: only v0.9.91 collects responses, so the save mechanics under test run against it. The v0.9.91
+// guide is hash-form (no question text), so its real question ids carry the default guide's synthetic text.
+const version = V0991_PAPER_VERSION;
 const guide = getReviewerGuideContract();
-const questions = guide.questions.slice(0, 4);
+const v0991Ids = getReviewerGuideBinding(V0991_PAPER_VERSION).questions;
+const questions = guide.questions.slice(0, 4).map((question, index) => ({ ...question, id: v0991Ids[index].id, number: v0991Ids[index].number }));
 
 afterEach(() => {
   window.localStorage.clear();
@@ -590,10 +594,11 @@ describe('ReviewCommentsPanel', () => {
     const manifestSha256 = 'a'.repeat(64);
     const requests: Array<{ init?: RequestInit; resolve: (response: Response) => void }> = [];
     vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
-      if (url.includes('?documentVersion=')) return Promise.resolve(new Response(JSON.stringify({ persistence: 'available', userKey: 'user-a', rows: [] }), { status: 200 }));
+      if (url.includes('?documentVersion=')) return Promise.resolve(new Response(JSON.stringify({ persistence: 'available', userKey: 'user-a', rows: [{ document_version: version, manifest_sha256: manifestSha256, cohort_id: 'categories', question_id: questions[1].id, draft_text: 'q2 text', submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null }] }), { status: 200 }));
       return new Promise<Response>((resolve) => { requests.push({ init, resolve }); });
     }));
-    writeReviewLocalDraft({ documentVersion: version, questionId: questions[1].id, userKey: 'user-a' }, 'q2 text');
+    // Plan R4: only v0.9.91 collects responses. Q2's text is a SAVED row (not a browser buffer), because a buffered
+    // draft is now sent by the recovery flush on availability and would add a request this test does not count.
 
     const responseRef = createRef<HTMLElement>();
     const onSelectQuestion = vi.fn();
@@ -690,11 +695,11 @@ describe('ReviewCommentsPanel', () => {
     const textarea = screen.getByRole('textbox', { name: 'Your response' });
     await waitFor(() => expect(textarea).toHaveValue('local newer'));
     expect(screen.queryByTestId('review-conflict')).not.toBeInTheDocument();
-    expect(screen.getByTestId('review-save-status')).toHaveTextContent('Unsaved changes');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    // Plan R4: only v0.9.91 collects responses. The recovery flush now sends this restored buffer as a draft the
+    // moment saving is available, so the request below comes from the flush (no click) and the status is not 'Unsaved changes'.
     await waitFor(() => expect(requests).toHaveLength(1));
     const body = JSON.parse(String(requests[0].init?.body));
+    expect(body.action).toBe('save-draft');
     expect(body.text).toBe('local newer');
     expect(body.expectedRevision).toBe(3);
   });
@@ -879,11 +884,11 @@ describe('ReviewCommentsPanel', () => {
     const textarea = screen.getByRole('textbox', { name: 'Your response' });
     await waitFor(() => expect(textarea).toHaveValue('orphan text'));
     expect(screen.queryByTestId('review-conflict')).not.toBeInTheDocument();
-    expect(screen.getByTestId('review-save-status')).toHaveTextContent('Unsaved changes');
-
-    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    // Plan R4: only v0.9.91 collects responses. The recovery flush now sends this restored buffer as a draft the
+    // moment saving is available, so the request below comes from the flush (no click) and the status is not 'Unsaved changes'.
     await waitFor(() => expect(requests).toHaveLength(1));
     const body = JSON.parse(String(requests[0].init?.body));
+    expect(body.action).toBe('save-draft');
     expect(body.text).toBe('orphan text');
     expect(body.expectedRevision).toBeNull();
   });

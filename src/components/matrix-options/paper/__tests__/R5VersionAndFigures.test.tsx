@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { acceptedFigureAssetHref, getAcceptedFiguresContract } from '@/lib/matrix-options/paper/accepted-figures';
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
 import type { CohortPortion } from '@/lib/matrix-options/paper/cohort-portions';
-import { getPaperRelease, PAPER_RELEASES, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, PAPER_RELEASES, R5_PAPER_VERSION, SELECTABLE_PAPER_RELEASES, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { getReviewLineage, reviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import { questionTitle } from '@/lib/matrix-options/paper/review-navigation';
@@ -255,7 +255,7 @@ describe('PaperVersionControl and PaperVersionStatus', () => {
     }
   });
 
-  it('names the draft on screen and lists both bound drafts, the current one not a link', () => {
+  it('names the draft on screen and lists the selectable drafts, the current one not a link', () => {
     render(<PaperVersionControl documentVersion={REVISED_PAPER_VERSION} buttonClassName="btn" {...context} />);
     const toggle = screen.getByTestId('paper-version-toggle');
     expect(toggle).toHaveAccessibleName('Draft version: Earlier draft');
@@ -273,17 +273,16 @@ describe('PaperVersionControl and PaperVersionStatus', () => {
     // The two names swap between the drafts, so each option is found by its test id and its
     // whole text is compared.
     expect(current.textContent).toBe(`${DEFAULT_OPTION_TEXT}You are viewing this draft.`);
-    const other = within(popover).getByTestId(`paper-version-option-${R5_PAPER_VERSION}`);
-    expect(other.tagName).toBe('A');
-    expect(other).toHaveAttribute('href', `/matrix-options/paper/v/${R5_PAPER_VERSION}/sec-7-8`);
-    expect(other.textContent).toBe(R5_OPTION_TEXT);
+    // Plan R4: R5 is out of the selector (it stays in the registry); only a page that IS R5 shows it.
+    expect(within(popover).queryByTestId(`paper-version-option-${R5_PAPER_VERSION}`)).toBeNull();
+    expect(popover.querySelector(`a[href*="${R5_PAPER_VERSION}"]`)).toBeNull();
     const v0991 = within(popover).getByTestId(`paper-version-option-${V0991_PAPER_VERSION}`);
     expect(v0991.tagName).toBe('A');
     expect(v0991).toHaveAttribute('href', expect.stringContaining(`/matrix-options/paper/v/${V0991_PAPER_VERSION}`));
     expect(v0991.textContent).toBe(`${getPaperRelease(V0991_PAPER_VERSION)?.label}${getPaperRelease(V0991_PAPER_VERSION)?.summary}`);
-    expect(within(popover).getAllByRole('link')).toHaveLength(2);
-    // Every bound release is offered, each exactly once.
-    expect(within(popover).getAllByRole('listitem')).toHaveLength(PAPER_RELEASES.length);
+    expect(within(popover).getAllByRole('link')).toHaveLength(1);
+    // Every selectable release is offered, each exactly once (R5 is not selectable).
+    expect(within(popover).getAllByRole('listitem')).toHaveLength(SELECTABLE_PAPER_RELEASES.length);
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByTestId('paper-version-popover')).toBeNull();
     expect(toggle).toHaveAttribute('aria-expanded', 'false');

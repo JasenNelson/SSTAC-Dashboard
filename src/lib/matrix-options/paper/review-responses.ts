@@ -44,6 +44,7 @@ export type ReviewResponseOutcome =
   | { readonly outcome: 'rate_limited' }
   | { readonly outcome: 'blank_submission' }
   | { readonly outcome: 'identity_changed' }
+  | { readonly outcome: 'release_read_only' }
   | { readonly outcome: 'persistence_unavailable' };
 
 export function reviewResponseOutcomeStatus(outcome: ReviewResponseOutcome['outcome']): number {
@@ -58,6 +59,7 @@ export function reviewResponseOutcomeStatus(outcome: ReviewResponseOutcome['outc
     case 'rate_limited': return 429;
     case 'blank_submission': return 422;
     case 'identity_changed': return 409;
+    case 'release_read_only': return 403;
     case 'persistence_unavailable': return 503;
   }
 }
