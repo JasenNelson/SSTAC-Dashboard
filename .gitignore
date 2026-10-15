@@ -106,6 +106,7 @@ tests/test-results/
 /test-results/
 tests/*.log
 playwright-report/
+/playwright-report-paper/
 
 # Other Python-specific ignores
 local_settings.py
