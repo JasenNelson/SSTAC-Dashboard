@@ -3708,8 +3708,52 @@ assumptions, not correctness against the tool.
 
 ---
 
-**Last Updated:** August 10, 2026 (Wiki runtime auto-follow; transitive-pin drift; scheduler logon type; synthetic-fixture blind spot)
-**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); 2026-07-13 added 1 (HIGH); 2026-07-21 added 1 (HIGH); 2026-08-05 added 2 (2 HIGH); 2026-08-06 added 1 (HIGH); 2026-08-10 added 1 (HIGH); prior totals not re-tallied.
+## 2026-10-15 - Local unit and e2e gates need environment the worktree does not supply [MEDIUM]
+
+**Area:** Gates / local environment / worktrees
+**Impact:** MEDIUM (two environment-caused RED gate runs on a docs-only commit; each cost a full re-run)
+**Status:** Documented
+
+### Problem or Discovery
+On a fresh worktree whose `.env.local` held only public settings, the push-gate run went RED twice
+for environment reasons, not code reasons:
+- `CI=true npm run test:coverage` failed 18 files with
+  `MATRIX_PAPER_PRIVATE_FIXTURE must be required or skip for a local run`.
+- `npm run test:e2e` stopped at once with `REAL_V16_E2E_BLOCKED: E2E_TEST_EMAIL and
+  E2E_TEST_PASSWORD are required for authenticated Chromium acceptance`.
+
+### Root Cause or Context
+- The private-fixture tests refuse to guess: they need `MATRIX_PAPER_PRIVATE_FIXTURE` set to
+  `required` (with a private asset root) or `skip`. CI sets `skip` in `.github/workflows/ci.yml`;
+  a local shell sets nothing.
+- `scripts/verify/matrix-paper-e2e.mjs` takes the `E2E_*` names from the process environment or
+  from `.env.local` in the current directory; with neither, it has no test login.
+
+### Solution or Pattern
+- Unit gate (G3 in `docs/GATE_MODE_SOP.md`), with the fixture mode CI uses:
+  `MATRIX_PAPER_PRIVATE_FIXTURE=skip npm run test:ci` (PowerShell: set the `$env:` name first).
+  `test:ci` also runs the gate-preflight node test that `test:coverage` omits.
+- E2E gate: make the `E2E_*` names available to the process, plus `E2E_AUTH_ENABLED=true`.
+  Prefer setting them in the gate process only, never commit them (`.env.local` is gitignored;
+  keep it untracked), and never print or log their values.
+- When a script reads credentials, use descriptive variable names: PowerShell names ignore case,
+  so a loop variable `$l` overwrote a log-path `$L` and printed a secret in an error message.
+
+### File References
+- `.github/workflows/ci.yml` (`MATRIX_PAPER_PRIVATE_FIXTURE: skip`)
+- `src/lib/matrix-options/paper/__tests__/private-fixture.ts`
+- `scripts/verify/matrix-paper-e2e.mjs`
+
+### Key Takeaway
+When a gate fails with one of the two prerequisite errors above, compare the local environment
+with the CI job's `env:` block and set what is missing. The run stays RED until the gate passes
+with the environment fixed; other pre-test failures can be real script, config or dependency
+defects.
+
+---
+
+**Last Updated:** October 15, 2026 (local gate environment: private fixture mode and e2e logins)
+**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); 2026-07-13 added 1 (HIGH); 2026-07-21 added 1 (HIGH); 2026-08-05 added 2 (2 HIGH); 2026-08-06 added 1 (HIGH); 2026-08-10 added 1 (HIGH); 2026-10-15 added 1 (MEDIUM); prior totals not re-tallied.
 **Security Status:** Phase 2 COMPLETE - All 5 tasks done, 3 critical vulnerabilities fixed, 6 security headers added
 **Refactoring Status:** TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
 **Maintained By:** Claude Sessions with /update-docs skill
