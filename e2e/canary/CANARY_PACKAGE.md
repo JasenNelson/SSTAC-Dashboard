@@ -1,6 +1,14 @@
 # Production canary package -- Matrix Options paper v0.9.91 review workflow
 
-Status: PROPOSED. Nothing in this package runs until the owner approves it explicitly. The run
+RUN COMPLETE -- DO NOT RUN AGAIN. This package was approved and run once on 2026-10-15 against the
+deployed merge `032cfcd5065c5e415fcf6b75f9f396634e599c53` (run ID below): GREEN. Record:
+`docs/apply-drafts/MATRIX_PAPER_REVIEW_V0991_APPLIED_RECORD_2026_10_15.md`. The text below is the
+manifest as approved (its sha256 at that commit was
+`d2799a08aedc10629aa9ebec48cf4fbbea080fbc6183868b96acfbc2a6105436`). This added paragraph changes the
+file, so the config's byte binding refuses a run against `032cfcd5`; any new canary needs a new
+package, run ID and approval.
+
+Status at approval time (historical; superseded by RUN COMPLETE above): PROPOSED. Nothing in this package runs until the owner approves it explicitly. The run
 needs its own separate approval after the backend activation; this file is the manifest approved.
 
 - runId (fixed, generated once from a random source): `canary-20261014-2849`
