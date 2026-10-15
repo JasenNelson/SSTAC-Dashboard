@@ -1,6 +1,11 @@
 # Matrix paper review persistence: v0.9.91 activation draft (2026_10_14)
 
-Status: DRAFT -- NOT APPLIED. Nothing here has been run against any database.
+APPLIED 2026-10-15 (with a submit-body corrective) and proven by the production canary: see
+`MATRIX_PAPER_REVIEW_V0991_APPLIED_RECORD_2026_10_15.md`. Everything below is the pre-apply draft
+record, kept as reviewed.
+
+Status at drafting time (SUPERSEDED by the APPLIED line above; do not apply again): "DRAFT -- NOT
+APPLIED. Nothing here has been run against any database."
 Applying the activation file needs: GREEN /codex-review of the exact file, the
 planned write flagged to the owner, and owner authorization (b) of this exact
 file + sha256 (CLAUDE.md Supabase Protocol rule 2). MCP apply_migration stays

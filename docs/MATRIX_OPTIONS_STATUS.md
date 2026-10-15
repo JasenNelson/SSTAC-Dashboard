@@ -375,25 +375,27 @@ regulatory-value selection or promotion.
 
 ### 3.5 Options Paper -- Working Draft + My Review longform UX (M1 + M2)
 
-**Status (current truth, written before review activation): v0.9.91 is the default paper in
-production and READING WORKS. The review backend (the three `matrix_paper_review_*` tables and
-the save-draft / submit functions) is NOT yet applied to the live database: its activation is
-pending explicit owner approval, and until then the review routes answer 503
-(`persistence_unavailable`) and My Review stays a browser-local buffer. Only v0.9.91 collects
+**Status (current truth, 2026-10-15): v0.9.91 is the default paper in production; reading,
+review saving, submission and the admin review view are LIVE. The review backend (the three
+`matrix_paper_review_*` tables and the save-draft / submit functions) was applied to the live
+database on 2026-10-15 under exact owner approvals (activation plus a submit-body corrective), and
+the one-shot production canary passed (GREEN). Record:
+`docs/apply-drafts/MATRIX_PAPER_REVIEW_V0991_APPLIED_RECORD_2026_10_15.md`. Only v0.9.91 collects
 responses; every earlier draft (including the predecessor 1.0.11) is read-only and does not
 collect responses. R5 is not offered in the version selector (its registry entry and historical
-read-only contracts are preserved). Do not describe review saving, submission or the admin review
-view as live until the owner-approved activation and the production canary have both been
-reported.**
+read-only contracts are preserved). Open owner decision: the live migration ledger has no entry for
+these objects (applied through `execute_sql`, not a migration), so preview branches and migration
+replays do not contain them.**
 
 This is a distinct sub-lane from the Matrix Options calculators (sections 2-3 above): a longform
 reader/review workspace for the Options Paper itself, under
 `src/app/(dashboard)/matrix-options/paper/**`, `src/components/matrix-options/paper/**`, and
 `src/lib/matrix-options/paper/**`. The Working Draft (M1) and My Review (M2) workspaces are merged
 and deployed. The server-side pieces (M3 persistence/save/submit/autosave and M5 admin view plus
-CSV export at `/admin/matrix-options-paper-reviews`) are implemented in code but dormant until the
-database activation above; the production canary package that proves them after activation is
-`e2e/canary/CANARY_PACKAGE.md` (excluded from default e2e; run once, only on owner approval).
+CSV export at `/admin/matrix-options-paper-reviews`) are live since the database activation above;
+the production canary package that proved them is `e2e/canary/CANARY_PACKAGE.md` (excluded from default e2e; run once on 2026-10-15, run ID
+`canary-20261014-2849`; do not re-run it: its local marker refuses a rerun only in the worktree
+that ran it, and the spec's no-prior-row precondition now stops any rerun before its first write).
 
 **Paper environment flags** (names and meaning only; values are set in the deployment, never
 committed; see the commented block in `.env.example`):
