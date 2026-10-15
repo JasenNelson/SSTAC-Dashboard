@@ -14,10 +14,11 @@ const baseAdminNavItems = [
   { href: '/admin/twg-synthesis', label: 'TWG Review' },
   { href: '/admin/catalog-staging-review', label: 'Catalog Staging Review' },
   { href: '/admin/matrix-review', label: 'Matrix Review' },
+  { href: '/admin/matrix-options-paper-reviews', label: 'Options Paper Reviews' },
   { href: '/admin/jermilova-review', label: 'Jermilova Review' },
-  { href: '/admin/matrix-map/health', label: 'Matrix Map Health' },
-  { href: '/admin/matrix-map/publish', label: 'Matrix Map Publish' },
-  { href: '/admin/matrix-map/site-aggregates', label: 'Matrix Map Site Aggregates' },
+  { href: '/admin/matrix-map/health', label: 'Database Health' },
+  { href: '/admin/matrix-map/publish', label: 'Database Publish' },
+  { href: '/admin/matrix-map/site-aggregates', label: 'Database Site Aggregates' },
   { href: '/regulatory-review', label: 'Regulatory Review' },
   { href: '/dashboard/engine-v2', label: 'Engine v2' },
 ]
@@ -44,7 +45,7 @@ export default function AdminFunctionsNav() {
             {adminNavItems.map(({ href, label }) => {
               const isActive = pathname === href
               const baseClasses =
-                'px-4 py-2 text-sm font-medium rounded-md transition-colors border focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent'
+                'inline-flex min-h-[44px] items-center px-4 py-2 text-sm font-medium rounded-md transition-colors border focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent'
               const activeClasses =
                 'text-white bg-sky-700 hover:bg-sky-800 border-sky-700 focus-visible:ring-offset-sky-800'
               const inactiveClasses =

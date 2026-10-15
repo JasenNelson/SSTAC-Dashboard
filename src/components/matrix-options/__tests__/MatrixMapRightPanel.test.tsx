@@ -444,7 +444,7 @@ describe('MatrixMapRightPanel', () => {
     renderPanel();
 
     await waitFor(() => {
-      expect(screen.getByText(/Unable to load measurements for this selection/)).toBeInTheDocument();
+      expect(screen.getByText(/Measurements for this selection could not be loaded/)).toBeInTheDocument();
     });
     expect(screen.queryByText(/Loading measurements/)).not.toBeInTheDocument();
   });

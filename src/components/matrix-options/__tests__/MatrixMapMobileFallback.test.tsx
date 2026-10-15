@@ -11,10 +11,10 @@ describe('MatrixMapMobileFallback', () => {
   it('renders the current mobile limitation and supporting heading', () => {
     render(<MatrixMapMobileFallback />);
     expect(
-      screen.getByRole('heading', { name: 'Interactive Map needs a wider viewport' }),
+      screen.getByRole('heading', { name: 'Database map needs a wider viewport' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Use a desktop or tablet (768px or wider) for the full interactive map.'),
+      screen.getByText('Use a desktop or tablet (768px or wider) for the full Database map.'),
     ).toBeInTheDocument();
   });
 

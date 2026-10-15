@@ -2210,7 +2210,7 @@ export default function SsdWorkbench({
                 }
                 className="mt-4 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:text-slate-200"
               >
-                Compare in References & Values
+                Compare in Catalogue
               </button>
             </div>
 

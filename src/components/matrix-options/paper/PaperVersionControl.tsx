@@ -138,7 +138,7 @@ export function PaperVersionStatus({ documentVersion, ...context }: { readonly d
   return (
     <p data-testid="paper-version-status" role="note" className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] px-4 py-1.5 text-sm text-[var(--db-text-primary)] sm:px-6 print:hidden">
       <span className="min-w-0">
-        <strong className="font-semibold">{current.label}.</strong> You are viewing an earlier draft. Responses to this draft are separate from the current collaborative expert-review draft.
+        <strong className="font-semibold">{current.label}.</strong> You are viewing an earlier draft. Responses to this draft are separate from the current Options Paper working draft.
       </span>
       {/* A full 44px touch target on phones and tablets; from lg up the line stays one compact row. */}
       <a href={paperVersionHref(fallback, context)} data-testid="paper-version-status-default-link" className="inline-flex min-h-[44px] items-center font-medium lg:min-h-[32px] text-[var(--db-accent-strong)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] dark:text-[var(--db-accent)]">

@@ -103,7 +103,7 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
 
   it('renders the Selection Stats heading when no samples are selected', () => {
     renderPanel();
-    expect(screen.getByText(/Selection Stats/)).toBeInTheDocument();
+    expect(screen.getByText(/Selection & Stats/)).toBeInTheDocument();
   });
 
   it('renders the no-selection empty state when identifiedFeatures is empty', () => {

@@ -356,7 +356,7 @@ export default async function SiteAggregatesPreviewPage() {
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
         <header>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            Matrix Map -- Site Aggregate Preview (Option C)
+            Database -- Site Aggregate Preview (Option C)
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
             Preview of what centroid-tier data would look like as one marker per site instead of

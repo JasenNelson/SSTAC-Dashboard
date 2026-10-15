@@ -47,7 +47,7 @@ import MatrixMapLoader from './MatrixMapLoader';
 import { EMPTY_MATRIX_SITE_AGGREGATE_DATA } from './types';
 
 export const metadata = {
-  title: 'Matrix Interactive Map | SSTAC Dashboard',
+  title: 'Database | SSTAC Dashboard',
   description:
     'Province-wide BC sediment-data interactive map (PR-MAP-2: empty map + base tiles + 14 BC WMS overlays).',
 };
@@ -133,14 +133,12 @@ export default async function MatrixMapPage() {
           Matrix Options
         </p>
         <h1 className="mt-0.5 text-lg font-bold text-slate-900 dark:text-slate-100">
-          Interactive Map -- PR-MAP-3a (samples + symbology)
+          Database
         </h1>
         <p className="mt-1 max-w-3xl text-xs text-slate-600 dark:text-slate-300">
-          PR-MAP-3a renders matrix-map samples with the 9-state symbology
-          (3 classifications x 3 coordinate-quality tiers) + the partial-
-          visibility banner. Identify (PR-MAP-3b) + selection (PR-MAP-4)
-          follow. Toggle BC public WMS overlays in the left rail; switch
-          base tiles from the top bar.
+          Province-wide sediment quality samples on a map, symbolized by
+          classification and coordinate quality. Toggle BC public WMS overlays
+          in the left rail; switch base tiles from the top bar.
         </p>
       </header>
       <div className="relative min-h-0 flex-1">

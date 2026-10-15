@@ -308,7 +308,7 @@ describe('SsdWorkbench', () => {
     render(<SsdWorkbench onOpenEvidenceLibrary={handleOpenEvidenceLibrary} />);
 
     fireEvent.click(
-      screen.getByRole('button', { name: /Compare in References & Values/i }),
+      screen.getByRole('button', { name: /Compare in Catalogue/i }),
     );
 
     expect(handleOpenEvidenceLibrary).toHaveBeenCalledWith({

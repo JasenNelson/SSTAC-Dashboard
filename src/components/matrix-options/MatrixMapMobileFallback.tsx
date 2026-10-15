@@ -29,10 +29,10 @@ export function MatrixMapMobileFallback() {
           </div>
         </div>
         <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          Interactive Map needs a wider viewport
+          Database map needs a wider viewport
         </h3>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-          Use a desktop or tablet (768px or wider) for the full interactive map.
+          Use a desktop or tablet (768px or wider) for the full Database map.
         </p>
         <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
           All other Matrix Options tabs remain fully usable on this device.

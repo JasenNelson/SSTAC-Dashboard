@@ -602,7 +602,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     );
     fireEvent.click(
       within(calculatorPanel).getByRole('button', {
-        name: /Open References & Values/i,
+        name: /Open Catalogue/i,
       }),
     );
 
@@ -702,6 +702,26 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(screen.getByRole('separator', { name: /Resize measurement workbench/i })).toBeInTheDocument();
   });
 
+  it('names the Database left panel controls Selection & Stats with visible text inside the accessible name', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
+
+    const toggle = screen.getByRole('button', { name: 'Hide Selection & Stats panel' });
+    expect(toggle.textContent).toContain('Selection & Stats');
+    expect(screen.getByRole('heading', { name: 'Selection & Stats' })).toBeInTheDocument();
+    expect(screen.getByRole('separator', { name: 'Resize Selection & Stats panel' })).toBeInTheDocument();
+    fireEvent.click(toggle);
+
+    const rail = screen.getByRole('button', { name: 'Expand Selection & Stats panel' });
+    expect(rail.textContent).toContain('Selection & Stats');
+    expect(document.body.textContent).not.toContain('Filters & Stats');
+  });
+
   it('renders Matrix Map left wrapper at the default width with a resize separator', () => {
     Object.defineProperty(window, 'innerWidth', {
       configurable: true,
@@ -715,7 +735,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     // Default left panel width = 320px (MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH).
     expect(leftWrapper).toHaveStyle({ width: '320px' });
     expect(
-      screen.getByRole('separator', { name: /Resize selection stats panel/i }),
+      screen.getByRole('separator', { name: /Resize Selection & Stats panel/i }),
     ).toBeInTheDocument();
   });
 
@@ -770,7 +790,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       screen.getByRole('separator', { name: /Resize measurement workbench/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('separator', { name: /Resize selection stats panel/i }),
+      screen.getByRole('separator', { name: /Resize Selection & Stats panel/i }),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Focus measurement workbench/i }));
@@ -781,7 +801,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
         screen.queryByRole('separator', { name: /Resize measurement workbench/i }),
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByRole('separator', { name: /Resize selection stats panel/i }),
+        screen.queryByRole('separator', { name: /Resize Selection & Stats panel/i }),
       ).not.toBeInTheDocument();
     });
   });
@@ -865,7 +885,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     // Initial width = 320px.
     expect(leftWrapper).toHaveStyle({ width: '320px' });
 
-    const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
+    const leftSep = screen.getByRole('separator', { name: /Resize Selection & Stats panel/i });
     // pointerdown at x=320, pointermove to x=370 (right = wider left panel).
     fireEvent.pointerDown(leftSep, { clientX: 320 });
     fireEvent(window, new PointerEvent('pointermove', { clientX: 370, bubbles: true }));
@@ -886,7 +906,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
-    const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
+    const leftSep = screen.getByRole('separator', { name: /Resize Selection & Stats panel/i });
     // pointerdown at x=320, pointermove to x=280 (left = narrower left panel).
     fireEvent.pointerDown(leftSep, { clientX: 320 });
     fireEvent(window, new PointerEvent('pointermove', { clientX: 280, bubbles: true }));
@@ -907,7 +927,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
-    const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
+    const leftSep = screen.getByRole('separator', { name: /Resize Selection & Stats panel/i });
     // Drag far left -- desired = 320 - 200 = 120 which is below min 280.
     fireEvent.pointerDown(leftSep, { clientX: 320 });
     fireEvent(window, new PointerEvent('pointermove', { clientX: 120, bubbles: true }));
@@ -966,7 +986,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
-    const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
+    const leftSep = screen.getByRole('separator', { name: /Resize Selection & Stats panel/i });
 
     fireEvent.keyDown(leftSep, { key: 'ArrowRight' });
 
@@ -984,7 +1004,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
-    const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
+    const leftSep = screen.getByRole('separator', { name: /Resize Selection & Stats panel/i });
 
     fireEvent.keyDown(leftSep, { key: 'ArrowLeft' });
 
@@ -1002,7 +1022,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
-    const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
+    const leftSep = screen.getByRole('separator', { name: /Resize Selection & Stats panel/i });
 
     // Nudge down many times -- should floor at 280.
     for (let i = 0; i < 20; i++) {
@@ -2141,7 +2161,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     it('F3: left panel toggle aria-expanded matches panel state', () => {
       render(<MatrixDashboard {...DEFAULT_PROPS} />);
       clickCalculatorTab();
-      const leftToggle = screen.getByRole('button', { name: /Guide panel$/i });
+      const leftToggle = screen.getByRole('button', { name: /Pathway Guide panel$/i });
       expect(leftToggle).toHaveAttribute('aria-expanded', 'false');
       fireEvent.click(leftToggle);
       expect(leftToggle).toHaveAttribute('aria-expanded', 'true');

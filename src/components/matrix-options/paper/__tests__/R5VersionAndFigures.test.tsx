@@ -243,7 +243,7 @@ describe('PaperVersionControl and PaperVersionStatus', () => {
   const context = { mode: 'working-draft', cohort: null, stableSectionId: 'sec-7-8' } as const;
   const DEFAULT_OPTION_TEXT = 'Earlier draftThe earlier draft of the paper. Responses to it remain separate from the current collaborative expert-review draft.';
   const R5_OPTION_TEXT = 'Interim review draftThe interim review draft of the paper. Responses to it remain separate from other paper versions.';
-  const R5_STATUS_TEXT = 'Interim review draft. You are viewing an earlier draft. Responses to this draft are separate from the current collaborative expert-review draft.';
+  const R5_STATUS_TEXT = 'Interim review draft. You are viewing an earlier draft. Responses to this draft are separate from the current Options Paper working draft.';
 
   it('binds exactly these names, and none of them names a version, a saved response or a future default', () => {
     const [currentRelease, defaultRelease, r5Release] = PAPER_RELEASES;
@@ -329,7 +329,7 @@ describe('PaperVersionControl and PaperVersionStatus', () => {
 });
 
 describe('RevisedPaperWorkspace: draft version in the header', () => {
-  const R5_STATUS_TEXT = 'Interim review draft. You are viewing an earlier draft. Responses to this draft are separate from the current collaborative expert-review draft.';
+  const R5_STATUS_TEXT = 'Interim review draft. You are viewing an earlier draft. Responses to this draft are separate from the current Options Paper working draft.';
   const WITHHELD_NOTICE = 'Appendix L is under revision and is not included in this presentation.';
   const outline: readonly PaperOutlineNavEntry[] = [
     { id: 'n1', anchor: 'intro', label: '1 Introduction', depth: 1, level: 1, parentId: null, childIds: ['n2'] },
