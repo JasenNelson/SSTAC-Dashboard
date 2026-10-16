@@ -19,7 +19,7 @@ describe('Paper reader route states', () => {
     expect(screen.queryByRole('main')).not.toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('No unverified content was displayed');
     expect(screen.queryByText('sensitive detail')).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Retry verified load' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(reset).toHaveBeenCalledOnce();
   });
 
@@ -27,6 +27,6 @@ describe('Paper reader route states', () => {
     render(<MatrixOptionsPaperNotFound />);
     expect(screen.queryByRole('main')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Paper version or section not found' })).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Open the current collaborative expert-review draft' })).toHaveAttribute('href', '/matrix-options/paper');
+    expect(screen.getByRole('link', { name: 'Open the current Options Paper working draft' })).toHaveAttribute('href', '/matrix-options/paper');
   });
 });

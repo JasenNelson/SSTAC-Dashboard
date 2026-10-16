@@ -97,8 +97,8 @@ describe('ConceptualMatrix -- Vision for Modernizing Schedule 3.4', () => {
     render(<ConceptualMatrix />);
 
     const objectives = screen.getByTestId('phase-2-objectives');
-    expect(within(objectives).getByText(/See Interactive Map/i)).toBeInTheDocument();
-    expect(within(objectives).getByText(/See References & Values/i)).toBeInTheDocument();
+    expect(within(objectives).getByText(/See Database/i)).toBeInTheDocument();
+    expect(within(objectives).getByText(/See Catalogue/i)).toBeInTheDocument();
     expect(within(objectives).getByText(/See Options Paper/i)).toBeInTheDocument();
     expect(within(objectives).queryByText(/See TWG Review/i)).not.toBeInTheDocument();
 

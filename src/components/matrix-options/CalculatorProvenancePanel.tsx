@@ -288,7 +288,7 @@ export default function CalculatorProvenancePanel({
               onClick={openEvidenceLibrary}
               className="min-h-8 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:text-sky-300"
             >
-              Open References & Values
+              Open Catalogue
             </button>
           )}
         </div>

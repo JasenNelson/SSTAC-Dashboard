@@ -10,8 +10,6 @@ export interface PartialVisibilityBannerProps {
   onRefresh: () => void;
 }
 
-const DEFAULT_CONTACT_EMAIL = 'jasen.nelson@gmail.com';
-
 function buildMailtoHref(
   contactEmail: string,
   hiddenSampleCount: number,
@@ -19,9 +17,9 @@ function buildMailtoHref(
   hiddenDraIds: string[],
 ) {
   const safeContactEmail = contactEmail.replace(/[\r\n]/g, '').trim();
-  const subject = 'Matrix map private DRA access request';
+  const subject = 'Database private DRA access request';
   const body = [
-    'Please review private DRA access for hidden matrix-map samples.',
+    'Please review private DRA access for hidden Database samples.',
     '',
     `Hidden sample count: ${hiddenSampleCount}`,
     `Hidden DRA count: ${hiddenDraCount}`,
@@ -42,15 +40,17 @@ export default function PartialVisibilityBanner({
 }: PartialVisibilityBannerProps) {
   if (hiddenSampleCount <= 0) return null;
 
-  // cross_project_check_before_recreate: no existing matrix admin contact
-  // convention was found, so keep the fallback isolated behind this override.
-  const resolvedContactEmail = contactEmail?.trim() || DEFAULT_CONTACT_EMAIL;
-  const contactHref = buildMailtoHref(
-    resolvedContactEmail,
-    hiddenSampleCount,
-    hiddenDraCount,
-    hiddenDraIds,
-  );
+  // No hard-coded fallback address: the Contact admin link renders only when
+  // a contact email is configured.
+  const resolvedContactEmail = contactEmail?.trim() ?? '';
+  const contactHref = resolvedContactEmail
+    ? buildMailtoHref(
+        resolvedContactEmail,
+        hiddenSampleCount,
+        hiddenDraCount,
+        hiddenDraIds,
+      )
+    : null;
 
   return (
     <section
@@ -80,24 +80,20 @@ export default function PartialVisibilityBanner({
           <button
             type="button"
             onClick={onRefresh}
-            aria-label="Refresh matrix map samples"
+            aria-label="Refresh Database samples"
             className="inline-flex h-9 items-center gap-2 rounded-md border border-amber-300 bg-white px-3 text-sm font-medium text-amber-900 shadow-sm transition-colors hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:border-amber-700 dark:bg-slate-900 dark:text-amber-100 dark:hover:bg-amber-900/40 dark:focus:ring-offset-slate-900"
           >
             <RefreshCw className="h-4 w-4" aria-hidden="true" />
             Refresh
           </button>
+          {contactHref && (
           <a
             href={contactHref}
             className="inline-flex h-9 items-center rounded-md border border-amber-300 bg-white px-3 text-sm font-medium text-amber-900 shadow-sm transition-colors hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:border-amber-700 dark:bg-slate-900 dark:text-amber-100 dark:hover:bg-amber-900/40 dark:focus:ring-offset-slate-900"
           >
             Contact admin
           </a>
-          <a
-            href="/matrix-options/private-data-access"
-            className="inline-flex h-9 items-center rounded-md border border-transparent px-3 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 dark:text-amber-100 dark:hover:bg-amber-900/40 dark:focus:ring-offset-slate-900"
-          >
-            Learn more
-          </a>
+          )}
         </div>
       </div>
     </section>

@@ -520,7 +520,7 @@ export default function EcoDirectEqPCalculator({
           />
           <div className="flex items-center justify-between mt-1">
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Default seeded from the eco References &amp; Values catalog
+              Default seeded from the eco Catalogue
               (provisional, frame-aware) or the substance library; HITL
               overrides per site review.
             </p>

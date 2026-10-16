@@ -11,16 +11,16 @@ Use the Phase 2 review surfaces to evaluate derivation options, explore pathway 
 Use the top tabs to move between the main review surfaces:
 
 *   **Phase 2 Scope (2026-2027):**
-    *   **Guide:** Gives project context, workflow, and key terms.
     *   **Modernizing Schedule 3.4:** Sets out the three-part structure of the modernized Schedule 3.4 and the four receptor-pathways of the Part 1 Matrix standards.
-    *   **TWG Review:** The working draft Matrix Options Paper, supporting inline commentary and Technical Working Group review.
+    *   **Guide:** Gives project context, workflow, and key terms.
+    *   **Options Paper:** The working draft Matrix Options Paper, supporting inline commentary and Technical Working Group review.
 *   **Phase 3 Scope (under development):**
-    *   **Database:** Geospatial map and interactive querying of provincial sediment quality data.
+    *   **Database:** Filtered tables of provincial sediment quality data, plus a map to view and select locations and data.
     *   **Calculator:** Interactive screening-level standard derivations across ecological and human health pathways.
     *   **SSD Workbench:** Species Sensitivity Distribution modeling for deriving protective hazardous concentration ($HC_p$) thresholds from ecotoxicological test data.
     *   **Catalogue:** Comprehensive evidence library of regulatory sources, toxicity reference values (RfDs, slope factors), equations, and audited parameter provenance.
 
-A typical review flow is: read the **Guide**, review the vision and approach for **Modernizing Schedule 3.4**, and then contribute to the collaborative development of the draft Matrix Options paper in **TWG Review**.
+A typical review flow is: read the **Guide**, review the vision and approach for **Modernizing Schedule 3.4**, and then contribute to the collaborative development of the draft Matrix Options paper in **Options Paper**.
 
 <!-- SECTION_BOUNDARY -->
 

@@ -724,10 +724,10 @@ export default async function MatrixMapHealthPage() {
       <div className="mx-auto max-w-7xl px-6 py-8">
         <header className="mb-8">
           <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            Admin / Matrix Map
+            Admin / Database
           </p>
           <h1 className="mt-1 text-2xl font-bold text-slate-900 dark:text-white">
-            Matrix Map -- Health
+            Database -- Health
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
             Read-only operational snapshot of the matrix_map schema
@@ -883,7 +883,7 @@ export default async function MatrixMapHealthPage() {
                 href="/admin/matrix-map/publish"
                 className="text-sm font-medium text-sky-700 underline hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-100"
               >
-                Go to Matrix Map Publish control
+                Go to Database Publish
               </Link>
             </div>
             {draListRes.error ? (

@@ -31,6 +31,12 @@ const DISPLAY_LABELS: Partial<Record<MatrixOptionsViewId, string>> = {
   'References & Values': 'Catalogue',
 };
 
+export const MATRIX_OPTIONS_VIEW_ALIASES: Readonly<Record<string, MatrixOptionsViewId>> = Object.freeze({
+  'Options Paper': 'TWG Review',
+  'Database': 'Interactive Map',
+  'Catalogue': 'References & Values',
+});
+
 export interface MatrixOptionsViewDefinition {
   id: MatrixOptionsViewId;
   dashboardLabel: string;
@@ -56,7 +62,11 @@ export function parseMatrixOptionsViewParam(
   value: string | string[] | undefined,
 ): MatrixOptionsViewId {
   const candidate = Array.isArray(value) ? value[0] : value;
-  return isMatrixOptionsViewId(candidate) ? candidate : 'The Guide';
+  if (isMatrixOptionsViewId(candidate)) return candidate;
+  if (typeof candidate === 'string' && Object.prototype.hasOwnProperty.call(MATRIX_OPTIONS_VIEW_ALIASES, candidate)) {
+    return MATRIX_OPTIONS_VIEW_ALIASES[candidate];
+  }
+  return 'The Guide';
 }
 
 export function isMatrixOptionsPaperWorkspaceEnabled(value: string | undefined): boolean {

@@ -88,8 +88,8 @@ export async function fetchMatrixMapSamplesServerSide(
         code: (rpcErr as { code?: unknown }).code,
       });
       fetchErrorMessage =
-        'Samples data temporarily unavailable -- check ' +
-        '/admin/matrix-map/health';
+        'Sample data is temporarily unavailable. Reload the page to try again; if the problem ' +
+        'continues, contact a Database administrator.';
     } else if (rpcData) {
       // The RPC returns a JSON object (jsonb on the wire). Cast through
       // unknown so we are explicit about the boundary; the structural
@@ -135,8 +135,8 @@ export async function fetchMatrixMapSamplesServerSide(
     // abort). Same user-facing message + log the thrown error.
     console.error('[matrix-map] RPC fetch_samples_with_hidden_summary THREW:', thrownErr);
     fetchErrorMessage =
-      'Samples data temporarily unavailable -- check ' +
-      '/admin/matrix-map/health';
+      'Sample data is temporarily unavailable. Reload the page to try again; if the problem ' +
+      'continues, contact a Database administrator.';
   }
 
   return { initialMapData, fetchErrorMessage };

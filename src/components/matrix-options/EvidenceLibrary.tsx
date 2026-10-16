@@ -6570,7 +6570,7 @@ export default function EvidenceLibrary({
                   setSelectedSourceId(null);
                 }}
                 className="min-h-[44px] inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-100 hover:border-sky-500 hover:text-sky-700 dark:hover:border-sky-400 dark:hover:text-sky-300 shadow-2xs transition-all"
-                aria-label="Back to catalog dashboard"
+                aria-label="Back to Catalogue"
               >
                 <ChevronLeft className="h-4 w-4" />
                 <span>Back to Catalogue</span>

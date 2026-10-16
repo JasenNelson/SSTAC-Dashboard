@@ -37,10 +37,8 @@ test.describe('Matrix Map member visibility (T40)', () => {
         banner.getByRole('heading', { name: 'Hidden samples behind private DRAs' }),
       ).toBeVisible();
       // Member-facing affordances (NOT admin publish controls): request access, not mutate visibility.
-      // "Contact admin" is a mailto <a> link; "Refresh" is the sole <button>. Assert both roles as
-      // rendered by PartialVisibilityBanner.
-      await expect(banner.getByRole('link', { name: 'Contact admin' })).toBeVisible();
-      await expect(banner.getByRole('button', { name: 'Refresh matrix map samples' })).toBeVisible();
+      // "Refresh" is the sole <button>. Assert its role as rendered by PartialVisibilityBanner.
+      await expect(banner.getByRole('button', { name: 'Refresh Database samples' })).toBeVisible();
     } else {
       // Unauthenticated: /matrix-options is middleware-gated.
       await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });

@@ -1643,7 +1643,7 @@ test.describe('Matrix Options Paper private draft journeys', () => {
     await expect(page.getByTestId('paper-version-toggle')).toContainText('Interim draft');
     const status = page.getByTestId('paper-version-status');
     await expect(status).toBeVisible();
-    await expect(status).toContainText('Interim review draft. You are viewing an earlier draft. Responses to this draft are separate from the current collaborative expert-review draft.');
+    await expect(status).toContainText('Interim review draft. You are viewing an earlier draft. Responses to this draft are separate from the current Options Paper working draft.');
     await expect(page.getByRole('link', { name: 'Working Draft', exact: true })).toHaveAttribute('href', privateStart);
     await expect(page.locator('h1')).toHaveCount(1);
 
@@ -1985,7 +1985,7 @@ test.describe('Matrix Options Paper private draft journeys', () => {
 
     await page.goto(`${privateWorkspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
-    await expect(page.getByTestId('paper-version-status')).toContainText('Responses to this draft are separate from the current collaborative expert-review draft.');
+    await expect(page.getByTestId('paper-version-status')).toContainText('Responses to this draft are separate from the current Options Paper working draft.');
     await expect(page.getByTestId('review-progress-count')).toHaveText('0 of 12 complete');
 
     // Q1: identical wording, so the earlier answer is shown for reference and the editor is empty.

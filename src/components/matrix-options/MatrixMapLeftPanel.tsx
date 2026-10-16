@@ -73,7 +73,7 @@ export function MatrixMapLeftPanel({ initialMapData, selectableSamples }: Matrix
           Map Selection
         </p>
         <h3 className="mt-0.5 text-sm font-bold text-slate-900 dark:text-slate-100">
-          Selection Stats
+          Selection &amp; Stats
         </h3>
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-3">

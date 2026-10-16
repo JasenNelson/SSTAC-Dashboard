@@ -81,7 +81,7 @@ describe('/matrix-options/paper', () => {
   it('uses truthful authenticated-release wording for missing paper identities', () => {
     render(<MatrixOptionsPaperNotFound />);
     expect(screen.getByText(/requested paper version or section is not available/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open the current collaborative expert-review draft' })).toHaveAttribute('href', '/matrix-options/paper');
+    expect(screen.getByRole('link', { name: 'Open the current Options Paper working draft' })).toHaveAttribute('href', '/matrix-options/paper');
     expect(screen.queryByText(/synthetic release|current fixture/i)).not.toBeInTheDocument();
   });
 });

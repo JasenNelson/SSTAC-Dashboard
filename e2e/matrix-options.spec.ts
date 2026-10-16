@@ -18,7 +18,7 @@ test.describe('Matrix Options default-policy review shortcuts', () => {
     }
   });
 
-  test('opens References & Values from the calculator candidate-default shortcut', async ({
+  test('opens Catalogue from the calculator candidate-default shortcut', async ({
     page,
   }) => {
     await gotoMatrixOptionsOrSkip(page);
@@ -51,7 +51,7 @@ test.describe('Matrix Options default-policy review shortcuts', () => {
     await expect(refTab).not.toContainText('Approve default');
   });
 
-  test('filters References by candidate defaults without promotion language', async ({
+  test('filters Catalogue by candidate defaults without promotion language', async ({
     page,
   }) => {
     await gotoMatrixOptionsOrSkip(page);
@@ -281,12 +281,12 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     await expect(tabbableTabs).toHaveCount(1);
   });
 
-  test('aria-controls on the active tab resolves to a real tabpanel element (References & Values)', async ({
+  test('aria-controls on the active tab resolves to a real tabpanel element (Catalogue)', async ({
     page,
   }) => {
     await gotoMatrixOptionsOrSkip(page);
 
-    // The References & Values panel was, until recently, missing its
+    // The Catalogue panel was, until recently, missing its
     // tabpanel wrapper -- aria-controls pointed at nothing. That kind of
     // dangling IDREF is invisible without asserting the target actually
     // resolves in the DOM.
@@ -307,11 +307,11 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
 
     // Calculator left guide panel starts collapsed (effectiveShowLeftPanel = false).
     // Open it first, then collapse it to verify inert behavior.
-    const showButton = page.getByRole('button', { name: 'Show Guide panel', exact: true });
+    const showButton = page.getByRole('button', { name: 'Show Pathway Guide panel', exact: true });
     await expect(showButton).toBeVisible();
     await showButton.click();
 
-    const hideButton = page.getByRole('button', { name: 'Hide Guide panel', exact: true });
+    const hideButton = page.getByRole('button', { name: 'Hide Pathway Guide panel', exact: true });
     await expect(hideButton).toBeVisible();
     await hideButton.click();
 

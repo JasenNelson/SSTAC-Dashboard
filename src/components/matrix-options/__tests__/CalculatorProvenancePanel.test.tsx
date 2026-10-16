@@ -193,7 +193,7 @@ describe('CalculatorProvenancePanel', () => {
     });
   });
 
-  describe('"Open References & Values" button', () => {
+  describe('"Open Catalogue" button', () => {
     it('calls onOpenEvidenceLibrary when button is clicked', () => {
       const onOpenEvidenceLibrary = vi.fn();
 
@@ -206,7 +206,7 @@ describe('CalculatorProvenancePanel', () => {
       );
 
       fireEvent.click(
-        screen.getByRole('button', { name: 'Open References & Values' }),
+        screen.getByRole('button', { name: 'Open Catalogue' }),
       );
 
       expect(onOpenEvidenceLibrary).toHaveBeenCalledOnce();
@@ -221,7 +221,7 @@ describe('CalculatorProvenancePanel', () => {
       );
 
       expect(
-        screen.queryByRole('button', { name: 'Open References & Values' }),
+        screen.queryByRole('button', { name: 'Open Catalogue' }),
       ).not.toBeInTheDocument();
     });
   });

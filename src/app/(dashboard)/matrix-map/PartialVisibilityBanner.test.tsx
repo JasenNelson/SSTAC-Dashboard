@@ -55,7 +55,7 @@ describe('PartialVisibilityBanner', () => {
     renderBanner({ onRefresh });
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'Refresh matrix map samples' }),
+      screen.getByRole('button', { name: 'Refresh Database samples' }),
     );
 
     expect(onRefresh).toHaveBeenCalledTimes(1);
@@ -75,4 +75,41 @@ describe('PartialVisibilityBanner', () => {
 
     expect(container.innerHTML).not.toContain(HIDDEN_DRA_ID);
   });
+});
+
+describe('contact admin contract', () => {
+  it('builds a Database-named mailto subject for the configured contact', () => {
+    renderBanner({ contactEmail: 'matrix-admin@example.com' });
+
+    const href =
+      screen.getByRole('link', { name: 'Contact admin' }).getAttribute('href') ?? '';
+    expect(href.startsWith('mailto:matrix-admin@example.com')).toBe(true);
+    expect(decodeURIComponent(href)).toContain(
+      'subject=Database private DRA access request',
+    );
+  });
+
+  it('does not render a Learn more link when configured', () => {
+    renderBanner({ contactEmail: 'matrix-admin@example.com' });
+
+    expect(
+      screen.queryByRole('link', { name: 'Learn more' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it.each([undefined, '', '   '])(
+    'hides contact admin and leaks no address when contactEmail is %j',
+    (contactEmail) => {
+      const { container } = renderBanner({ contactEmail });
+
+      expect(
+        screen.queryByRole('link', { name: 'Contact admin' }),
+      ).not.toBeInTheDocument();
+      expect(container.textContent ?? '').not.toContain('@');
+      for (const anchor of Array.from(container.querySelectorAll('a[href]'))) {
+        expect(anchor.getAttribute('href') ?? '').not.toContain('@');
+      }
+      expect(screen.getByRole('button', { name: /Refresh/ })).toBeInTheDocument();
+    },
+  );
 });

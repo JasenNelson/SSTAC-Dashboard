@@ -125,7 +125,7 @@ export function MatrixMapRightPanel({
         if (cancelled) return;
         if (error) {
           setRows([]);
-          const message = 'Unable to load measurements for this selection. Check RPC permissions or try again.';
+          const message = 'Measurements for this selection could not be loaded. Select the samples again or reload the page.';
           setErrorMessage(message);
           setMeasurementError(selectedIdKey, message);
         } else {
@@ -136,7 +136,7 @@ export function MatrixMapRightPanel({
       } catch {
         if (cancelled) return;
         setRows([]);
-        const message = 'Unable to load measurements for this selection. Check RPC permissions or try again.';
+        const message = 'Measurements for this selection could not be loaded. Select the samples again or reload the page.';
         setErrorMessage(message);
         setMeasurementError(selectedIdKey, message);
       } finally {

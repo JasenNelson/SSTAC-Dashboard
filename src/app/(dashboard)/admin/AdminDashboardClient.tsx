@@ -20,7 +20,6 @@ import {
   Map,
   MapPin,
   ShieldCheck,
-  Check,
 } from 'lucide-react';
 import { isAgenticOsEnabled } from '@/lib/agentic-os/feature-flag';
 
@@ -126,7 +125,9 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
               <div>
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Completion Rate</p>
                 <p className="text-3xl font-bold text-teal-600">
-                  {Math.round((metrics.completedMilestones / metrics.totalMilestones) * 100)}%
+                  {metrics.totalMilestones === 0
+                    ? '--'
+                    : `${Math.round((metrics.completedMilestones / metrics.totalMilestones) * 100)}%`}
                 </p>
               </div>
               <div className="w-12 h-12 bg-teal-100 dark:bg-teal-900/40 rounded-xl flex items-center justify-center">
@@ -238,7 +239,7 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                   TWG Review
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
-                  Analyze and synthesize TWG review feedback
+                  Analyze and synthesize TWG white paper review feedback
                 </p>
               </div>
             </Link>
@@ -253,7 +254,22 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                   Matrix Review
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
-                  Review submitted TWG matrix reviews and ratings
+                  Review earlier Matrix Options phase feedback and ratings
+                </p>
+              </div>
+            </Link>
+
+            {/* Options Paper Reviews */}
+            <Link href="/admin/matrix-options-paper-reviews" className="group">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-sky-300">
+                <div className="w-16 h-16 bg-sky-100 dark:bg-sky-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-sky-200 dark:group-hover:bg-sky-800 transition-colors">
+                  <FileSearch className="w-8 h-8 text-sky-700 dark:text-sky-300" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mb-2">
+                  Options Paper Reviews
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  View submitted Options Paper review responses and export them as CSV
                 </p>
               </div>
             </Link>
@@ -310,10 +326,10 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                   <MapPin className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors mb-2">
-                  Matrix Map Tables
+                  Database Health
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
-                  Manage DRA publications and review the source catalog
+                  Read-only operational snapshot of the Database tables
                 </p>
               </div>
             </Link>
@@ -325,7 +341,7 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                   <BarChart3 className="w-8 h-8 text-slate-700 dark:text-slate-300" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mb-2">
-                  Matrix Map Site Aggregates
+                  Database Site Aggregates
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
                   Read-only Option C preview: one marker per site instead of one pin per sample. Publishes nothing.
@@ -340,7 +356,7 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                   <Map className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors mb-2">
-                  Matrix Map Publish
+                  Database Publish
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
                   Publish or unpublish reviewed DRAs through the audited admin flow
@@ -400,63 +416,6 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                 </div>
               </Link>
             )}
-          </div>
-        </div>
-
-        {/* System Status */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-slate-200 dark:border-slate-700">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">System Status</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
-                <span className="w-6 h-6 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mr-3">
-                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                </span>
-                All Systems Operational
-              </h3>
-              <div className="space-y-3 text-sm text-slate-500 dark:text-slate-400">
-                <div className="flex items-center justify-between">
-                  <span>Database Connection</span>
-                  <span className="text-green-600 font-medium inline-flex items-center gap-1">
-                    <Check className="w-3.5 h-3.5" /> Connected
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Authentication Service</span>
-                  <span className="text-green-600 font-medium inline-flex items-center gap-1">
-                    <Check className="w-3.5 h-3.5" /> Active
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>File Storage</span>
-                  <span className="text-green-600 font-medium inline-flex items-center gap-1">
-                    <Check className="w-3.5 h-3.5" /> Available
-                  </span>
-                </div>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center">
-                <span className="w-6 h-6 bg-sky-100 dark:bg-sky-900/40 rounded-full flex items-center justify-center mr-3">
-                  <span className="w-2 h-2 bg-sky-500 rounded-full"></span>
-                </span>
-                Recent Activity
-              </h3>
-              <div className="space-y-3 text-sm text-slate-500 dark:text-slate-400">
-                <div className="flex items-center justify-between">
-                  <span>Last User Login</span>
-                  <span className="text-slate-400 dark:text-slate-500">2 hours ago</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Last Document Upload</span>
-                  <span className="text-slate-400 dark:text-slate-500">1 day ago</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Last Announcement</span>
-                  <span className="text-slate-400 dark:text-slate-500">3 days ago</span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

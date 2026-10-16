@@ -159,13 +159,13 @@ const OBJECTIVES: { title: string; body: string; home?: string }[] = [
     title: 'BC Aquatic Database',
     body:
       'Built by the Ministry of Environment and Parks from documents submitted to the Site Remediation Program and shared datasets. Establishes concentration ranges across BC, shows where substances occur, and indicates which sites need site-specific risk-based assessment.',
-    home: 'Interactive Map',
+    home: 'Database',
   },
   {
     title: 'Policy-ready input parameters',
     body:
       'Toxicity Reference Values for human and ecological health, plus sediment grain size thresholds, receptor characteristics, exposure assumptions, and water lot use classifications. These feed the Phase 3 calculations; Protocol 28 provides the precedent for other media.',
-    home: 'References & Values',
+    home: 'Catalogue',
   },
   {
     title: 'Matrix Options Paper',

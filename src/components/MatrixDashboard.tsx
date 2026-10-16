@@ -992,8 +992,8 @@ export default function MatrixDashboard({
         ? 'It exceeds the preliminary standard, so it sets the adjusted standard.'
         : 'It is at or above the background UTL, so it sets the adjusted standard.'
       : undefined;
-  const rightPanelTitle =
-    activeTopTab === 'Calculator' ? 'Value Search' : 'Quick Reference';
+  // The right rail renders only in Calculator mode, so its title is fixed.
+  const rightPanelTitle = 'Value Search';
   // A11y fix (F2, 2026-08-14 adversarial review): content-aware aria-label
   const rightPanelToggleLabel = isCalculatorMode
     ? `${effectiveShowRightPanel ? 'Hide' : 'Show'} ${rightPanelTitle} panel`
@@ -1004,19 +1004,19 @@ export default function MatrixDashboard({
         : `${effectiveShowRightPanel ? 'Hide' : 'Show'} right panel`;
 
   const leftPanelToggleLabel = isCalculatorMode
-    ? `${effectiveShowLeftPanel ? 'Hide' : 'Show'} Guide panel`
+    ? `${effectiveShowLeftPanel ? 'Hide' : 'Show'} Pathway Guide panel`
     : isMapMode
-      ? `${effectiveShowLeftPanel ? 'Hide' : 'Show'} Filters & Stats panel`
+      ? `${effectiveShowLeftPanel ? 'Hide' : 'Show'} Selection & Stats panel`
       : `${effectiveShowLeftPanel ? 'Hide' : 'Show'} Filters panel`;
 
   const leftPanelToggleText = isCalculatorMode
-    ? 'Guide'
+    ? 'Pathway Guide'
     : isMapMode
-      ? 'Filters & Stats'
+      ? 'Selection & Stats'
       : 'Filters';
 
   const rightPanelToggleText = isCalculatorMode
-    ? 'Input Parameter Search'
+    ? 'Value Search'
     : isMapMode
       ? 'Workbench'
       : isEvidenceLibraryMode
@@ -1087,24 +1087,12 @@ export default function MatrixDashboard({
           </div>
         );
       }
-      case 'The Guide':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Use the guide to understand the project phases, workspace tabs, and key terms.</p>;
-      case 'Vision for Modernizing Schedule 3.4':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Review the three-part vision for Schedule 3.4 and the four Part 1 receptor-pathways.</p>;
-      case 'Interactive Map':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Inspect sediment samples, measurements, filters, and map-linked selections.</p>;
-      case 'TWG Review':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Use the review tools to record Technical Working Group feedback.</p>;
-      case 'References & Values':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Review source metadata, calculator values, equations, and QA states.</p>;
-      case 'SSD Workbench':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Derive review-only SSD HCp candidates from ECOTOX-style toxicity records.</p>;
       default:
         return null;
     }
   };
 
-  const leftSidebarHeading = 'GUIDE';
+  const leftSidebarHeading = 'Pathway Guide';
 
   const renderToolReference = () => (
     <CalculatorValueSearchPanel
@@ -1403,7 +1391,7 @@ export default function MatrixDashboard({
                     type="button"
                     role="separator"
                     aria-orientation="vertical"
-                    aria-label="Resize selection stats panel"
+                    aria-label="Resize Selection & Stats panel"
                     aria-valuenow={matrixMapLeftPanelWidth}
                     aria-valuemin={MATRIX_MAP_LEFT_PANEL_MIN_WIDTH}
                     aria-valuemax={leftPanelAriaMax}
@@ -1453,14 +1441,14 @@ export default function MatrixDashboard({
                 {!showLeftPanel && (
                   <button
                     type="button"
-                    aria-label="Expand site filters and stats panel"
+                    aria-label="Expand Selection & Stats panel"
                     data-testid="matrix-map-expand-left-panel"
                     onClick={() => setShowLeftPanel(true)}
                     className="absolute left-0 top-1/2 -translate-y-1/2 z-[1000] bg-white/95 dark:bg-slate-800/95 border border-l-0 border-slate-200 dark:border-slate-700 shadow-md rounded-r-lg py-3 px-1.5 flex flex-col items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                   >
                     <ChevronRight className="w-3.5 h-3.5" />
                     <span className="[writing-mode:vertical-rl] rotate-180 text-[10px] font-bold tracking-wider uppercase">
-                      Filters &amp; Stats
+                      Selection &amp; Stats
                     </span>
                   </button>
                 )}

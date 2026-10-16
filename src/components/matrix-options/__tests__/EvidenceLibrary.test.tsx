@@ -1156,7 +1156,7 @@ describe('EvidenceLibrary panel rebalance', () => {
     expect(screen.getByTestId('evidence-library-value-detail')).toBeInTheDocument();
 
     fireEvent.click(
-      screen.getByRole('button', { name: /Back to catalog dashboard/ }),
+      screen.getByRole('button', { name: /Back to Catalogue/ }),
     );
     expect(
       screen.getByTestId('evidence-library-right-dashboard'),
