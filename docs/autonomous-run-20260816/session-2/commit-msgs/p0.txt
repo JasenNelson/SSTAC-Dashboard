@@ -1,0 +1,25 @@
+fix(ui): stop three P0 surfaces hiding or misstating regulatory data
+
+From docs/UI_AUDIT_ROUND2_TRIAGE_2026_08_16.md, plus one of the same class found in review.
+
+P0-1 MatrixMapRightPanel: censored is boolean | null, and a two-state ternary rendered null --
+an UNKNOWN detect/non-detect status -- as the word "Detected". That is the table asserting a
+confirmed detection the data does not support. Every neighbouring nullable column degrades
+honestly and filter-measurements.ts already handles null explicitly; this was the only site that
+asserted. Now an "unknown" badge.
+
+P0-2 SsdWorkbench: the exclusions table rendered .slice(0, 8) while the tile above reported the
+true total, so the two disagreed and only the honest one was legible. Cap removed; the container
+still scrolls on screen and de-clips on paper, so nothing is hidden.
+
+P0-4 TWGReviewPortal: reviewer comments were clipped at 5000 chars with no notice. The important
+part is WHERE truncation is detected -- the textareas carried maxLength, so the BROWSER truncated
+a paste before onChange fired, and a warning built on the handler would have been unreachable
+code that looked like a safeguard. maxLength removed, the limit enforced in handleCommentChange,
+and a role="alert" naming how many characters were dropped.
+
+Also: the PRIMARY matrix-map measurement table was capped max-h-[68vh]/[42vh] with no print
+reset, so it ended mid-list on paper. Its cap is composed through cn(), which is why the
+source-text sweep on the parent branch could not see it.
+
+Seven regression tests, each falsified two-sided against the reverted fix.
