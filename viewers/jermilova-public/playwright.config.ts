@@ -4,11 +4,12 @@ import { defineConfig, devices } from '@playwright/test';
 
 // Parity run: the anonymous Jermilova viewer vs the authenticated original /bn-rrm page.
 //
-// No webServer: the runtime runbook starts the viewer preview server and the original's
-// dev server itself, with owned process custody, and passes their URLs in:
+// The runtime runbook starts the viewer preview server itself (owned process custody).
+// The original's dev server is either already running or, with PARITY_START_ORIGINAL=true,
+// started by Playwright below. URLs are passed in:
 //   PARITY_VIEWER_URL    e.g. http://127.0.0.1:<port>   (anonymous viewer)
 //   PARITY_ORIGINAL_URL  e.g. http://127.0.0.1:<port>   (root app dev server)
-//   PARITY_EVIDENCE_DIR  absolute folder for screenshots + summaries
+//   PARITY_EVIDENCE_DIR  absolute folder for screenshots, summaries and test output
 //
 // Credentials use ONLY the repository's established mechanism: @next/env loadEnvConfig
 // (env files are read in place, never copied), E2E_AUTH_ENABLED=true plus
@@ -34,8 +35,55 @@ if (process.env.PARITY_REQUIRE_ORIGINAL === 'true' && (!authEnabled || !original
   throw new Error('PARITY_REQUIRE_ORIGINAL is set but the established E2E auth variables or PARITY_ORIGINAL_URL are missing.');
 }
 
+// Optional: let Playwright start the ORIGINAL (root app) dev server from this worktree,
+// as the root playwright.config.ts does, so it inherits the env loaded above in memory
+// (Supabase settings included) without any env file being copied. On Windows Playwright
+// stops it with `taskkill /T /F`; the runbook still verifies afterwards that no process
+// references this worktree's dev server and that the port is released.
+const startOriginal = process.env.PARITY_START_ORIGINAL === 'true';
+let originalPort = 0;
+if (startOriginal) {
+  // Unprivileged ports only (1024-65535; the runbook uses 3131). URL parsing drops a
+  // default port such as :80, which therefore fails closed here by design.
+  const parsed = originalBaseURL ? new URL(originalBaseURL) : null;
+  originalPort = parsed && /^[0-9]+$/.test(parsed.port) ? Number(parsed.port) : 0;
+  if (
+    !parsed ||
+    parsed.protocol !== 'http:' ||
+    parsed.hostname !== '127.0.0.1' ||
+    parsed.pathname !== '/' ||
+    originalPort < 1024 ||
+    originalPort > 65535
+  ) {
+    throw new Error('PARITY_START_ORIGINAL needs PARITY_ORIGINAL_URL of the form http://127.0.0.1:<port 1024-65535>.');
+  }
+  // Never start the original without a consumer: it exists only for the auth parity run.
+  if (!authEnabled || process.env.PARITY_REQUIRE_ORIGINAL !== 'true') {
+    throw new Error('PARITY_START_ORIGINAL requires PARITY_REQUIRE_ORIGINAL=true and the established E2E auth variables.');
+  }
+}
+
 export default defineConfig({
   testDir: './e2e',
+  // Test output goes to the evidence folder, never into the repository.
+  outputDir: path.join(process.env.PARITY_EVIDENCE_DIR, 'test-output'),
+  // Whole-run ceiling, below the runbook's outer bound, so Playwright's own teardown
+  // (which stops the webServer tree) runs before any outer kill could orphan it.
+  globalTimeout: 1_200_000,
+  webServer: startOriginal
+    ? {
+        command: `"${process.execPath}" "${path.join(repoRoot, 'node_modules', 'next', 'dist', 'bin', 'next')}" dev --hostname 127.0.0.1 --port ${originalPort}`,
+        cwd: repoRoot,
+        // Probing /login also warms the page the auth setup visits first.
+        url: `${originalBaseURL!.replace(/\/$/, '')}/login`,
+        reuseExistingServer: false,
+        timeout: 240_000,
+        stdout: 'ignore',
+        stderr: 'pipe',
+        // Same safety pin as the root playwright.config.ts webServer.
+        env: { ...(process.env as Record<string, string>), AGENTIC_OS_SPAWN_STUB: 'true' },
+      }
+    : undefined,
   // Never write an HTML report or trace: the setup project's step titles hold credentials.
   reporter: [['list']],
   timeout: 180_000,
