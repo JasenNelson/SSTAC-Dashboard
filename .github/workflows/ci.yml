@@ -31,6 +31,42 @@ jobs:
       - name: TypeScript check
         run: npx tsc --noEmit
 
+  # The Jermilova public viewer (viewers/jermilova-public) is a standalone package with its
+  # own vitest config and store aliases, so root Unit Tests exclude it; its gates run here.
+  viewer-jermilova:
+    name: Jermilova Viewer Gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # src-closure.json pins every src/ dependency to Git blobs at a base commit.
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Source closure and fork patch checks
+        run: |
+          node viewers/jermilova-public/scripts/src-closure.mjs --check
+          node viewers/jermilova-public/scripts/fork-patches.mjs --check
+
+      - name: Generate viewer Next.js types
+        working-directory: viewers/jermilova-public
+        run: npx next typegen .
+
+      - name: Viewer TypeScript check
+        run: npx tsc --noEmit -p viewers/jermilova-public/tsconfig.json --incremental false
+
+      - name: Viewer unit tests
+        working-directory: viewers/jermilova-public
+        run: npx vitest run --config vitest.config.ts
+
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -359,12 +395,13 @@ jobs:
   status-check:
     name: CI Status Check
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, unit-tests, build, e2e-tests, performance-analysis, wiki-graph-product-tests-windows]
+    needs: [lint-and-typecheck, viewer-jermilova, unit-tests, build, e2e-tests, performance-analysis, wiki-graph-product-tests-windows]
     if: always()
     steps:
       - name: Check build status
         run: |
           if [ "${{ needs.lint-and-typecheck.result }}" != "success" ] || \
+             [ "${{ needs.viewer-jermilova.result }}" != "success" ] || \
              [ "${{ needs.unit-tests.result }}" != "success" ] || \
              [ "${{ needs.build.result }}" != "success" ] || \
              [ "${{ needs.e2e-tests.result }}" != "success" ] || \

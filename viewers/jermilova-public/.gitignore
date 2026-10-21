@@ -1,0 +1,4 @@
+# Viewer build output and tool caches (the root .gitignore patterns are root-anchored).
+node_modules/
+.next/
+out/

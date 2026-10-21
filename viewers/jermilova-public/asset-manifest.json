@@ -1,0 +1,184 @@
+{
+  "schema_version": "jermilova-viewer-asset-manifest-v1",
+  "pack_id": "bnrrm-casestudy-jermilova2025-mackenzie-hg",
+  "source_pack_dir": "public/bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg",
+  "provenance": {
+    "target_hash_source": "MC R3_SOURCE_IDENTITY_SUPPLEMENT_R2.json sha256 aafab6f2ea0f91f50d756e658a5d4d86797d2eb582c651168dba4a0771c84242",
+    "inventory_source": "MC U0_ASSET_INVENTORY.json sha256 ba4e505a4cfd713d5e7d0499ee530a201ed9f593d82f8dbdf3812ea19907ba12",
+    "note": "sha256/bytes are the exact Git blob bytes at base d9c1bb31 (LF). inventory_* record the original primary-checkout physical bytes; eleven of those had CRLF line endings. The copier verifies sha256/bytes only and never rewrites asset bytes."
+  },
+  "assets": [
+    {
+      "role": "core",
+      "key": "pack",
+      "path": "pack.json",
+      "sha256": "24b322e8b8389164c58a15d9e8b29e35fe794dbdbdf9ee7b6606947e7a4bf17b",
+      "bytes": 3436,
+      "inventory_sha256": "24b322e8b8389164c58a15d9e8b29e35fe794dbdbdf9ee7b6606947e7a4bf17b",
+      "inventory_bytes": 3436
+    },
+    {
+      "role": "core",
+      "key": "runtime_model",
+      "path": "runtime/learned-model.json",
+      "sha256": "970d958a97a170c160e1ab73f22664b527ff9ae7dba24b8c1fddf25bc547cb50",
+      "bytes": 172261,
+      "inventory_sha256": "87ea005116da4a1eb8fd1b750324154e4ce8465d4b4a1ac16bd8d8ca36a978ad",
+      "inventory_bytes": 178496
+    },
+    {
+      "role": "core",
+      "key": "model_overview",
+      "path": "review/model_overview.json",
+      "sha256": "14f0676a726fa92cadf8f864d31637812d79dff0dd029ffc8ded72de3e13e418",
+      "bytes": 2846,
+      "inventory_sha256": "14f0676a726fa92cadf8f864d31637812d79dff0dd029ffc8ded72de3e13e418",
+      "inventory_bytes": 2846
+    },
+    {
+      "role": "core",
+      "key": "decisions",
+      "path": "review/decisions.json",
+      "sha256": "5e4e43c6eff3f36f79222944d79e126615187ec892ae38c67ac07b449bdf1f85",
+      "bytes": 6203,
+      "inventory_sha256": "5e4e43c6eff3f36f79222944d79e126615187ec892ae38c67ac07b449bdf1f85",
+      "inventory_bytes": 6203
+    },
+    {
+      "role": "core",
+      "key": "provenance",
+      "path": "review/provenance_registry.json",
+      "sha256": "9a3e6f8376adfc7a8b9371198dd917c3951908c9d52e419da7a802a9ca93f959",
+      "bytes": 4081,
+      "inventory_sha256": "9a3e6f8376adfc7a8b9371198dd917c3951908c9d52e419da7a802a9ca93f959",
+      "inventory_bytes": 4081
+    },
+    {
+      "role": "core",
+      "key": "training_data",
+      "path": "training_data.json",
+      "sha256": "e6ad4be9580067ed67da5e55f1c9e2ab40cc5e3ff33037cac05803d7b4684931",
+      "bytes": 795344,
+      "inventory_sha256": "e6ad4be9580067ed67da5e55f1c9e2ab40cc5e3ff33037cac05803d7b4684931",
+      "inventory_bytes": 795344
+    },
+    {
+      "role": "map",
+      "key": "basins_gsl",
+      "path": "map/gsl_basins.geojson",
+      "sha256": "06896af15dcddf8ba6f8f7513028cffbc5a8f21a91a8cf8147d45ad11979c891",
+      "bytes": 21629,
+      "inventory_sha256": "fa9c8424cf205c408afde9d453d7c95f02d6c666dc6300fae5b029630b06f573",
+      "inventory_bytes": 22750
+    },
+    {
+      "role": "map",
+      "key": "basins_gbs",
+      "path": "map/gbs_basins.geojson",
+      "sha256": "2a4d772bd236d76b1fe81c12f05f2cb2f33948817b67d2109ba8c6b1d348079b",
+      "bytes": 213826,
+      "inventory_sha256": "4d54d305b594529ef204c585a4aa9e05c20266de35a8ba443054378b72819864",
+      "inventory_bytes": 224835
+    },
+    {
+      "role": "map",
+      "key": "advisory_lakes",
+      "path": "map/advisory_lakes.geojson",
+      "sha256": "01140a3d393eb5877d39b333a32aa4ca5db2c513a56860dbe2dd2159dcbfdfc9",
+      "bytes": 14712,
+      "inventory_sha256": "82f207a157bb40c5346707b14c9422d9c0bb8bbf642adbf77c019e12b4219642",
+      "inventory_bytes": 15345
+    },
+    {
+      "role": "map",
+      "key": "commercial_fisheries",
+      "path": "map/commercial_fisheries.geojson",
+      "sha256": "169f5a415ae7d058ffdf5b60c2dfbf046e5279814bedba4f4d318fb6e9229e70",
+      "bytes": 58836,
+      "inventory_sha256": "572ad70904b975bbeb2dbf7ddaaf215245c6a823abc49df0732fa1132bfa6899",
+      "inventory_bytes": 61496
+    },
+    {
+      "role": "map",
+      "key": "historic_mines",
+      "path": "map/historic_mines.geojson",
+      "sha256": "6f79e815da3e97fcc13fc722ed7245a0b4a0daa9da965c607f661abeb2555547",
+      "bytes": 46263,
+      "inventory_sha256": "776f4b8a6ed0708dc4e9dbe85ecab698426e9b3fec9dd694d2b0fa77c3608334",
+      "inventory_bytes": 48040
+    },
+    {
+      "role": "map",
+      "key": "large_mines",
+      "path": "map/large_mines.geojson",
+      "sha256": "0f776017eab6338b062243eaf6a4ebea97cb5e5f9dbf2c3697ce69e701755aac",
+      "bytes": 4700,
+      "inventory_sha256": "3ccf2fa5985ed31e8f769732dd1586cd99d9e2aec426f520d9344958edb40809",
+      "inventory_bytes": 4941
+    },
+    {
+      "role": "map",
+      "key": "hydro_facilities",
+      "path": "map/hydro_facilities.geojson",
+      "sha256": "6ea3067167f35efc6b593fb06360236a244b11978d6911fcb93703b6b14f5cad",
+      "bytes": 2582,
+      "inventory_sha256": "ae935c81de92407cf16d7377eb71938da918214e5346eea152b825d6809d53f0",
+      "inventory_bytes": 2707
+    },
+    {
+      "role": "map",
+      "key": "climate_stations",
+      "path": "map/climate_stations.geojson",
+      "sha256": "2254049666fc4da4ca6a4064b00f4dc9aea7519bdeb7a7a22ea2aaefd38aa760",
+      "bytes": 154842,
+      "inventory_sha256": "7405b764723c3dc4b2e4f23f6bed07d4fcab05b80e8b3032d99861bcb9ab5218",
+      "inventory_bytes": 162269
+    },
+    {
+      "role": "map",
+      "key": "thaw_slumps",
+      "path": "map/thaw_slumps.geojson",
+      "sha256": "ace60d261c1e0768bcdb7c230938ef4ae3af514b334d2ec0b583688d75b39365",
+      "bytes": 1290355,
+      "inventory_sha256": "ace60d261c1e0768bcdb7c230938ef4ae3af514b334d2ec0b583688d75b39365",
+      "inventory_bytes": 1290355
+    },
+    {
+      "role": "review",
+      "key": "site_reports",
+      "path": "review/site_reports.json",
+      "sha256": "4665544987212a0d465f5d20fd482b9cac075f11721695834b2248c434ba307c",
+      "bytes": 3603,
+      "inventory_sha256": "4665544987212a0d465f5d20fd482b9cac075f11721695834b2248c434ba307c",
+      "inventory_bytes": 3603
+    },
+    {
+      "role": "map",
+      "key": "mineral_claims",
+      "path": "map/mineral_claims.geojson",
+      "sha256": "603f708f82fd9283e252421ed89a01b2bb9ed1e8f80cfd09bca5f0a03ebbe046",
+      "bytes": 420595,
+      "inventory_sha256": "603f708f82fd9283e252421ed89a01b2bb9ed1e8f80cfd09bca5f0a03ebbe046",
+      "inventory_bytes": 420595
+    },
+    {
+      "role": "map",
+      "key": "oil_gas_claims",
+      "path": "map/oil_gas_claims.geojson",
+      "sha256": "709a17d45f84fa11dbbbf266a124c74a40869935b21eec19ddfb382407e61528",
+      "bytes": 382172,
+      "inventory_sha256": "709a17d45f84fa11dbbbf266a124c74a40869935b21eec19ddfb382407e61528",
+      "inventory_bytes": 382172
+    },
+    {
+      "role": "map",
+      "key": "communities",
+      "path": "map/communities.geojson",
+      "sha256": "8a208bf3260de4992aa48ba05abf2c821d499b6aa407488e462bbcd6d845e8c1",
+      "bytes": 15617,
+      "inventory_sha256": "8a208bf3260de4992aa48ba05abf2c821d499b6aa407488e462bbcd6d845e8c1",
+      "inventory_bytes": 15617
+    }
+  ],
+  "excluded_map_keys": []
+}

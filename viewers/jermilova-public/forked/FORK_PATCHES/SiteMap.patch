@@ -1,0 +1,472 @@
+diff --git a/src/components/bn-rrm/map/SiteMap.tsx b/viewers/jermilova-public/forked/SiteMap.tsx
+index a20581d9..b1f7c1e4 100644
+--- a/src/components/bn-rrm/map/SiteMap.tsx
++++ b/viewers/jermilova-public/forked/SiteMap.tsx
+@@ -38,16 +38,7 @@ import {
+   type GeoJsonFeatureCollection,
+ } from '@/lib/bn-rrm/map-overlay-helpers';
+ import {
+-  formatIdentifyEmptyHtml,
+-  formatIdentifyPopupHtml,
+-} from '@/lib/maps/identify-format';
+-import {
+-  getActiveOverlaysInZOrder,
+-  queryActiveOverlays,
+-  queryActiveOverlaysInBounds,
+   type IdentifiedFeature,
+-  type IdentifyOverlay,
+-  type LeafletMapLike,
+ } from '@/lib/maps/wms-identify';
+ import {
+   ZoomIn,
+@@ -55,14 +46,12 @@ import {
+   MapPin,
+   Target,
+   Layers,
+-  Download,
+   ChevronUp,
+   ChevronDown,
+   ExternalLink,
+   Hand,
+   BoxSelect,
+   MousePointer,
+-  Crosshair,
+ } from 'lucide-react';
+ import type * as Leaflet from 'leaflet';
+ import type { FeatureCollection } from 'geojson';
+@@ -99,8 +88,6 @@ const BASE_LAYERS = {
+ };
+ 
+ const BC_WMS_URL = 'https://openmaps.gov.bc.ca/geo/pub/ows';
+-const BC_WMS_IDENTIFY_PROXY_URL = '/api/bn-rrm/wms-identify';
+-const BC_WFS_IDENTIFY_PROXY_URL = '/api/bn-rrm/wfs-identify';
+ const BC_ATTR = '© Province of British Columbia';
+ 
+ interface OverlayDef {
+@@ -261,15 +248,6 @@ export function SiteMap({
+     | ((latlng: { lat: number; lng: number }, geojsonHit: IdentifiedFeature | null) => void)
+     | null
+   >(null);
+-  // Transient "no features" / "N features" popup owned by the Identify tool.
+-  // We track it so it can be removed on mode exit.
+-  const identifyPopupRef = useRef<Leaflet.Popup | null>(null);
+-  // Monotonic request counter for the Identify tool. Every runIdentify call
+-  // captures its own id at entry; after each await we bail if the ref has
+-  // advanced, which means a newer click (or mode exit) superseded us. This is
+-  // the correctness guarantee at the call site; queryActiveOverlays has its
+-  // own internal timeoutMs but that does NOT discard stale successful replies.
+-  const identifyRequestIdRef = useRef<number>(0);
+ 
+   const sites = useSiteDataStore((state) => state.sites);
+   const assessments = useSiteDataStore((state) => state.assessments);
+@@ -279,7 +257,6 @@ export function SiteMap({
+   const toggleSiteSelection = useSiteDataStore((state) => state.toggleSiteSelection);
+   const selectAllSites = useSiteDataStore((state) => state.selectAllSites);
+   const clearSiteSelection = useSiteDataStore((state) => state.clearSiteSelection);
+-  const setIdentifiedFeatures = useSiteDataStore((state) => state.setIdentifiedFeatures);
+   const clearIdentifiedFeatures = useSiteDataStore((state) => state.clearIdentifiedFeatures);
+ 
+   const siteLocations = useMemo(() => {
+@@ -858,322 +835,6 @@ export function SiteMap({
+     }
+   }, [interactionMode, isLoaded, leaflet, siteLocations]);
+ 
+-  // Identify-area mode: drag a rectangle and query active WMS overlays for
+-  // all features in the drawn bounds. Results replace the current identified
+-  // feature list and the popup only summarizes the batch.
+-  useEffect(() => {
+-    const map = mapInstanceRef.current;
+-    if (!map || !isLoaded || !leaflet) return;
+-    if (interactionMode !== 'identify-area') return;
+-    const requestIdRef = identifyRequestIdRef;
+-
+-    map.dragging.disable();
+-
+-    let startLatLng: { lat: number; lng: number } | null = null;
+-
+-    const onMouseDown = (e: { latlng: { lat: number; lng: number } }) => {
+-      startLatLng = e.latlng;
+-      if (areaSelectRectRef.current) {
+-        map.removeLayer(areaSelectRectRef.current);
+-        areaSelectRectRef.current = null;
+-      }
+-    };
+-
+-    const onMouseMove = (e: { latlng: { lat: number; lng: number } }) => {
+-      if (!startLatLng) return;
+-      if (areaSelectRectRef.current) {
+-        map.removeLayer(areaSelectRectRef.current);
+-      }
+-      areaSelectRectRef.current = leaflet.rectangle(
+-        leaflet.latLngBounds(startLatLng, e.latlng),
+-        { color: '#7c3aed', weight: 2, fillOpacity: 0.12, dashArray: '6 3' },
+-      ).addTo(map);
+-    };
+-
+-    const onMouseUp = async (e: { latlng: { lat: number; lng: number } }) => {
+-      if (!startLatLng) return;
+-      const bounds = leaflet.latLngBounds(startLatLng, e.latlng);
+-      const center = bounds.getCenter();
+-      startLatLng = null;
+-
+-      if (areaSelectRectRef.current) {
+-        map.removeLayer(areaSelectRectRef.current);
+-        areaSelectRectRef.current = null;
+-      }
+-
+-      const myId = ++requestIdRef.current;
+-      const overlayDefs: Record<string, Omit<IdentifyOverlay, 'key'>> = {};
+-      for (const [key, def] of Object.entries(OVERLAY_LAYERS)) {
+-        overlayDefs[key] = {
+-          name: def.name,
+-          layer: def.layer,
+-          category: def.category,
+-        };
+-      }
+-      const ordered = getActiveOverlaysInZOrder(
+-        overlayLayersRef.current as Map<string, unknown>,
+-        overlayDefs,
+-      );
+-
+-      let hits: IdentifiedFeature[] = [];
+-      try {
+-        hits = await queryActiveOverlaysInBounds(ordered, bounds, {
+-          wfsUrl: BC_WFS_IDENTIFY_PROXY_URL,
+-          maxFeaturesPerLayer: 250,
+-        });
+-      } catch (err) {
+-        console.warn('[SiteMap] identify-area: query failed', err);
+-      }
+-
+-      if (requestIdRef.current !== myId) return;
+-
+-      if (identifyPopupRef.current) {
+-        try {
+-          map.closePopup(identifyPopupRef.current);
+-        } catch {
+-          // ignore
+-        }
+-        identifyPopupRef.current = null;
+-      }
+-
+-      if (hits.length === 0) {
+-        const reason: 'no_overlays' | 'no_hits' =
+-          ordered.length === 0 ? 'no_overlays' : 'no_hits';
+-        try {
+-          const popup = leaflet
+-            .popup({ closeButton: true, autoClose: true })
+-            .setLatLng(center)
+-            .setContent(formatIdentifyEmptyHtml(reason));
+-          popup.openOn(map);
+-          identifyPopupRef.current = popup;
+-        } catch (err) {
+-          console.warn('[SiteMap] identify-area: no-hits popup failed', err);
+-        }
+-        return;
+-      }
+-
+-      setIdentifiedFeatures(hits);
+-      try {
+-        const popup = leaflet
+-          .popup({ closeButton: true, autoClose: true })
+-          .setLatLng(center)
+-          .setContent(
+-            `<div style="min-width:220px;font-family:system-ui,sans-serif;">` +
+-              `<p style="font-weight:700;color:#0f172a;margin:0 0 6px 0;">${hits.length} features identified in area</p>` +
+-              `<p style="font-size:12px;color:#475569;margin:0;">Review the full result set in the side panel.</p>` +
+-            `</div>`,
+-          );
+-        popup.openOn(map);
+-        identifyPopupRef.current = popup;
+-      } catch (err) {
+-        console.warn('[SiteMap] identify-area: popup open failed', err);
+-      }
+-    };
+-
+-    map.on('mousedown', onMouseDown);
+-    map.on('mousemove', onMouseMove);
+-    map.on('mouseup', onMouseUp);
+-
+-    return () => {
+-      requestIdRef.current++;
+-      map.off('mousedown', onMouseDown);
+-      map.off('mousemove', onMouseMove);
+-      map.off('mouseup', onMouseUp);
+-      map.dragging.enable();
+-      if (areaSelectRectRef.current) {
+-        map.removeLayer(areaSelectRectRef.current);
+-        areaSelectRectRef.current = null;
+-      }
+-    };
+-  }, [interactionMode, isLoaded, leaflet, setIdentifiedFeatures]);
+-
+-  // Identify mode wiring.
+-  //
+-  // Entry: set crosshair cursor, close any open popup, unbind all marker
+-  // popups (saving content+options to markerPopupBackupRef) so Leaflet's
+-  // internal popup-open logic cannot fire, attach map.on('click') for
+-  // raster/empty clicks, install runIdentify as the single authoritative
+-  // writer of identifiedFeatures.
+-  //
+-  // Exit (cleanup returned from useEffect): restore cursor, rebind all
+-  // marker popups from the backup ref and clear it, detach map click
+-  // handler, close any transient identify popup, clear runIdentifyRef.
+-  // Cluster suppression lives inside the EXISTING clusterclick handler -
+-  // flipping interactionModeRef alone restores cluster zoom behavior.
+-  useEffect(() => {
+-    const map = mapInstanceRef.current;
+-    if (!map || !isLoaded || !leaflet) return;
+-    const isIdentifyMode =
+-      interactionMode === 'identify' || interactionMode === 'identify-area';
+-    if (!isIdentifyMode) return;
+-    const requestIdRef = identifyRequestIdRef;
+-
+-    const L = leaflet;
+-    const container = map.getContainer();
+-    const prevCursor = container.style.cursor;
+-    container.style.cursor = 'crosshair';
+-    container.classList.add('bnrrm-identify-cursor');
+-
+-    // Close any currently-open popup so a prior marker popup does not linger.
+-    try {
+-      map.closePopup();
+-    } catch {
+-      // ignore
+-    }
+-
+-    // Unbind every site marker's popup and save content+options. Leaflet's
+-    // internal popup-open for bound popups fires independently of our click
+-    // handler - unbind is the reliable suppression.
+-    const backup = markerPopupBackupRef.current;
+-    markerMapRef.current.forEach((marker) => {
+-      try {
+-        const popup = marker.getPopup?.();
+-        if (popup) {
+-          const content = popup.getContent?.();
+-          const options = popup.options;
+-          backup.set(marker, { content, options });
+-          marker.unbindPopup();
+-        }
+-      } catch (err) {
+-        console.warn('[SiteMap] identify: unbindPopup failed', err);
+-      }
+-    });
+-
+-    // The writer. Single authoritative path into identifiedFeatures.
+-    const runIdentify = async (
+-      latlng: { lat: number; lng: number },
+-      geojsonHit: IdentifiedFeature | null,
+-    ) => {
+-      // Capture a monotonic request id at entry. After each await we compare
+-      // against the ref; if it has advanced, a newer click (or mode exit)
+-      // superseded us and we silently discard this response.
+-      const myId = ++requestIdRef.current;
+-      // Resolve the active WMS overlays in topmost-first z-order. The
+-      // overlayLayersRef Map is inserted-in-add-order, so reverse iteration
+-      // gives topmost-first. Declaration order of OVERLAY_LAYERS is NOT used.
+-      const overlayDefs: Record<string, Omit<IdentifyOverlay, 'key'>> = {};
+-      for (const [key, def] of Object.entries(OVERLAY_LAYERS)) {
+-        overlayDefs[key] = { name: def.name, layer: def.layer, category: def.category };
+-      }
+-      const ordered = getActiveOverlaysInZOrder(
+-        overlayLayersRef.current as Map<string, unknown>,
+-        overlayDefs,
+-      );
+-      let wmsHits: IdentifiedFeature[] = [];
+-      try {
+-        wmsHits = await queryActiveOverlays(
+-          ordered,
+-          map as unknown as LeafletMapLike,
+-          latlng,
+-          { wmsUrl: BC_WMS_IDENTIFY_PROXY_URL },
+-        );
+-      } catch (err) {
+-        console.warn('[SiteMap] identify: queryActiveOverlays failed', err);
+-      }
+-      // Stale-response guard: if a newer request has started (or mode exited),
+-      // abandon this response without writing to the store or opening a popup.
+-      if (requestIdRef.current !== myId) return;
+-      const merged = geojsonHit ? [geojsonHit, ...wmsHits] : wmsHits;
+-
+-      // Remove any prior transient identify popup before opening a new one.
+-      if (identifyPopupRef.current) {
+-        try {
+-          map.closePopup(identifyPopupRef.current);
+-        } catch {
+-          // ignore
+-        }
+-        identifyPopupRef.current = null;
+-      }
+-
+-      if (merged.length === 0) {
+-        // Distinguish the two empty cases so the popup copy is accurate:
+-        //   - no_overlays: user has not enabled any WMS overlay AND the click
+-        //     did not hit a GeoJSON feature. Identify has nothing to query;
+-        //     the popup hints at the layer menu instead of misleadingly
+-        //     saying "no features here".
+-        //   - no_hits: at least one overlay was queryable (or a GeoJSON
+-        //     feature was clicked) but the buffered search returned nothing.
+-        const reason: 'no_overlays' | 'no_hits' =
+-          ordered.length === 0 && !geojsonHit ? 'no_overlays' : 'no_hits';
+-        // Do NOT write to the store when there are no hits.
+-        try {
+-          const popup = L.popup({ closeButton: true, autoClose: true })
+-            .setLatLng(latlng)
+-            .setContent(formatIdentifyEmptyHtml(reason));
+-          popup.openOn(map);
+-          identifyPopupRef.current = popup;
+-        } catch (err) {
+-          console.warn('[SiteMap] identify: no-hits popup failed', err);
+-        }
+-        return;
+-      }
+-
+-      setIdentifiedFeatures(merged);
+-      try {
+-        const popup = L.popup({ closeButton: true, autoClose: true })
+-          .setLatLng(latlng)
+-          .setContent(
+-            formatIdentifyPopupHtml(
+-              merged.map((f) => ({
+-                layerLabel: f.layerLabel,
+-                properties: f.properties,
+-              })),
+-            ),
+-          );
+-        popup.openOn(map);
+-        identifyPopupRef.current = popup;
+-      } catch (err) {
+-        console.warn('[SiteMap] identify: popup open failed', err);
+-      }
+-    };
+-    runIdentifyRef.current =
+-      interactionMode === 'identify' ? runIdentify : null;
+-
+-    const handleIdentifyClick = (e: { latlng: { lat: number; lng: number } }) => {
+-      void runIdentify(e.latlng, null);
+-    };
+-    if (interactionMode === 'identify') {
+-      map.on('click', handleIdentifyClick);
+-    }
+-
+-    return () => {
+-      // Bump the request id so any in-flight runIdentify call that resolves
+-      // after mode exit will see a mismatch and abandon silently.
+-      requestIdRef.current++;
+-
+-      // Restore cursor
+-      container.style.cursor = prevCursor;
+-      container.classList.remove('bnrrm-identify-cursor');
+-
+-      // Rebind marker popups from the backup
+-      backup.forEach((saved, marker) => {
+-        try {
+-          if (saved.content !== undefined) {
+-            marker.bindPopup(saved.content, saved.options);
+-          }
+-        } catch (err) {
+-          console.warn('[SiteMap] identify: bindPopup restore failed', err);
+-        }
+-      });
+-      backup.clear();
+-
+-      if (interactionMode === 'identify') {
+-        map.off('click', handleIdentifyClick);
+-      }
+-
+-      if (identifyPopupRef.current) {
+-        try {
+-          map.closePopup(identifyPopupRef.current);
+-        } catch {
+-          // ignore
+-        }
+-        identifyPopupRef.current = null;
+-      }
+-
+-      runIdentifyRef.current = null;
+-    };
+-  }, [interactionMode, isLoaded, leaflet, setIdentifiedFeatures]);
+-
+   // Pack-switch clearing for identified features. UI-level effect scoped to
+   // the map page - NOT a cross-store subscription. Matches the "coexist
+   // stacked" panel choice: identified features do not outlive a pack switch.
+@@ -1216,26 +877,6 @@ export function SiteMap({
+     mapInstanceRef.current.fitBounds(bounds.pad(0.2), { maxZoom: 13 });
+   }, [leaflet, siteLocations]);
+ 
+-  // Export map as image
+-  const handleExportMap = useCallback(async () => {
+-    if (!mapContainerRef.current) return;
+-
+-    try {
+-      const { toPng } = await import('html-to-image');
+-      const dataUrl = await toPng(mapContainerRef.current, {
+-        quality: 0.95,
+-        backgroundColor: '#f8fafc',
+-      });
+-
+-      const link = document.createElement('a');
+-      link.download = `openpra-map-${new Date().toISOString().split('T')[0]}.png`;
+-      link.href = dataUrl;
+-      link.click();
+-    } catch (err) {
+-      console.error('Failed to export map:', err);
+-    }
+-  }, []);
+-
+   return (
+     <div className={cn('relative w-full h-full bg-slate-100 dark:bg-slate-700', className)}>
+       {/* Cluster marker styles */}
+@@ -1405,15 +1046,6 @@ export function SiteMap({
+           )}
+         </div>
+ 
+-        <div className="h-px bg-slate-200 dark:bg-slate-600 my-1" />
+-        <button
+-          aria-label="Export map image"
+-          onClick={handleExportMap}
+-          className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+-          title="Export map image"
+-        >
+-          <Download className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+-        </button>
+       </div>
+ 
+       {/* Interaction mode toggle */}
+@@ -1457,36 +1089,6 @@ export function SiteMap({
+           <BoxSelect className="w-4 h-4" />
+           <span className="hidden sm:inline">Area</span>
+         </button>
+-        <button
+-          onClick={() => setInteractionMode('identify')}
+-          aria-label="Identify mode"
+-          aria-pressed={interactionMode === 'identify'}
+-          className={cn(
+-            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
+-            interactionMode === 'identify'
+-              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
+-          )}
+-          title="Identify - searches currently-enabled WMS overlays. Enable a layer from the layer menu first."
+-        >
+-          <Crosshair className="w-4 h-4" />
+-          <span className="hidden sm:inline">Identify</span>
+-        </button>
+-        <button
+-          onClick={() => setInteractionMode('identify-area')}
+-          aria-label="Identify area mode"
+-          aria-pressed={interactionMode === 'identify-area'}
+-          className={cn(
+-            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors',
+-            interactionMode === 'identify-area'
+-              ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+-              : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
+-          )}
+-          title="Identify Area - drag a box to collect features from currently-enabled WMS overlays."
+-        >
+-          <BoxSelect className="w-4 h-4" />
+-          <span className="hidden sm:inline">Identify Area</span>
+-        </button>
+       </div>
+ 
+       {/* Legend */}

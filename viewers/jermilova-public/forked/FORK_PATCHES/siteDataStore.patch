@@ -1,0 +1,46 @@
+diff --git a/src/stores/bn-rrm/siteDataStore.ts b/viewers/jermilova-public/forked/siteDataStore.ts
+index 9234e5b9..f0e88793 100644
+--- a/src/stores/bn-rrm/siteDataStore.ts
++++ b/viewers/jermilova-public/forked/siteDataStore.ts
+@@ -5,7 +5,7 @@
+  */
+ 
+ import { create } from 'zustand';
+-import { devtools, persist } from 'zustand/middleware';
++import { devtools } from 'zustand/middleware';
+ import type {
+   SiteData,
+   SiteLocation,
+@@ -59,7 +59,6 @@ interface SiteDataState {
+ 
+ export const useSiteDataStore = create<SiteDataState>()(
+   devtools(
+-    persist(
+       (set, get) => ({
+         sites: {},
+         assessments: {},
+@@ -278,24 +277,6 @@ export const useSiteDataStore = create<SiteDataState>()(
+           set({ identifiedFeatures: [], primaryFeatureIndex: null });
+         },
+       }),
+-      {
+-        name: 'sstac-bn-rrm-site-data',
+-        // Explicit whitelist. Preserves CURRENT persist behavior (every data
+-        // field was previously persisted), and intentionally EXCLUDES the new
+-        // identify fields (identifiedFeatures, primaryFeatureIndex) so stale
+-        // features are not restored on reload without a map to anchor them.
+-        partialize: (state) => ({
+-          sites: state.sites,
+-          assessments: state.assessments,
+-          selectedSiteId: state.selectedSiteId,
+-          selectedSiteIds: state.selectedSiteIds,
+-          isUploading: state.isUploading,
+-          uploadProgress: state.uploadProgress,
+-          lastUploadResult: state.lastUploadResult,
+-          batchAssessmentProgress: state.batchAssessmentProgress,
+-        }),
+-      }
+-    ),
+     { name: 'bn-rrm-site-data-store' }
+   )
+ );

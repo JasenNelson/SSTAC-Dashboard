@@ -1,0 +1,27 @@
+/*
+ * Jermilova public viewer stylesheet.
+ *
+ * Fidelity: the viewer renders the authenticated app's original BN-RRM components,
+ * so it uses the authenticated app's own stylesheet unchanged. Tailwind scans the
+ * original component and library folders those components come from, plus the
+ * viewer's forks.
+ */
+@import "../../../src/app/globals.css";
+@source "../../../src/components/bn-rrm";
+@source "../../../src/lib/bn-rrm";
+@source "../forked";
+
+/* Integrity-gate states shown before the original page mounts (viewer-only). */
+.loading-card,
+.error-card {
+  margin: 24px auto;
+  max-width: 720px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 16px 20px;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.loading-card { color: #64748b; }
+.error-card { border-color: #d4aaa4; color: #8a342e; }
+.error-card h2 { margin-top: 0; }

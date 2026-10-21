@@ -42,6 +42,11 @@ const eslintConfig = [
       "*.config.js",
       "*.config.mjs",
       "next-env.d.ts",
+      // Standalone viewer packages: lint their source, never their build output or caches.
+      "viewers/*/.next/**",
+      "viewers/*/out/**",
+      "viewers/*/node_modules/**",
+      "viewers/*/next-env.d.ts",
     ],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),

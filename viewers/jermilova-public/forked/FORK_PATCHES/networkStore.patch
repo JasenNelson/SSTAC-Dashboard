@@ -1,0 +1,60 @@
+diff --git a/src/stores/bn-rrm/networkStore.ts b/viewers/jermilova-public/forked/networkStore.ts
+index 1afcbd89..0ba949a8 100644
+--- a/src/stores/bn-rrm/networkStore.ts
++++ b/viewers/jermilova-public/forked/networkStore.ts
+@@ -15,7 +15,6 @@ import type {
+   BeliefDistribution,
+   NodeCategory,
+ } from '@/types/bn-rrm/network';
+-import { createDummyNetwork } from '@/lib/bn-rrm/dummy-data';
+ import { createTrainedNetwork, createGenericNetwork } from '@/lib/bn-rrm/trained-network';
+ import { dagForwardInference, dagBackwardInference } from '@/lib/bn-rrm/bn-inference';
+ import type { PackManifest } from '@/lib/bn-rrm/pack-types';
+@@ -48,8 +47,6 @@ interface NetworkState {
+ 
+   // Actions - Model
+   loadModel: (model: NetworkModel) => void;
+-  loadDummyModel: () => void;
+-  loadTrainedModel: (source?: 'expert' | 'learned') => void;
+   loadPackModel: (packBaseUrl: string, manifest: PackManifest) => Promise<void>;
+ 
+   // Actions - Inference
+@@ -122,28 +119,6 @@ export const useNetworkStore = create<NetworkState>()(
+         });
+       },
+ 
+-      loadDummyModel: () => {
+-        const dummyModel = createDummyNetwork();
+-        get().loadModel(dummyModel);
+-      },
+-
+-      loadTrainedModel: async (source: 'expert' | 'learned' = 'expert') => {
+-        if (source === 'learned') {
+-          try {
+-            const learnedJson = await import('@/data/bn-rrm/learned-model.json');
+-            const trainedModel = createTrainedNetwork('learned', learnedJson.default ?? learnedJson);
+-            get().loadModel(trainedModel);
+-          } catch {
+-            // Fallback to expert if learned model not available
+-            const trainedModel = createTrainedNetwork('expert');
+-            get().loadModel(trainedModel);
+-          }
+-        } else {
+-          const trainedModel = createTrainedNetwork('expert');
+-          get().loadModel(trainedModel);
+-        }
+-      },
+-
+       loadPackModel: async (packBaseUrl: string, manifest: PackManifest) => {
+         const generation = get()._loadGeneration + 1;
+         set({ isLoading: true, _loadGeneration: generation });
+@@ -167,9 +142,6 @@ export const useNetworkStore = create<NetworkState>()(
+         } catch (err) {
+           if (get()._loadGeneration !== generation) return;
+           console.error('[NetworkStore] Pack model load failed:', err);
+-          // Fallback to expert model (only meaningful for canonical packs)
+-          const trainedModel = createTrainedNetwork('expert');
+-          get().loadModel(trainedModel);
+         } finally {
+           // Only clear loading if this is still the active generation
+           if (get()._loadGeneration === generation) {

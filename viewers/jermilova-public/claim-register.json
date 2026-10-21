@@ -1,0 +1,164 @@
+{
+  "schema_version": "jermilova-public-claim-register-v1",
+  "excerpt_encoding": "UTF-8 JSON.stringify(value)",
+  "source_policy": "Only status ACCEPTED_CURRENT or SHOW_WITH_ERRATUM rows render; OMIT rows are verified and never rendered.",
+  "claims": [
+    {
+      "id": "pack-display-name",
+      "group": "Identity",
+      "label": "Frozen pack identity",
+      "artifact_key": "pack",
+      "field_path": "display_name",
+      "artifact_sha256": "24b322e8b8389164c58a15d9e8b29e35fe794dbdbdf9ee7b6606947e7a4bf17b",
+      "excerpt_sha256": "5cc354bd859cc3c222160b3a7047b5691ffa4f66a31e044be9926375afecf78b",
+      "status": "ACCEPTED_CURRENT",
+      "approved_text": "Jermilova 2025 Mackenzie Mercury BN-RRM"
+    },
+    {
+      "id": "pack-release-stage",
+      "group": "Identity",
+      "label": "Release stage",
+      "artifact_key": "pack",
+      "field_path": "release_stage",
+      "artifact_sha256": "24b322e8b8389164c58a15d9e8b29e35fe794dbdbdf9ee7b6606947e7a4bf17b",
+      "excerpt_sha256": "23efcc1b053b3c28d45a21ab150b2a686477c6801447419bc552df93b3abfd5e",
+      "status": "ACCEPTED_CURRENT",
+      "approved_text": "prototype"
+    },
+    {
+      "id": "article-citation",
+      "group": "Reference",
+      "label": "Article reference",
+      "artifact_key": "pack",
+      "field_path": "reference.citation",
+      "artifact_sha256": "24b322e8b8389164c58a15d9e8b29e35fe794dbdbdf9ee7b6606947e7a4bf17b",
+      "excerpt_sha256": "b132f8fd77df147235521e149aef5507ab4b824c619f4fd03a366aa07dd0f5b5",
+      "status": "ACCEPTED_CURRENT",
+      "approved_text": "Jermilova et al. 2025, IEAM 21(2):396-413"
+    },
+    {
+      "id": "article-doi",
+      "group": "Reference",
+      "label": "Article DOI",
+      "artifact_key": "pack",
+      "field_path": "reference.doi",
+      "artifact_sha256": "24b322e8b8389164c58a15d9e8b29e35fe794dbdbdf9ee7b6606947e7a4bf17b",
+      "excerpt_sha256": "668ca00178a97687a860e6aa7b1e7771c63cf02feb251228f06b6aceaa178307",
+      "status": "ACCEPTED_CURRENT",
+      "approved_text": "10.1093/inteam/vjae011"
+    },
+    {
+      "id": "model-node-count",
+      "group": "Model shape",
+      "label": "Packaged DAG nodes",
+      "artifact_key": "pack",
+      "field_path": "dag_node_count",
+      "artifact_sha256": "24b322e8b8389164c58a15d9e8b29e35fe794dbdbdf9ee7b6606947e7a4bf17b",
+      "excerpt_sha256": "8527a891e224136950ff32ca212b45bc93f69fbb801c3b1ebedac52775f99e61",
+      "status": "ACCEPTED_CURRENT",
+      "approved_text": 14
+    },
+    {
+      "id": "model-edge-count",
+      "group": "Model shape",
+      "label": "Packaged directed links",
+      "artifact_key": "pack",
+      "field_path": "dag_edge_count",
+      "artifact_sha256": "24b322e8b8389164c58a15d9e8b29e35fe794dbdbdf9ee7b6606947e7a4bf17b",
+      "excerpt_sha256": "e629fa6598d732768f7c726b4b621285f9c3b85303900aa912017db7617d8bdb",
+      "status": "ACCEPTED_CURRENT",
+      "approved_text": 15
+    },
+    {
+      "id": "applicability-boundaries",
+      "group": "Scope",
+      "label": "Pack applicability boundaries",
+      "artifact_key": "pack",
+      "field_path": "applicability_boundaries",
+      "artifact_sha256": "24b322e8b8389164c58a15d9e8b29e35fe794dbdbdf9ee7b6606947e7a4bf17b",
+      "excerpt_sha256": "2becd7c5d046fd3354c179dacf18d3438fe62cf13f19ca143aa84b1b3449b197",
+      "status": "SHOW_WITH_ERRATUM",
+      "approved_text": [
+        "Freshwater mercury pathway only (not sediment metals/organics)",
+        "Mackenzie River basin geography (NWT, Canada)",
+        "Fish tissue Hg and water THg endpoints (no benthic community endpoints)",
+        "GSL is the runtime model; GBS is reference training data only."
+      ]
+    },
+    {
+      "id": "gsl-training-name",
+      "group": "Training data",
+      "label": "GSL runtime training dataset",
+      "artifact_key": "training_data",
+      "field_path": "models.GSL.display_name",
+      "artifact_sha256": "e6ad4be9580067ed67da5e55f1c9e2ab40cc5e3ff33037cac05803d7b4684931",
+      "excerpt_sha256": "27302c9bb9cc0a9d086fff1258785e54071d853355010dee37ef24fc6050d018",
+      "status": "ACCEPTED_CURRENT",
+      "approved_text": "Great Slave Lake"
+    },
+    {
+      "id": "gsl-training-fish",
+      "group": "Training data",
+      "label": "GSL runtime model training data: fish cases",
+      "artifact_key": "training_data",
+      "field_path": "models.GSL.fish_count",
+      "artifact_sha256": "e6ad4be9580067ed67da5e55f1c9e2ab40cc5e3ff33037cac05803d7b4684931",
+      "excerpt_sha256": "3b86df3ff95ad2fd72102e34f3a721f2bdc876e12e3bd1434af8ab4cabbd5547",
+      "status": "ACCEPTED_CURRENT",
+      "approved_text": 604
+    },
+    {
+      "id": "gsl-training-water",
+      "group": "Training data",
+      "label": "GSL runtime model training data: water cases",
+      "artifact_key": "training_data",
+      "field_path": "models.GSL.water_count",
+      "artifact_sha256": "e6ad4be9580067ed67da5e55f1c9e2ab40cc5e3ff33037cac05803d7b4684931",
+      "excerpt_sha256": "3097fc802d49355a0a256d4b07ab9f7257fcf35077cdb8133d59f607fedb229e",
+      "status": "ACCEPTED_CURRENT",
+      "approved_text": 855
+    },
+    {
+      "id": "gbs-training-name",
+      "group": "Training data",
+      "label": "GBS reference training dataset (not a second inference model)",
+      "artifact_key": "training_data",
+      "field_path": "models.GBS.display_name",
+      "artifact_sha256": "e6ad4be9580067ed67da5e55f1c9e2ab40cc5e3ff33037cac05803d7b4684931",
+      "excerpt_sha256": "3be2892833172288e641fd0146a0ec32af30052f57de69fb54469e2db37985df",
+      "status": "ACCEPTED_CURRENT",
+      "approved_text": "Great Bear Subbasin"
+    },
+    {
+      "id": "gbs-training-fish",
+      "group": "Training data",
+      "label": "GBS reference training data: fish cases",
+      "artifact_key": "training_data",
+      "field_path": "models.GBS.fish_count",
+      "artifact_sha256": "e6ad4be9580067ed67da5e55f1c9e2ab40cc5e3ff33037cac05803d7b4684931",
+      "excerpt_sha256": "718127812c05853f0bec61582a4a3840b1c844fe11fe1a004b5b7eb8b8b59846",
+      "status": "ACCEPTED_CURRENT",
+      "approved_text": 274
+    },
+    {
+      "id": "gbs-training-water",
+      "group": "Training data",
+      "label": "GBS reference training data: water cases",
+      "artifact_key": "training_data",
+      "field_path": "models.GBS.water_count",
+      "artifact_sha256": "e6ad4be9580067ed67da5e55f1c9e2ab40cc5e3ff33037cac05803d7b4684931",
+      "status": "ACCEPTED_CURRENT",
+      "excerpt_sha256": "c5080dbc42e822a31c72ebf171d79394f57bba1e0511bad4a721c2c0f62ae6b3",
+      "approved_text": 1589
+    },
+    {
+      "id": "dataset-repository-doi",
+      "artifact_key": "pack",
+      "field_path": "reference.data_repository",
+      "artifact_sha256": "24b322e8b8389164c58a15d9e8b29e35fe794dbdbdf9ee7b6606947e7a4bf17b",
+      "excerpt_sha256": "110ccac4c984cc220b6352aeb050f5ae94d842074bc48c55bf14527f40c6e06f",
+      "status": "OMIT",
+      "approved_text": null
+    }
+  ]
+}
