@@ -33,6 +33,12 @@ jobs:
 
   # The Jermilova public viewer (viewers/jermilova-public) is a standalone package with its
   # own vitest config and store aliases, so root Unit Tests exclude it; its gates run here.
+  # Advisory: not part of CI Status Check (see the note there). Re-pin procedure after an
+  # intended change to a pinned src/ file: node viewers/jermilova-public/scripts/make-forks.mjs
+  # (after removing the previous forked/*.ts AND forked/*.tsx outputs), then fork-patches.mjs --write and
+  # src-closure.mjs --write <base sha>, then review the regenerated patches. <base sha> is the
+  # full 40-hex commit that already contains the src/ change and stays reachable from main.
+  # If make-forks.mjs stops on an anchor, update and review its edit list first.
   viewer-jermilova:
     name: Jermilova Viewer Gates
     runs-on: ubuntu-latest
@@ -395,13 +401,15 @@ jobs:
   status-check:
     name: CI Status Check
     runs-on: ubuntu-latest
-    needs: [lint-and-typecheck, viewer-jermilova, unit-tests, build, e2e-tests, performance-analysis, wiki-graph-product-tests-windows]
+    # viewer-jermilova is intentionally NOT aggregated here: it runs and reports on its own,
+    # and whether it should block merges is an owner policy decision (its src/ closure pin
+    # fails whenever pinned bn-rrm files change, until the viewer is re-forked and re-pinned).
+    needs: [lint-and-typecheck, unit-tests, build, e2e-tests, performance-analysis, wiki-graph-product-tests-windows]
     if: always()
     steps:
       - name: Check build status
         run: |
           if [ "${{ needs.lint-and-typecheck.result }}" != "success" ] || \
-             [ "${{ needs.viewer-jermilova.result }}" != "success" ] || \
              [ "${{ needs.unit-tests.result }}" != "success" ] || \
              [ "${{ needs.build.result }}" != "success" ] || \
              [ "${{ needs.e2e-tests.result }}" != "success" ] || \

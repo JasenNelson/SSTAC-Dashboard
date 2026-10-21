@@ -111,6 +111,8 @@ export default defineConfig({
             testMatch: /parity\.spec\.ts/,
             grep: /@original/,
             dependencies: ['setup'],
+            // `next dev` compiles /bn-rrm and each dynamic tab chunk on first use.
+            timeout: 360_000,
             use: { ...devices['Desktop Chrome'], baseURL: originalBaseURL, storageState: userAuthState },
           },
           {
