@@ -20,6 +20,11 @@ const viewerRoot = __dirname;
 const repoRoot = path.resolve(viewerRoot, '../..');
 loadEnvConfig(process.env.PARITY_ENV_DIR ?? repoRoot);
 
+// Never write Playwright's failure page snapshot (error-context.md): it copies every
+// input's value, including the e2e password field on a failed sign-in. Set here so the
+// runner and every worker (both load this config) inherit it.
+process.env.PLAYWRIGHT_NO_COPY_PROMPT = '1';
+
 const viewerBaseURL = process.env.PARITY_VIEWER_URL;
 const originalBaseURL = process.env.PARITY_ORIGINAL_URL;
 const userAuthState = path.join(repoRoot, 'e2e', '.auth', 'user.json');
