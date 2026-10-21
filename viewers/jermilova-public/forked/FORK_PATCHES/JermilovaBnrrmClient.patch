@@ -1,5 +1,5 @@
 diff --git a/src/app/(dashboard)/bn-rrm/BNRRMClient.tsx b/viewers/jermilova-public/forked/JermilovaBnrrmClient.tsx
-index be0c3b90..9d2ecb50 100644
+index be0c3b907fc46f80586ad3a8caf8aac2a9fffd9a..9d2ecb505b637b2ab0b5b202ed255562e44072e0 100644
 --- a/src/app/(dashboard)/bn-rrm/BNRRMClient.tsx
 +++ b/viewers/jermilova-public/forked/JermilovaBnrrmClient.tsx
 @@ -1,6 +1,6 @@

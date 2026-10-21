@@ -1,5 +1,5 @@
 diff --git a/src/components/bn-rrm/canvas/Canvas.tsx b/viewers/jermilova-public/forked/Canvas.tsx
-index f9a15b0a..a756c089 100644
+index f9a15b0aaa52156fa7fd8f457bca9fba92a04626..a756c089a0d070006280d5b91cf8d481590faef9 100644
 --- a/src/components/bn-rrm/canvas/Canvas.tsx
 +++ b/viewers/jermilova-public/forked/Canvas.tsx
 @@ -20,8 +20,6 @@ import {

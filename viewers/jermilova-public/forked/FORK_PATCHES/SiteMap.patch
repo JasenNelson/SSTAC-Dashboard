@@ -1,5 +1,5 @@
 diff --git a/src/components/bn-rrm/map/SiteMap.tsx b/viewers/jermilova-public/forked/SiteMap.tsx
-index a20581d9..b1f7c1e4 100644
+index a20581d9cdc8bf10416825a97393e3829022c1d4..b1f7c1e46cd51e3c668cf3b79b4eac8299df71d6 100644
 --- a/src/components/bn-rrm/map/SiteMap.tsx
 +++ b/viewers/jermilova-public/forked/SiteMap.tsx
 @@ -38,16 +38,7 @@ import {

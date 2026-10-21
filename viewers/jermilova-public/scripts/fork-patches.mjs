@@ -15,13 +15,31 @@ export function patchName(fork) {
   return path.basename(fork).replace(/\.(tsx?|mjs)$/, '') + '.patch';
 }
 
+// GIT_DIFF_OPTS is read per file pair and would override -U3; never pass it through.
+function diffEnv() {
+  const env = { ...process.env };
+  delete env.GIT_DIFF_OPTS;
+  return env;
+}
+
 export function forkDiff(fork) {
   const original = FORK_ORIGINALS[fork];
   const forkPath = 'viewers/jermilova-public/' + fork;
   const result = spawnSync(
     'git',
-    ['-C', repoRoot, '-c', 'core.autocrlf=false', '-c', 'diff.noprefix=false', 'diff', '--no-index', '--no-color', '--no-ext-diff', '--', original, forkPath],
-    { encoding: 'buffer', maxBuffer: 32 * 1024 * 1024 },
+    // Byte-deterministic across machines: --full-index (full blob ids, independent of the
+    // repository's object count) plus pinned prefixes, context, hunk joining, algorithm and
+    // blank-line handling, so per-user git config cannot change the patch bytes.
+    [
+      '-C', repoRoot,
+      '-c', 'core.autocrlf=false',
+      '-c', 'diff.noprefix=false',
+      '-c', 'diff.suppressBlankEmpty=false',
+      'diff', '--no-index', '--no-color', '--no-ext-diff', '--no-textconv', '--full-index',
+      '--src-prefix=a/', '--dst-prefix=b/', '-U3', '--inter-hunk-context=0', '--diff-algorithm=myers', '--indent-heuristic',
+      '--', original, forkPath,
+    ],
+    { encoding: 'buffer', maxBuffer: 32 * 1024 * 1024, env: diffEnv() },
   );
   // git diff --no-index exits 1 when the files differ; anything else is an error.
   if (result.status !== 1) {

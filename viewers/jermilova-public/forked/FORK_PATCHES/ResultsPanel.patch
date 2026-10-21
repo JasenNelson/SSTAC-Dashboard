@@ -1,5 +1,5 @@
 diff --git a/src/components/bn-rrm/panels/ResultsPanel.tsx b/viewers/jermilova-public/forked/ResultsPanel.tsx
-index 03241d42..479a19ef 100644
+index 03241d427a95beca90c5f311b24893233e7c1038..479a19efd3dff9db3a07741517bd8ae3766153a9 100644
 --- a/src/components/bn-rrm/panels/ResultsPanel.tsx
 +++ b/viewers/jermilova-public/forked/ResultsPanel.tsx
 @@ -19,7 +19,6 @@ import {

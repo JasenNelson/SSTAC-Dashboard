@@ -1,5 +1,5 @@
 diff --git a/src/components/bn-rrm/map/SiteDetails.tsx b/viewers/jermilova-public/forked/SiteDetails.tsx
-index 85391180..b64c64ac 100644
+index 85391180b0252b243f525e6e15297a59473bb49e..b64c64ac9c793e346fdee9b20ede4bb3439fe516 100644
 --- a/src/components/bn-rrm/map/SiteDetails.tsx
 +++ b/viewers/jermilova-public/forked/SiteDetails.tsx
 @@ -9,7 +9,7 @@
