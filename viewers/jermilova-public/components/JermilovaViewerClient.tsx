@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import JermilovaBnrrmClient from '../forked/JermilovaBnrrmClient';
 import { loadJermilovaPack } from '../lib/loadJermilovaPack';
+import { JERMILOVA_PUBLIC_BASE_PATH } from '../lib/publicBasePath';
 import { createVerifiedFetch } from '../lib/verifiedFetch';
 import { PackLoadState } from './PackLoadState';
 
@@ -19,9 +20,13 @@ export default function JermilovaViewerClient() {
   useEffect(() => {
     let live = true;
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = createVerifiedFetch(originalFetch.bind(globalThis), (violation) => {
-      if (live) setError(violation.message);
-    });
+    globalThis.fetch = createVerifiedFetch(
+      originalFetch.bind(globalThis),
+      (violation) => {
+        if (live) setError(violation.message);
+      },
+      JERMILOVA_PUBLIC_BASE_PATH,
+    );
     loadJermilovaPack()
       .then(() => {
         if (live) setVerified(true);

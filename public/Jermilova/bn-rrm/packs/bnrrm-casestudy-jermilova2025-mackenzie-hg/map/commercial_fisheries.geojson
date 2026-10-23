@@ -1,0 +1,2661 @@
+{
+  "type": "FeatureCollection",
+  "name": "commercial_fisheries",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "bbox": [
+    -135.7237,
+    60.05,
+    -11.45,
+    70.5
+  ],
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -124.75,
+          69.75
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Cape Parry Area",
+        "lat": 69.75,
+        "lon": -124.75,
+        "quota_kg": 300,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -128.25,
+          65.25
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Doris Lake",
+        "lat": 65.25,
+        "lon": -128.25,
+        "quota_kg": 300,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -132.66667,
+          68.66667
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Sitidgi Lake",
+        "lat": 68.66666667,
+        "lon": -132.6666667,
+        "quota_kg": 300,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -125.0,
+          65.0
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Whitefish Lake",
+        "lat": 65.0,
+        "lon": -125.0,
+        "quota_kg": 500,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -127.16667,
+          70.16667
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Akyuk Lake",
+        "lat": 70.16666667,
+        "lon": -127.1666667,
+        "quota_kg": 700,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -127.03333,
+          70.03333
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Middle Lake",
+        "lat": 70.03333333,
+        "lon": -127.0333333,
+        "quota_kg": 700,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -128.93333,
+          67.93333
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Manuel Lake",
+        "lat": 67.93333333,
+        "lon": -128.9333333,
+        "quota_kg": 800,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -128.41667,
+          66.41667
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Rorey Lake",
+        "lat": 66.41666667,
+        "lon": -128.4166667,
+        "quota_kg": 800,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -127.5,
+          70.5
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Old Horton River",
+        "lat": 70.5,
+        "lon": -127.5,
+        "quota_kg": 900,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout",
+          "Arctic Char"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -125.2,
+          64.2
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Tagatui Lake",
+        "lat": 64.2,
+        "lon": -125.2,
+        "quota_kg": 900,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -134.86667,
+          67.86667
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Peel River",
+        "lat": 67.86666667,
+        "lon": -134.8666667,
+        "quota_kg": 2300,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -126.55,
+          65.55
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Alfred Lake",
+        "lat": 65.55,
+        "lon": -126.55,
+        "quota_kg": 2800,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -125.33333,
+          65.33333
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Brackett Lake",
+        "lat": 65.33333333,
+        "lon": -125.3333333,
+        "quota_kg": 2800,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -126.55,
+          65.55
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Lennie Lake",
+        "lat": 65.55,
+        "lon": -126.55,
+        "quota_kg": 2800,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -134.476,
+          67.98861
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mackenzie River Delta Area 1",
+        "lat": 67.98861,
+        "lon": -134.476,
+        "quota_kg": 4600,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout",
+          "Burbot",
+          "Northern Pike"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -134.9295,
+          67.9656
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mackenzie River Delta Area 1",
+        "lat": 67.9656,
+        "lon": -134.9295,
+        "quota_kg": 4600,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout",
+          "Burbot",
+          "Northern Pike"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -133.804,
+          67.48721
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mackenzie River Delta Area 5",
+        "lat": 67.48721,
+        "lon": -133.804,
+        "quota_kg": 4600,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -129.97122,
+          66.76311
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mackenzie River Delta Area 5",
+        "lat": 66.76311,
+        "lon": -129.97122,
+        "quota_kg": 4600,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -128.8166,
+          65.6833
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mackenzie River Delta Area 5",
+        "lat": 65.6833,
+        "lon": -128.8166,
+        "quota_kg": 4600,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -125.33333,
+          65.33333
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mahoney Lake",
+        "lat": 65.33333333,
+        "lon": -125.3333333,
+        "quota_kg": 4600,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -134.524,
+          68.748
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mackenzie River Delta Area 4",
+        "lat": 68.748,
+        "lon": -134.524,
+        "quota_kg": 6900,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -135.23,
+          68.683
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mackenzie River Delta Area 4",
+        "lat": 68.683,
+        "lon": -135.23,
+        "quota_kg": 6900,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -134.0886,
+          68.3824
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mackenzie River Delta Area 4",
+        "lat": 68.3824,
+        "lon": -134.0886,
+        "quota_kg": 6900,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -133.9437,
+          68.00359
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mackenzie River Delta Area 2",
+        "lat": 68.00359,
+        "lon": -133.9437,
+        "quota_kg": 11400,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout",
+          "Burbot",
+          "Northern Pike"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -133.7833,
+          68.21666
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mackenzie River Delta Area 2",
+        "lat": 68.21666,
+        "lon": -133.7833,
+        "quota_kg": 11400,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout",
+          "Burbot",
+          "Northern Pike"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -132.5,
+          69.5
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Husky Lake",
+        "lat": 69.5,
+        "lon": -132.5,
+        "quota_kg": 22800,
+        "quota_category": "Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -135.09161,
+          68.25796
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mackenzie River Delta Area 3",
+        "lat": 68.25796,
+        "lon": -135.09161,
+        "quota_kg": 47800,
+        "quota_category": "Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout",
+          "Burbot",
+          "Northern Pike"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -135.7237,
+          68.632
+        ]
+      },
+      "properties": {
+        "name": "Region 1 Mackenzie Delta",
+        "location": "Mackenzie River Delta Area 3",
+        "lat": 68.632,
+        "lon": -135.7237,
+        "quota_kg": 47800,
+        "quota_category": "Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout",
+          "Burbot",
+          "Northern Pike"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.35,
+          60.35
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Gertrude Lake",
+        "lat": 60.35,
+        "lon": -111.35,
+        "quota_kg": 200,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.31667,
+          60.31667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Trudel Lake",
+        "lat": 60.31666667,
+        "lon": -111.3166667,
+        "quota_kg": 200,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.16667,
+          60.16667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Champagne Lakes",
+        "lat": 60.16666667,
+        "lon": -111.1666667,
+        "quota_kg": 300,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.13333,
+          60.13333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Jack Lake",
+        "lat": 60.13333333,
+        "lon": -111.1333333,
+        "quota_kg": 300,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.66667,
+          61.66667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Naylor Lake",
+        "lat": 61.66666667,
+        "lon": -109.6666667,
+        "quota_kg": 300,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.91667,
+          60.91667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Reade Lake",
+        "lat": 60.91666667,
+        "lon": -119.9166667,
+        "quota_kg": 300,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.25,
+          60.25
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Telklini Lake",
+        "lat": 60.25,
+        "lon": -111.25,
+        "quota_kg": 400,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.08333,
+          60.08333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Indian Shack Lake",
+        "lat": 60.08333333,
+        "lon": -111.0833333,
+        "quota_kg": 500,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.78333,
+          60.78333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Mistigi Lake",
+        "lat": 60.78333333,
+        "lon": -111.7833333,
+        "quota_kg": 500,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.71667,
+          61.71667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Sibbeston Lake",
+        "lat": 61.71666667,
+        "lon": -122.7166667,
+        "quota_kg": 500,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.98333,
+          60.98333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Leland Lake",
+        "lat": 60.98333333,
+        "lon": -110.9833333,
+        "quota_kg": 600,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.95,
+          60.95
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "McEwan Lake",
+        "lat": 60.95,
+        "lon": -119.95,
+        "quota_kg": 600,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.91667,
+          60.91667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Robinson Lake",
+        "lat": 60.91666667,
+        "lon": -110.9166667,
+        "quota_kg": 600,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.53333,
+          60.53333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Shark Lake",
+        "lat": 60.53333333,
+        "lon": -109.5333333,
+        "quota_kg": 600,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.78333,
+          61.78333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Walker Lake",
+        "lat": 61.78333333,
+        "lon": -109.7833333,
+        "quota_kg": 600,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.91667,
+          60.91667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Hanging Ice Lake",
+        "lat": 60.91666667,
+        "lon": -110.9166667,
+        "quota_kg": 700,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.65,
+          60.65
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "High Level Lake",
+        "lat": 60.65,
+        "lon": -110.65,
+        "quota_kg": 700,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.98333,
+          61.98333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Unnamed Lake 3",
+        "lat": 61.98333333,
+        "lon": -111.9833333,
+        "quota_kg": 700,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.01667,
+          61.01667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Tsetso Lake",
+        "lat": 61.01666667,
+        "lon": -123.0166667,
+        "quota_kg": 800,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Walleye"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.53333,
+          61.53333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Unnamed Lake 7",
+        "lat": 61.53333333,
+        "lon": -119.5333333,
+        "quota_kg": 800,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.55,
+          60.55
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Bennathy Lake",
+        "lat": 60.55,
+        "lon": -110.55,
+        "quota_kg": 900,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.08333,
+          60.08333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Fork Lake",
+        "lat": 60.08333333,
+        "lon": -111.0833333,
+        "quota_kg": 900,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.08333,
+          60.08333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Hotel Lake",
+        "lat": 60.08333333,
+        "lon": -110.0833333,
+        "quota_kg": 1000,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.33333,
+          60.33333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Oulton Lake",
+        "lat": 60.33333333,
+        "lon": -111.3333333,
+        "quota_kg": 1000,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.75,
+          60.75
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Tetcho Lake",
+        "lat": 60.75,
+        "lon": -120.75,
+        "quota_kg": 1000,
+        "quota_category": "Very small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.16667,
+          60.16667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Unnamed Lake 2",
+        "lat": 60.16666667,
+        "lon": -118.1666667,
+        "quota_kg": 1100,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.46667,
+          60.46667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Vandyck Lake",
+        "lat": 60.46666667,
+        "lon": -109.4666667,
+        "quota_kg": 1200,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.45,
+          60.45
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Disappointment Lake",
+        "lat": 60.45,
+        "lon": -110.45,
+        "quota_kg": 1400,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.51667,
+          60.51667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Tourangeau Lake",
+        "lat": 60.51666667,
+        "lon": -110.5166667,
+        "quota_kg": 1400,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.16667,
+          62.16667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Willow Lake",
+        "lat": 62.16666667,
+        "lon": -119.1666667,
+        "quota_kg": 1400,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.45,
+          61.45
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Unnamed Lake 6",
+        "lat": 61.45,
+        "lon": -119.45,
+        "quota_kg": 1500,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.4,
+          61.4
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Naskethey Lake",
+        "lat": 61.4,
+        "lon": -109.4,
+        "quota_kg": 1700,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -126.16667,
+          63.16667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Wrigley Lake",
+        "lat": 63.16666667,
+        "lon": -126.1666667,
+        "quota_kg": 1700,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.46667,
+          61.46667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Unnamed Lake 5",
+        "lat": 61.46666667,
+        "lon": -119.4666667,
+        "quota_kg": 1700,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.83333,
+          61.83333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Salkeld Lake",
+        "lat": 61.83333333,
+        "lon": -109.8333333,
+        "quota_kg": 1800,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.91667,
+          60.91667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Unnamed Lake 1",
+        "lat": 60.91666667,
+        "lon": -117.9166667,
+        "quota_kg": 1800,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.31667,
+          60.31667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Largepike Lake",
+        "lat": 60.31666667,
+        "lon": -110.3166667,
+        "quota_kg": 1900,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.55,
+          61.55
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Ruelling Lake",
+        "lat": 61.55,
+        "lon": -109.55,
+        "quota_kg": 1900,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.13333,
+          60.13333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Soulier Lake",
+        "lat": 60.13333333,
+        "lon": -110.1333333,
+        "quota_kg": 1900,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -120.28333,
+          60.28333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Trainor Lake",
+        "lat": 60.28333333,
+        "lon": -120.2833333,
+        "quota_kg": 1900,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.9,
+          61.9
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Tronka Chua Lake",
+        "lat": 61.9,
+        "lon": -109.9,
+        "quota_kg": 1900,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.95,
+          60.95
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Bedarch Lake",
+        "lat": 60.95,
+        "lon": -109.95,
+        "quota_kg": 2000,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.08333,
+          60.08333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Dogface Lake",
+        "lat": 60.08333333,
+        "lon": -119.0833333,
+        "quota_kg": 2300,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Walleye"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.2,
+          61.2
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "MacInnis Lake",
+        "lat": 61.2,
+        "lon": -110.2,
+        "quota_kg": 2300,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.86667,
+          61.86667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "O'Conner Lake",
+        "lat": 61.86666667,
+        "lon": -111.8666667,
+        "quota_kg": 2300,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.25,
+          60.25
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Yatsore Lake",
+        "lat": 60.25,
+        "lon": -110.25,
+        "quota_kg": 2400,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.53333,
+          61.53333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "King Lake",
+        "lat": 61.53333333,
+        "lon": -110.5333333,
+        "quota_kg": 3000,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.05,
+          60.05
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Deskenatlata Lake",
+        "lat": 60.05,
+        "lon": -112.05,
+        "quota_kg": 3600,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout",
+          "Walleye"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.1,
+          60.1
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Piers Lake",
+        "lat": 60.1,
+        "lon": -111.1,
+        "quota_kg": 4200,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -116.36667,
+          61.36667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Zinto Lake",
+        "lat": 61.36666667,
+        "lon": -116.3666667,
+        "quota_kg": 4200,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.25,
+          61.25
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Taltson Lake",
+        "lat": 61.25,
+        "lon": -110.25,
+        "quota_kg": 4600,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.58333,
+          61.58333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Unnamed Lake 4",
+        "lat": 61.58333333,
+        "lon": -109.5833333,
+        "quota_kg": 5000,
+        "quota_category": "Small",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.88333,
+          62.88333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Lac La Loche",
+        "lat": 62.88333333,
+        "lon": -110.8833333,
+        "quota_kg": 5200,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.78333,
+          63.78333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Margaret Lake",
+        "lat": 63.78333333,
+        "lon": -109.7833333,
+        "quota_kg": 5600,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -11.45,
+          62.45
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Gagnon Lake",
+        "lat": 62.45,
+        "lon": -11.45,
+        "quota_kg": 6300,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.66667,
+          61.66667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Sparks Lake",
+        "lat": 61.66666667,
+        "lon": -109.6666667,
+        "quota_kg": 6500,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.41667,
+          61.41667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Hjalmar Lake",
+        "lat": 61.41666667,
+        "lon": -109.4166667,
+        "quota_kg": 8800,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.75,
+          61.75
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Thubun Lakes",
+        "lat": 61.75,
+        "lon": -111.75,
+        "quota_kg": 9300,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.78333,
+          61.78333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Rutledge Lake",
+        "lat": 61.78333333,
+        "lon": -110.7833333,
+        "quota_kg": 9500,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.66667,
+          61.66667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Taltson River to Rat R.",
+        "lat": 61.66666667,
+        "lon": -112.6666667,
+        "quota_kg": 11400,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Walleye"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -123.08333,
+          64.08333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Blackwater Lake",
+        "lat": 64.08333333,
+        "lon": -123.0833333,
+        "quota_kg": 12500,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -119.0,
+          63.0
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Grandin Lake",
+        "lat": 63.0,
+        "lon": -119.0,
+        "quota_kg": 13000,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.06667,
+          61.06667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Thekulthili Lake",
+        "lat": 61.06666667,
+        "lon": -110.0666667,
+        "quota_kg": 13800,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.66667,
+          60.66667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Kakisa Lake",
+        "lat": 60.66666667,
+        "lon": -117.6666667,
+        "quota_kg": 20000,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Walleye"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.5,
+          60.5
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Tathlina Lake",
+        "lat": 60.5,
+        "lon": -117.5,
+        "quota_kg": 20000,
+        "quota_category": "Moderate",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Walleye"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.13333,
+          61.13333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Beaver Lake",
+        "lat": 61.13333333,
+        "lon": -117.1333333,
+        "quota_kg": 20800,
+        "quota_category": "Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -106.08333,
+          60.08333
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Scott Lake",
+        "lat": 60.08333333,
+        "lon": -106.0833333,
+        "quota_kg": 21000,
+        "quota_category": "Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -121.41667,
+          64.41667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Keller Lake",
+        "lat": 64.41666667,
+        "lon": -121.4166667,
+        "quota_kg": 22700,
+        "quota_category": "Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.66667,
+          61.66667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Nonacho Lake",
+        "lat": 61.66666667,
+        "lon": -109.6666667,
+        "quota_kg": 31800,
+        "quota_category": "Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.69052,
+          61.31561
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Great Slave Lake Area 3",
+        "lat": 61.31561,
+        "lon": -113.69052,
+        "quota_kg": 45500,
+        "quota_category": "Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.58591,
+          60.94697
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Great Slave Lake Area 3",
+        "lat": 60.94697,
+        "lon": -114.58591,
+        "quota_kg": 45500,
+        "quota_category": "Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.21667,
+          62.21667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "McDonald Lake",
+        "lat": 62.21666667,
+        "lon": -111.2166667,
+        "quota_kg": 46000,
+        "quota_category": "Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.8167,
+          60.933
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Great Slave Lake Area 1",
+        "lat": 60.933,
+        "lon": -114.8167,
+        "quota_kg": 227300,
+        "quota_category": "Very Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -116.01087,
+          60.9433
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Great Slave Lake Area 1",
+        "lat": 60.9433,
+        "lon": -116.01087,
+        "quota_kg": 227300,
+        "quota_category": "Very Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.7167,
+          61.45
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Great Slave Lake Area 1",
+        "lat": 61.45,
+        "lon": -115.7167,
+        "quota_kg": 318200,
+        "quota_category": "Very Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.55,
+          61.3667
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Great Slave Lake Area 2",
+        "lat": 61.3667,
+        "lon": -113.55,
+        "quota_kg": 318200,
+        "quota_category": "Very Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.61667,
+          61.75
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Great Slave Lake Area 2",
+        "lat": 61.75,
+        "lon": -114.61667,
+        "quota_kg": 318200,
+        "quota_category": "Very Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.50034,
+          62.07362
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Great Slave Lake Area 5",
+        "lat": 62.07362,
+        "lon": -112.50034,
+        "quota_kg": 363600,
+        "quota_category": "Very Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.58915,
+          62.2271
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Great Slave Lake Area 5",
+        "lat": 62.2271,
+        "lon": -111.58915,
+        "quota_kg": 363600,
+        "quota_category": "Very Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.93297,
+          62.71352
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Great Slave Lake Area 4",
+        "lat": 62.71352,
+        "lon": -115.93297,
+        "quota_kg": 409100,
+        "quota_category": "Very Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.24108,
+          62.02056
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Great Slave Lake Area 4",
+        "lat": 62.02056,
+        "lon": -114.24108,
+        "quota_kg": 409100,
+        "quota_category": "Very Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.16537,
+          61.59769
+        ]
+      },
+      "properties": {
+        "name": "Region 2 Slave Mackenzie",
+        "location": "Great Slave Lake Area 4",
+        "lat": 61.59769,
+        "lon": -113.16537,
+        "quota_kg": 409100,
+        "quota_category": "Very Large",
+        "subsubbasin": null,
+        "subbasin": null,
+        "species": [
+          "Lake Whitefish",
+          "Lake Trout"
+        ]
+      }
+    }
+  ]
+}

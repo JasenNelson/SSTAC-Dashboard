@@ -37,8 +37,10 @@ import { ResultsPanel as ForkResultsPanel } from '../forked/ResultsPanel';
 import * as forkNetworkStore from '../forked/networkStore';
 import * as forkSiteDataStore from '../forked/siteDataStore';
 import assetManifest from '../asset-manifest.json';
+import { JERMILOVA_PUBLIC_BASE_PATH } from './publicBasePath';
 
 const PACK_ID = 'bnrrm-casestudy-jermilova2025-mackenzie-hg';
+const BASE = JERMILOVA_PUBLIC_BASE_PATH;
 const viewerRoot = path.resolve(__dirname, '..');
 const viewerPublic = path.join(viewerRoot, 'public');
 
@@ -104,7 +106,10 @@ function installFetchStub() {
     const url = typeof input === 'string' ? input : input instanceof URL ? input.href : String((input as { url: string }).url);
     const method = (init?.method ?? 'GET').toUpperCase();
     requests.push({ url, method });
-    const pathname = decodeURIComponent(new URL(url, 'http://viewer.local').pathname);
+    // The stores' direct loads in these tests (no wrapper) request '/bn-rrm/...'; the
+    // mounted viewer's verifiedFetch requests '<base>/bn-rrm/...', as the deployment serves.
+    const requested = decodeURIComponent(new URL(url, 'http://viewer.local').pathname);
+    const pathname = requested.startsWith(`${BASE}/bn-rrm/`) ? requested.slice(BASE.length) : requested;
     const file = path.join(viewerPublic, ...pathname.slice(1).split('/'));
     if (method !== 'GET' || !pathname.startsWith('/bn-rrm/') || !file.startsWith(viewerPublic) || !fs.existsSync(file)) {
       return new Response('not found', { status: 404 });
@@ -300,6 +305,7 @@ describe('Jermilova viewer parity with the authenticated original', () => {
     // Cold start: the page must load Jermilova itself, not reuse warmed store state.
     usePackStore.setState(usePackStore.getInitialState(), true);
     useNetworkStore.setState(useNetworkStore.getInitialState(), true);
+    const firstMountRequest = requests.length;
     render(<JermilovaViewerClient />);
     try {
       await waitFor(() => expect(document.querySelectorAll('nav button')).toHaveLength(6), { timeout: 10000 });
@@ -311,7 +317,8 @@ describe('Jermilova viewer parity with the authenticated original', () => {
     // The original PackBanner caveat for the read-only benchmark pack is shown verbatim.
     expect(await screen.findByText(/Frozen benchmark/)).toBeTruthy();
     expect(screen.getByText(/Use the Data tab to browse published training data/)).toBeTruthy();
-    expect(screen.getByText('14 nodes')).toBeTruthy();
+    // The model loads after the pack banner; wait for its count rather than racing it.
+    expect(await screen.findByText('14 nodes', {}, { timeout: 10000 })).toBeTruthy();
     expect(screen.queryByText('Review')).toBeNull();
     expect(screen.queryByText('Case Studies')).toBeNull();
     fireEvent.click(screen.getByTitle('Upload & export'));
@@ -322,6 +329,11 @@ describe('Jermilova viewer parity with the authenticated original', () => {
     expect(setItem).not.toHaveBeenCalled();
     setItem.mockRestore();
     for (const request of requests) expect(request.method).toBe('GET');
+    // Every pack read the mounted viewer makes goes to the served mount, never to the
+    // authenticated app's own /bn-rrm/ paths.
+    const mounted = requests.slice(firstMountRequest).map((request) => new URL(request.url, 'http://viewer.local').pathname);
+    expect(mounted.length).toBeGreaterThan(0);
+    for (const pathname of mounted) expect(pathname.startsWith(`${BASE}/bn-rrm/`), pathname).toBe(true);
   }, 30000);
 
   it('a pack file tampered after mount replaces the page with the fail-closed error', async () => {

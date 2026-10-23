@@ -14,7 +14,8 @@ describe('viewer asset manifest', () => {
   it('keeps asset preparation and export auditing in the sole build path', async () => {
     const packageJson = JSON.parse(await readFile(path.join(viewerRoot, 'package.json'), 'utf8'));
     expect(packageJson.scripts.build).toBe(
-      'npm run prepare:assets && node scripts/src-closure.mjs --check && node scripts/fork-patches.mjs --check && next build && node scripts/audit-export.mjs',
+      // The receipt steps bracket the build; --end-build runs the export audit itself.
+      'npm run prepare:assets && node scripts/publish-root-mirror.mjs --begin-build && node scripts/src-closure.mjs --check && node scripts/fork-patches.mjs --check && next build && node scripts/publish-root-mirror.mjs --end-build',
     );
   });
 

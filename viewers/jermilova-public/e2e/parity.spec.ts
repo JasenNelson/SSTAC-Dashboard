@@ -1,4 +1,4 @@
-// Rendered parity: anonymous viewer (/Jermilova/) vs authenticated original (/bn-rrm with
+// Rendered parity: anonymous viewer (/Jermilova) vs authenticated original (/bn-rrm with
 // the Jermilova pack selected). Projects in ../playwright.config.ts:
 //   viewer-anon (@viewer) -> original-auth (@original) -> compare (@compare)
 import fs from 'node:fs';
@@ -16,7 +16,10 @@ const WIDTHS = [
 const REMOVED_LINES = new Set(['Export', 'Identify', 'Identify Area']);
 // External hosts the owner approved (original basemaps + BC WMS).
 const APPROVED_HOSTS = [/(^|\.)tile\.openstreetmap\.org$/, /^server\.arcgisonline\.com$/, /(^|\.)tile\.opentopomap\.org$/, /^stamen-tiles\.a\.ssl\.fastly\.net$/, /^openmaps\.gov\.bc\.ca$/];
-const VIEWER_PATHS = [/^\/Jermilova\/$/, /^\/_next\//, /^\/bn-rrm\//, /^\/favicon\.ico$/];
+// The export is served under /Jermilova/ (basePath): by the preview server, and by the
+// root deployment, which answers /Jermilova/ with a single 308 to /Jermilova. Nothing may
+// reach the authenticated app's own /_next/ or /bn-rrm/ paths.
+const VIEWER_PATHS = [/^\/Jermilova\/?$/, /^\/Jermilova\/index\.txt$/, /^\/Jermilova\/_next\//, /^\/Jermilova\/bn-rrm\//, /^\/favicon\.ico$/];
 
 interface Snapshot {
   tabs: string[];
@@ -35,12 +38,23 @@ const READY: Record<string, (page: Page) => Promise<unknown>> = {
   Conceptual: (page) => mainArea(page).locator('h2').first().waitFor(),
   'Detailed BN': (page) => page.locator('.react-flow__node').first().waitFor(),
   CPT: (page) => mainArea(page).getByText(/With CPT/).first().waitFor(),
-  Map: (page) => page.locator('.leaflet-container').first().waitFor(),
+  // Attached, not visible: at phone width the layout (the original's SiteMap layout, reused)
+  // keeps both fixed side panels, which leaves the Leaflet container 0 px wide (measured on
+  // the clone at 390 px). Desktop visibility is asserted separately in snapshot().
+  Map: (page) => page.locator('.leaflet-container').first().waitFor({ state: 'attached' }),
   Data: (page) => page.getByPlaceholder('Filter values...').waitFor(),
 };
 
 const wrapper = (page: Page) => page.locator('.bn-rrm-wrapper');
 const mainArea = (page: Page) => page.locator('.bn-rrm-wrapper > main');
+// The shell's node-count status in its sub-header (first child of the wrapper). A
+// page-wide getByText('14 nodes') is ambiguous: the ResultsPanel model-info badge in
+// <main> (Detailed BN tab, right panel) also contains "14 nodes, 7 CPTs, 15 causal edges".
+const nodeCountStatus = (page: Page) => wrapper(page).locator('> div').first().getByText(/^\d+ nodes$/);
+async function expectNodeCountStatus(page: Page, text: string) {
+  await expect(nodeCountStatus(page)).toHaveText(text);
+  await expect(nodeCountStatus(page)).toBeVisible();
+}
 
 async function tabLabels(page: Page) {
   return (await wrapper(page).locator('nav button').allInnerTexts()).map((t) => t.trim());
@@ -80,18 +94,30 @@ async function canvasState(page: Page) {
   return { containers, children: (await nodes.count()) - containers, edges };
 }
 
+// React Flow renders nodes and edges only after measuring them, so a read on a fixed delay
+// can catch the canvas mid-update. Read until three consecutive samples, 250 ms apart,
+// agree.
+async function settledCanvasState(page: Page) {
+  const samples: string[] = [];
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const state = await canvasState(page);
+    samples.push(JSON.stringify(state));
+    if (samples.length >= 3 && samples.slice(-3).every((sample) => sample === samples[samples.length - 1])) return state;
+    await page.waitForTimeout(250);
+  }
+  throw new Error(`Canvas did not settle: ${samples.slice(-3).join(' | ')}`);
+}
+
 async function snapshot(page: Page, label: string): Promise<Snapshot> {
   const snap: Snapshot = { tabs: await tabLabels(page), chrome: '', canvas: {}, text: {} };
   await openTab(page, 'Detailed BN');
   await page.locator('.react-flow__node-containerNode').first().waitFor();
   snap.chrome = await chromeText(page);
-  snap.canvas.collapsed = await canvasState(page);
+  snap.canvas.collapsed = await settledCanvasState(page);
   await page.locator('[data-id="container_4"]').click();
-  await page.waitForTimeout(300);
-  snap.canvas.mixed = await canvasState(page);
+  snap.canvas.mixed = await settledCanvasState(page);
   await page.getByTitle('Expand all containers').click();
-  await page.waitForTimeout(300);
-  snap.canvas.expanded = await canvasState(page);
+  snap.canvas.expanded = await settledCanvasState(page);
   await page.locator('[data-id="fish_tissue_hg"]').click();
   await page.waitForTimeout(300);
   snap.text['inspector-desktop'] = await mainArea(page).innerText();
@@ -100,6 +126,7 @@ async function snapshot(page: Page, label: string): Promise<Snapshot> {
     await page.setViewportSize({ width: size.width, height: size.height });
     for (const tab of TABS) {
       await openTab(page, tab);
+      if (tab === 'Map' && size.name === 'desktop') await expect(page.locator('.leaflet-container').first()).toBeVisible();
       snap.text[`${tab}-${size.name}`] = await mainArea(page).innerText();
       await page.screenshot({ path: path.join(EVIDENCE, `${label}-${tab.replace(/\W+/g, '_')}-${size.name}.png`), fullPage: true });
     }
@@ -108,7 +135,52 @@ async function snapshot(page: Page, label: string): Promise<Snapshot> {
   return snap;
 }
 
+// Counts every browser-storage, IndexedDB and cookie write from the first script on, so a
+// write that is later cleared still fails (a final-state check alone would miss it).
+async function installWriteSpies(page: Page) {
+  await page.addInitScript(() => {
+    const counts = { storage: 0, indexedDB: 0, cookie: 0 };
+    const installed = { storage: false, indexedDB: false, cookie: false };
+    (window as unknown as { __writes: typeof counts }).__writes = counts;
+    (window as unknown as { __spiesInstalled: typeof installed }).__spiesInstalled = installed;
+    for (const name of ['setItem', 'removeItem', 'clear'] as const) {
+      const original = Storage.prototype[name] as (...args: unknown[]) => unknown;
+      (Storage.prototype as unknown as Record<string, unknown>)[name] = function (this: Storage, ...args: unknown[]) {
+        counts.storage += 1;
+        return original.apply(this, args);
+      };
+    }
+    installed.storage = true;
+    const factory = window.indexedDB;
+    if (factory) {
+      const open = factory.open.bind(factory);
+      const remove = factory.deleteDatabase.bind(factory);
+      factory.open = ((...args: Parameters<IDBFactory['open']>) => { counts.indexedDB += 1; return open(...args); }) as IDBFactory['open'];
+      factory.deleteDatabase = ((...args: Parameters<IDBFactory['deleteDatabase']>) => { counts.indexedDB += 1; return remove(...args); }) as IDBFactory['deleteDatabase'];
+      installed.indexedDB = true;
+    }
+    const cookie = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+    if (cookie && cookie.get && cookie.set) {
+      const setCookie = cookie.set;
+      Object.defineProperty(Document.prototype, 'cookie', {
+        configurable: true,
+        get: cookie.get,
+        set(this: Document, value: string) { counts.cookie += 1; setCookie.call(this, value); },
+      });
+      installed.cookie = true;
+    }
+  });
+}
+// Counts, plus whether each spy installed (an uninstalled spy would make a 0 count vacuous).
+const writeCounts = (page: Page) =>
+  page.evaluate(() => {
+    const view = window as unknown as { __writes: unknown; __spiesInstalled: unknown };
+    return { writes: view.__writes, installed: view.__spiesInstalled };
+  });
+const NO_WRITES = { writes: { storage: 0, indexedDB: 0, cookie: 0 }, installed: { storage: true, indexedDB: true, cookie: true } };
+
 test('@viewer anonymous viewer: faithful shell, read-only network, no storage, no errors', async ({ page, context }) => {
+  await installWriteSpies(page);
   const problems: string[] = [];
   page.on('pageerror', (error) => problems.push(`pageerror: ${error.message}`));
   page.on('console', (message) => {
@@ -126,9 +198,9 @@ test('@viewer anonymous viewer: faithful shell, read-only network, no storage, n
   });
 
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/Jermilova/');
+  await page.goto('/Jermilova');
   await expect(wrapper(page).locator('nav button')).toHaveCount(6);
-  await expect(page.getByText('14 nodes')).toBeVisible();
+  await expectNodeCountStatus(page, '14 nodes');
   expect(await tabLabels(page)).toEqual(TABS);
   // No pack/model selector in the header (the original's selector is a chevron dropdown).
   await expect(wrapper(page).locator('> div').first().locator('svg.lucide-chevron-down')).toHaveCount(0);
@@ -138,16 +210,24 @@ test('@viewer anonymous viewer: faithful shell, read-only network, no storage, n
   expect(snap.canvas.collapsed.edges).toHaveLength(6);
   expect(snap.canvas.mixed).toMatchObject({ containers: 7, children: 2 });
   expect(snap.canvas.expanded).toMatchObject({ containers: 7, children: 14 });
-  expect(snap.canvas.expanded.edges).toHaveLength(15);
+  // The model has 15 edges and the original Canvas hands all 15 to React Flow (unit parity
+  // test), but React Flow draws 14: the original node component for mehg_ingested renders
+  // only a target handle, so MeHg Ingested -> pTWI Exceedance has no source handle to draw
+  // from. Same in the original page (the @compare test requires identical edge lists).
+  expect(snap.canvas.expanded.edges).toHaveLength(14);
+  expect(snap.canvas.expanded.edges.some((id) => id.startsWith('rf__edge-mehg_ingested_ptwi_exceedance'))).toBe(false);
 
   // A reload restores the initial (all collapsed) state.
   await page.setViewportSize({ width: 1440, height: 900 });
   await openTab(page, 'Detailed BN');
   await page.getByTitle('Expand all containers').click();
+  // No storage, IndexedDB or cookie write across every tab, width and interaction above,
+  // read immediately before the reload resets the counters.
+  expect(await writeCounts(page)).toEqual(NO_WRITES);
   await page.reload();
-  await expect(page.getByText('14 nodes')).toBeVisible();
+  await expectNodeCountStatus(page, '14 nodes');
   await page.locator('.react-flow__node-containerNode').first().waitFor();
-  expect((await canvasState(page)).children).toBe(0);
+  expect((await settledCanvasState(page)).children).toBe(0);
 
   const storage = await page.evaluate(async () => ({
     local: localStorage.length,
@@ -155,6 +235,8 @@ test('@viewer anonymous viewer: faithful shell, read-only network, no storage, n
     idb: typeof indexedDB.databases === 'function' ? (await indexedDB.databases()).length : 0,
   }));
   expect(storage).toEqual({ local: 0, session: 0, idb: 0 });
+  // The spies were re-installed by the reload; the reloaded page wrote nothing either.
+  expect(await writeCounts(page)).toEqual(NO_WRITES);
   // The viewer itself sets no cookies (third-party tile hosts are out of scope here).
   expect((await context.cookies(process.env.PARITY_VIEWER_URL as string)).length).toBe(0);
   fs.writeFileSync(path.join(EVIDENCE, 'viewer-problems.json'), JSON.stringify(problems, null, 2));
@@ -170,7 +252,7 @@ test('@original authenticated original with the Jermilova pack selected', async 
   await wrapper(page).locator('nav button').first().waitFor();
   await wrapper(page).locator('> div').first().locator('button:has(svg.lucide-chevron-down)').first().click();
   await page.getByRole('button', { name: new RegExp(JERMILOVA) }).click();
-  await expect(page.getByText('14 nodes')).toBeVisible();
+  await expectNodeCountStatus(page, '14 nodes');
   await snapshot(page, 'original');
 });
 

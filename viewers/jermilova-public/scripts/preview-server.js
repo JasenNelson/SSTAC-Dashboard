@@ -58,18 +58,23 @@ async function route(req, res) {
   }
   const raw = req.url;
   if (!raw || raw.length > 4096 || raw.includes('%') || raw.includes('\\') || raw.includes('..') || raw.includes(':') || raw.includes('?')) return sendError(res, 400);
-  if (raw === '/Jermilova') {
-    res.writeHead(308, { 'Location': '/Jermilova/', 'Content-Length': '0', 'Cache-Control': 'no-store' });
+  // Same canonical URL as the root deployment: /Jermilova/ redirects once to /Jermilova.
+  if (raw === '/Jermilova/') {
+    res.writeHead(308, { 'Location': '/Jermilova', 'Content-Length': '0', 'Cache-Control': 'no-store' });
     return res.end();
   }
+  // The export is built with basePath '/Jermilova' (lib/publicBasePath.ts): every asset
+  // and pack read is under /Jermilova/, mirroring the root deployment's public/Jermilova/.
   let relative;
-  if (raw === '/Jermilova/' || raw === '/Jermilova/index.html') relative = 'index.html';
-  else if (raw.startsWith('/_next/')) relative = raw.slice(1);
-  else if (raw.startsWith('/bn-rrm/')) relative = raw.slice(1);
+  if (raw === '/Jermilova' || raw === '/Jermilova/index.html') relative = 'index.html';
+  else if (raw === '/Jermilova/index.txt') relative = 'index.txt';
+  else if (raw.startsWith('/Jermilova/_next/')) relative = raw.slice('/Jermilova/'.length);
+  else if (raw.startsWith('/Jermilova/bn-rrm/')) relative = raw.slice('/Jermilova/'.length);
   else if (raw === '/favicon.ico') relative = 'favicon.ico';
   else return sendError(res, 404);
   const pieces = relative.split('/');
-  if (pieces.some(x => !x || x === '.' || x === '..')) return sendError(res, 400);
+  // Windows drops trailing dots and spaces from names, so 'bn-rrm.' would reach 'bn-rrm'.
+  if (pieces.some(x => !x || x === '.' || x === '..' || /[. ]$/.test(x))) return sendError(res, 400);
   const target = path.resolve(root, relative);
   const foldedTarget = target.toLowerCase();
   const foldedPrefix = rootPrefix.toLowerCase();

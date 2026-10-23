@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { NextConfig } from 'next';
+import { JERMILOVA_PUBLIC_BASE_PATH, JERMILOVA_PUBLIC_BUILD_ID } from './lib/publicBasePath';
 
 // The aliases below resolve from the build's working directory, so the build must
 // run from this viewer package; fail closed otherwise instead of aliasing elsewhere.
@@ -15,6 +16,9 @@ if (
 
 const nextConfig: NextConfig = {
   output: 'export',
+  // Served at /Jermilova/ (preview server and the root deployment's public/Jermilova/).
+  basePath: JERMILOVA_PUBLIC_BASE_PATH,
+  generateBuildId: async () => JERMILOVA_PUBLIC_BUILD_ID,
   trailingSlash: true,
   images: { unoptimized: true },
   experimental: { externalDir: true },

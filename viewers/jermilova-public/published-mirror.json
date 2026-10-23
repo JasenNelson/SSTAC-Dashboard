@@ -1,0 +1,316 @@
+{
+  "schema": "jermilova-public-mirror-v1",
+  "base_path": "/Jermilova",
+  "mount": "public/Jermilova",
+  "file_count": 59,
+  "total_bytes": 5199612,
+  "index_inline_script_sha256": [
+    "sha256-OBTN3RiyCV4Bq7dFqZ5a2pAXjnCcCYeTJMO2I/LYKeo=",
+    "sha256-wPAsNzCVCEiGPnUSb4kLdOvq79eB6f/1hBf1XhaSfvk=",
+    "sha256-wyL0hleNH0qqgOUd8Ruhy5CRcUvgcgDA6TE41zQMcWo=",
+    "sha256-PuOR+LZBqrKb4ePpBB6hBCpSuljEq9ohELpHi6j0q8g=",
+    "sha256-zfPBeShvZRjRd7Iv7JR+NW/i9yZ7vNWN6+GOM0UHtrE=",
+    "sha256-i/k9dNlim2bw/P4uBE6H5TkwSixGtVIyDp1QCZNZnrE="
+  ],
+  "viewer_source": {
+    "sha256": "54bd5a386d7590df3248132616eeed23a59b4b669f44697c87e58d71ba8204f2",
+    "file_count": 69
+  },
+  "files": [
+    {
+      "path": "_next/static/chunks/09d0abd7-48e57dbead480eb8.js",
+      "bytes": 173019,
+      "sha256": "fbe959a28ba6d8041658724233d092e89e5ffa9d187041dc529aa06a50f1cd66"
+    },
+    {
+      "path": "_next/static/chunks/241.061ffff295a2c115.js",
+      "bytes": 12125,
+      "sha256": "4c307066f1e9821eff93fba9f63a620354474edac50ad5ebfd0ee2c7e377218f"
+    },
+    {
+      "path": "_next/static/chunks/294.a9a34064e0985ac6.js",
+      "bytes": 93917,
+      "sha256": "ab54a3bf125e886ee722cd6a55e29b71830fad794e4ee8df9832c6cb2bbe330d"
+    },
+    {
+      "path": "_next/static/chunks/323.a44da5aacd15befe.js",
+      "bytes": 78,
+      "sha256": "3a7cf17ab0a0967fd61f4a4c814f3fea6d52f586581440a7a2bf754978269630"
+    },
+    {
+      "path": "_next/static/chunks/355.a1ce95bcc62622cd.js",
+      "bytes": 28351,
+      "sha256": "aff6f9efc2ac67eb6b0437b4aec8a7764f7faf0fed7103b0165e5cf1e883c041"
+    },
+    {
+      "path": "_next/static/chunks/356.71ffb923a309c912.js",
+      "bytes": 5437,
+      "sha256": "b22866c5ca8bfcd905e31d76116472a185a458d63080d05daf9753f518e7919d"
+    },
+    {
+      "path": "_next/static/chunks/363.51076cbbd2dd8d63.js",
+      "bytes": 34056,
+      "sha256": "bf84bf75cd2cf24d3b2dfd0f4a67f54fb0e183db4406455c4d2dc5c58d9b9b59"
+    },
+    {
+      "path": "_next/static/chunks/446.a7db03e8ca14bfe3.js",
+      "bytes": 34449,
+      "sha256": "f6bc30002d9f479a4ac376998b0434082a2336cd6552dd2b73ef48cf3716b5b7"
+    },
+    {
+      "path": "_next/static/chunks/458.62c90a30faeaa85e.js",
+      "bytes": 78,
+      "sha256": "318e05a3d7edccef13bfc5fee6a16cfe57fb63b0700a06e0f5b04ee3ac307f5e"
+    },
+    {
+      "path": "_next/static/chunks/465-9e39ac7362f0dfa1.js",
+      "bytes": 172670,
+      "sha256": "cdddf6e7e62b6c102180257922b02cdd3789f5a9e23be4acb2a4321d213139af"
+    },
+    {
+      "path": "_next/static/chunks/57.13fda55cac61d174.js",
+      "bytes": 10186,
+      "sha256": "9b91d9aee3edbe73ad15fe4b2fdd8e465973fce1a07c3e7a172a953d43eea416"
+    },
+    {
+      "path": "_next/static/chunks/647.a8326675cffe3381.js",
+      "bytes": 78,
+      "sha256": "bd248301cf2fbea5391d9e1dc89d01413a6d3e0d5794b04cbc897fafa7a2e188"
+    },
+    {
+      "path": "_next/static/chunks/873.308b3799e17f9210.js",
+      "bytes": 17857,
+      "sha256": "659b0bc4cd27a2d977a9551d9285c3f27f53f2aca4369533650ec019f6667aa1"
+    },
+    {
+      "path": "_next/static/chunks/884-df81133a47f4d1d4.js",
+      "bytes": 43163,
+      "sha256": "e3666f8751fe43a186deb9d8ace0a182066546bc332a22a299461dda3e6f4bc9"
+    },
+    {
+      "path": "_next/static/chunks/889.80fea024e9a520a3.js",
+      "bytes": 738,
+      "sha256": "21248dd05c06269e0cc324a9cbe0ba9ad2a0503e147f4f56a5dc22da9ed0b1be"
+    },
+    {
+      "path": "_next/static/chunks/98e392d3.c6574c4e92c1b7cf.js",
+      "bytes": 80379,
+      "sha256": "492128e08148b04f8a356aefe4e1d07685d76a198361a1c343b2f206b2f68c30"
+    },
+    {
+      "path": "_next/static/chunks/app/_not-found/page-483d73c1f50f252d.js",
+      "bytes": 2670,
+      "sha256": "e0316f85c05efe1b0dc9eaed5e682d63db77080dc2a95292b2f0b1a7d12e3687"
+    },
+    {
+      "path": "_next/static/chunks/app/layout-e57fd0fcfaea1129.js",
+      "bytes": 318,
+      "sha256": "c7ca8ba01eabbe06de1d67b24b0b6fa12d6aa58f101d350d45f109238b6b61ac"
+    },
+    {
+      "path": "_next/static/chunks/app/page-1173a419756673da.js",
+      "bytes": 140177,
+      "sha256": "47a09d0f33e1890f722c8fbe37c5951e373e3ad5f16a361f7c67f890dd5cdae9"
+    },
+    {
+      "path": "_next/static/chunks/ee7a6c1e.e6cca975c5eea77c.js",
+      "bytes": 148503,
+      "sha256": "e0ae118e876a6e7ec91670130b9474fcd406fcf435e7fde13b7448fe4b1426ec"
+    },
+    {
+      "path": "_next/static/chunks/framework-cc2a582776af7f86.js",
+      "bytes": 182711,
+      "sha256": "5d0428a79ecadea7e286e9656eb9c4a495560f377a42284cee94b22c84190b30"
+    },
+    {
+      "path": "_next/static/chunks/main-app-ac85adb3836740af.js",
+      "bytes": 554,
+      "sha256": "9049b438a6c02214f4d05af7fdcd3e1dd241021971bf4cce73044bd059c63cc9"
+    },
+    {
+      "path": "_next/static/chunks/main-be1eeaea4be3dd20.js",
+      "bytes": 121531,
+      "sha256": "9a2d33edbf39f7cf66ee4e1b60e07d38c4f27a280fee12e634cdc64dc3e468c2"
+    },
+    {
+      "path": "_next/static/chunks/pages/_app-c3b48ce943959ed1.js",
+      "bytes": 912,
+      "sha256": "95aad1b868a1867d8c2bb07fef420bcd7bebaab28480ddeb6d329b12f6e21596"
+    },
+    {
+      "path": "_next/static/chunks/pages/_error-c34539e3e39e76c0.js",
+      "bytes": 5645,
+      "sha256": "fd0c574e8a6188424215c8f8373bbbf320a8179a8b4524384dc05b844d5ff945"
+    },
+    {
+      "path": "_next/static/chunks/polyfills-42372ed130431b0a.js",
+      "bytes": 112594,
+      "sha256": "0973c1d64c88adc8e3c950410cb58b288f72118d5965b78049438deb8f2f9683"
+    },
+    {
+      "path": "_next/static/chunks/webpack-2e2a1fc8ea47ffa5.js",
+      "bytes": 5216,
+      "sha256": "e140357360359ffee77290c2da316788cfc3a52c8bc60a5acb2747a1fafb44dd"
+    },
+    {
+      "path": "_next/static/css/599369d853c61df7.css",
+      "bytes": 15772,
+      "sha256": "dae1c1338c9a6d70787063786e64b9ffe238de67379ad80f2827c60aa90fddd1"
+    },
+    {
+      "path": "_next/static/css/929f2127a5a9987b.css",
+      "bytes": 688,
+      "sha256": "5ea4d37ba829f27588ed3c9f85b156b03b23db14f70dadd4b48c5fe9f8370e5a"
+    },
+    {
+      "path": "_next/static/css/ab2ef3d332e731c4.css",
+      "bytes": 115579,
+      "sha256": "ab4a2f0acc73794c076bbf5e24c7dc3e1a65361e76a45d139461cccfa2a4ab7d"
+    },
+    {
+      "path": "_next/static/css/c8981de53f5b9992.css",
+      "bytes": 1070,
+      "sha256": "e1f1a936bdc0043d7504523eed01d6f89801761ebcb13c3365ae67889c6a6821"
+    },
+    {
+      "path": "_next/static/css/e6f28f098874e69e.css",
+      "bytes": 11211,
+      "sha256": "45a1d5b095e6bd673ac7e1d3fc47a1b6517cbe35390e632cc198c6e83b90d8f4"
+    },
+    {
+      "path": "_next/static/jermilova-public/_buildManifest.js",
+      "bytes": 505,
+      "sha256": "e219c3aa06f67f3e9168b79b5c70e49e47e80fb722279f33ab94260d2445334d"
+    },
+    {
+      "path": "_next/static/jermilova-public/_ssgManifest.js",
+      "bytes": 80,
+      "sha256": "678f6ce2cb80b1fe72fc67e7412be6e2ab6ada083111b64f7c40d35e3cba5e00"
+    },
+    {
+      "path": "_next/static/media/layers-2x.9859cd12.png",
+      "bytes": 1259,
+      "sha256": "066daca850d8ffbef007af00b06eac0015728dee279c51f3cb6c716df7c42edf"
+    },
+    {
+      "path": "_next/static/media/layers.ef6db872.png",
+      "bytes": 696,
+      "sha256": "1dbbe9d028e292f36fcba8f8b3a28d5e8932754fc2215b9ac69e4cdecf5107c6"
+    },
+    {
+      "path": "_next/static/media/marker-icon.d577052a.png",
+      "bytes": 1466,
+      "sha256": "574c3a5cca85f4114085b6841596d62f00d7c892c7b03f28cbfa301deb1dc437"
+    },
+    {
+      "path": "bn-rrm/pack-registry.json",
+      "bytes": 415,
+      "sha256": "a62993279e1872909d67831bce1dc3d4965479bc3d23ae58898b73b0b4e03454"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/advisory_lakes.geojson",
+      "bytes": 14712,
+      "sha256": "01140a3d393eb5877d39b333a32aa4ca5db2c513a56860dbe2dd2159dcbfdfc9"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/climate_stations.geojson",
+      "bytes": 154842,
+      "sha256": "2254049666fc4da4ca6a4064b00f4dc9aea7519bdeb7a7a22ea2aaefd38aa760"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/commercial_fisheries.geojson",
+      "bytes": 58836,
+      "sha256": "169f5a415ae7d058ffdf5b60c2dfbf046e5279814bedba4f4d318fb6e9229e70"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/communities.geojson",
+      "bytes": 15617,
+      "sha256": "8a208bf3260de4992aa48ba05abf2c821d499b6aa407488e462bbcd6d845e8c1"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/gbs_basins.geojson",
+      "bytes": 213826,
+      "sha256": "2a4d772bd236d76b1fe81c12f05f2cb2f33948817b67d2109ba8c6b1d348079b"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/gsl_basins.geojson",
+      "bytes": 21629,
+      "sha256": "06896af15dcddf8ba6f8f7513028cffbc5a8f21a91a8cf8147d45ad11979c891"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/historic_mines.geojson",
+      "bytes": 46263,
+      "sha256": "6f79e815da3e97fcc13fc722ed7245a0b4a0daa9da965c607f661abeb2555547"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/hydro_facilities.geojson",
+      "bytes": 2582,
+      "sha256": "6ea3067167f35efc6b593fb06360236a244b11978d6911fcb93703b6b14f5cad"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/large_mines.geojson",
+      "bytes": 4700,
+      "sha256": "0f776017eab6338b062243eaf6a4ebea97cb5e5f9dbf2c3697ce69e701755aac"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/mineral_claims.geojson",
+      "bytes": 420595,
+      "sha256": "603f708f82fd9283e252421ed89a01b2bb9ed1e8f80cfd09bca5f0a03ebbe046"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/oil_gas_claims.geojson",
+      "bytes": 382172,
+      "sha256": "709a17d45f84fa11dbbbf266a124c74a40869935b21eec19ddfb382407e61528"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/thaw_slumps.geojson",
+      "bytes": 1290355,
+      "sha256": "ace60d261c1e0768bcdb7c230938ef4ae3af514b334d2ec0b583688d75b39365"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/pack.json",
+      "bytes": 3436,
+      "sha256": "24b322e8b8389164c58a15d9e8b29e35fe794dbdbdf9ee7b6606947e7a4bf17b"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/review/decisions.json",
+      "bytes": 6203,
+      "sha256": "5e4e43c6eff3f36f79222944d79e126615187ec892ae38c67ac07b449bdf1f85"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/review/model_overview.json",
+      "bytes": 2846,
+      "sha256": "14f0676a726fa92cadf8f864d31637812d79dff0dd029ffc8ded72de3e13e418"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/review/provenance_registry.json",
+      "bytes": 4081,
+      "sha256": "9a3e6f8376adfc7a8b9371198dd917c3951908c9d52e419da7a802a9ca93f959"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/review/site_reports.json",
+      "bytes": 3603,
+      "sha256": "4665544987212a0d465f5d20fd482b9cac075f11721695834b2248c434ba307c"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/runtime/learned-model.json",
+      "bytes": 172261,
+      "sha256": "970d958a97a170c160e1ab73f22664b527ff9ae7dba24b8c1fddf25bc547cb50"
+    },
+    {
+      "path": "bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/training_data.json",
+      "bytes": 795344,
+      "sha256": "e6ad4be9580067ed67da5e55f1c9e2ab40cc5e3ff33037cac05803d7b4684931"
+    },
+    {
+      "path": "index.html",
+      "bytes": 6001,
+      "sha256": "a18bceba928df32b8a2d71086623d3cf155d374d9ae7aba3d2b8e2985eef190d"
+    },
+    {
+      "path": "index.txt",
+      "bytes": 3555,
+      "sha256": "f99f870b880cfe7e4944778d7efc83886d9b24aafb456121106eba35da52d864"
+    }
+  ]
+}

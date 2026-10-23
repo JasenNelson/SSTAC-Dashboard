@@ -47,6 +47,9 @@ const eslintConfig = [
       "viewers/*/out/**",
       "viewers/*/node_modules/**",
       "viewers/*/next-env.d.ts",
+      // Committed static export of the Jermilova viewer (generated, minified build output;
+      // verified byte for byte against viewers/jermilova-public/published-mirror.json).
+      "public/Jermilova/**",
     ],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),

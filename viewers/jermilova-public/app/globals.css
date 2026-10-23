@@ -10,6 +10,19 @@
 @source "../../../src/components/bn-rrm";
 @source "../../../src/lib/bn-rrm";
 @source "../forked";
+/*
+ * Tailwind also auto-scans this package. Keep docs, tests, scripts and generated manifests
+ * out of that scan so editing them can never change the published stylesheet (only the
+ * fingerprinted build inputs can).
+ */
+@source not "../README.md";
+@source not "../e2e";
+@source not "../scripts";
+@source not "../lib/*.test.ts";
+@source not "../lib/*.test.tsx";
+@source not "../playwright.config.ts";
+@source not "../vitest.config.ts";
+@source not "../published-mirror.json";
 
 /* Integrity-gate states shown before the original page mounts (viewer-only). */
 .loading-card,

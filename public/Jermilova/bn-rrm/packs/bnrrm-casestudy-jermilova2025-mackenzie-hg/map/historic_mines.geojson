@@ -1,0 +1,1778 @@
+{
+  "type": "FeatureCollection",
+  "name": "historic_mines",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "bbox": [
+    -130.166667,
+    60.833333,
+    -109.516667,
+    66.095833
+  ],
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.13333,
+          63.03333
+        ]
+      },
+      "properties": {
+        "name": "ARGONAUT",
+        "primary_commodity": "Gold, Tungsten",
+        "lat_str": "63° 02' 00\" N",
+        "lon_str": "113° 08' 00\" W",
+        "y": 63.0333333333,
+        "x": -113.133333333,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1938-1943",
+        "development": "40’vertical shaft, open cuts",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.22083,
+          64.15417
+        ]
+      },
+      "properties": {
+        "name": "BAR-BET",
+        "primary_commodity": "Gold",
+        "lat_str": "64° 09' 15\" N",
+        "lon_str": "115° 13' 15\" W",
+        "y": 64.1541666667,
+        "x": -115.220833333,
+        "stage": "High-Graded (Abandoned)",
+        "years_production": "1938-1941",
+        "development": "high-grade trenching",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -109.51667,
+          62.875
+        ]
+      },
+      "properties": {
+        "name": "BARNSTON RIVER",
+        "primary_commodity": "Copper",
+        "lat_str": "62° 52' 30\" N",
+        "lon_str": "109° 31' 00\" W",
+        "y": 62.875,
+        "x": -109.516666667,
+        "stage": "Minor Exploration (Abandoned)",
+        "years_production": "1941",
+        "development": "three short shafts (20 feet)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.025,
+          66.00833
+        ]
+      },
+      "properties": {
+        "name": "BEAR PORTAL",
+        "primary_commodity": "Silver",
+        "lat_str": "66° 00' 30\" N",
+        "lon_str": "118° 01' 30\" W",
+        "y": 66.0083333333,
+        "x": -118.025,
+        "stage": "Minor Exploration (Abandoned)",
+        "years_production": "1933-1934",
+        "development": "adit tunnel",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.90833,
+          62.41667
+        ]
+      },
+      "properties": {
+        "name": "BEAULIEU",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 25' 00\" N",
+        "lon_str": "112° 54' 30\" W",
+        "y": 62.4166666667,
+        "x": -112.908333333,
+        "stage": "Minor Producer (Remediated)",
+        "years_production": "1942, 1946-1948",
+        "development": "320’ vertical shaft, 2 levels (681’ dev.), small pits",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.18333,
+          64.73333
+        ]
+      },
+      "properties": {
+        "name": "BETA  GAMMA",
+        "primary_commodity": "Uranium",
+        "lat_str": "64° 44' 00\" N",
+        "lon_str": "118° 11' 00\" W",
+        "y": 64.7333333333,
+        "x": -118.183333333,
+        "stage": "Bulk Sampled (Abandoned)",
+        "years_production": "1934, 1956",
+        "development": "65’ vertical shaft + adit tunnel (992’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.39583,
+          61.99583
+        ]
+      },
+      "properties": {
+        "name": "BLANCHET  ISLAND",
+        "primary_commodity": "Cobalt, Nickel",
+        "lat_str": "61° 59' 45\" N",
+        "lon_str": "112° 23' 45\" W",
+        "y": 61.9958333333,
+        "x": -112.395833333,
+        "stage": "High-Graded (Abandoned)",
+        "years_production": "1969-1970",
+        "development": "75’ adit tunnel, open cuts",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.09583,
+          66.00833
+        ]
+      },
+      "properties": {
+        "name": "BONANZA",
+        "primary_commodity": "Silver",
+        "lat_str": "66° 00' 30\" N",
+        "lon_str": "118° 05' 45\" W",
+        "y": 66.0083333333,
+        "x": -118.095833333,
+        "stage": "Advanced Exploration (Abandoned)",
+        "years_production": "1937-1938",
+        "development": "100’ vertical shaft, one level (300’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.74583,
+          62.34167
+        ]
+      },
+      "properties": {
+        "name": "BULLMOOSE LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 20' 30\" N",
+        "lon_str": "112° 44' 45\" W",
+        "y": 62.3416666667,
+        "x": -112.745833333,
+        "stage": "Producer (Remediated)",
+        "years_production": "1941, 1975-1976, 1983-1987",
+        "development": "56’ incline shaft + main decline to 700’ depth (7 levels), secondary decline to 100’ depth",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.1625,
+          63.0625
+        ]
+      },
+      "properties": {
+        "name": "BURNT  ISLAND",
+        "primary_commodity": "Gold",
+        "lat_str": "63° 03' 45\" N",
+        "lon_str": "113° 09' 45\" W",
+        "y": 63.0625,
+        "x": -113.1625,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1940s, 1984, 1989-1990",
+        "development": "43’ incline shaft; decline to 100’ (1 level)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.31667,
+          62.4625
+        ]
+      },
+      "properties": {
+        "name": "BURWASH",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 27' 45\" N",
+        "lon_str": "114° 19' 00\" W",
+        "y": 62.4625,
+        "x": -114.316666667,
+        "stage": "High-Graded (Abandoned)",
+        "years_production": "1935-1936",
+        "development": "125’ vertical shaft, 1 level (177’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.20417,
+          62.9875
+        ]
+      },
+      "properties": {
+        "name": "CAMLAREN",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 59' 15\" N",
+        "lon_str": "113° 12' 15\" W",
+        "y": 62.9875,
+        "x": -113.204166667,
+        "stage": "Producer (Remediated)",
+        "years_production": "1937-1938, 1962, 1974, 1980-1981",
+        "development": "1,055’ vertical #1 shaft, 5 levels (5,267’ dev.); 200’ vertical #2 shaft",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.18333,
+          62.55
+        ]
+      },
+      "properties": {
+        "name": "CASSIDY  POINT",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 33' 00\" N",
+        "lon_str": "114° 11' 00\" W",
+        "y": 62.55,
+        "x": -114.183333333,
+        "stage": "Bulk Sampled (Abandoned)",
+        "years_production": "1950, 1986",
+        "development": "pit and tunnel",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.64583,
+          62.46667
+        ]
+      },
+      "properties": {
+        "name": "CHIPP  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 28' 00\" N",
+        "lon_str": "112° 38' 45\" W",
+        "y": 62.4666666667,
+        "x": -112.645833333,
+        "stage": "Minor Exploration (Abandoned)",
+        "years_production": "1942",
+        "development": "32’ vertical shaft",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.2375,
+          62.91667
+        ]
+      },
+      "properties": {
+        "name": "CLAN  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 55' 00\" N",
+        "lon_str": "114° 14' 15\" W",
+        "y": 62.9166666667,
+        "x": -114.2375,
+        "stage": "Bulk Sampled (Abandoned)",
+        "years_production": "1967",
+        "development": "open cut",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.1,
+          64.4
+        ]
+      },
+      "properties": {
+        "name": "COLOMAC",
+        "primary_commodity": "Gold",
+        "lat_str": "64° 24' 00\" N",
+        "lon_str": "115° 06' 00\" W",
+        "y": 64.4,
+        "x": -115.1,
+        "stage": "Producer (Under Remediation)",
+        "years_production": "1946, 1989-1991, 1994-1997",
+        "development": "3 open pits",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.36667,
+          62.43333
+        ]
+      },
+      "properties": {
+        "name": "CON including Rycon and Vol Produ",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 26' 00\" N",
+        "lon_str": "114° 22' 00\" W",
+        "y": 62.4333333333,
+        "x": -114.366666667,
+        "stage": "(Under Remediation)",
+        "years_production": "1937-2003",
+        "development": "two primary shafts, depth 6,200’, two internal winzes, vent shafts",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.94167,
+          62.50417
+        ]
+      },
+      "properties": {
+        "name": "CONSOLATION  LAKE",
+        "primary_commodity": "Tungsten",
+        "lat_str": "62° 30' 15\" N",
+        "lon_str": "112° 56' 30\" W",
+        "y": 62.5041666667,
+        "x": -112.941666667,
+        "stage": "Bulk Sampled (Abandoned)",
+        "years_production": "1942",
+        "development": "primary trench",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.8,
+          65.99167
+        ]
+      },
+      "properties": {
+        "name": "CONTACT  LAKE",
+        "primary_commodity": "Uranium, Silver",
+        "lat_str": "65° 59' 30\" N",
+        "lon_str": "117° 48' 00\" W",
+        "y": 65.9916666667,
+        "x": -117.8,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1932-1939, 1947-1949, 1969, 1979-1980",
+        "development": "190 vertical shaft, 3 levels, adit, internal winze",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.74583,
+          65.97917
+        ]
+      },
+      "properties": {
+        "name": "CONTACT  LAKE  PORTAL",
+        "primary_commodity": "Silver, Copper",
+        "lat_str": "65° 58' 45\" N",
+        "lon_str": "117° 44' 45\" W",
+        "y": 65.9791666667,
+        "x": -117.745833333,
+        "stage": "Minor Exploration (Abandoned)",
+        "years_production": "1934",
+        "development": "adit tunnel",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.8625,
+          62.40833
+        ]
+      },
+      "properties": {
+        "name": "COPPER  PASS",
+        "primary_commodity": "Nickel",
+        "lat_str": "62° 24' 30\" N",
+        "lon_str": "111° 51' 45\" W",
+        "y": 62.4083333333,
+        "x": -111.8625,
+        "stage": "Bulk Sampled (Abandoned)",
+        "years_production": "1957, 1969-1970",
+        "development": "three trenches",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.35417,
+          62.58333
+        ]
+      },
+      "properties": {
+        "name": "CRESTAURUM",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 35' 00\" N",
+        "lon_str": "114° 21' 15\" W",
+        "y": 62.5833333333,
+        "x": -114.354166667,
+        "stage": "Advanced Exploration (Abandoned)",
+        "years_production": "1946-1947",
+        "development": "420’ vertical shaft, 3 levels (360’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.1125,
+          64.14167
+        ]
+      },
+      "properties": {
+        "name": "DAMOTI  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "64° 08' 30\" N",
+        "lon_str": "115° 06' 45\" W",
+        "y": 64.1416666667,
+        "x": -115.1125,
+        "stage": "Advanced Exploration (Non-Operational)",
+        "years_production": "1996",
+        "development": "1,420’ decline to 132’ depth, 2 levels (495’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.20833,
+          62.17917
+        ]
+      },
+      "properties": {
+        "name": "DESTAFFANY",
+        "primary_commodity": "Tantalum, Lithium",
+        "lat_str": "62° 10' 45\" N",
+        "lon_str": "112° 12' 30\" W",
+        "y": 62.1791666667,
+        "x": -112.208333333,
+        "stage": "Minor Producer (Remediated)",
+        "years_production": "1942-1954",
+        "development": "3 primary open cuts, 75’ vertical shaft, open pit (Best Bet)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.89583,
+          63.1875
+        ]
+      },
+      "properties": {
+        "name": "DISCOVERY",
+        "primary_commodity": "Gold",
+        "lat_str": "63° 11' 15\" N",
+        "lon_str": "113° 53' 45\" W",
+        "y": 63.1875,
+        "x": -113.895833333,
+        "stage": "Producer (Under Remediation)",
+        "years_production": "1946-1969",
+        "development": "4,060’ vertical shaft, 27 levels (50,473’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.2125,
+          64.275
+        ]
+      },
+      "properties": {
+        "name": "DIVERSIFIED",
+        "primary_commodity": "Gold",
+        "lat_str": "64° 16' 30\" N",
+        "lon_str": "115° 12' 45\" W",
+        "y": 64.275,
+        "x": -115.2125,
+        "stage": "Advanced Exploration (Non-Operational)",
+        "years_production": "1946-1951, 1980s",
+        "development": "525’ vertical shaft, 2 levels (3,200’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.29167,
+          62.75417
+        ]
+      },
+      "properties": {
+        "name": "DOME  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 45' 15\" N",
+        "lon_str": "113° 17' 30\" W",
+        "y": 62.7541666667,
+        "x": -113.291666667,
+        "stage": "Bulk Sampled (Non-Operational)",
+        "years_production": "1990s",
+        "development": "primary open cut",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.99167,
+          66.09583
+        ]
+      },
+      "properties": {
+        "name": "ECHO  BAY",
+        "primary_commodity": "Silver, Copper",
+        "lat_str": "66° 05' 45\" N",
+        "lon_str": "117° 59' 30\" W",
+        "y": 66.0958333333,
+        "x": -117.991666667,
+        "stage": "Producer (Remediated)",
+        "years_production": "1934-1936, 1964-1974",
+        "development": "3 adit tunnels, vertical winze",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.07083,
+          66.00417
+        ]
+      },
+      "properties": {
+        "name": "EL-BONANZA",
+        "primary_commodity": "Silver",
+        "lat_str": "66° 00' 15\" N",
+        "lon_str": "118° 04' 15\" W",
+        "y": 66.0041666667,
+        "x": -118.070833333,
+        "stage": "Bulk Sampled (Abandoned)",
+        "years_production": "1934-1936, 1956-1957, 1965",
+        "development": "incline shaft to 150’ level, 2 levels; adit portal + winze",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.03333,
+          66.08333
+        ]
+      },
+      "properties": {
+        "name": "ELDORADO",
+        "primary_commodity": "Uranium, Radium, Silver, Copper",
+        "lat_str": "66° 05' 00\" N",
+        "lon_str": "118° 02' 00\" W",
+        "y": 66.0833333333,
+        "x": -118.033333333,
+        "stage": "Producer (Remediated)",
+        "years_production": "1931-1960, 1974-1981",
+        "development": "125’ v. shaft, 262’ v. shaft",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.46667,
+          62.63333
+        ]
+      },
+      "properties": {
+        "name": "FREDA",
+        "primary_commodity": "Tantalum, Columbium",
+        "lat_str": "62° 38' 00\" N",
+        "lon_str": "113° 28' 00\" W",
+        "y": 62.6333333333,
+        "x": -113.466666667,
+        "stage": "Bulk Sampled (Abandoned)",
+        "years_production": "1946",
+        "development": "open cuts",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.35,
+          62.5
+        ]
+      },
+      "properties": {
+        "name": "GIANT / SUPERCREST",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 30' 00\" N",
+        "lon_str": "114° 21' 00\" W",
+        "y": 62.5,
+        "x": -114.35,
+        "stage": "Producer (Under Remediation)",
+        "years_production": "1937-2004",
+        "development": "3 v. shafts, 2,000’ depth, 8 levels; five open pits",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.94167,
+          62.4875
+        ]
+      },
+      "properties": {
+        "name": "GILMOUR  LAKE",
+        "primary_commodity": "Tungsten",
+        "lat_str": "62° 29' 15\" N",
+        "lon_str": "112° 56' 30\" W",
+        "y": 62.4875,
+        "x": -112.941666667,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1940-1941",
+        "development": "1 primary trench",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.99167,
+          66.08333
+        ]
+      },
+      "properties": {
+        "name": "GLACIER  BAY",
+        "primary_commodity": "Silver",
+        "lat_str": "66° 05' 00\" N",
+        "lon_str": "117° 59' 30\" W",
+        "y": 66.0833333333,
+        "x": -117.991666667,
+        "stage": "Minor Exploration (Abandoned)",
+        "years_production": "1932-1933",
+        "development": "115’ vertical shaft, 1 level (100’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.36667,
+          62.54167
+        ]
+      },
+      "properties": {
+        "name": "GOLD  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 32' 30\" N",
+        "lon_str": "114° 22' 00\" W",
+        "y": 62.5416666667,
+        "x": -114.366666667,
+        "stage": "Satellite Producer (Remediated)",
+        "years_production": "1985-1988",
+        "development": "Decline to 275’, 3 levels (5,994’ dev.) 348’ raise",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.51667,
+          62.55417
+        ]
+      },
+      "properties": {
+        "name": "HIDDEN  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 33' 15\" N",
+        "lon_str": "113° 31' 00\" W",
+        "y": 62.5541666667,
+        "x": -113.516666667,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1940s, 1959-1969",
+        "development": "69’ incl. shaft, 1 level (+160’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.38333,
+          64.80833
+        ]
+      },
+      "properties": {
+        "name": "INDORE",
+        "primary_commodity": "Uranium",
+        "lat_str": "64° 48' 30\" N",
+        "lon_str": "118° 23' 00\" W",
+        "y": 64.8083333333,
+        "x": -118.383333333,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1950-1953, 1955-1956",
+        "development": "190’ vertical shaft + adit, 2 levels (+1,200’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.16667,
+          63.025
+        ]
+      },
+      "properties": {
+        "name": "JOHNSTON  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "63° 01' 30\" N",
+        "lon_str": "114° 10' 00\" W",
+        "y": 63.025,
+        "x": -114.166666667,
+        "stage": "High-Graded (Abandoned)",
+        "years_production": "1941-1943, 1981",
+        "development": "1 primary trench; 49m decline, 59m dev.",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -130.16667,
+          63.28333
+        ]
+      },
+      "properties": {
+        "name": "MACTUNG",
+        "primary_commodity": "Tungsten",
+        "lat_str": "63° 17' 00\" N",
+        "lon_str": "130° 10' 00\" W",
+        "y": 63.2833333333,
+        "x": -130.166666667,
+        "stage": "Bulk Sampled (Non-Operational)",
+        "years_production": "1973",
+        "development": "1,300’ adit, 1,000’ of crosscutting, 90’ raise",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.3375,
+          62.95417
+        ]
+      },
+      "properties": {
+        "name": "MAHE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 57' 15\" N",
+        "lon_str": "113° 20' 15\" W",
+        "y": 62.9541666667,
+        "x": -113.3375,
+        "stage": "Advanced Exploration (Non-Operational)",
+        "years_production": "1986-1987",
+        "development": "1,600’ decline to 200’ level",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.42083,
+          62.775
+        ]
+      },
+      "properties": {
+        "name": "MITCHELL  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 46' 30\" N",
+        "lon_str": "113° 25' 15\" W",
+        "y": 62.775,
+        "x": -113.420833333,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1957",
+        "development": "15’ deep pit/shaft",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.3625,
+          62.90833
+        ]
+      },
+      "properties": {
+        "name": "MON",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 54' 30\" N",
+        "lon_str": "114° 21' 45\" W",
+        "y": 62.9083333333,
+        "x": -114.3625,
+        "stage": "Minor Producer (Remediated)",
+        "years_production": "1938, 1989-1997",
+        "development": "2 declines; 64’ vertical shaft; open cuts",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.40833,
+          63.0125
+        ]
+      },
+      "properties": {
+        "name": "MURRAY  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "63° 00' 45\" N",
+        "lon_str": "113° 24' 30\" W",
+        "y": 63.0125,
+        "x": -113.408333333,
+        "stage": "Minor Exploration (Abandoned)",
+        "years_production": "1940",
+        "development": "13’ vertical shaft, 30’ vertical shaft",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.24167,
+          62.7875
+        ]
+      },
+      "properties": {
+        "name": "MYRT  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 47' 15\" N",
+        "lon_str": "113° 14' 30\" W",
+        "y": 62.7875,
+        "x": -113.241666667,
+        "stage": "Bulk Sampled (Abandoned)",
+        "years_production": "1974",
+        "development": "466’ decline ramp, 405’ dev.",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.03333,
+          66.04444
+        ]
+      },
+      "properties": {
+        "name": "MYSTERY  ISLAND",
+        "primary_commodity": "Uranium, Radium",
+        "lat_str": "66° 02' 40\" N",
+        "lon_str": "118° 02' 00\" W",
+        "y": 66.0444444444,
+        "x": -118.033333333,
+        "stage": "Minor Exploration (Abandoned)",
+        "years_production": "1933-1934",
+        "development": "adit tunnel",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.575,
+          62.54583
+        ]
+      },
+      "properties": {
+        "name": "NED",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 32' 45\" N",
+        "lon_str": "113° 34' 30\" W",
+        "y": 62.5458333333,
+        "x": -113.575,
+        "stage": "High-Graded (Abandoned)",
+        "years_production": "1940-1942",
+        "development": "trenches",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.35833,
+          62.4375
+        ]
+      },
+      "properties": {
+        "name": "NEGUS",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 26' 15\" N",
+        "lon_str": "114° 21' 30\" W",
+        "y": 62.4375,
+        "x": -114.358333333,
+        "stage": "Producer (Remediated)",
+        "years_production": "1938-1952",
+        "development": "vertical shaft + winze to 2,150’, 21 levels",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.7625,
+          63.25
+        ]
+      },
+      "properties": {
+        "name": "NICHOLAS  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "63° 15' 00\" N",
+        "lon_str": "113° 45' 45\" W",
+        "y": 63.25,
+        "x": -113.7625,
+        "stage": "Advanced Exploration (Non-Operational)",
+        "years_production": "1994",
+        "development": "2,030’ decline to 270’ level, 2 levels (680’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.95833,
+          65.5875
+        ]
+      },
+      "properties": {
+        "name": "NOREX",
+        "primary_commodity": "Silver",
+        "lat_str": "65° 35' 15\" N",
+        "lon_str": "117° 57' 30\" W",
+        "y": 65.5875,
+        "x": -117.958333333,
+        "stage": "Satellite Producer (Abandoned)",
+        "years_production": "1973-1983",
+        "development": "Decline to 600’ level, 5 levels",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -115.22083,
+          64.25
+        ]
+      },
+      "properties": {
+        "name": "NORTH  INCA",
+        "primary_commodity": "Gold",
+        "lat_str": "64° 15' 00\" N",
+        "lon_str": "115° 13' 15\" W",
+        "y": 64.25,
+        "x": -115.220833333,
+        "stage": "Advanced Exploration (Remediated)",
+        "years_production": "1947-1949",
+        "development": " 320’ vertical shaft, 2 levels (2,186’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -116.32917,
+          63.125
+        ]
+      },
+      "properties": {
+        "name": "NORTHLAND",
+        "primary_commodity": "Uranium",
+        "lat_str": "63° 07' 30\" N",
+        "lon_str": "116° 19' 45\" W",
+        "y": 63.125,
+        "x": -116.329166667,
+        "stage": "Advanced Exploration (Remediated)",
+        "years_production": "1955-1956",
+        "development": "274’ vertical shaft, 2 levels (2,618’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.97917,
+          65.59583
+        ]
+      },
+      "properties": {
+        "name": "NORTHRIM",
+        "primary_commodity": "Silver",
+        "lat_str": "65° 35' 45\" N",
+        "lon_str": "117° 58' 45\" W",
+        "y": 65.5958333333,
+        "x": -117.979166667,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1933-1935, 1968, 1970-1971, 1975-1978",
+        "development": "Decline to 340’ level, 4 levels",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.52917,
+          62.74167
+        ]
+      },
+      "properties": {
+        "name": "OLD  PARR",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 44' 30\" N",
+        "lon_str": "113° 31' 45\" W",
+        "y": 62.7416666667,
+        "x": -113.529166667,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1947-1972",
+        "development": "5 primary trenches/pits",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.925,
+          63.17083
+        ]
+      },
+      "properties": {
+        "name": "ORMSBY",
+        "primary_commodity": "Gold",
+        "lat_str": "63° 10' 15\" N",
+        "lon_str": "113° 55' 30\" W",
+        "y": 63.1708333333,
+        "x": -113.925,
+        "stage": "Advanced Exploration (Operational)",
+        "years_production": "1997, 2004-2005",
+        "development": "decline to 117m depth; 75m ventilation raise",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.33333,
+          62.6375
+        ]
+      },
+      "properties": {
+        "name": "ORO  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 38' 15\" N",
+        "lon_str": "114° 20' 00\" W",
+        "y": 62.6375,
+        "x": -114.333333333,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1942-1943",
+        "development": "primary trench/pit",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.45833,
+          61.73611
+        ]
+      },
+      "properties": {
+        "name": "OUTPOST  ISLAND",
+        "primary_commodity": "Gold, Tungsten, Copper",
+        "lat_str": "61° 44' 10\" N",
+        "lon_str": "113° 27' 30\" W",
+        "y": 61.7361111111,
+        "x": -113.458333333,
+        "stage": "Producer (Remediated)",
+        "years_production": "1936-1938, 1940-1942, 1951-1952",
+        "development": "525’ vertical shaft, 5 levels; 134’ inclined shaft",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.79167,
+          61.325
+        ]
+      },
+      "properties": {
+        "name": "O’CONNOR  LAKE",
+        "primary_commodity": "Lead, Zinc",
+        "lat_str": "61° 19' 30\" N",
+        "lon_str": "111° 47' 30\" W",
+        "y": 61.325,
+        "x": -111.791666667,
+        "stage": "Bulk Sampled (Abandoned)",
+        "years_production": "1952",
+        "development": "180’ vertical shaft, one level (329’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.1125,
+          62.74167
+        ]
+      },
+      "properties": {
+        "name": "PEG  TANTALUM",
+        "primary_commodity": "Tantalum",
+        "lat_str": "62° 44' 30\" N",
+        "lon_str": "113° 06' 45\" W",
+        "y": 62.7416666667,
+        "x": -113.1125,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1945-1947",
+        "development": "one primary open cut on #3 dyke",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.35417,
+          62.7375
+        ]
+      },
+      "properties": {
+        "name": "PENSIVE  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 44' 15\" N",
+        "lon_str": "113° 21' 15\" W",
+        "y": 62.7375,
+        "x": -113.354166667,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1939, 1941",
+        "development": "20’ deep open cut with 50’ vertical shaft",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.5,
+          60.83333
+        ]
+      },
+      "properties": {
+        "name": "PINE  POINT",
+        "primary_commodity": "Lead, Zinc",
+        "lat_str": "60° 50' 00\" N",
+        "lon_str": "114° 30' 00\" W",
+        "y": 60.8333333333,
+        "x": -114.5,
+        "stage": "Producer (Remediated)",
+        "years_production": "1928-1929, 1952-1954, 1963-1987",
+        "development": "48 open pits, 2 u/g production mines",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.19583,
+          62.52083
+        ]
+      },
+      "properties": {
+        "name": "PTARMIGAN / TOM",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 31' 15\" N",
+        "lon_str": "114° 11' 45\" W",
+        "y": 62.5208333333,
+        "x": -114.195833333,
+        "stage": "Producer (Abandoned)",
+        "years_production": "1938-1942, 1982-1983, 1985-1997",
+        "development": "924’ vertical shaft, decline to 300’, 6 levels \n(Ptarmigan); decline to 400’, 3 levels (Tom)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.375,
+          62.55
+        ]
+      },
+      "properties": {
+        "name": "RANNEY  HILL",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 33' 00\" N",
+        "lon_str": "114° 22' 30\" W",
+        "y": 62.55,
+        "x": -114.375,
+        "stage": "High-Graded (Abandoned)",
+        "years_production": "1930s",
+        "development": "100’ inclined tunnel",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -116.54583,
+          63.45
+        ]
+      },
+      "properties": {
+        "name": "RAYROCK",
+        "primary_commodity": "Uranium",
+        "lat_str": "63° 27' 00\" N",
+        "lon_str": "116° 32' 45\" W",
+        "y": 63.45,
+        "x": -116.545833333,
+        "stage": "Producer (Remediated)",
+        "years_production": "1955-1959",
+        "development": "adit tunnel, winze to 1,000’, 9 levels (15,579’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.4375,
+          62.5
+        ]
+      },
+      "properties": {
+        "name": "RODSTROM",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 30' 00\" N",
+        "lon_str": "114° 26' 15\" W",
+        "y": 62.5,
+        "x": -114.4375,
+        "stage": "Bulk Sampled (Abandoned)",
+        "years_production": "1970s, 1990s",
+        "development": "open cuts",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.575,
+          62.4625
+        ]
+      },
+      "properties": {
+        "name": "RUTH",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 27' 45\" N",
+        "lon_str": "112° 34' 30\" W",
+        "y": 62.4625,
+        "x": -112.575,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1941-1942",
+        "development": "230’ inclined shaft, 2 levels (229’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.94583,
+          65.58333
+        ]
+      },
+      "properties": {
+        "name": "SMALLWOOD  LAKE",
+        "primary_commodity": "Silver",
+        "lat_str": "65° 35' 00\" N",
+        "lon_str": "117° 56' 45\" W",
+        "y": 65.5833333333,
+        "x": -117.945833333,
+        "stage": "Satellite Producer (Abandoned)",
+        "years_production": "1979-1983",
+        "development": "3,400’ decline, 4 levels",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.86667,
+          63.6
+        ]
+      },
+      "properties": {
+        "name": "SNAP  LAKE",
+        "primary_commodity": "Diamond",
+        "lat_str": "63° 36' 00\" N",
+        "lon_str": "110° 52' 00\" W",
+        "y": 63.6,
+        "x": -110.866666667,
+        "stage": "Producer (Operational)",
+        "years_production": "2000, 2004-current",
+        "development": "underground ramp",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.80417,
+          62.375
+        ]
+      },
+      "properties": {
+        "name": "SPECTRUM  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 22' 30\" N",
+        "lon_str": "112° 48' 15\" W",
+        "y": 62.375,
+        "x": -112.804166667,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1959",
+        "development": "128’ incline shaft, one level, 72’ raise",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -110.30833,
+          62.44583
+        ]
+      },
+      "properties": {
+        "name": "STARK  LAKE",
+        "primary_commodity": "Uranium",
+        "lat_str": "62° 26' 45\" N",
+        "lon_str": "110° 18' 30\" W",
+        "y": 62.4458333333,
+        "x": -110.308333333,
+        "stage": "Advanced Exploration (Abandoned)",
+        "years_production": "1952",
+        "development": " adit tunnel (563’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.12083,
+          63.00417
+        ]
+      },
+      "properties": {
+        "name": "STORM",
+        "primary_commodity": "Tungsten",
+        "lat_str": "63° 00' 15\" N",
+        "lon_str": "113° 07' 15\" W",
+        "y": 63.0041666667,
+        "x": -113.120833333,
+        "stage": "Minor Exploration (Abandoned)",
+        "years_production": "1942",
+        "development": "26’ shaft, 45’ shaft",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.86667,
+          62.425
+        ]
+      },
+      "properties": {
+        "name": "STRIKE  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 25' 30\" N",
+        "lon_str": "112° 52' 00\" W",
+        "y": 62.425,
+        "x": -112.866666667,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1977-1978",
+        "development": "several open cuts",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.33333,
+          62.85417
+        ]
+      },
+      "properties": {
+        "name": "SUNSET  LAKE",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 51' 15\" N",
+        "lon_str": "112° 20' 00\" W",
+        "y": 62.8541666667,
+        "x": -112.333333333,
+        "stage": "Advanced Exploration (Remediated)",
+        "years_production": "1946-1947",
+        "development": "145’ vertical shaft, 1 level (200’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -118.11667,
+          65.60417
+        ]
+      },
+      "properties": {
+        "name": "TERRA (aka SILVER BEAR)",
+        "primary_commodity": "Silver, Copper",
+        "lat_str": "65° 36' 15\" N",
+        "lon_str": "118° 07' 00\" W",
+        "y": 65.6041666667,
+        "x": -118.116666667,
+        "stage": "Producer (Abandoned)",
+        "years_production": "1968-1985",
+        "development": "main decline to 1,300’ depth, 13 levels; 600’ vertical shaft; two small decline/adit tunnels",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.475,
+          62.6125
+        ]
+      },
+      "properties": {
+        "name": "THOMPSON-LUNDMARK",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 36' 45\" N",
+        "lon_str": "113° 28' 30\" W",
+        "y": 62.6125,
+        "x": -113.475,
+        "stage": "Producer (Abandoned)",
+        "years_production": "1938-1949",
+        "development": "2 inclined shafts, 1 vertical shaft, inclined winze; 650’ vertical depth total",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -112.6,
+          62.11667
+        ]
+      },
+      "properties": {
+        "name": "THOR  LAKE",
+        "primary_commodity": "Beryllium",
+        "lat_str": "62° 07' 00\" N",
+        "lon_str": "112° 36' 00\" W",
+        "y": 62.1166666667,
+        "x": -112.6,
+        "stage": "Bulk Sampled (Non-Operational)",
+        "years_production": "1985-1986",
+        "development": "1,600’ decline to 250’ depth",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.3375,
+          62.94167
+        ]
+      },
+      "properties": {
+        "name": "TREACY",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 56' 30\" N",
+        "lon_str": "113° 20' 15\" W",
+        "y": 62.9416666667,
+        "x": -113.3375,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1953",
+        "development": "primary trench",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.47917,
+          63.07083
+        ]
+      },
+      "properties": {
+        "name": "TRY  ME",
+        "primary_commodity": "Gold",
+        "lat_str": "63° 04' 15\" N",
+        "lon_str": "113° 28' 45\" W",
+        "y": 63.0708333333,
+        "x": -113.479166667,
+        "stage": "Minor Exploration (Abandoned)",
+        "years_production": "1941",
+        "development": "39’ incline shaft",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.05417,
+          63.10833
+        ]
+      },
+      "properties": {
+        "name": "VIKING",
+        "primary_commodity": "Gold",
+        "lat_str": "63° 06' 30\" N",
+        "lon_str": "114° 03' 15\" W",
+        "y": 63.1083333333,
+        "x": -114.054166667,
+        "stage": "Advanced Exploration (Abandoned)",
+        "years_production": "1947",
+        "development": "160’ inclined shaft, 1 level (400’ dev.)",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.23333,
+          62.91667
+        ]
+      },
+      "properties": {
+        "name": "WEST BAY (DAF)",
+        "primary_commodity": "Gold",
+        "lat_str": "62° 55' 00\" N",
+        "lon_str": "113° 14' 00\" W",
+        "y": 62.9166666667,
+        "x": -113.233333333,
+        "stage": "Minor Producer (Abandoned)",
+        "years_production": "1947-1948, 1990",
+        "development": "open pit 60’ depth",
+        "prod_num": 0
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -113.175,
+          61.79583
+        ]
+      },
+      "properties": {
+        "name": "WILSON  ISLAND",
+        "primary_commodity": "Gold",
+        "lat_str": "61° 47' 45\" N",
+        "lon_str": "113° 10' 30\" W",
+        "y": 61.7958333333,
+        "x": -113.175,
+        "stage": "Minor Exploration (Abandoned)",
+        "years_production": "1920s",
+        "development": "43’ shaft, 10’ shaft",
+        "prod_num": 0
+      }
+    }
+  ]
+}

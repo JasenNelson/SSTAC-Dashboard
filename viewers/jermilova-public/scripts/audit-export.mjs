@@ -52,8 +52,12 @@ const ROUTE_ARTIFACTS = [
   /^404\/index\.(html|txt)$/,
   /^_not-found(\.(html|txt)|\/index\.(html|txt))$/,
 ];
+// Framework output is allowed only as scripts, styles (both scanned below) and binary images
+// and fonts: a source map, SVG or any other text type under _next/ would carry text the
+// bundle audit does not scan.
+const FRAMEWORK_FILE = /^_next\/.+\.(js|css|png|woff2?)$/;
 const unexpectedExportFiles = (await filesUnder(exportRoot))
-  .filter((file) => !file.startsWith('_next/') && !file.startsWith('bn-rrm/'))
+  .filter((file) => !FRAMEWORK_FILE.test(file) && !file.startsWith('bn-rrm/'))
   .filter((file) => !ROUTE_ARTIFACTS.some((pattern) => pattern.test(file)))
   .sort();
 const t2Passed = t2PackPassed && unexpectedExportFiles.length === 0;
