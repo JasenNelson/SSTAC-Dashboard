@@ -3,7 +3,77 @@
 Lane: BN-RRM Jermilova faithful anonymous viewer, served at `/Jermilova` on the SSTAC
 deployment (`/Jermilova/` redirects there once). Other lanes keep their own latest handoffs (`FRESH_SESSION_HANDOFF_2026_10_15_*`).
 
-## State
+Updated 2026-10-23 (UTC) after the merge; the pre-update copy is
+`docs/archive/FRESH_SESSION_HANDOFF_2026_10_22_JERMILOVA_PUBLIC_VIEWER.pre_1519044c_update.md`.
+
+## Shipped (2026-10-23 UTC)
+
+- PR #822 (https://github.com/JasenNelson/SSTAC-Dashboard/pull/822), head
+  `7cf13fa59d4af14d669f80f08a82dd4d4b9e90cd`, all 13 GitHub checks green, merged by the owner
+  at 2026-10-23T03:29:24Z as merge commit `1519044c8d10692da0fe5381fce2cc6bd115f1f8`.
+- Production deployed: Vercel status `success` on `1519044c`, and
+  `GET https://sstac-dashboard.vercel.app/api/health` reports `1519044c...` (`env: production`).
+- Read-only anonymous production smoke (evidence
+  `.tmp\bnrrm-public-viewer\faithful-r1\p94-prod-smoke-20261023T033434Z\`, gitignored; the three
+  smoke scripts `prod-header-smoke.cjs`, `prod-manifest-smoke.cjs` and `prod-vercel-suffix.cjs`
+  are copied there):
+  - headers, 16/16 PASS (`header-smoke.log`, `prod-header-smoke.cjs`):
+    - one 308 `/Jermilova/` -> `/Jermilova`, then 200, with no login redirect and no
+      `Set-Cookie`;
+    - `Cache-Control: no-cache`, X-Frame-Options DENY, nosniff;
+    - `X-Robots-Tag: noindex, nofollow`, HSTS and `frame-ancestors 'none'`;
+    - `index.html` byte-equal to the committed mirror;
+    - the 20 pack files return 200 with `no-store` and are byte-equal to the committed files
+      under `public/Jermilova/bn-rrm/`;
+    - `/bn-rrm` still 307 to `/login`, and `POST /Jermilova` returns 405;
+  - manifest and CSP (`manifest-smoke.log`, `prod-manifest-smoke.cjs`):
+    - PASS: the `script-src` hash list equals `index_inline_script_sha256` in
+      `published-mirror.json` exactly (6/6), and its only other source is `'self'`;
+    - PASS: the served page's inline scripts hash to exactly that set;
+    - 58 of the 59 manifest files are served byte- and SHA-256-equal to `published-mirror.json`.
+      The exception is `_next/static/chunks/webpack-2e2a1fc8ea47ffa5.js`, served as 5677 bytes
+      against 5216. `vercel-suffix.json` (from `prod-vercel-suffix.cjs`) records:
+      - the served first 5216 bytes equal the committed file;
+      - the extra 461 bytes (saved as `viewer-webpack-served-suffix.txt`) are Vercel's toolbar
+        loader. It returns early unless the `__vercel_toolbar=1` cookie is set, and otherwise
+        loads `https://vercel.live/_next-live/feedback/feedback.js`;
+      - the root app's `/_next/static/chunks/webpack-63b899be85efe956.js` ends with the same
+        snippet (deployment id normalised), so this is platform behaviour, not a change in the
+        mirror;
+      - the route's `script-src` (`src/lib/jermilova-public/route-config.ts`) is `'self'` plus
+        the inline hashes, so it does not allow that `vercel.live` script. See owner
+        decision 7;
+  - browser, 1 passed: the viewer's own `@viewer` parity test against production. It ran
+    twice: `browser-smoke.log`, then a re-run with saved preconditions in `browser-rerun\`.
+    The re-run passed too, with 12 screenshots and `viewer-problems.json` `[]`. It ran
+    anonymously:
+    - `browser-rerun\preconditions.json`, written immediately before the run:
+      - none of `E2E_AUTH_ENABLED`, `E2E_TEST_EMAIL`, `E2E_TEST_PASSWORD`,
+        `PARITY_ORIGINAL_URL`, `PARITY_REQUIRE_ORIGINAL` or `PARITY_START_ORIGINAL` was set;
+      - `PARITY_ENV_DIR` was an empty folder;
+      - neither `e2e/.auth/user.json` nor `admin.json` existed (an after-run check in the
+        session found them still absent; not saved as a file);
+    - `browser-rerun\projects-list.log` shows `viewer-anon` as the only configured project. It
+      always uses an empty storageState.
+
+    The test asserts:
+    - the six tabs in order, 14 nodes and no pack selector;
+    - Detailed BN collapsed 7 containers / 0 children / 6 edges; mixed 7 / 2 (8 edges
+      recorded, not asserted); expanded 7 / 14 / 14 edges;
+    - every tab at 1440 and 390 px (12 screenshots), and a reload that resets the state;
+    - zero storage, IndexedDB and cookie writes, GET only, approved hosts only, and no page
+      errors (`viewer-problems.json` is `[]`);
+  - forbidden controls (`forbidden-controls.json`, a scan of `viewer-snapshot.json`, not part
+    of the test). No line of the 13 captured tab texts is exactly Export, Run assessment,
+    Identify, Identify Area, Review, Case Studies, Sign in, Log in or Login. Substring hits:
+    only the Conceptual guide sentence "Identify which nodes most influence the risk outcome."
+    at both widths, which is original text, not a control.
+- Owner decisions 1 (merge approval) and 2 (publication) are done by the merge. Still open
+  below: 3 (authenticated parity on the final export), 4 (shared origin; shipped as is, no
+  separate-origin decision recorded), 5 (CI Status Check is not a required context), 6
+  (deferred cleanup) and 7 (Vercel toolbar injection, new).
+
+## State (as written before the merge)
 
 - Worktree `C:\Projects\SSTAC-Dashboard-worktrees\bn-rrm-jermilova-faithful-20261021`.
 - Branch `feat/bn-rrm-jermilova-faithful-20261021`.
@@ -484,14 +554,16 @@ deployment (`/Jermilova/` redirects there once). Other lanes keep their own late
 
 ### Production
 
-NOT deployed at the time of writing. `vercel.json` disables deploys for `feat/*`. An
-exact-SHA Vercel preview can be requested by pushing the same commit to a branch outside
-`feat/*` and `fix/*`. Its result, if any, is in the PR body.
+Deployed 2026-10-23 with merge commit `1519044c`; see "Shipped" above. (The pre-merge text
+of this section is in the archive copy.) `vercel.json` disables deploys for `feat/*`, so a
+later viewer change reaches production only through a merge to `main`.
 
 ## Owner decisions
 
-1. **Merge approval of the exact PR head.** The token is in the decision packet.
-2. **Anonymous publication.** Merging makes the README's "What becomes anonymously reachable"
+1. **Merge approval of the exact PR head.** DONE: the owner merged head `7cf13fa5` as
+   `1519044c` on 2026-10-23.
+2. **Anonymous publication.** DONE by the merge (2026-10-23): the README's "What becomes
+   anonymously reachable" list is now public. As written before the merge, merging makes that
    list public for the first time:
    - the 19 Jermilova pack assets, including the `review/*` files, `training_data.json` and the
      `mineral_claims`, `oil_gas_claims` and `communities` layers;
@@ -526,8 +598,36 @@ exact-SHA Vercel preview can be requested by pushing the same commit to a branch
      needs a rounding-based justification before the fields go;
    - an `npm ci` in the main checkout. The worktree's node_modules is a junction to the Codex
      lane store.
+7. **Vercel toolbar injection (found in the 2026-10-23 production smoke).**
+   - Vercel appends its toolbar loader at serve time to the webpack runtime chunk. This was
+     observed on the viewer's `/Jermilova/_next/static/chunks/webpack-2e2a1fc8ea47ffa5.js` and
+     on the root app's `webpack-63b899be85efe956.js`. So production bytes for that one viewer
+     file differ from `published-mirror.json`.
+   - What it does: the snippet is same-origin code inside that chunk, so it executes on every
+     `/Jermilova` load under `script-src 'self'`. It is not covered by `published-mirror.json`
+     or by any integrity check in the viewer (`verifiedFetch` checks pack files only).
+   - On each load it reads `document.cookie` and tests it for `__vercel_toolbar=1`:
+     - without that cookie (observed: the anonymous smoke context has no cookies), it returns
+       immediately. It makes no request and no write, and the smoke recorded none;
+     - with that cookie, it inserts a `https://vercel.live/...feedback.js` script element. The
+       route's `script-src` does not allow that host, so the browser should refuse the load.
+       This branch was not exercised in the smoke.
+   - The snippet sends nothing itself, but it is code the repository does not control, served
+     on the anonymous route. Its content can change with Vercel's platform. The root app
+     carries the same snippet.
+   - Owner choice (provider setting, not changed here). Either:
+     - turn off the Vercel Toolbar for production in the Vercel project settings, then
+       re-verify that all 59 files match `published-mirror.json`; or
+     - accept it explicitly. Any later production byte check then compares that chunk as the
+       mirror bytes plus the exact recorded suffix (`viewer-webpack-served-suffix.txt`, sha256
+       `14a89402...`), and investigates any other suffix.
 
 ## After the merge
+
+2026-10-23: the deployment, health and smoke steps below were run on production; the results,
+including one exception (a file Vercel appends to at serve time), are under "Shipped" above.
+The rollback/unpublish step was not exercised. The list is kept as the procedure for any later
+republish.
 
 - Wait for the production deployment.
 - `GET https://sstac-dashboard.vercel.app/api/health` must report the merge SHA.
