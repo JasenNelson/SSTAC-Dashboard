@@ -1,0 +1,46 @@
+diff --git a/src/components/bn-rrm/canvas/Canvas.tsx b/viewers/jermilova-public/forked/Canvas.tsx
+index f9a15b0aaa52156fa7fd8f457bca9fba92a04626..a756c089a0d070006280d5b91cf8d481590faef9 100644
+--- a/src/components/bn-rrm/canvas/Canvas.tsx
++++ b/viewers/jermilova-public/forked/Canvas.tsx
+@@ -20,8 +20,6 @@ import {
+   Panel,
+   useNodesState,
+   useEdgesState,
+-  addEdge,
+-  type Connection,
+   type Edge,
+   type Node,
+   BackgroundVariant,
+@@ -30,8 +28,8 @@ import {
+ import '@xyflow/react/dist/style.css';
+ 
+ import { useNetworkStore } from '@/stores/bn-rrm/networkStore';
+-import { BaseNode, ImpactNode, CompactNode } from './nodes/BaseNode';
+-import { ContainerNode } from './nodes/ContainerNode';
++import { BaseNode, ImpactNode, CompactNode } from '@/components/bn-rrm/canvas/nodes/BaseNode';
++import { ContainerNode } from '@/components/bn-rrm/canvas/nodes/ContainerNode';
+ import { calculateNodePositions } from '@/lib/bn-rrm/dummy-data';
+ import { cn } from '@/utils/cn';
+ import type { NetworkNodeData, NodeCategory } from '@/types/bn-rrm/network';
+@@ -267,13 +265,6 @@ export function Canvas({
+     selectNode(null);
+   }, [selectNode]);
+ 
+-  const onConnect = useCallback(
+-    (connection: Connection) => {
+-      setEdges((eds) => addEdge(connection, eds));
+-    },
+-    [setEdges]
+-  );
+-
+   const minimapNodeColor = useCallback((node: Node) => {
+     const category = (node.data as unknown as NetworkNodeData)?.category;
+     const colors: Record<NodeCategory, string> = {
+@@ -294,7 +285,6 @@ export function Canvas({
+         edges={edges}
+         onNodesChange={onNodesChange}
+         onEdgesChange={onEdgesChange}
+-        onConnect={onConnect}
+         onNodeClick={onNodeClick}
+         onPaneClick={onPaneClick}
+         nodeTypes={nodeTypes}

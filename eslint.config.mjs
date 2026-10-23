@@ -42,6 +42,14 @@ const eslintConfig = [
       "*.config.js",
       "*.config.mjs",
       "next-env.d.ts",
+      // Standalone viewer packages: lint their source, never their build output or caches.
+      "viewers/*/.next/**",
+      "viewers/*/out/**",
+      "viewers/*/node_modules/**",
+      "viewers/*/next-env.d.ts",
+      // Committed static export of the Jermilova viewer (generated, minified build output;
+      // verified byte for byte against viewers/jermilova-public/published-mirror.json).
+      "public/Jermilova/**",
     ],
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),

@@ -1,0 +1,115 @@
+{
+  "_meta": {
+    "export_date": "2026-04-06",
+    "db_hash": "jermilova2025-gsl-v1.0",
+    "description": "Site reports for Jermilova 2025 Mackenzie Mercury BN-RRM. Regional aggregation (no individual station coordinates available)."
+  },
+  "sites": [
+    {
+      "site_id": 1,
+      "name": "Great Slave Lake (GSL)",
+      "registry_id": "GSL",
+      "waterbody_type": "freshwater_lake",
+      "region": "Northwest Territories, Canada",
+      "station_count": 4,
+      "campaign_dates": {
+        "earliest": "2000",
+        "latest": "2020",
+        "n_unique_dates": 20,
+        "n_years": 20,
+        "cross_year": true
+      },
+      "temporal_note": "Multi-decadal monitoring data. Exact date range from FRDR repository metadata.",
+      "spatial_context": {
+        "location_label": "Great Slave Lake, Mackenzie River basin",
+        "reference_type": "ZONE"
+      },
+      "source_documents": [
+        { "title": "FRDR Repository Dataset", "type": "data_repository", "date": "2024" },
+        { "title": "Jermilova et al. 2025 IEAM", "type": "journal_article", "date": "2025" }
+      ],
+      "station_details": [
+        {
+          "station_id": 1,
+          "station_name": "Outlet Region",
+          "station_type": "regional_aggregate",
+          "depth_m": null,
+          "latitude": null,
+          "longitude": null,
+          "date_earliest": null,
+          "date_latest": null,
+          "n_sample_dates": 0,
+          "chemistry_records": 0,
+          "toxicity_records": 0,
+          "community_records": 0,
+          "co_location": "single_loe",
+          "cross_year_merge": true,
+          "spatial_class": "ZONE"
+        },
+        {
+          "station_id": 2,
+          "station_name": "Middle Region",
+          "station_type": "regional_aggregate",
+          "depth_m": null,
+          "latitude": null,
+          "longitude": null,
+          "date_earliest": null,
+          "date_latest": null,
+          "n_sample_dates": 0,
+          "chemistry_records": 0,
+          "toxicity_records": 0,
+          "community_records": 0,
+          "co_location": "single_loe",
+          "cross_year_merge": true,
+          "spatial_class": "ZONE"
+        },
+        {
+          "station_id": 3,
+          "station_name": "North Arm Region",
+          "station_type": "regional_aggregate",
+          "depth_m": null,
+          "latitude": null,
+          "longitude": null,
+          "date_earliest": null,
+          "date_latest": null,
+          "n_sample_dates": 0,
+          "chemistry_records": 0,
+          "toxicity_records": 0,
+          "community_records": 0,
+          "co_location": "single_loe",
+          "cross_year_merge": true,
+          "spatial_class": "ZONE"
+        },
+        {
+          "station_id": 4,
+          "station_name": "East Arm Region",
+          "station_type": "regional_aggregate",
+          "depth_m": null,
+          "latitude": null,
+          "longitude": null,
+          "date_earliest": null,
+          "date_latest": null,
+          "n_sample_dates": 0,
+          "chemistry_records": 0,
+          "toxicity_records": 0,
+          "community_records": 0,
+          "co_location": "single_loe",
+          "cross_year_merge": true,
+          "spatial_class": "ZONE"
+        }
+      ],
+      "co_location_quality": { "single_loe": 4 },
+      "woe_risk_distribution": {},
+      "chemistry_summary": null,
+      "toxicity_summary": null,
+      "community_summary": null
+    }
+  ],
+  "summary": {
+    "total_sites": 1,
+    "total_stations": 4,
+    "sites_with_chemistry": 0,
+    "sites_with_toxicity": 0,
+    "sites_with_community": 0
+  }
+}

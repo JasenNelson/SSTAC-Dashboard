@@ -1,0 +1,255 @@
+{
+  "schema_version": "jermilova-viewer-src-closure-v1",
+  "base_commit": "d9c1bb3106bb901bb7bef75a4aee950409c3ef22",
+  "method": "entrypoint TypeScript module resolution (ts.preProcessFile + ts.resolveModuleName, viewer tsconfig)",
+  "entry_dirs": [
+    "app",
+    "components",
+    "forked",
+    "lib"
+  ],
+  "entry_count": 35,
+  "entries": [
+    {
+      "path": "src/components/bn-rrm/canvas/BeliefBar.tsx",
+      "role": "module",
+      "bytes": 8119,
+      "sha256": "5dee3e43deb9ac36e5d79edfdf883bcf34bcac112f1f23f682f1b1b0a2b91c94"
+    },
+    {
+      "path": "src/components/bn-rrm/canvas/nodes/BaseNode.tsx",
+      "role": "module",
+      "bytes": 9900,
+      "sha256": "d29bc5ad7877316c4fa5ac82cd1eca3390c4cfe19c480d86d44d547d20e5b960"
+    },
+    {
+      "path": "src/components/bn-rrm/canvas/nodes/ContainerNode.tsx",
+      "role": "module",
+      "bytes": 7191,
+      "sha256": "f1635562ede2277954448de35fa2228900b8ccf054a30223f324b7261ea50d96"
+    },
+    {
+      "path": "src/components/bn-rrm/cpt/CPTExplorer.tsx",
+      "role": "module",
+      "bytes": 20690,
+      "sha256": "77495aa09aec6d92f67b784678d1b06953c598172c683c33662488dbcf5eee78"
+    },
+    {
+      "path": "src/components/bn-rrm/data/BenchmarkDataViewer.tsx",
+      "role": "module",
+      "bytes": 3395,
+      "sha256": "831e04067ae4443335e56560bf6f45e1589c0db1845be2252cd4f25d18286e04"
+    },
+    {
+      "path": "src/components/bn-rrm/data/TrainingDataTable.tsx",
+      "role": "module",
+      "bytes": 15027,
+      "sha256": "ea4ae303d449e198172e29bb7f00e421c86c142edb0d17cf1150d140d971af35"
+    },
+    {
+      "path": "src/components/bn-rrm/getting-started/GettingStartedView.tsx",
+      "role": "module",
+      "bytes": 31934,
+      "sha256": "a5da4d4a88df9948236d11a20fb122b17fb478777b23674dea2510b062843a4d"
+    },
+    {
+      "path": "src/components/bn-rrm/map/IdentifiedFeaturesList.tsx",
+      "role": "module",
+      "bytes": 8437,
+      "sha256": "85970ac40d9d82cb521cfb1de2f0ea3caaacc7b86d5b5e01daef451a55a7528b"
+    },
+    {
+      "path": "src/components/bn-rrm/panels/NodeInspector.tsx",
+      "role": "module",
+      "bytes": 13657,
+      "sha256": "c530ea37e06887583cc1b739cbc0084cd82d6c64161aafdeb9bd98a614b34a44"
+    },
+    {
+      "path": "src/components/bn-rrm/shared/ExpandableSection.tsx",
+      "role": "module",
+      "bytes": 2084,
+      "sha256": "3152201d302422c43e2192c204def7b1b015ee9e553accca3eff7d70cb123294"
+    },
+    {
+      "path": "src/components/bn-rrm/shared/InfoTooltip.tsx",
+      "role": "module",
+      "bytes": 4707,
+      "sha256": "6f36c565bab214b2773eb41707e14d2ffc24d6cafebf6728a08417a1a60ba7f8"
+    },
+    {
+      "path": "src/components/bn-rrm/shared/PackBanner.tsx",
+      "role": "module",
+      "bytes": 2038,
+      "sha256": "a2209213550412121836bfbbb34e1a67e4e7cd1ed07a33f4b5bcc4d2fea5a0d6"
+    },
+    {
+      "path": "src/components/bn-rrm/shared/tooltip-definitions.ts",
+      "role": "module",
+      "bytes": 12868,
+      "sha256": "d9ed4cb7c5b1ae6123afd4c51a5291291afa5967cc96c3c43c5a43c3a1986068"
+    },
+    {
+      "path": "src/hooks/bn-rrm/useAutoLoadPackSites.ts",
+      "role": "module",
+      "bytes": 4620,
+      "sha256": "7052712b07d76a0509402fabf530708e27f099a38050930ca1e0b706758939ad"
+    },
+    {
+      "path": "src/hooks/bn-rrm/usePackMapArtifact.ts",
+      "role": "module",
+      "bytes": 4839,
+      "sha256": "f076deeeb6e9e3a4782ec52de0e0e63e85b0000068b59d78b46207a6cd396b7e"
+    },
+    {
+      "path": "src/lib/bn-rrm/bn-inference.ts",
+      "role": "module",
+      "bytes": 21021,
+      "sha256": "f87e7a550b28fb03c6fd9de8d02b6ea5a9e321c81532494039c8331c98dd2c6e"
+    },
+    {
+      "path": "src/lib/bn-rrm/dummy-data.ts",
+      "role": "module",
+      "bytes": 11181,
+      "sha256": "397e03f568b6d50727edd47488cfdaf03f89318dac339e98b7e86a42bc6547c6"
+    },
+    {
+      "path": "src/lib/bn-rrm/map-overlay-helpers.ts",
+      "role": "module",
+      "bytes": 15400,
+      "sha256": "0fc5dd41a35ba708fd1852aab5b0e7acc03b1f7daa813e55de0ab55a38f297ae"
+    },
+    {
+      "path": "src/lib/bn-rrm/pack-types.ts",
+      "role": "module",
+      "bytes": 9819,
+      "sha256": "38b8b32879dd732d1d569b30f432a389ee33bd21343b6b549ada550d29e33d4f"
+    },
+    {
+      "path": "src/lib/bn-rrm/trained-network.ts",
+      "role": "module",
+      "bytes": 41979,
+      "sha256": "0617145ca4d76ab2a49768127c701f988e306ef4f374faa26904092ef2f0ba7a"
+    },
+    {
+      "path": "src/lib/bn-rrm/transparency-adapters.ts",
+      "role": "module",
+      "bytes": 11412,
+      "sha256": "82f9062fd3c7b68b24a6ecc5b59a92a58dcc9e4faea4df3ea4c7179de177d494"
+    },
+    {
+      "path": "src/lib/maps/wms-identify.ts",
+      "role": "module",
+      "bytes": 16823,
+      "sha256": "83fd319392057b6fe6505a3259e4915e96f5f33e236ccfef3cf5bc7299a0cd64"
+    },
+    {
+      "path": "src/stores/bn-rrm/packStore.ts",
+      "role": "module",
+      "bytes": 9962,
+      "sha256": "de23f72bc81baee6692c9ae0214445c21e25b672c60d147d604b4ab47d20ac19"
+    },
+    {
+      "path": "src/types/bn-rrm/network.ts",
+      "role": "module",
+      "bytes": 5865,
+      "sha256": "dbeeed5bb28ee0a11c141c39ff1fd40a355061b74aff931203a17891b8a375c4"
+    },
+    {
+      "path": "src/types/bn-rrm/site-data.ts",
+      "role": "module",
+      "bytes": 6239,
+      "sha256": "4cfdc793ca9a868bb09af3afcf11644918245ea4868c3d0907c79129685c1b0d"
+    },
+    {
+      "path": "src/utils/cn.ts",
+      "role": "module",
+      "bytes": 169,
+      "sha256": "74e8fe9d0d680c442ed6adb13e7d119d6c210c19ae6c114313b2a72552be0883"
+    },
+    {
+      "path": "src/data/bn-rrm/learned-model.json",
+      "role": "test-module",
+      "bytes": 1100490,
+      "sha256": "1bf3744a97c42a05ebf3514a97a13bdc9c43c7b83222622c89c8154f01a776a4"
+    },
+    {
+      "path": "src/app/(dashboard)/bn-rrm/BNRRMClient.tsx",
+      "role": "fork-original",
+      "bytes": 32846,
+      "sha256": "e4a1bdb6e951862c16d72ed58115804e1a628e2fd770ca19d2e5af508d3f364b"
+    },
+    {
+      "path": "src/components/bn-rrm/canvas/Canvas.tsx",
+      "role": "fork-original",
+      "bytes": 13918,
+      "sha256": "1eece1832def69ff8c044f63ed75a4ed8a055a094729201cd102009a26572181"
+    },
+    {
+      "path": "src/components/bn-rrm/map/SiteDetails.tsx",
+      "role": "fork-original",
+      "bytes": 17138,
+      "sha256": "97335789c832dd44af6ae2066d543dc3983ef756d8113e50872529c41b5c26b3"
+    },
+    {
+      "path": "src/components/bn-rrm/map/SiteMap.tsx",
+      "role": "fork-original",
+      "bytes": 66219,
+      "sha256": "f9596e8c5dacb90e6a8fc1927521e78d73c148c039b3a30b22f5d22002d6545b"
+    },
+    {
+      "path": "src/components/bn-rrm/panels/ResultsPanel.tsx",
+      "role": "fork-original",
+      "bytes": 32115,
+      "sha256": "397b6b5f663941bad45af4bec5b548f8746427beb104e7b7d8b4aa4df893bb08"
+    },
+    {
+      "path": "src/stores/bn-rrm/networkStore.ts",
+      "role": "fork-original",
+      "bytes": 14609,
+      "sha256": "922eac2d1fe6956d31de0e7a787a6257c22d9cc938d74f10c897f888d01903b3"
+    },
+    {
+      "path": "src/stores/bn-rrm/siteDataStore.ts",
+      "role": "fork-original",
+      "bytes": 11171,
+      "sha256": "4a2fe274a9027989003c18070c24a18a3f588ef50be1a19bcd934005b9a295c6"
+    },
+    {
+      "path": "src/app/globals.css",
+      "role": "stylesheet",
+      "bytes": 59543,
+      "sha256": "c44f97a930f73a328321140f84f88e74bb0ab39e3b130b4fd9a1d5a5f86775e0"
+    }
+  ],
+  "external_specifiers": [
+    "@testing-library/react",
+    "@xyflow/react",
+    "@xyflow/react/dist/style.css",
+    "clsx",
+    "geojson",
+    "leaflet",
+    "leaflet.markercluster",
+    "leaflet.markercluster/dist/MarkerCluster.Default.css",
+    "leaflet.markercluster/dist/MarkerCluster.css",
+    "leaflet/dist/leaflet.css",
+    "lucide-react",
+    "next",
+    "next/dynamic",
+    "node:child_process",
+    "node:crypto",
+    "node:fs",
+    "node:fs/promises",
+    "node:os",
+    "node:path",
+    "node:url",
+    "react",
+    "react-dom",
+    "react-dom/server",
+    "react-leaflet",
+    "tailwind-merge",
+    "typescript",
+    "vitest",
+    "zustand",
+    "zustand/middleware"
+  ]
+}

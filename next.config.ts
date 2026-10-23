@@ -1,4 +1,5 @@
 import { withSentryConfig } from '@sentry/nextjs';
+import { jermilovaPublicHeaders, jermilovaPublicRewrites } from './src/lib/jermilova-public/route-config';
 
 const MATRIX_OPTIONS_PAPER_TRACE_FILES = [
   './candidate/paper/BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md',
@@ -38,6 +39,15 @@ const nextConfig = {
   // machine), NOT disabling this typecheck.
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  // Anonymous read-only Jermilova viewer: the committed static export under
+  // public/Jermilova/ (src/lib/jermilova-public/route-config.ts explains the mount).
+  // Only these two hooks; no other route is rewritten or given headers here.
+  async rewrites() {
+    return jermilovaPublicRewrites;
+  },
+  async headers() {
+    return jermilovaPublicHeaders;
   },
   // Reduce preload warnings by optimizing resource hints
   experimental: {

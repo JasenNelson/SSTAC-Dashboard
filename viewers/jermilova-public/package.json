@@ -1,0 +1,9 @@
+{
+  "name": "jermilova-public-viewer",
+  "private": true,
+  "scripts": {
+    "prepare:assets": "node scripts/prepare-assets.mjs",
+    "build": "npm run prepare:assets && node scripts/publish-root-mirror.mjs --begin-build && node scripts/src-closure.mjs --check && node scripts/fork-patches.mjs --check && next build && node scripts/publish-root-mirror.mjs --end-build",
+    "test": "vitest run"
+  }
+}

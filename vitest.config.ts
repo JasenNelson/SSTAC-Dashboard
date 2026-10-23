@@ -51,6 +51,10 @@ export default defineConfig({
       'ProjectsSSTAC-Dashboard-worktrees*/**',
       'e2e/**',
       '**/e2e/**',
+      // Standalone viewer packages (viewers/<name>/) carry their own vitest config with
+      // package-specific aliases (exact-module store forks) and environments; collecting
+      // them here would run them under the wrong resolution. Run them via their own config.
+      'viewers/**',
       // Performance tests require a build - run separately with `npm run build && npm test`
       '**/performance.test.ts',
       // node:test file owned by the print lane (scripts/build-review-package.mjs);
