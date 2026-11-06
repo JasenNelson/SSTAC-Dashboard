@@ -2,11 +2,13 @@
 
 A faithful, anonymous, read-only clone of the authenticated `/bn-rrm` page with the
 Jermilova 2025 Mackenzie mercury pack selected. It reuses the original BN-RRM components;
-only deletion-only forks remove write, export, identify and pack-selection actions
-(`forked/`, pinned by `forked/FORK_PATCHES/` and `src-closure.json`).
+the six source views remain unchanged, deletion-only forks remove write, export, identify
+and pack-selection actions, and the viewer appends the approved About view (`forked/`,
+pinned by `forked/FORK_PATCHES/` and `src-closure.json`).
 
-Tabs, in source order: Guide, Conceptual, Detailed BN, CPT, Map, Data. There is no Review,
-Case Studies, pack selector, Supabase access, server API call, or browser-storage write.
+Tabs: Guide, Conceptual, Detailed BN, CPT, Map, Data, About. The first six retain source
+order and behavior. There is no Review, Case Studies, pack selector, Supabase access,
+server API call, or browser-storage write.
 
 The original's in-memory what-if is kept (owner decision): a visitor can set evidence on a
 node, reset it, and switch Results between forward and backward inference, exactly as in the
@@ -125,7 +127,7 @@ These are all served without login. The route asks search engines not to index i
 - **Required CI (E2E):** `e2e/jermilova-public.spec.ts` loads `/Jermilova/` anonymously in
   chromium, firefox and webkit on the e2e dev server. It checks:
   - exactly one redirect, no login, and the security headers;
-  - the six tabs and the 14-node model;
+  - the seven tabs and the 14-node model;
   - no Review or Case Studies;
   - no storage writes and no non-GET requests.
 - **CI (Jermilova Viewer Gates, aggregated into CI Status Check):**

@@ -42,7 +42,7 @@ describe('Jermilova viewer fork fidelity', () => {
     }
   });
 
-  it('makes each fork equal to its original plus exactly the reviewed deletion patch', () => {
+  it('makes each fork equal to its original plus exactly the reviewed viewer patch', () => {
     const forks = Object.keys(FORK_ORIGINALS as Record<string, string>);
     expect(forks).toHaveLength(7);
     for (const fork of forks) {

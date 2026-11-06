@@ -43,13 +43,15 @@ function productViewerFiles() {
 }
 
 describe('Jermilova public viewer scope', () => {
-  it('shows the original tab list minus Review and Case Studies, in source order, defaulting to Detailed BN', () => {
+  it('keeps the six original viewer tabs unchanged and appends About, defaulting to Detailed BN', () => {
     const original = tabsOf(read(ORIGINAL_SHELL));
     const fork = tabsOf(read(FORK_SHELL));
     expect(original.map((t) => t.id)).toContain('review');
     expect(original.map((t) => t.id)).toContain('casestudies');
-    expect(fork).toEqual(original.filter((t) => t.id !== 'review' && t.id !== 'casestudies'));
-    expect(fork.map((t) => t.label)).toEqual(['Guide', 'Conceptual', 'Detailed BN', 'CPT', 'Map', 'Data']);
+    const originalViewerTabs = original.filter((t) => t.id !== 'review' && t.id !== 'casestudies');
+    expect(fork.slice(0, originalViewerTabs.length)).toEqual(originalViewerTabs);
+    expect(fork[originalViewerTabs.length]).toEqual({ id: 'about', label: 'About' });
+    expect(fork.map((t) => t.label)).toEqual(['Guide', 'Conceptual', 'Detailed BN', 'CPT', 'Map', 'Data', 'About']);
     for (const source of [read(ORIGINAL_SHELL), read(FORK_SHELL)]) {
       expect(source).toContain("useState<ViewTab>('detailed')");
     }
@@ -65,8 +67,9 @@ describe('Jermilova public viewer scope', () => {
       'forked/ResultsPanel.tsx',
       'forked/SiteMap.tsx',
       'forked/SiteDetails.tsx',
+      'components/AboutView.tsx',
     ]));
-    for (const superseded of ['ReadOnlyNetworkCanvas', 'GuideView', 'ConceptualView', 'DataView', 'JermilovaMapView', 'JermilovaMapCanvas', 'AboutView']) {
+    for (const superseded of ['ReadOnlyNetworkCanvas', 'GuideView', 'ConceptualView', 'DataView', 'JermilovaMapView', 'JermilovaMapCanvas']) {
       expect(files).not.toContain(`components/${superseded}.tsx`);
     }
     const modules = (closure.entries as Array<{ path: string; role: string }>).filter((e) => e.role === 'module').map((e) => e.path);

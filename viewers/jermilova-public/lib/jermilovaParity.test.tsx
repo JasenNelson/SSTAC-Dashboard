@@ -300,7 +300,7 @@ describe('Jermilova viewer parity with the authenticated original', () => {
     expect(useNetworkStore.getState().model?.nodes).toHaveLength(14);
   });
 
-  it('the viewer mounts the original page with exactly the six source tabs in source order', async () => {
+  it('the viewer keeps the six source tabs in order and appends the approved About view', async () => {
     const setItem = vi.spyOn(Storage.prototype, 'setItem');
     // Cold start: the page must load Jermilova itself, not reuse warmed store state.
     usePackStore.setState(usePackStore.getInitialState(), true);
@@ -308,12 +308,12 @@ describe('Jermilova viewer parity with the authenticated original', () => {
     const firstMountRequest = requests.length;
     render(<JermilovaViewerClient />);
     try {
-      await waitFor(() => expect(document.querySelectorAll('nav button')).toHaveLength(6), { timeout: 10000 });
+      await waitFor(() => expect(document.querySelectorAll('nav button')).toHaveLength(7), { timeout: 10000 });
     } catch (error) {
       throw new Error(`Shell did not mount: ${document.body.textContent?.slice(0, 400)}`, { cause: error });
     }
     const labels = [...document.querySelectorAll('nav button')].map((b) => b.textContent?.trim());
-    expect(labels).toEqual(['Guide', 'Conceptual', 'Detailed BN', 'CPT', 'Map', 'Data']);
+    expect(labels).toEqual(['Guide', 'Conceptual', 'Detailed BN', 'CPT', 'Map', 'Data', 'About']);
     // The original PackBanner caveat for the read-only benchmark pack is shown verbatim.
     expect(await screen.findByText(/Frozen benchmark/)).toBeTruthy();
     expect(screen.getByText(/Use the Data tab to browse published training data/)).toBeTruthy();
@@ -326,6 +326,10 @@ describe('Jermilova viewer parity with the authenticated original', () => {
     // TrainingDataTable (filter + column selector) once the training data loads.
     expect(await screen.findByPlaceholderText('Filter values...', {}, { timeout: 10000 })).toBeTruthy();
     expect(screen.getByText('All columns')).toBeTruthy();
+    fireEvent.click(screen.getByTitle('Pack information and limitations'));
+    expect(await screen.findByText('Registered pack information')).toBeTruthy();
+    expect(screen.getByText(/Independent reconstruction/)).toBeTruthy();
+    expect(screen.getByText(/Paper agreement \(C3\): UNAVAILABLE/)).toBeTruthy();
     expect(setItem).not.toHaveBeenCalled();
     setItem.mockRestore();
     for (const request of requests) expect(request.method).toBe('GET');
@@ -340,7 +344,7 @@ describe('Jermilova viewer parity with the authenticated original', () => {
     usePackStore.setState(usePackStore.getInitialState(), true);
     useNetworkStore.setState(useNetworkStore.getInitialState(), true);
     render(<JermilovaViewerClient />);
-    await waitFor(() => expect(document.querySelectorAll('nav button')).toHaveLength(6), { timeout: 10000 });
+    await waitFor(() => expect(document.querySelectorAll('nav button')).toHaveLength(7), { timeout: 10000 });
     tamperPath = `/bn-rrm/packs/${PACK_ID}/training_data.json`;
     try {
       fireEvent.click(screen.getByTitle('Upload & export'));

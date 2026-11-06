@@ -13,7 +13,9 @@ import { NodeInspector } from '@/components/bn-rrm/panels/NodeInspector';
 import { ResultsPanel } from './ResultsPanel';
 import { BenchmarkDataViewer } from '@/components/bn-rrm/data/BenchmarkDataViewer';
 import { SiteDetails } from './SiteDetails';
-import { Workflow, Network, Map, Database, PanelRightOpen, PanelRightClose, ChevronRight, Beaker, Thermometer, Activity, AlertTriangle, Table, BookOpen } from 'lucide-react';
+import { AboutView } from '../components/AboutView';
+import type { VerifiedClaim } from '../lib/loadJermilovaPack';
+import { Workflow, Network, Map, Database, PanelRightOpen, PanelRightClose, ChevronRight, Beaker, Thermometer, Activity, AlertTriangle, Table, BookOpen, Info } from 'lucide-react';
 
 const Canvas = dynamic(() => import('./Canvas').then((mod) => mod.Canvas), {
   ssr: false,
@@ -35,7 +37,7 @@ const GettingStartedView = dynamic(() => import('@/components/bn-rrm/getting-sta
   loading: () => <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-slate-900"><div className="flex items-center gap-3 text-slate-400 dark:text-slate-500"><div className="w-6 h-6 border-2 border-slate-300 dark:border-slate-600 border-t-blue-500 rounded-full animate-spin" /><span>Loading guide...</span></div></div>,
 });
 
-type ViewTab = 'gettingstarted' | 'conceptual' | 'detailed' | 'cpt' | 'map' | 'data';
+type ViewTab = 'gettingstarted' | 'conceptual' | 'detailed' | 'cpt' | 'map' | 'data' | 'about';
 
 const tabs: { id: ViewTab; label: string; icon: typeof Workflow; description: string }[] = [
   { id: 'gettingstarted', label: 'Guide', icon: BookOpen, description: 'Getting started' },
@@ -44,9 +46,10 @@ const tabs: { id: ViewTab; label: string; icon: typeof Workflow; description: st
   { id: 'cpt', label: 'CPT', icon: Table, description: 'Conditional Probability Tables' },
   { id: 'map', label: 'Map', icon: Map, description: 'Spatial data explorer' },
   { id: 'data', label: 'Data', icon: Database, description: 'Upload & export' },
+  { id: 'about', label: 'About', icon: Info, description: 'Pack information and limitations' },
 ];
 
-export default function BNRRMClient() {
+export default function BNRRMClient({ aboutClaims }: { aboutClaims: VerifiedClaim[] }) {
   const [activeTab, setActiveTab] = useState<ViewTab>('detailed');
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
@@ -102,20 +105,20 @@ export default function BNRRMClient() {
     <div className="h-screen flex flex-col bg-slate-100 dark:bg-slate-900 bn-rrm-wrapper print:h-auto print:block print:bg-white">
       {/* Sub-header with tab navigation. print:hidden so the PDF output
           of the TWG Review tier doesn't include the BN-RRM tab strip. */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm print:hidden">
-        <div className="flex items-center gap-4">
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-2 flex min-w-0 items-center justify-between gap-2 shrink-0 shadow-sm sm:px-4 print:hidden">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-blue-500 via-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/25"><Network className="w-5 h-5 text-white" /></div>
             <div><h1 className="font-bold text-slate-800 dark:text-slate-100 leading-tight">BN-RRM</h1><p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">Benthic Risk Assessment</p></div>
           </div>
           <div className="h-8 w-px bg-slate-200 dark:bg-slate-700" />
-          <nav className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
+          <nav aria-label="Viewer sections" className="flex min-w-0 flex-1 gap-1 overflow-x-auto overscroll-x-contain bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               const showBadge = tab.id === 'data' && siteCount > 0;
               return (
-                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={cn('relative flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200', isActive ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/50')} title={tab.description}>
+                <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={cn('relative flex h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 sm:h-auto sm:min-w-0 sm:justify-start', isActive ? 'bg-white dark:bg-slate-600 text-slate-800 dark:text-slate-100 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/50')} title={tab.description}>
                   <Icon className="w-4 h-4" /><span className="hidden md:inline">{tab.label}</span>
                   {showBadge && <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">{siteCount}</span>}
                 </button>
@@ -154,6 +157,7 @@ export default function BNRRMClient() {
         {activeTab === 'cpt' && <CPTExplorer key={selectedPackId ?? 'default'} />}
         {activeTab === 'map' && <MapView showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} />}
         {activeTab === 'data' && <DataView isReadOnly={isReadOnly} />}
+        {activeTab === 'about' && <AboutView claims={aboutClaims} />}
       </main>
     </div>
   );
