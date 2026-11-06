@@ -1,7 +1,7 @@
 export const JERMILOVA_VIEWER_CAPABILITIES = {
   packId: 'bnrrm-casestudy-jermilova2025-mackenzie-hg',
   modelId: 'bnrrm-mackenzie-hg-gsl',
-  tabs: ['guide', 'conceptual', 'network', 'cpt', 'map', 'data'] as const,
+  tabs: ['guide', 'conceptual', 'network', 'cpt', 'map', 'data', 'about'] as const,
   tabLabels: {
     guide: 'Guide',
     conceptual: 'Conceptual',
@@ -9,6 +9,7 @@ export const JERMILOVA_VIEWER_CAPABILITIES = {
     cpt: 'CPT',
     map: 'Map',
     data: 'Data',
+    about: 'About',
   },
   assetKeys: [
     'pack',

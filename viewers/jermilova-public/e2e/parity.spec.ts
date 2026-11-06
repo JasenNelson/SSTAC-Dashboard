@@ -7,7 +7,8 @@ import { expect, test, type Page } from '@playwright/test';
 
 const EVIDENCE = process.env.PARITY_EVIDENCE_DIR as string;
 const JERMILOVA = 'Jermilova 2025 Mackenzie Mercury BN-RRM';
-const TABS = ['Guide', 'Conceptual', 'Detailed BN', 'CPT', 'Map', 'Data'];
+const SOURCE_TABS = ['Guide', 'Conceptual', 'Detailed BN', 'CPT', 'Map', 'Data'];
+const VIEWER_TABS = [...SOURCE_TABS, 'About'];
 const WIDTHS = [
   { name: 'desktop', width: 1440, height: 900 },
   { name: 'phone', width: 390, height: 844 },
@@ -43,6 +44,7 @@ const READY: Record<string, (page: Page) => Promise<unknown>> = {
   // the clone at 390 px). Desktop visibility is asserted separately in snapshot().
   Map: (page) => page.locator('.leaflet-container').first().waitFor({ state: 'attached' }),
   Data: (page) => page.getByPlaceholder('Filter values...').waitFor(),
+  About: (page) => mainArea(page).getByText('Registered pack information').waitFor(),
 };
 
 const wrapper = (page: Page) => page.locator('.bn-rrm-wrapper');
@@ -108,7 +110,7 @@ async function settledCanvasState(page: Page) {
   throw new Error(`Canvas did not settle: ${samples.slice(-3).join(' | ')}`);
 }
 
-async function snapshot(page: Page, label: string): Promise<Snapshot> {
+async function snapshot(page: Page, label: string, tabs: string[]): Promise<Snapshot> {
   const snap: Snapshot = { tabs: await tabLabels(page), chrome: '', canvas: {}, text: {} };
   await openTab(page, 'Detailed BN');
   await page.locator('.react-flow__node-containerNode').first().waitFor();
@@ -124,7 +126,7 @@ async function snapshot(page: Page, label: string): Promise<Snapshot> {
   await page.getByTitle('Collapse all containers').click();
   for (const size of WIDTHS) {
     await page.setViewportSize({ width: size.width, height: size.height });
-    for (const tab of TABS) {
+    for (const tab of tabs) {
       await openTab(page, tab);
       if (tab === 'Map' && size.name === 'desktop') await expect(page.locator('.leaflet-container').first()).toBeVisible();
       snap.text[`${tab}-${size.name}`] = await mainArea(page).innerText();
@@ -199,13 +201,13 @@ test('@viewer anonymous viewer: faithful shell, read-only network, no storage, n
 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/Jermilova');
-  await expect(wrapper(page).locator('nav button')).toHaveCount(6);
+  await expect(wrapper(page).locator('nav button')).toHaveCount(7);
   await expectNodeCountStatus(page, '14 nodes');
-  expect(await tabLabels(page)).toEqual(TABS);
+  expect(await tabLabels(page)).toEqual(VIEWER_TABS);
   // No pack/model selector in the header (the original's selector is a chevron dropdown).
   await expect(wrapper(page).locator('> div').first().locator('svg.lucide-chevron-down')).toHaveCount(0);
 
-  const snap = await snapshot(page, 'viewer');
+  const snap = await snapshot(page, 'viewer', VIEWER_TABS);
   expect(snap.canvas.collapsed).toMatchObject({ containers: 7, children: 0 });
   expect(snap.canvas.collapsed.edges).toHaveLength(6);
   expect(snap.canvas.mixed).toMatchObject({ containers: 7, children: 2 });
@@ -253,7 +255,7 @@ test('@original authenticated original with the Jermilova pack selected', async 
   await wrapper(page).locator('> div').first().locator('button:has(svg.lucide-chevron-down)').first().click();
   await page.getByRole('button', { name: new RegExp(JERMILOVA) }).click();
   await expectNodeCountStatus(page, '14 nodes');
-  await snapshot(page, 'original');
+  await snapshot(page, 'original', SOURCE_TABS);
 });
 
 test('@compare viewer equals original apart from the removed tabs and controls', async () => {
@@ -262,7 +264,7 @@ test('@compare viewer equals original apart from the removed tabs and controls',
   const original = read('original');
   const normalize = (text: string) => text.split('\n').map((line) => line.trim()).filter((line) => line && !REMOVED_LINES.has(line)).join('\n');
 
-  expect(viewer.tabs).toEqual(original.tabs.filter((tab) => tab !== 'Review' && tab !== 'Case Studies'));
+  expect(viewer.tabs).toEqual([...original.tabs.filter((tab) => tab !== 'Review' && tab !== 'Case Studies'), 'About']);
   expect(viewer.chrome).toContain('Frozen benchmark');
   expect(viewer.chrome).toEqual(original.chrome);
   expect(viewer.canvas).toEqual(original.canvas);

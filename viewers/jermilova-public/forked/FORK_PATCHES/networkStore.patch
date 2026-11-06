@@ -1,5 +1,5 @@
 diff --git a/src/stores/bn-rrm/networkStore.ts b/viewers/jermilova-public/forked/networkStore.ts
-index 1afcbd89a8c6f274593ec27cd860e34e21d32d97..0ba949a8d65a172b95a8d7c90f08f9a5f3f2efcd 100644
+index 1afcbd89a8c6f274593ec27cd860e34e21d32d97..232c021c72c6f23226c673734640abad6e299ac8 100644
 --- a/src/stores/bn-rrm/networkStore.ts
 +++ b/viewers/jermilova-public/forked/networkStore.ts
 @@ -15,7 +15,6 @@ import type {
@@ -10,7 +10,15 @@ index 1afcbd89a8c6f274593ec27cd860e34e21d32d97..0ba949a8d65a172b95a8d7c90f08f9a5
  import { createTrainedNetwork, createGenericNetwork } from '@/lib/bn-rrm/trained-network';
  import { dagForwardInference, dagBackwardInference } from '@/lib/bn-rrm/bn-inference';
  import type { PackManifest } from '@/lib/bn-rrm/pack-types';
-@@ -48,8 +47,6 @@ interface NetworkState {
+@@ -27,6 +26,7 @@ import type { PackManifest } from '@/lib/bn-rrm/pack-types';
+ interface NetworkState {
+   // Model data
+   model: NetworkModel | null;
++  baselineModel: NetworkModel | null;
+ 
+   // Derived/computed
+   nodeMap: Map<string, NetworkNodeData>;
+@@ -48,8 +48,6 @@ interface NetworkState {
  
    // Actions - Model
    loadModel: (model: NetworkModel) => void;
@@ -19,7 +27,40 @@ index 1afcbd89a8c6f274593ec27cd860e34e21d32d97..0ba949a8d65a172b95a8d7c90f08f9a5
    loadPackModel: (packBaseUrl: string, manifest: PackManifest) => Promise<void>;
  
    // Actions - Inference
-@@ -122,28 +119,6 @@ export const useNetworkStore = create<NetworkState>()(
+@@ -93,6 +91,7 @@ export const useNetworkStore = create<NetworkState>()(
+     (set, get) => ({
+       // Initial state
+       model: null,
++      baselineModel: null,
+       nodeMap: new Map(),
+       containerMap: new Map(),
+       evidence: {},
+@@ -108,11 +107,22 @@ export const useNetworkStore = create<NetworkState>()(
+       // =======================================================================
+ 
+       loadModel: (model) => {
+-        const nodeMap = new Map(model.nodes.map(n => [n.id, n]));
++        const cloneModel = (): NetworkModel => ({
++          ...model,
++          nodes: model.nodes.map((node) => ({
++            ...node,
++            beliefs: { ...node.beliefs },
++            evidence: null,
++          })),
++        });
++        const baselineModel = cloneModel();
++        const liveModel = cloneModel();
++        const nodeMap = new Map(liveModel.nodes.map(n => [n.id, n]));
+         const containerMap = new Map(model.containers.map(c => [c.id, c]));
+ 
+         set({
+-          model,
++          model: liveModel,
++          baselineModel,
+           nodeMap,
+           containerMap,
+           evidence: {},
+@@ -122,28 +132,6 @@ export const useNetworkStore = create<NetworkState>()(
          });
        },
  
@@ -48,7 +89,7 @@ index 1afcbd89a8c6f274593ec27cd860e34e21d32d97..0ba949a8d65a172b95a8d7c90f08f9a5
        loadPackModel: async (packBaseUrl: string, manifest: PackManifest) => {
          const generation = get()._loadGeneration + 1;
          set({ isLoading: true, _loadGeneration: generation });
-@@ -167,9 +142,6 @@ export const useNetworkStore = create<NetworkState>()(
+@@ -167,9 +155,6 @@ export const useNetworkStore = create<NetworkState>()(
          } catch (err) {
            if (get()._loadGeneration !== generation) return;
            console.error('[NetworkStore] Pack model load failed:', err);
@@ -58,3 +99,42 @@ index 1afcbd89a8c6f274593ec27cd860e34e21d32d97..0ba949a8d65a172b95a8d7c90f08f9a5
          } finally {
            // Only clear loading if this is still the active generation
            if (get()._loadGeneration === generation) {
+@@ -179,15 +164,15 @@ export const useNetworkStore = create<NetworkState>()(
+       },
+ 
+       runInference: (mode) => {
+-        const { evidence, model } = get();
++        const { evidence, model, baselineModel } = get();
+         if (!model) return;
+ 
+         set({ isInferenceRunning: true });
+ 
+         // All models use the general DAG inference engine
+         const result = mode === 'forward'
+-          ? dagForwardInference(model, evidence)
+-          : dagBackwardInference(model, evidence);
++          ? dagForwardInference(baselineModel ?? model, evidence)
++          : dagBackwardInference(baselineModel ?? model, evidence);
+ 
+         const beliefs: Record<string, Record<string, number>> = {};
+         for (const [nodeId, dist] of Object.entries(result.beliefs)) {
+@@ -338,16 +323,12 @@ export const useNetworkStore = create<NetworkState>()(
+       },
+ 
+       clearAllEvidence: () => {
+-        const { model } = get();
++        const { model, baselineModel } = get();
+         if (!model) return;
+ 
++        const baselineBeliefs = dagForwardInference(baselineModel ?? model, {}).beliefs;
+         const updatedNodes = model.nodes.map(n => {
+-          const uniformProb = 1.0 / n.states.length;
+-          const newBeliefs: BeliefDistribution = {};
+-          n.states.forEach(s => {
+-            newBeliefs[s.id] = uniformProb;
+-          });
+-          return { ...n, evidence: null, beliefs: newBeliefs };
++          return { ...n, evidence: null, beliefs: { ...(baselineBeliefs[n.id] ?? n.beliefs) } };
+         });
+ 
+         const newNodeMap = new Map(updatedNodes.map(n => [n.id, n]));

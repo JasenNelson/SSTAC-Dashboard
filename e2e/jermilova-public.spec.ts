@@ -4,10 +4,10 @@ import { expect, test } from '@playwright/test';
 // under public/Jermilova/ (src/lib/jermilova-public/route-config.ts). Runs without a
 // session: it must never redirect to /login, never write, and never touch the
 // authenticated app's own paths.
-const TABS = ['Guide', 'Conceptual', 'Detailed BN', 'CPT', 'Map', 'Data'];
+const TABS = ['Guide', 'Conceptual', 'Detailed BN', 'CPT', 'Map', 'Data', 'About'];
 
 test.describe('anonymous /Jermilova viewer', () => {
-  test('loads without login, shows the six read-only tabs and the Jermilova model, and makes no writes', async ({ page, baseURL }) => {
+  test('loads without login, shows the seven read-only tabs and the Jermilova model, and makes no writes', async ({ page, baseURL }) => {
     // Room for the per-step waits below, so a slow step names its locator instead of the
     // whole test hitting the config's 60 s ceiling.
     test.setTimeout(180_000);
@@ -67,7 +67,7 @@ test.describe('anonymous /Jermilova viewer', () => {
     expect(headers['cache-control']).toBe('no-cache');
 
     const wrapper = page.locator('.bn-rrm-wrapper');
-    await expect(wrapper.locator('nav button')).toHaveCount(6, { timeout: 60_000 });
+    await expect(wrapper.locator('nav button')).toHaveCount(7, { timeout: 60_000 });
     expect((await wrapper.locator('nav button').allInnerTexts()).map((text) => text.trim())).toEqual(TABS);
     // The shell's node-count status (scoped: the results badge also mentions "14 nodes").
     await expect(wrapper.locator('> div').first().getByText(/^\d+ nodes$/)).toHaveText('14 nodes', { timeout: 60_000 });
@@ -84,6 +84,7 @@ test.describe('anonymous /Jermilova viewer', () => {
       CPT: () => main.getByText(/With CPT/).first().waitFor({ timeout: 60_000 }),
       Map: () => page.locator('.leaflet-container').first().waitFor({ timeout: 60_000 }),
       Data: () => page.getByPlaceholder('Filter values...').waitFor({ timeout: 60_000 }),
+      About: () => main.getByText('Registered pack information').waitFor({ timeout: 60_000 }),
     };
     for (const tab of TABS) {
       await wrapper.locator('nav button').filter({ hasText: tab }).first().click();

@@ -1,7 +1,7 @@
 // Creates viewers/jermilova-public/forked/* from the authenticated originals in src/.
 // Every change is an exact-string edit that must match exactly once, so a drifted
 // source fails closed instead of producing a silently different fork. Edits are
-// limited to import-path rewrites plus the deletions approved in the recovery plan.
+// limited to approved viewer isolation, About, and fresh-baseline behavior.
 // Usage: node viewers/jermilova-public/scripts/make-forks.mjs
 // The repo root is derived from this file's location, never from the shell cwd.
 import fs from 'node:fs';
@@ -44,15 +44,36 @@ const forks = [
       ["import { ExportPanel } from '@/components/bn-rrm/data/ExportPanel';\n", ''],
       ["import { ReferenceDataBrowser } from '@/components/bn-rrm/data/ReferenceDataBrowser';\n", ''],
       ["import { SiteDetails } from '@/components/bn-rrm/map/SiteDetails';", "import { SiteDetails } from './SiteDetails';"],
+      [
+        "import { SiteDetails } from './SiteDetails';\n",
+        "import { SiteDetails } from './SiteDetails';\nimport { AboutView } from '../components/AboutView';\nimport type { VerifiedClaim } from '../lib/loadJermilovaPack';\n",
+      ],
       ["import { classifyRawSiteData, dagForwardInference } from '@/lib/bn-rrm/bn-inference';\nimport { createTrainedNetwork } from '@/lib/bn-rrm/trained-network';\n", ''],
-      ['AlertTriangle, Upload, Table, Download, ClipboardCheck, BookOpen }', 'AlertTriangle, Table, BookOpen }'],
+      ['AlertTriangle, Upload, Table, Download, ClipboardCheck, BookOpen }', 'AlertTriangle, Table, BookOpen, Info }'],
       ["import('@/components/bn-rrm/canvas/Canvas')", "import('./Canvas')"],
       ["import('@/components/bn-rrm/map/SiteMap')", "import('./SiteMap')"],
       [between(t, 'const ReviewView = dynamic(', '});\n\n'), ''],
       [between(t, 'const CaseStudiesView = dynamic(', '});\n\n'), ''],
-      [" | 'data' | 'review' | 'casestudies';", " | 'data';"],
+      [" | 'data' | 'review' | 'casestudies';", " | 'data' | 'about';"],
+      [
+        "  { id: 'data', label: 'Data', icon: Database, description: 'Upload & export' },\n",
+        "  { id: 'data', label: 'Data', icon: Database, description: 'Upload & export' },\n  { id: 'about', label: 'About', icon: Info, description: 'Pack information and limitations' },\n",
+      ],
       ["  { id: 'review', label: 'Review', icon: ClipboardCheck, description: 'Peer review transparency' },\n", ''],
       ["  { id: 'casestudies', label: 'Case Studies', icon: BookOpen, description: 'Site comparisons' },\n", ''],
+      ['export default function BNRRMClient() {', 'export default function BNRRMClient({ aboutClaims }: { aboutClaims: VerifiedClaim[] }) {'],
+      [
+        '      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm print:hidden">\n        <div className="flex items-center gap-4">',
+        '      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-3 py-2 flex min-w-0 items-center justify-between gap-2 shrink-0 shadow-sm sm:px-4 print:hidden">\n        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-4">',
+      ],
+      [
+        '<nav className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-lg p-1">',
+        '<nav aria-label="Viewer sections" className="flex min-w-0 flex-1 gap-1 overflow-x-auto overscroll-x-contain bg-slate-100 dark:bg-slate-700 rounded-lg p-1">',
+      ],
+      [
+        "className={cn('relative flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200'",
+        "className={cn('relative flex h-[44px] min-w-[44px] shrink-0 items-center justify-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200 sm:h-auto sm:min-w-0 sm:justify-start'",
+      ],
       ['  const selectSite = useSiteDataStore((state) => state.selectSite);\n  const addAssessment = useSiteDataStore((state) => state.addAssessment);\n', ''],
       [between(t, '  const handleViewOnMap = useCallback(', '}, [sites, handleRunAssessment, setBatchProgress]);\n\n'), ''],
       ['h-[calc(100vh-4rem)]', 'h-screen'],
@@ -60,6 +81,10 @@ const forks = [
       ["        {activeTab === 'review' && <ReviewView />}\n        {activeTab === 'casestudies' && <CaseStudiesView />}\n", ''],
       [' onRunAssessment={handleRunAssessment} onRunBatchAssessment={handleRunBatchAssessment} />}', ' />}'],
       ['<DataView onViewOnMap={handleViewOnMap} onRunAssessment={handleRunAssessment} isReadOnly={isReadOnly} />', '<DataView isReadOnly={isReadOnly} />'],
+      [
+        "        {activeTab === 'data' && <DataView isReadOnly={isReadOnly} />}\n",
+        "        {activeTab === 'data' && <DataView isReadOnly={isReadOnly} />}\n        {activeTab === 'about' && <AboutView claims={aboutClaims} />}\n",
+      ],
       [
         'function MapView({ showLeftPanel, showRightPanel, onRunAssessment, onRunBatchAssessment }: { showLeftPanel: boolean; showRightPanel: boolean; onRunAssessment: (siteId: string) => void; onRunBatchAssessment: (siteIds: string[]) => void }) {',
         'function MapView({ showLeftPanel, showRightPanel }: { showLeftPanel: boolean; showRightPanel: boolean }) {',
@@ -150,6 +175,18 @@ const forks = [
       ["  loadDummyModel: () => void;\n  loadTrainedModel: (source?: 'expert' | 'learned') => void;\n", ''],
       [between(t, '      loadDummyModel: () => {', '          get().loadModel(trainedModel);\n        }\n      },\n\n'), ''],
       ["          // Fallback to expert model (only meaningful for canonical packs)\n          const trainedModel = createTrainedNetwork('expert');\n          get().loadModel(trainedModel);\n", ''],
+      ['  model: NetworkModel | null;\n', '  model: NetworkModel | null;\n  baselineModel: NetworkModel | null;\n'],
+      ['      model: null,\n', '      model: null,\n      baselineModel: null,\n'],
+      [
+        "      loadModel: (model) => {\n        const nodeMap = new Map(model.nodes.map(n => [n.id, n]));\n        const containerMap = new Map(model.containers.map(c => [c.id, c]));\n\n        set({\n          model,\n          nodeMap,\n          containerMap,\n          evidence: {},\n          selectedNodeId: null,\n          selectedContainerId: null,\n          highlightedPath: [],\n        });\n      },",
+        "      loadModel: (model) => {\n        const cloneModel = (): NetworkModel => ({\n          ...model,\n          nodes: model.nodes.map((node) => ({\n            ...node,\n            beliefs: { ...node.beliefs },\n            evidence: null,\n          })),\n        });\n        const baselineModel = cloneModel();\n        const liveModel = cloneModel();\n        const nodeMap = new Map(liveModel.nodes.map(n => [n.id, n]));\n        const containerMap = new Map(model.containers.map(c => [c.id, c]));\n\n        set({\n          model: liveModel,\n          baselineModel,\n          nodeMap,\n          containerMap,\n          evidence: {},\n          selectedNodeId: null,\n          selectedContainerId: null,\n          highlightedPath: [],\n        });\n      },",
+      ],
+      ['        const { evidence, model } = get();\n', '        const { evidence, model, baselineModel } = get();\n'],
+      ['          ? dagForwardInference(model, evidence)\n          : dagBackwardInference(model, evidence);', '          ? dagForwardInference(baselineModel ?? model, evidence)\n          : dagBackwardInference(baselineModel ?? model, evidence);'],
+      [
+        between(t, '      clearAllEvidence: () => {', '        });\n      },\n\n'),
+        "      clearAllEvidence: () => {\n        const { model, baselineModel } = get();\n        if (!model) return;\n\n        const baselineBeliefs = dagForwardInference(baselineModel ?? model, {}).beliefs;\n        const updatedNodes = model.nodes.map(n => {\n          return { ...n, evidence: null, beliefs: { ...(baselineBeliefs[n.id] ?? n.beliefs) } };\n        });\n\n        const newNodeMap = new Map(updatedNodes.map(n => [n.id, n]));\n\n        set({\n          evidence: {},\n          model: { ...model, nodes: updatedNodes },\n          nodeMap: newNodeMap,\n        });\n      },\n\n",
+      ],
     ],
   },
   {

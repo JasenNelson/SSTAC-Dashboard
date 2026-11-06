@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import JermilovaBnrrmClient from '../forked/JermilovaBnrrmClient';
-import { loadJermilovaPack } from '../lib/loadJermilovaPack';
+import { loadJermilovaPack, type VerifiedClaim } from '../lib/loadJermilovaPack';
 import { JERMILOVA_PUBLIC_BASE_PATH } from '../lib/publicBasePath';
 import { createVerifiedFetch } from '../lib/verifiedFetch';
 import { PackLoadState } from './PackLoadState';
@@ -14,7 +14,7 @@ import { PackLoadState } from './PackLoadState';
 // 2. The pack is verified once up front (14 nodes, 15 edges, claims) before the
 //    forked authenticated shell mounts.
 export default function JermilovaViewerClient() {
-  const [verified, setVerified] = useState(false);
+  const [verifiedClaims, setVerifiedClaims] = useState<VerifiedClaim[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,8 +28,8 @@ export default function JermilovaViewerClient() {
       JERMILOVA_PUBLIC_BASE_PATH,
     );
     loadJermilovaPack()
-      .then(() => {
-        if (live) setVerified(true);
+      .then((loaded) => {
+        if (live) setVerifiedClaims(loaded.claims);
       })
       .catch((reason: unknown) => {
         if (!live) return;
@@ -42,8 +42,8 @@ export default function JermilovaViewerClient() {
   }, []);
 
   return (
-    <PackLoadState error={error} loading={!verified}>
-      {verified && <JermilovaBnrrmClient />}
+    <PackLoadState error={error} loading={!verifiedClaims}>
+      {verifiedClaims && <JermilovaBnrrmClient aboutClaims={verifiedClaims} />}
     </PackLoadState>
   );
 }
