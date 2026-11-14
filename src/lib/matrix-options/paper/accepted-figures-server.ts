@@ -9,7 +9,7 @@ import {
   resolveAcceptedFigure,
   type AcceptedFiguresContract,
 } from './accepted-figures';
-import { V0991_PAPER_VERSION } from './releases';
+import { PHASE2_PAPER_VERSION, V0991_PAPER_VERSION } from './releases';
 
 /*
  * Server-side authentication of a release's accepted figures against its
@@ -73,8 +73,8 @@ export function authenticateAcceptedFigures(structure: AuthenticatedSource): Acc
   // that mentions the marker word is one counted block, and every line that references the
   // asset folder is one block's own image line.
   const markerMentions = lines.filter((line) => /MATRIX_FIGURE_PLACEMENT/i.test(line)).length;
-  if (markerMentions !== blocks.length) fail(`placement marker spelling ${markerMentions}`);
-  const assetReferences = lines.filter((line) => /\]\(assets(?:_v0991)?\//.test(line)).length;
+  if (markerMentions !== (version === PHASE2_PAPER_VERSION ? 0 : blocks.length)) fail(`placement marker spelling ${markerMentions}`);
+  const assetReferences = lines.filter((line) => /\]\((?:assets(?:_v0991)?|figures)\//.test(line)).length;
   if (assetReferences !== blocks.length) fail(`asset image outside a placement ${assetReferences}`);
 
   blocks.forEach((block, index) => {
@@ -92,7 +92,11 @@ export function authenticateAcceptedFigures(structure: AuthenticatedSource): Acc
     for (let line = block.startLine - 1; line >= 0 && owner === null; line -= 1) {
       owner = SECTION_ANCHOR_LINE.exec(lines[line])?.[1] ?? PANDOC_SECTION_LINE.exec(lines[line])?.[1] ?? null;
     }
-    if (version === V0991_PAPER_VERSION) {
+    if (version === PHASE2_PAPER_VERSION) {
+      const heading = lines.slice(0, block.startLine).reverse().find((line) => /^#{1,6} \d{1,2}(?:\.\d{1,2})?\.?(?: |$)/.test(line));
+      const number = heading ? /^#{1,6} (\d{1,2}(?:\.\d{1,2})?)\.?(?: |$)/.exec(heading)?.[1] : null;
+      if (!number || `sec-phase2-${number.replace(/\./g, '-')}` !== placement.sectionAnchor) fail(`placement section ${block.figureId}`);
+    } else if (version === V0991_PAPER_VERSION) {
       const ancestors = pandocSectionAncestors(lines, block.startLine);
       if (!ancestors.includes(placement.sectionAnchor)) fail(`placement section ${block.figureId}`);
     } else if (owner !== placement.sectionAnchor) {

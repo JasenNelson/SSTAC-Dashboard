@@ -162,7 +162,7 @@ interface PrivateReleaseCatalog {
 }
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
-const FIGURE_FILE = /^[A-Za-z0-9-]+\.png$/;
+const FIGURE_FILE = /^[A-Za-z0-9_-]+\.png$/;
 const DECIMAL_BYTES = /^[1-9][0-9]*$/;
 
 /** This revision is prepared in code but remains disabled until separately activated. */

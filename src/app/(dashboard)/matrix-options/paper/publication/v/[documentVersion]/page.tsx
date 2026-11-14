@@ -6,7 +6,7 @@ import {
   resolveMatrixOptionsPaperReviewNavigationGate,
 } from '@/lib/matrix-options/navigation';
 import { REVISED_PAPER_ROUTE } from '@/lib/matrix-options/revised-paper';
-import { getPaperRelease, PREDECESSOR_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, PHASE2_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { PrivateReleaseUnavailableError } from '@/lib/matrix-options/paper/private-release-assets';
 import type { PrivateReleaseFailureCode } from '@/lib/matrix-options/paper/private-release-assets';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -141,7 +141,7 @@ function authenticatedReview(structure: RevisedPaperStructure, documentVersion: 
       if (isExpectedPaperFailure(error, CONTRACT_FAILURE_PREFIXES)) throw new PaperRouteFailure('COHORT_RELEASE_MISMATCH');
       throw error;
     }
-    if (cohortManifest.releaseIdentity !== documentVersion || structure.manifest.source.version !== documentVersion || cohortManifest.cohorts.length !== 5) {
+    if (cohortManifest.releaseIdentity !== documentVersion || structure.manifest.source.version !== documentVersion) {
       throw new PaperRouteFailure('COHORT_RELEASE_MISMATCH');
     }
     try {
@@ -311,7 +311,7 @@ export default async function PublicationPage({
     const identity = paperSectionIdentity(structure, documentVersion);
     const initialIndex = (state.section === null ? null : owningSectionIndex(groups, state.section)) ?? 0;
     const initialGroup = groups[initialIndex];
-    initialRegion = sectionRegion(groups.map((group) => group.label), initialIndex, APPENDIX_BOUNDARY_LABEL);
+    initialRegion = sectionRegion(groups.map((group) => group.label), initialIndex, documentVersion === PHASE2_PAPER_VERSION ? 'Technical Annex' : APPENDIX_BOUNDARY_LABEL);
     documentModel = { chunks: chunks.slice(initialGroup.chunkStart, initialGroup.chunkEnd), linkMap: fullModel.linkMap };
     sectionWindow = {
       paperSha256: identity.paperSha256,

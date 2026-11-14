@@ -63,18 +63,19 @@ export const APPENDIX_BOUNDARY_LABEL = 'Technical Appendices Compendium';
 export const APPENDIX_BOUNDARY_ALIASES = Object.freeze([
   APPENDIX_BOUNDARY_LABEL,
   'Technical Appendices',
+  'Technical Annex',
 ] as const);
 
 export function isAppendixBoundaryLabel(label: string): boolean {
   return APPENDIX_BOUNDARY_ALIASES.includes(label.trim() as (typeof APPENDIX_BOUNDARY_ALIASES)[number]);
 }
 
-const SECTION_NUMBER = /^\s*(?:section\s+)?(\d{1,2}(?:\.\d{1,2})+)(?=$|[\s:])/i;
+const SECTION_NUMBER = /^\s*(?:section\s+)?(\d{1,2}(?:\.\d{1,2})+|\d{1,2}\.)(?=$|[\s:])/i;
 
 /** Dotted section number of a heading label ("7.8" for "Section 7.8: ..."), or null. */
 export function outlineSectionNumber(label: string): readonly number[] | null {
   const match = SECTION_NUMBER.exec(label);
-  return match ? match[1].split('.').map(Number) : null;
+  return match ? match[1].replace(/\.$/, '').split('.').map(Number) : null;
 }
 
 function isChapterNumber(parts: readonly number[]): boolean {

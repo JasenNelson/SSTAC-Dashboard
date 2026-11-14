@@ -107,9 +107,10 @@ describe('buildOutlineHierarchy rules (synthetic)', () => {
     expect(buildOutlineHierarchy(entries).map((entry) => entry.parentId)).toEqual([null, 't', 'c', 'c']);
   });
 
-  it('parses only dotted section numbers', () => {
+  it('parses dotted numbers and numbered Phase 2 headings, but not quantities', () => {
     expect(outlineSectionNumber('Section 7.8: Input')).toEqual([7, 8]);
     expect(outlineSectionNumber('7.0 Chapter')).toEqual([7, 0]);
+    expect(outlineSectionNumber('1. Summary')).toEqual([1]);
     expect(outlineSectionNumber('12 Months of work')).toBeNull();
     expect(outlineSectionNumber('(a) US EPA')).toBeNull();
   });

@@ -11,7 +11,7 @@ import { reviewResponseRowSchema, reviewResponseStatusLabel } from '@/lib/matrix
 import type { ReviewResponseRow } from '@/lib/matrix-options/paper/review-responses';
 import { questionPromptSummary } from '@/lib/matrix-options/paper/review-navigation';
 import type { ReviewNavTopic } from '@/lib/matrix-options/paper/review-navigation';
-import { PAPER_RELEASES, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { PAPER_RELEASES, PHASE2_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import type { ReviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
@@ -391,8 +391,9 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
   const lineageAbortRef = useRef<AbortController | null>(null);
   const lineageVersion = lineage?.predecessorVersion;
   const lineageManifest = lineage?.predecessorManifestSha256;
+  const lineageHasReusableQuestion = Boolean(lineage && Object.values(lineage.predecessorQuestionIds).some((id) => typeof id === 'string'));
   useEffect(() => {
-    if (!lineageVersion || !lineageManifest || !/^[a-f0-9]{64}$/.test(lineageManifest) || !userKey || typeof fetch !== 'function') {
+    if (!lineageHasReusableQuestion || !lineageVersion || !lineageManifest || !/^[a-f0-9]{64}$/.test(lineageManifest) || !userKey || typeof fetch !== 'function') {
       // No predecessor, or no verified reviewer (signed out, or not loaded yet): nothing is shown.
       // Same-value updates, so a draft with no lineage never re-renders for this.
       setLineageRows((previous) => (previous.size === 0 ? previous : new Map()));
@@ -438,7 +439,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
       setLineageState('unavailable');
     });
     return () => { cancelled = true; clearTimeout(timer); controller.abort(); if (lineageAbortRef.current === controller) lineageAbortRef.current = null; };
-  }, [lineageManifest, lineageVersion, userKey]);
+  }, [lineageHasReusableQuestion, lineageManifest, lineageVersion, userKey]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -989,9 +990,10 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
       : activeState === 'draft'
         ? `Draft saved${updatedAt ? ` ${updatedAt}` : ''}.`
         : '';
+  const notCollectingLabel = documentVersion === PHASE2_PAPER_VERSION ? 'This Phase 2 review draft does not collect responses yet.' : 'This earlier draft does not collect responses.';
   const notCollectingStatus = activeDraft
-    ? 'This earlier draft does not collect responses. Your text is kept in this browser only, and is cleared when you sign out.'
-    : `${readOnlyRowStatus ? `${readOnlyRowStatus} ` : ''}This earlier draft does not collect responses.`;
+    ? `${notCollectingLabel} Your text is kept in this browser only, and is cleared when you sign out.`
+    : `${readOnlyRowStatus ? `${readOnlyRowStatus} ` : ''}${notCollectingLabel}`;
   const rowStatusText = activeState === 'submitted'
     ? `Submitted${submittedAt ? ` ${submittedAt}` : ''}. Editing creates a new draft; re-submit to replace it.`
     : activeState === 'changed'
@@ -1012,7 +1014,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
     : persistence === 'loading' ? 'Saving becomes available once your saved responses have loaded.'
       : persistence === 'unauthenticated' ? (storedInBrowser ? 'Sign in again in another tab, then select Try again here. Until then, what you type is kept in this browser only.' : 'Sign in again in another tab, then select Try again here. What you type is on this page only and is lost if you reload or leave.')
         : persistence === 'identity-changed' ? (userKey && !hasPageOnlyDrafts ? 'A different reviewer is now signed in on this browser, so saving here is stopped. Reload the page to continue. Unsaved text stays in this browser for the reviewer who typed it.' : 'A different reviewer is now signed in on this browser, so saving here is stopped. This browser is not storing your unsaved text -- copy it before you reload.')
-        : persistence === 'not-collecting' ? 'This earlier draft does not collect responses.'
+        : persistence === 'not-collecting' ? notCollectingLabel
         : persistence === 'not-provisioned' ? (storedInBrowser ? 'Responses to this draft cannot be saved to the review record yet. What you type is kept in this browser only, and is cleared when you sign out.' : 'Responses to this draft cannot be saved to the review record yet. What you type is on this page only and is lost if you reload or leave.')
         : storedInBrowser ? 'Saving to the review record is not available yet. What you type is kept in this browser only, and is cleared when you sign out.' :'Saving to the review record is not available yet. What you type is on this page only and is lost if you reload or leave.';
   // Lineage for the open question: `undefined` = this draft has no predecessor (or the
@@ -1051,6 +1053,33 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
     updateConflict(conflict.questionId, null);
     setOutcome(conflict.questionId, null);
   };
+
+  if (documentVersion === PHASE2_PAPER_VERSION) {
+    return (
+      <section ref={responseRef} tabIndex={-1} data-testid="active-question-response" aria-labelledby="review-questions-heading" className="min-w-0 space-y-4 focus:outline-none print:hidden">
+        <div>
+          <h3 id="review-questions-heading" className="text-sm font-semibold text-[var(--db-text-primary)]">Focus areas for comment</h3>
+          <p role="status" className="mt-2 text-xs text-[var(--db-text-secondary)]">This Phase 2 review draft is read-only. Response collection is not enabled for these focus areas.</p>
+        </div>
+        {sectionNote ? <p data-testid="review-section-note" role="status" className="text-xs text-[var(--db-text-secondary)]">{sectionNote}</p> : null}
+        <ol data-testid="review-question-index" className="space-y-3">
+          {questions.map((item) => {
+            const open = item.number === question?.number;
+            return (
+              <li key={item.id} ref={(element) => { if (element) rowRefs.current.set(item.number, element); else rowRefs.current.delete(item.number); }} data-testid={`review-question-row-q${item.number}`} data-open={open ? 'true' : 'false'} className="min-w-0 rounded-md border border-[var(--db-border)] bg-[var(--db-surface)]">
+                <button type="button" data-testid={`review-question-toggle-q${item.number}`} aria-expanded={open} aria-controls={open ? `review-question-panel-${item.number}` : undefined} aria-current={item.number === highlightNumber ? 'true' : undefined} onClick={() => (open ? closeQuestionWithSave() : selectQuestionWithSave(item.number))} className="flex min-h-[44px] w-full min-w-0 items-start gap-2 rounded-md px-3 py-2 text-left text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]">
+                  <span aria-hidden="true" className="shrink-0 text-xs font-semibold tabular-nums text-[var(--db-text-secondary)]">{item.number <= 7 ? item.number : 'Other'}</span>
+                  <span className="min-w-0 flex-1 font-medium text-[var(--db-text-primary)]">{questionPromptSummary(item.prompt)}</span>
+                  <ChevronDown aria-hidden="true" className={cn('h-4 w-4 shrink-0 text-[var(--db-text-secondary)]', open && 'rotate-180')} />
+                </button>
+                {open ? <div id={`review-question-panel-${item.number}`} role="region" className="border-t border-[var(--db-border)] px-3 pb-3 pt-3 text-sm leading-relaxed text-[var(--db-text-primary)]"><MathRenderer content={item.prompt} /></div> : null}
+              </li>
+            );
+          })}
+        </ol>
+      </section>
+    );
+  }
 
   return (
     <section ref={responseRef} tabIndex={-1} data-testid="active-question-response" aria-labelledby="review-questions-heading" className="min-w-0 space-y-4 focus:outline-none focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-dashed focus-visible:outline-[var(--db-border-strong)] print:hidden">

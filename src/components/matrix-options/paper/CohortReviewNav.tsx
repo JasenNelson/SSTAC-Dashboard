@@ -4,6 +4,7 @@ import type { CohortId, CohortManifest } from '@/lib/matrix-options/cohort-contr
 import type { CohortPortion } from '@/lib/matrix-options/paper/cohort-portions';
 import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import { numberedReviewTopicLabel } from '@/lib/matrix-options/paper/topic-labels';
+import { PHASE2_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 
 /*
  * M2 left rail: 5 collapsible cohorts, each listing its authenticated paper
@@ -46,6 +47,8 @@ export function CohortReviewNav({
   onSelectPortion,
   onSelectQuestion,
 }: CohortReviewNavProps) {
+  const focusAreas = cohortManifest.releaseIdentity === PHASE2_PAPER_VERSION;
+  const questionCountLabel = (count: number) => `${count} ${focusAreas ? count === 1 ? 'focus area' : 'focus areas' : count === 1 ? 'question' : 'questions'}`;
   return (
     <nav aria-label="Review topics">
       <ul className="space-y-2">
@@ -60,14 +63,14 @@ export function CohortReviewNav({
             <li key={cohort.id} className="rounded-md border border-[var(--db-border)] bg-[var(--db-surface)]">
               <button
                 type="button"
-                aria-label={`${topicLabel}, ${cohort.questionNumbers.length} questions`}
+                  aria-label={`${topicLabel}, ${questionCountLabel(cohort.questionNumbers.length)}`}
                 aria-expanded={expanded}
                 aria-controls={portionsId}
                 onClick={() => onSelectCohort(cohort.id)}
                 className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-md px-3 py-2 text-left text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] ${selected ? 'bg-[var(--db-accent-tint)] font-semibold text-[var(--db-text-primary)]' : 'font-medium text-[var(--db-text-primary)] hover:bg-[var(--db-depth-1)]'}`}
               >
                 <span className="min-w-0 break-words">{topicLabel}</span>
-                <span className="shrink-0 text-xs font-normal text-[var(--db-text-secondary)]">{cohort.questionNumbers.length} questions</span>
+                <span className="shrink-0 text-xs font-normal text-[var(--db-text-secondary)]">{questionCountLabel(cohort.questionNumbers.length)}</span>
               </button>
               <div id={portionsId} hidden={!expanded} className="border-t border-[var(--db-border)] p-2">
                 <p className="px-2 pb-1 text-xs font-medium text-[var(--db-text-secondary)]">Paper sections</p>
@@ -91,7 +94,7 @@ export function CohortReviewNav({
                 ) : (
                   <p className="px-2 pb-2 text-sm text-[var(--db-text-secondary)]">No paper section is linked to this topic yet.</p>
                 )}
-                <p className="mt-3 px-2 pb-1 text-xs font-medium text-[var(--db-text-secondary)]">Review questions</p>
+                <p className="mt-3 px-2 pb-1 text-xs font-medium text-[var(--db-text-secondary)]">{focusAreas ? 'Focus areas for comment' : 'Review questions'}</p>
                 <ul className="space-y-1">
                   {questions.map((question) => {
                     const active = activeQuestionNumber === question.number;
@@ -103,7 +106,7 @@ export function CohortReviewNav({
                           onClick={() => onSelectQuestion(cohort.id, question.number)}
                           className={`min-h-[44px] w-full rounded-md px-3 py-2 text-left text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] ${active ? 'bg-[var(--db-accent-tint)] font-semibold text-[var(--db-text-primary)]' : 'text-[var(--db-text-primary)] hover:bg-[var(--db-depth-1)]'}`}
                         >
-                          <span className="block break-words">Question {question.number}: {question.heading}</span>
+                          <span className="block break-words">{focusAreas ? question.number === 8 ? question.heading : `Focus area ${question.number}: ${question.heading}` : `Question ${question.number}: ${question.heading}`}</span>
                         </button>
                       </li>
                     );

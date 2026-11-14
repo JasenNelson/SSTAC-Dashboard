@@ -16,6 +16,7 @@ import {
   getPaperRelease,
   paperReleaseIdentity,
   paperReleaseSourceLabel,
+  PHASE2_PAPER_VERSION,
   V0991_PAPER_VERSION,
   type PaperReleaseVersion,
 } from './paper/releases';
@@ -318,6 +319,18 @@ function githubAnchor(label: string, prior: Map<string, number>): string {
   return seen === 0 ? base : `${base}-${seen}`;
 }
 
+function phase2HeadingAnchor(label: string): string {
+  const number = /^(\d{1,2})(?:\.(\d{1,2}))?\.?(?:\s|$)/.exec(label);
+  if (number) return `sec-phase2-${number[1]}${number[2] ? `-${number[2]}` : ''}`;
+  const annex = /^A\.(\d{1,2})(?:\s|$)/.exec(label);
+  if (annex) return `app-phase2-a-${annex[1]}`;
+  if (label === 'Technical Annex') return 'app-phase2-a';
+  if (label === 'References') return 'sec-phase2-references';
+  if (label === 'About this paper') return 'sec-phase2-about-this-paper';
+  if (label === 'Acknowledgements') return 'sec-phase2-acknowledgements';
+  throw new Error(`Unrecognized Phase 2 heading: ${label}`);
+}
+
 const V0991_HEADING_CONTRACT = v0991HeadingContract as {
   readonly schemaVersion: string;
   readonly releaseIdentity: string;
@@ -385,7 +398,7 @@ export function findAppendixBoundary(
   }, []);
   if (matches.length === 0) {
     const pandocBoundary = nodes.reduce<number[]>((indexes, node, index) => {
-      if (node.depth === 1 && node.label === 'Technical Appendices') indexes.push(index);
+      if (node.depth === 1 && (node.label === 'Technical Appendices' || node.label === 'Technical Annex')) indexes.push(index);
       return indexes;
     }, []);
     if (pandocBoundary.length === 1) return pandocBoundary[0];
@@ -561,6 +574,10 @@ export function compileRevisedPaperStructure(
         if (!appendixLStarted) fail(`unregistered heading before Appendix L at ${index}`);
         anchor = githubAnchor(label, anchors);
       }
+    } else if (release.documentVersion === PHASE2_PAPER_VERSION) {
+      anchor = phase2HeadingAnchor(label);
+      if (anchors.has(anchor)) fail(`duplicate Phase 2 heading id ${anchor}`);
+      anchors.set(anchor, 1);
     } else {
       anchor = githubAnchor(label, anchors);
     }

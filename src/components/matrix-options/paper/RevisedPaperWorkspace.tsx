@@ -40,7 +40,7 @@ import { DownloadFilesPanel } from './DownloadFilesPanel';
 import { PaperVersionControl, PaperVersionStatus, PaperWithheldNotice } from './PaperVersionControl';
 import type { VerifiedDownloadManifest } from '@/lib/matrix-options/paper/download-manifest';
 import { isContentsHeading } from '@/lib/matrix-options/paper/paper-nav-groups';
-import { getPaperRelease, PAPER_WITHHELD_NOTICE_ID, PREDECESSOR_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, PAPER_WITHHELD_NOTICE_ID, PHASE2_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import type { ReviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 
 export interface RevisedPaperWorkspaceProps {
@@ -1392,7 +1392,7 @@ export function RevisedPaperWorkspace({ documentVersion, guide: reviewerGuide, r
             <nav aria-label="Workspace mode" className="flex items-center gap-0.5 rounded-lg bg-[var(--db-depth-1)] p-0.5">
               {/* Switching modes keeps the question the reviewer is on. */}
               <a href={paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: openQuestion?.id ?? null, section: null })} aria-current={isMyReview ? undefined : 'page'} className={modeLink(!isMyReview)}>Working Draft</a>
-              <a href={paperWorkspaceHref(documentVersion, { mode: 'my-review', cohort: activeQuestionCohortId, q: openQuestion?.id ?? null, section: null })} aria-current={isMyReview ? 'page' : undefined} className={modeLink(isMyReview)}>My Review</a>
+              <a href={paperWorkspaceHref(documentVersion, { mode: 'my-review', cohort: activeQuestionCohortId, q: openQuestion?.id ?? null, section: null })} aria-current={isMyReview ? 'page' : undefined} className={modeLink(isMyReview)}>{documentVersion === PHASE2_PAPER_VERSION ? 'Focus Areas' : 'My Review'}</a>
             </nav>
             <PaperVersionControl documentVersion={documentVersion} buttonClassName={headerButton} onOpen={() => { setDownloadOpen(false); setAboutOpen(false); }} {...versionLinkContext} />
             <button
