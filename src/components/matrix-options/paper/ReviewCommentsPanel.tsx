@@ -391,7 +391,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
   const lineageAbortRef = useRef<AbortController | null>(null);
   const lineageVersion = lineage?.predecessorVersion;
   const lineageManifest = lineage?.predecessorManifestSha256;
-  const lineageHasReusableQuestion = Boolean(writable && lineage && Object.values(lineage.predecessorQuestionIds).some((id) => typeof id === 'string'));
+  const lineageHasReusableQuestion = Boolean(documentVersion !== PHASE2_R2_PAPER_VERSION && lineage && Object.values(lineage.predecessorQuestionIds).some((id) => typeof id === 'string'));
   useEffect(() => {
     if (!lineageHasReusableQuestion || !lineageVersion || !lineageManifest || !/^[a-f0-9]{64}$/.test(lineageManifest) || !userKey || typeof fetch !== 'function') {
       // No predecessor, or no verified reviewer (signed out, or not loaded yet): nothing is shown.
