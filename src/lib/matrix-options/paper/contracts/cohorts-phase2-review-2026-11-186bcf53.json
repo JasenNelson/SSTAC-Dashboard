@@ -1,0 +1,191 @@
+{
+  "schemaVersion": "matrix-paper-cohorts-v1",
+  "releaseIdentity": "phase2-review-2026-11-186bcf53",
+  "status": "PROPOSED_PENDING_OWNER_QP_APPROVAL",
+  "cohorts": [
+    {
+      "id": "structure",
+      "name": "Structure",
+      "questionNumbers": [
+        1
+      ],
+      "sourceLocators": [
+        "Section 3",
+        "Comments invited lines 523-525"
+      ],
+      "guideEvidenceRanges": [
+        [
+          523,
+          525
+        ]
+      ],
+      "purpose": "Comment on the proposed approach, gaps, improvements and supporting evidence.",
+      "packageContents": [
+        "Relevant paper section",
+        "Section 9 comment focus"
+      ],
+      "limitations": "Draft for review; no numerical standard or policy decision is adopted."
+    },
+    {
+      "id": "sediment-uses-waterbodies",
+      "name": "Sediment uses and waterbodies",
+      "questionNumbers": [
+        2
+      ],
+      "sourceLocators": [
+        "Section 5",
+        "Comments invited lines 526-527"
+      ],
+      "guideEvidenceRanges": [
+        [
+          526,
+          527
+        ]
+      ],
+      "purpose": "Comment on the proposed approach, gaps, improvements and supporting evidence.",
+      "packageContents": [
+        "Relevant paper section",
+        "Section 9 comment focus"
+      ],
+      "limitations": "Draft for review; no numerical standard or policy decision is adopted."
+    },
+    {
+      "id": "substances",
+      "name": "Substances",
+      "questionNumbers": [
+        3
+      ],
+      "sourceLocators": [
+        "Section 4",
+        "Comments invited lines 528-529"
+      ],
+      "guideEvidenceRanges": [
+        [
+          528,
+          529
+        ]
+      ],
+      "purpose": "Comment on the proposed approach, gaps, improvements and supporting evidence.",
+      "packageContents": [
+        "Relevant paper section",
+        "Section 9 comment focus"
+      ],
+      "limitations": "Draft for review; no numerical standard or policy decision is adopted."
+    },
+    {
+      "id": "human-health",
+      "name": "Human health",
+      "questionNumbers": [
+        4
+      ],
+      "sourceLocators": [
+        "Section 6.1",
+        "Comments invited lines 530-530"
+      ],
+      "guideEvidenceRanges": [
+        [
+          530,
+          530
+        ]
+      ],
+      "purpose": "Comment on the proposed approach, gaps, improvements and supporting evidence.",
+      "packageContents": [
+        "Relevant paper section",
+        "Section 9 comment focus"
+      ],
+      "limitations": "Draft for review; no numerical standard or policy decision is adopted."
+    },
+    {
+      "id": "ecological-health",
+      "name": "Ecological health",
+      "questionNumbers": [
+        5
+      ],
+      "sourceLocators": [
+        "Section 6.3",
+        "Comments invited lines 531-532"
+      ],
+      "guideEvidenceRanges": [
+        [
+          531,
+          532
+        ]
+      ],
+      "purpose": "Comment on the proposed approach, gaps, improvements and supporting evidence.",
+      "packageContents": [
+        "Relevant paper section",
+        "Section 9 comment focus"
+      ],
+      "limitations": "Draft for review; no numerical standard or policy decision is adopted."
+    },
+    {
+      "id": "common-rules",
+      "name": "Common rules",
+      "questionNumbers": [
+        6
+      ],
+      "sourceLocators": [
+        "Section 7",
+        "Comments invited lines 533-534"
+      ],
+      "guideEvidenceRanges": [
+        [
+          533,
+          534
+        ]
+      ],
+      "purpose": "Comment on the proposed approach, gaps, improvements and supporting evidence.",
+      "packageContents": [
+        "Relevant paper section",
+        "Section 9 comment focus"
+      ],
+      "limitations": "Draft for review; no numerical standard or policy decision is adopted."
+    },
+    {
+      "id": "evidence-order",
+      "name": "Evidence and order of work",
+      "questionNumbers": [
+        7
+      ],
+      "sourceLocators": [
+        "Section 8",
+        "Comments invited lines 535-536"
+      ],
+      "guideEvidenceRanges": [
+        [
+          535,
+          536
+        ]
+      ],
+      "purpose": "Comment on the proposed approach, gaps, improvements and supporting evidence.",
+      "packageContents": [
+        "Relevant paper section",
+        "Section 9 comment focus"
+      ],
+      "limitations": "Draft for review; no numerical standard or policy decision is adopted."
+    },
+    {
+      "id": "other-comments",
+      "name": "Other comments",
+      "questionNumbers": [
+        8
+      ],
+      "sourceLocators": [
+        "Section 9",
+        "Comments invited lines 518-521"
+      ],
+      "guideEvidenceRanges": [
+        [
+          518,
+          521
+        ]
+      ],
+      "purpose": "Comment on the proposed approach, gaps, improvements and supporting evidence.",
+      "packageContents": [
+        "Relevant paper section",
+        "Section 9 comment focus"
+      ],
+      "limitations": "Draft for review; no numerical standard or policy decision is adopted."
+    }
+  ]
+}

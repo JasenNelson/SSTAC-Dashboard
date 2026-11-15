@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { notFoundMock, redirectMock, loadStructureSpy, requestLoadSpy, privateBundleSpy, createClientMock, getUserMock } = vi.hoisted(() => ({
@@ -47,7 +48,7 @@ import {
 import { MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH } from '@/lib/matrix-options/navigation';
 import { buildLegacyAnchorMap } from '@/lib/matrix-options/paper/full-document';
 import { PrivateReleaseUnavailableError } from '@/lib/matrix-options/paper/private-release-assets';
-import { getPaperRelease, PAPER_WITHHELD_NOTICE_ID, R5_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, PAPER_WITHHELD_NOTICE_ID, PHASE2_PAPER_VERSION, R5_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 
 const priorWorkspaceValue = process.env.MATRIX_OPTIONS_PAPER_WORKSPACE;
@@ -308,5 +309,26 @@ describe('a private-storage release on the section route', () => {
     expect(lastCall[0]).toBe(R5_PAPER_VERSION);
     expect(lastCall[1]).toMatchObject({ userId: '11111111-1111-4111-8111-111111111111' });
     expect(requestLoadSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe('a Phase 2 legacy section address', () => {
+  beforeEach(async () => {
+    await resetLoaders();
+    process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
+    process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'true';
+    const content = '## 6.1 Synthetic heading\n\nBody.\n';
+    privateBundleSpy.mockResolvedValue({ structure: { content, nodes: [{ id: 'node:phase2', anchor: 'sec-phase2-6-1', label: '6.1 Synthetic heading', depth: 1, parentId: null, startByte: 0, endByte: content.length, tokenEndByte: 24 }] } });
+  });
+
+  it('explains that an old section has no verified counterpart in this release', async () => {
+    const result = await visit('sec-6-1', PHASE2_PAPER_VERSION);
+    expect(renderToStaticMarkup(result)).toContain('Section not present in this release');
+    expect(redirectMock).not.toHaveBeenCalled();
+  });
+
+  it('still opens a verified Phase 2 section', async () => {
+    await expect(visit('sec-phase2-6-1', PHASE2_PAPER_VERSION)).rejects.toThrow('NEXT_REDIRECT');
+    expect(redirectMock).toHaveBeenCalledWith(paperWorkspaceHref(PHASE2_PAPER_VERSION, { mode: 'working-draft', cohort: null, q: null, section: 'sec-phase2-6-1' }));
   });
 });

@@ -1,7 +1,8 @@
 import r5FiguresContract from './contracts/accepted-figures-v0.9.88-r4-presentation-001.json';
 import v0991FiguresContract from './contracts/accepted-figures-v0.9.91-run109-001.json';
+import phase2FiguresContract from './contracts/accepted-figures-phase2-review-2026-11-186bcf53.json';
 import type { PaperMarkdownSegment } from './figures';
-import { R5_PAPER_VERSION, V0991_PAPER_VERSION } from './releases';
+import { PHASE2_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from './releases';
 
 /*
  * Accepted figures: the exact PNG placements of a release.
@@ -100,7 +101,9 @@ export interface AcceptedFigureBinding {
 
 const SHA256_HEX = /^[0-9a-f]{64}$/;
 const FIGURE_ID = /^[0-9A-Z]+-[0-9]+$/;
+const PHASE2_FIGURE_ID = /^[1-4]$/;
 const ASSET_FILE = /^[A-Za-z0-9-]+\.png$/;
+const PHASE2_ASSET_FILE = /^[A-Za-z0-9_-]+\.png$/;
 const SECTION_ANCHOR = /^(?:sec|app)-[a-z0-9-]+$/;
 const CONTRACT_KEYS = ['schemaVersion', 'releaseIdentity', 'paperSha256', 'sources', 'assets', 'placements'] as const;
 const SOURCE_KEYS = ['candidateManifestSha256', 'placementRegistrySha256', 'interfaceOverlaySha256'] as const;
@@ -145,18 +148,20 @@ export function validateAcceptedFiguresContract(candidate: unknown, expectedRele
   if (!Array.isArray(candidate.placements) || candidate.placements.length === 0) fail('placements');
 
   const assets = new Map<string, AcceptedFigureAsset>();
+  const figureIdPattern = expectedReleaseIdentity === PHASE2_PAPER_VERSION ? PHASE2_FIGURE_ID : FIGURE_ID;
+  const assetFilePattern = expectedReleaseIdentity === PHASE2_PAPER_VERSION ? PHASE2_ASSET_FILE : ASSET_FILE;
   const files = new Set<string>();
   for (const raw of candidate.assets as readonly unknown[]) {
     if (!isRecord(raw)) fail('asset shape');
     const asset = raw as unknown as AcceptedFigureAsset;
     if (!isNonBlank(asset.id) || assets.has(asset.id)) fail(`asset id ${String(asset.id)}`);
     if (!hasExactlyKeys(raw, ASSET_KEYS)) fail(`unverified asset field ${asset.id}`);
-    if (typeof asset.file !== 'string' || !ASSET_FILE.test(asset.file) || asset.file !== `${asset.id}.png` || files.has(asset.file)) fail(`asset file ${asset.id}`);
+    if (typeof asset.file !== 'string' || !assetFilePattern.test(asset.file) || asset.file !== `${asset.id}.png` || files.has(asset.file)) fail(`asset file ${asset.id}`);
     if (typeof asset.sha256 !== 'string' || !SHA256_HEX.test(asset.sha256)) fail(`asset SHA-256 ${asset.id}`);
     if (!isPositiveInteger(asset.bytes) || !isPositiveInteger(asset.width) || !isPositiveInteger(asset.height)) fail(`asset size ${asset.id}`);
     // Each entry is one figure id, listed once: a joined or repeated entry can never stand in for two placements.
     if (!Array.isArray(asset.placementIds) || asset.placementIds.length === 0
-      || asset.placementIds.some((id: unknown) => typeof id !== 'string' || !FIGURE_ID.test(id))
+      || asset.placementIds.some((id: unknown) => typeof id !== 'string' || !figureIdPattern.test(id))
       || new Set(asset.placementIds).size !== asset.placementIds.length) fail(`asset placements ${asset.id}`);
     assets.set(asset.id, asset);
     files.add(asset.file);
@@ -168,7 +173,7 @@ export function validateAcceptedFiguresContract(candidate: unknown, expectedRele
   for (const raw of candidate.placements as readonly unknown[]) {
     if (!isRecord(raw)) fail('placement shape');
     const placement = raw as unknown as AcceptedFigurePlacement;
-    if (typeof placement.figureId !== 'string' || !FIGURE_ID.test(placement.figureId) || placementIds.has(placement.figureId)) fail(`placement id ${String(placement.figureId)}`);
+    if (typeof placement.figureId !== 'string' || !figureIdPattern.test(placement.figureId) || placementIds.has(placement.figureId)) fail(`placement id ${String(placement.figureId)}`);
     placementIds.add(placement.figureId);
     if (!hasExactlyKeys(raw, PLACEMENT_KEYS)) fail(`unverified placement field ${placement.figureId}`);
     if (!assets.has(placement.assetId)) fail(`placement asset ${placement.figureId}`);
@@ -191,6 +196,7 @@ export function validateAcceptedFiguresContract(candidate: unknown, expectedRele
 
 let cachedR5Contract: AcceptedFiguresContract | undefined;
 let cachedV0991Contract: AcceptedFiguresContract | undefined;
+let cachedPhase2Contract: AcceptedFiguresContract | undefined;
 
 /** The accepted figures of a release, or null for a release that has none (the predecessor). */
 export function getAcceptedFiguresContract(documentVersion: string): AcceptedFiguresContract | null {
@@ -202,6 +208,10 @@ export function getAcceptedFiguresContract(documentVersion: string): AcceptedFig
     cachedV0991Contract ??= validateAcceptedFiguresContract(v0991FiguresContract, V0991_PAPER_VERSION);
     return cachedV0991Contract;
   }
+  if (documentVersion === PHASE2_PAPER_VERSION) {
+    cachedPhase2Contract ??= validateAcceptedFiguresContract(phase2FiguresContract, PHASE2_PAPER_VERSION);
+    return cachedPhase2Contract;
+  }
   return null;
 }
 
@@ -212,7 +222,7 @@ export interface AcceptedFigureBlock {
   readonly startLine: number;
   readonly endLine: number;
   /** Present only for the authenticated Run109 Pandoc placement shape. */
-  readonly sourceFormat?: 'pandoc-v0.9.91';
+  readonly sourceFormat?: 'pandoc-v0.9.91' | 'pandoc-phase2';
   /** Null when the lines after the marker are not caption / status / image. */
   readonly content: { readonly caption: string; readonly status: string; readonly alt: string; readonly file: string } | null;
 }
@@ -222,6 +232,7 @@ const CAPTION_SPAN = /^\[\]\{#fig-[a-z0-9-]+\}/;
 const STATUS_LINE = /^\*\*Status: (.+)\*\*[ \t]*$/;
 const IMAGE_LINE = /^!\[(.*)\]\(assets\/([A-Za-z0-9-]+\.png)\)[ \t]*$/;
 const PANDOC_IMAGE_LINE = /^!\[(Figure [0-9A-Z-]+\. [^\]\r\n]+)\]\(assets_v0991\/([A-Za-z0-9-]+\.png)\)\{#fig-[A-Za-z0-9-]+(?: width=[0-9.]+in)? alt="([^"\r\n]+)"\}[ \t]*$/;
+const PHASE2_IMAGE_LINE = /^!\[(Figure ([1-4])\. [^\]\r\n]+)\]\(figures\/([A-Za-z0-9_]+\.png)\)\{width=[0-9.]+in\}[ \t]*$/;
 
 /**
  * Every placement block in the given lines. A marker in its exact spelling is
@@ -235,6 +246,11 @@ const PANDOC_IMAGE_LINE = /^!\[(Figure [0-9A-Z-]+\. [^\]\r\n]+)\]\(assets_v0991\
 export function findAcceptedFigureBlocks(lines: readonly string[]): readonly AcceptedFigureBlock[] {
   const blocks: AcceptedFigureBlock[] = [];
   for (let index = 0; index < lines.length; index += 1) {
+    const phase2Image = PHASE2_IMAGE_LINE.exec(lines[index]);
+    if (phase2Image) {
+      blocks.push({ figureId: phase2Image[2], startLine: index, endLine: index, sourceFormat: 'pandoc-phase2', content: { caption: phase2Image[1], status: '', alt: phase2Image[1], file: phase2Image[3] } });
+      continue;
+    }
     const marker = MARKER_LINE.exec(lines[index]);
     if (!marker) continue;
     // marker, blank, caption, blank, status, blank, image
@@ -285,7 +301,7 @@ export function acceptedFigureBlockText(content: { readonly caption: string; rea
 export function resolveAcceptedFigure(block: AcceptedFigureBlock, expectedReleaseIdentity?: string): AcceptedFigureBinding | null {
   const content = block.content;
   if (!content || !content.caption.startsWith(`Figure ${block.figureId}. `)) return null;
-  const releaseIdentity = expectedReleaseIdentity ?? (block.sourceFormat === 'pandoc-v0.9.91' ? V0991_PAPER_VERSION : R5_PAPER_VERSION);
+  const releaseIdentity = expectedReleaseIdentity ?? (block.sourceFormat === 'pandoc-phase2' ? PHASE2_PAPER_VERSION : block.sourceFormat === 'pandoc-v0.9.91' ? V0991_PAPER_VERSION : R5_PAPER_VERSION);
   const contract = getAcceptedFiguresContract(releaseIdentity);
   if (!contract) return null;
   const placement = contract.placements.find((candidate) => candidate.figureId === block.figureId);
@@ -324,7 +340,7 @@ export function splitAcceptedFigureCaption(figure: { readonly figureId: string; 
 export function splitAcceptedFigureSegments(segments: readonly PaperMarkdownSegment[]): PaperMarkdownSegment[] {
   const result: PaperMarkdownSegment[] = [];
   for (const segment of segments) {
-    if (segment.kind !== 'markdown' || !segment.markdown.includes('MATRIX_FIGURE_PLACEMENT')) { result.push(segment); continue; }
+    if (segment.kind !== 'markdown' || (!segment.markdown.includes('MATRIX_FIGURE_PLACEMENT') && !segment.markdown.includes('](figures/'))) { result.push(segment); continue; }
     const lines = segment.markdown.split('\n');
     const blocks = findAcceptedFigureBlocks(lines);
     if (blocks.length === 0) { result.push(segment); continue; }

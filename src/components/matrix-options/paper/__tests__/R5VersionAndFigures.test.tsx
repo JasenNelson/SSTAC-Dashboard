@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { acceptedFigureAssetHref, getAcceptedFiguresContract } from '@/lib/matrix-options/paper/accepted-figures';
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
 import type { CohortPortion } from '@/lib/matrix-options/paper/cohort-portions';
-import { getPaperRelease, PAPER_RELEASES, R5_PAPER_VERSION, SELECTABLE_PAPER_RELEASES, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, PAPER_RELEASES, PHASE2_PAPER_VERSION, R5_PAPER_VERSION, SELECTABLE_PAPER_RELEASES, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { getReviewLineage, reviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import { questionTitle } from '@/lib/matrix-options/paper/review-navigation';
@@ -246,7 +246,8 @@ describe('PaperVersionControl and PaperVersionStatus', () => {
   const R5_STATUS_TEXT = 'Interim review draft. You are viewing an earlier draft. Responses to this draft are separate from the current Options Paper working draft.';
 
   it('binds exactly these names, and none of them names a version, a saved response or a future default', () => {
-    const [currentRelease, defaultRelease, r5Release] = PAPER_RELEASES;
+    const [phase2Release, currentRelease, defaultRelease, r5Release] = PAPER_RELEASES;
+    expect(phase2Release).toMatchObject({ documentVersion: PHASE2_PAPER_VERSION, label: 'Phase 2 review draft - November 2026', activation: 'SELECTABLE_NON_DEFAULT' });
     expect(currentRelease).toMatchObject({ documentVersion: V0991_PAPER_VERSION, label: 'Current collaborative expert-review draft', shortLabel: 'Current draft', activation: 'DEFAULT' });
     expect(defaultRelease).toMatchObject({ documentVersion: REVISED_PAPER_VERSION, label: 'Earlier draft', shortLabel: 'Earlier draft', summary: 'The earlier draft of the paper. Responses to it remain separate from the current collaborative expert-review draft.' });
     expect(r5Release).toMatchObject({ documentVersion: R5_PAPER_VERSION, label: 'Interim review draft', shortLabel: 'Interim draft', summary: 'The interim review draft of the paper. Responses to it remain separate from other paper versions.' });
@@ -256,7 +257,7 @@ describe('PaperVersionControl and PaperVersionStatus', () => {
   });
 
   it('names the draft on screen and lists the selectable drafts, the current one not a link', () => {
-    render(<PaperVersionControl documentVersion={REVISED_PAPER_VERSION} buttonClassName="btn" {...context} />);
+    render(<PaperVersionControl documentVersion={REVISED_PAPER_VERSION} phase2Available buttonClassName="btn" {...context} />);
     const toggle = screen.getByTestId('paper-version-toggle');
     expect(toggle).toHaveAccessibleName('Draft version: Earlier draft');
     expect(toggle).toHaveAttribute('aria-haspopup', 'dialog');
@@ -280,7 +281,7 @@ describe('PaperVersionControl and PaperVersionStatus', () => {
     expect(v0991.tagName).toBe('A');
     expect(v0991).toHaveAttribute('href', expect.stringContaining(`/matrix-options/paper/v/${V0991_PAPER_VERSION}`));
     expect(v0991.textContent).toBe(`${getPaperRelease(V0991_PAPER_VERSION)?.label}${getPaperRelease(V0991_PAPER_VERSION)?.summary}`);
-    expect(within(popover).getAllByRole('link')).toHaveLength(1);
+    expect(within(popover).getAllByRole('link')).toHaveLength(2);
     // Every selectable release is offered, each exactly once (R5 is not selectable).
     expect(within(popover).getAllByRole('listitem')).toHaveLength(SELECTABLE_PAPER_RELEASES.length);
     fireEvent.keyDown(document, { key: 'Escape' });

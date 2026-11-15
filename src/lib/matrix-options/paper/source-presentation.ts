@@ -42,6 +42,8 @@ export interface PaperFrontMatter {
 
 const FRONT_MATTER_FENCE = '---';
 const FRONT_MATTER_FIELD = /^([a-z][a-z0-9_-]*): (?:"([^"\\]*)"|([^"'\s][^\r\n]*?))[ \t]*$/;
+const FRONT_MATTER_LIST_FIELD = /^([a-z][a-z0-9_-]*):[ \t]*$/;
+const FRONT_MATTER_LIST_ITEM = /^  - "([^"\\]*)"[ \t]*$/;
 
 /**
  * The front-matter block at the very start of `content`, or null when there is
@@ -51,6 +53,7 @@ const FRONT_MATTER_FIELD = /^([a-z][a-z0-9_-]*): (?:"([^"\\]*)"|([^"'\s][^\r\n]*
 export function parseFrontMatter(content: string): PaperFrontMatter | null {
   if (!content.startsWith(`${FRONT_MATTER_FENCE}\n`)) return null;
   const fields: Record<string, string> = {};
+  let listField: string | null = null;
   let offset = FRONT_MATTER_FENCE.length + 1;
   for (;;) {
     const lineEnd = content.indexOf('\n', offset);
@@ -58,6 +61,18 @@ export function parseFrontMatter(content: string): PaperFrontMatter | null {
     const line = content.slice(offset, lineEnd);
     offset = lineEnd + 1;
     if (line === FRONT_MATTER_FENCE) break;
+    const item = FRONT_MATTER_LIST_ITEM.exec(line);
+    if (item && listField) {
+      fields[listField] = fields[listField] ? `${fields[listField]}\n${item[1]}` : item[1];
+      continue;
+    }
+    listField = null;
+    const list = FRONT_MATTER_LIST_FIELD.exec(line);
+    if (list && !Object.prototype.hasOwnProperty.call(fields, list[1])) {
+      listField = list[1];
+      fields[listField] = '';
+      continue;
+    }
     const field = FRONT_MATTER_FIELD.exec(line);
     if (!field || Object.prototype.hasOwnProperty.call(fields, field[1])) return null;
     fields[field[1]] = field[2] ?? field[3];
@@ -81,8 +96,9 @@ export function maskFrontMatter(content: string): string {
 /** The title block shown in place of the front matter: only fields the source carries. */
 export function frontMatterTitleBlock(fields: Readonly<Record<string, string>>): string {
   const lines: string[] = [];
-  if (fields.title) lines.push(`# ${fields.title}`, '');
-  if (fields.subtitle) lines.push(`**${fields.subtitle}**`, '');
+  const phase2Title = fields.title === 'Matrix Options Paper' && fields.subtitle === "Proposed Approaches for Modernizing British Columbia's Sediment Standards";
+  if (fields.title) lines.push(`# ${phase2Title ? `${fields.title}: ${fields.subtitle}` : fields.title}`, '');
+  if (fields.subtitle && !phase2Title) lines.push(`**${fields.subtitle}**`, '');
   const byline = [fields.author, fields.date].filter((value): value is string => Boolean(value));
   // A trailing backslash is a hard line break, so author and date sit on two lines of one paragraph.
   if (byline.length > 0) lines.push(byline.join('\\\n'), '');
@@ -121,13 +137,15 @@ const PANDOC_ANCHOR_SPAN = /\[\]\{#([A-Za-z][A-Za-z0-9_-]*)\}/g;
 
 /** Masks trailing Pandoc heading attributes for parsing without changing source offsets. */
 export function maskPandocHeadingAttributes(markdown: string): string {
-  return markdown.replace(/^(#{1,6} .+?) \{#[A-Za-z][A-Za-z0-9_-]*(?: \.[A-Za-z][A-Za-z0-9_-]*)*\}[ \t]*$/gm, (line, heading: string) => `${heading}${' '.repeat(line.length - heading.length)}`);
+  return markdown.replace(/^(#{1,6} .+?) \{(?:#[A-Za-z][A-Za-z0-9_-]* )?\.[A-Za-z][A-Za-z0-9_-]*(?: \.[A-Za-z][A-Za-z0-9_-]*)*\}[ \t]*$/gm, (line, heading: string) => `${heading}${' '.repeat(line.length - heading.length)}`)
+    .replace(/^(#{1,6} .+?) \{#[A-Za-z][A-Za-z0-9_-]*\}[ \t]*$/gm, (line, heading: string) => `${heading}${' '.repeat(line.length - heading.length)}`);
 }
 
 /** Removes empty Pandoc anchors and trailing heading attributes from presented Markdown. */
 export function stripPandocAnchorSpans(markdown: string): string {
   const withoutAnchors = markdown.includes('[]{#') ? markdown.replace(PANDOC_ANCHOR_SPAN, '') : markdown;
-  return withoutAnchors.replace(/^(#{1,6} .+?) \{#[A-Za-z][A-Za-z0-9_-]*(?: \.[A-Za-z][A-Za-z0-9_-]*)*\}[ \t]*$/gm, '$1');
+  return withoutAnchors.replace(/^(#{1,6} .+?) \{(?:#[A-Za-z][A-Za-z0-9_-]* )?\.[A-Za-z][A-Za-z0-9_-]*(?: \.[A-Za-z][A-Za-z0-9_-]*)*\}[ \t]*$/gm, '$1')
+    .replace(/^(#{1,6} .+?) \{#[A-Za-z][A-Za-z0-9_-]*\}[ \t]*$/gm, '$1');
 }
 
 /** The ids of every empty pandoc anchor span, with the UTF-16 offset each one starts at. */

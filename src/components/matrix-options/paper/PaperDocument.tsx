@@ -7,7 +7,7 @@ import {
   sectionAnchorSet,
 } from '@/lib/matrix-options/paper/full-document';
 import type { PaperChunk } from '@/lib/matrix-options/paper/full-document';
-import { APPENDIX_BOUNDARY_LABEL, buildOutlineHierarchy } from '@/lib/matrix-options/paper/outline-hierarchy';
+import { buildOutlineHierarchy, isAppendixBoundaryLabel } from '@/lib/matrix-options/paper/outline-hierarchy';
 import type { PaperRegion } from '@/lib/matrix-options/paper/contents-heading';
 import type { NativeFigureSet } from '@/lib/matrix-options/paper/native-figures';
 import { workingDraftSectionHref } from '@/lib/matrix-options/paper/url-state';
@@ -248,7 +248,7 @@ export function PaperDocument({ model, layout = 'article', region = 'main', nati
   // to 'appendix' at the appendix boundary heading.
   let current: PaperRegion = region;
   const chunks = model.chunks.map((chunk) => {
-    if (chunk.depth === 1 && chunk.label?.trim() === APPENDIX_BOUNDARY_LABEL) current = 'appendix';
+    if (chunk.depth === 1 && chunk.label && isAppendixBoundaryLabel(chunk.label)) current = 'appendix';
     return <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={model.linkMap} region={current} nativeFigures={nativeFigures} />;
   });
   if (layout === 'chunks') return <>{chunks}</>;

@@ -22,9 +22,10 @@ export const PREDECESSOR_PAPER_VERSION = '1.0.11-remediated-7-8-successor-202609
  */
 export const R5_PAPER_VERSION = 'v0.9.88-r4-presentation-001' as const;
 export const V0991_PAPER_VERSION = 'v0.9.91' as const;
+export const PHASE2_PAPER_VERSION = 'phase2-review-2026-11-186bcf53' as const;
 export const DEFAULT_PAPER_VERSION = V0991_PAPER_VERSION;
 
-export type PaperReleaseVersion = typeof PREDECESSOR_PAPER_VERSION | typeof R5_PAPER_VERSION | typeof V0991_PAPER_VERSION;
+export type PaperReleaseVersion = typeof PREDECESSOR_PAPER_VERSION | typeof R5_PAPER_VERSION | typeof V0991_PAPER_VERSION | typeof PHASE2_PAPER_VERSION;
 
 export type PaperReleaseActivation = 'DEFAULT' | 'SELECTABLE_NON_DEFAULT';
 
@@ -195,8 +196,28 @@ const V0991_RELEASE: PaperRelease = Object.freeze({
   contentsHeadingDisplay: null,
 });
 
+const PHASE2_RELEASE: PaperRelease = Object.freeze({
+  documentVersion: PHASE2_PAPER_VERSION,
+  sha256: '186bcf531ff59868620b889e3af8ed4827a24b2d5c8aab02a04853164fae4120',
+  bytes: 63040,
+  delivery: 'private-storage',
+  filename: null,
+  provenance: null,
+  activation: 'SELECTABLE_NON_DEFAULT',
+  label: 'Phase 2 review draft - November 2026',
+  shortLabel: 'Phase 2 draft',
+  summary: 'A concise SABCS proposal for review. The comment route, format and closing date remain to be confirmed.',
+  headingDepthShift: 0,
+  frontMatter: true,
+  acceptedFigures: true,
+  predecessorVersion: V0991_PAPER_VERSION,
+  retiredSectionAnchors: Object.freeze({}),
+  withheld: null,
+  contentsHeadingDisplay: null,
+});
+
 /** Current entry first: the order the version control lists them in. */
-export const PAPER_RELEASES: readonly PaperRelease[] = Object.freeze([V0991_RELEASE, PREDECESSOR_RELEASE, R5_RELEASE]);
+export const PAPER_RELEASES: readonly PaperRelease[] = Object.freeze([PHASE2_RELEASE, V0991_RELEASE, PREDECESSOR_RELEASE, R5_RELEASE]);
 
 export function isPaperReleaseVersion(value: unknown): value is PaperReleaseVersion {
   return typeof value === 'string' && PAPER_RELEASES.some((release) => release.documentVersion === value);

@@ -40,7 +40,7 @@ export interface CohortPortion {
 type PortionNode = Pick<RevisedPaperNode, 'id' | 'depth' | 'label' | 'parentId' | 'kind' | 'startByte' | 'endByte' | 'anchor'>;
 
 const REVIEWERS_GUIDE_LOCATOR = /Reviewer's Guide/i;
-const APPENDIX_BOUNDARY_LABELS = new Set(['Technical Appendices Compendium', 'Technical Appendices']);
+const APPENDIX_BOUNDARY_LABELS = new Set(['Technical Appendices Compendium', 'Technical Appendices', 'Technical Annex']);
 const SECTION_NUMBER_TOKEN = /^\d{1,2}(?:\.\d{1,2})*$/;
 const SECTION_LOCATOR = /^Sections?[ \t]+(\S(?:.*\S)?)$/;
 const SECTION_LIST_SEPARATOR = /[ \t]*,[ \t]*(?:and[ \t]+)?|[ \t]+and[ \t]+|[ \t]*&[ \t]*/;

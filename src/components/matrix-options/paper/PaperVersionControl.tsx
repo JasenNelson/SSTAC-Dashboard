@@ -1,9 +1,10 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Layers } from 'lucide-react';
 
-import { getPaperRelease, PAPER_RELEASES, PAPER_WITHHELD_NOTICE_ID, SELECTABLE_PAPER_RELEASES } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, PAPER_RELEASES, PAPER_WITHHELD_NOTICE_ID, PHASE2_PAPER_VERSION, SELECTABLE_PAPER_RELEASES } from '@/lib/matrix-options/paper/releases';
+import { COHORT_IDS, PHASE2_COHORT_IDS } from '@/lib/matrix-options/cohort-contract';
 import type { PaperRelease } from '@/lib/matrix-options/paper/releases';
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import type { PaperMode } from '@/lib/matrix-options/paper/url-state';
@@ -41,22 +42,38 @@ export interface PaperVersionLinkContext {
 
 /** Where switching to `release` goes, keeping the reader's mode and (where it exists) their place. */
 export function paperVersionHref(release: Pick<PaperRelease, 'documentVersion'>, context: PaperVersionLinkContext): string {
-  if (context.mode === 'my-review') return paperWorkspaceHref(release.documentVersion, { mode: 'my-review', cohort: context.cohort, q: null, section: null });
+  if (context.mode === 'my-review') {
+    const validCohorts: readonly string[] = release.documentVersion === PHASE2_PAPER_VERSION ? PHASE2_COHORT_IDS : COHORT_IDS;
+    return paperWorkspaceHref(release.documentVersion, { mode: 'my-review', cohort: context.cohort && validCohorts.includes(context.cohort) ? context.cohort : null, q: null, section: null });
+  }
   if (context.stableSectionId) return `/matrix-options/paper/v/${encodeURIComponent(release.documentVersion)}/${encodeURIComponent(context.stableSectionId)}`;
   return paperWorkspaceHref(release.documentVersion, { mode: 'working-draft', cohort: null, q: null, section: null });
 }
 
 export interface PaperVersionControlProps extends PaperVersionLinkContext {
   readonly documentVersion: string;
+  readonly phase2Available?: boolean;
   readonly buttonClassName: string;
   /** Called when the popover opens, so the header can close its other popovers. */
   readonly onOpen?: () => void;
 }
 
-export function PaperVersionControl({ documentVersion, buttonClassName, onOpen, ...context }: PaperVersionControlProps) {
+export function PaperVersionControl({ documentVersion, phase2Available, buttonClassName, onOpen, ...context }: PaperVersionControlProps) {
   const [open, setOpen] = useState(false);
+  const [verifiedPhase2, setVerifiedPhase2] = useState(phase2Available === true);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const current = getPaperRelease(documentVersion);
+  useEffect(() => {
+    if (!open || phase2Available !== undefined || documentVersion === PHASE2_PAPER_VERSION) return;
+    const release = getPaperRelease(PHASE2_PAPER_VERSION);
+    if (!release) return;
+    const controller = new AbortController();
+    setVerifiedPhase2(false);
+    fetch(`/api/matrix-options/paper/v/${encodeURIComponent(PHASE2_PAPER_VERSION)}/sections/sec-phase2-about-this-paper?paper=${release.sha256}`, { cache: 'no-store', signal: controller.signal })
+      .then((response) => { if (!controller.signal.aborted) setVerifiedPhase2(response.ok); })
+      .catch(() => { if (!controller.signal.aborted) setVerifiedPhase2(false); });
+    return () => controller.abort();
+  }, [open, phase2Available, documentVersion]);
   if (!current) return null;
   const close = () => {
     setOpen(false);
@@ -90,7 +107,7 @@ export function PaperVersionControl({ documentVersion, buttonClassName, onOpen, 
           <h2 className="font-semibold">Draft version</h2>
           <ul className="space-y-1">
             {/* R5 is not offered, but a page that IS R5 (direct address) still lists it as the current entry. */}
-            {PAPER_RELEASES.filter((release) => release.documentVersion === current.documentVersion || SELECTABLE_PAPER_RELEASES.includes(release)).map((release) => {
+            {PAPER_RELEASES.filter((release) => release.documentVersion === current.documentVersion || (SELECTABLE_PAPER_RELEASES.includes(release) && (release.documentVersion !== PHASE2_PAPER_VERSION || phase2Available === true || verifiedPhase2))).map((release) => {
               const selected = release.documentVersion === current.documentVersion;
               const body = (
                 <>
@@ -135,14 +152,15 @@ export function PaperVersionStatus({ documentVersion, ...context }: { readonly d
   const current = getPaperRelease(documentVersion);
   const fallback = PAPER_RELEASES.find((release) => release.activation === 'DEFAULT');
   if (!current || current.activation === 'DEFAULT' || !fallback) return null;
+  const phase2 = current.documentVersion === PHASE2_PAPER_VERSION;
   return (
     <p data-testid="paper-version-status" role="note" className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] px-4 py-1.5 text-sm text-[var(--db-text-primary)] sm:px-6 print:hidden">
       <span className="min-w-0">
-        <strong className="font-semibold">{current.label}.</strong> You are viewing an earlier draft. Responses to this draft are separate from the current Options Paper working draft.
+        <strong className="font-semibold">{current.label}.</strong> {phase2 ? 'This newer proposal is open for reading; response collection is not yet enabled. Earlier responses remain with their original draft.' : 'You are viewing an earlier draft. Responses to this draft are separate from the current Options Paper working draft.'}
       </span>
       {/* A full 44px touch target on phones and tablets; from lg up the line stays one compact row. */}
       <a href={paperVersionHref(fallback, context)} data-testid="paper-version-status-default-link" className="inline-flex min-h-[44px] items-center font-medium lg:min-h-[32px] text-[var(--db-accent-strong)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] dark:text-[var(--db-accent)]">
-        Go to the current draft
+        {phase2 ? 'Go to the v0.9.91 review draft' : 'Go to the current draft'}
       </a>
     </p>
   );

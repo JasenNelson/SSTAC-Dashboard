@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
-import { PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { PHASE2_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { readReviewLocalDraft, writeReviewLocalDraft, writeReviewLocalDraftEntry } from '@/lib/matrix-options/paper/review-local-buffer';
 
 import { ReviewCommentsPanel } from '../ReviewCommentsPanel';
@@ -106,6 +106,24 @@ const textbox = () => screen.getByRole('textbox', { name: 'Your response' });
 const settle = async () => { await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); }); };
 
 describe('zero-write gate: every release except v0.9.91 never PUTs', () => {
+  it('Phase 2 shows eight read-only focus areas with no response controls or writes', async () => {
+    const { fetchMock } = installFetch(PHASE2_PAPER_VERSION);
+    const focusQuestions = guide.questions.slice(0, 8);
+    const lineage = { predecessorVersion: V0991_PAPER_VERSION, predecessorManifestSha256: OTHER_MANIFEST, predecessorQuestionIds: Object.fromEntries(focusQuestions.map((question) => [question.id, null])) };
+    render(panelElement(PHASE2_PAPER_VERSION, { questions: focusQuestions, question: focusQuestions[0], lineage }));
+    expect(screen.getByRole('heading', { name: 'Focus areas for comment' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('read-only');
+    expect(screen.getByTestId('review-question-index').children).toHaveLength(8);
+    expect(screen.queryByRole('textbox', { name: 'Your response' })).toBeNull();
+    expect(screen.queryByTestId('review-save-draft')).toBeNull();
+    expect(screen.queryByTestId('review-submit')).toBeNull();
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    fireEvent.click(screen.getByTestId('review-question-toggle-q2'));
+    await settle();
+    expect(fetchMock.mock.calls.filter(([, init]) => (init as RequestInit | undefined)?.method === 'PUT')).toHaveLength(0);
+    expect(fetchMock.mock.calls.filter(([url]) => String(url).includes(encodeURIComponent(V0991_PAPER_VERSION)))).toHaveLength(0);
+  });
+
   it.each([['the predecessor', PREDECESSOR_PAPER_VERSION], ['R5', R5_PAPER_VERSION]])('%s: typing, autosave, blur, navigation, submit, retry and a bootstrap that says available make zero PUT calls', async (_name, version) => {
     const { puts, fetchMock } = installFetch(version, { bootstraps: [{ persistence: 'available', userKey: REVIEWER, rows: [] }] });
     // A browser copy of another question must be left exactly as it is.

@@ -1,7 +1,7 @@
 import type { CohortManifest } from '../cohort-contract';
 import type { ReviewerGuideContract } from '../reviewer-guide';
 import { sectionNumbersFromLocator } from './cohort-portions';
-import { APPENDIX_BOUNDARY_LABEL, outlineSectionNumber } from './outline-hierarchy';
+import { isAppendixBoundaryLabel, outlineSectionNumber } from './outline-hierarchy';
 import { numberedReviewTopicLabel, reviewTopicLabel } from './topic-labels';
 
 /*
@@ -146,7 +146,7 @@ export function buildReviewNavigation(
   });
   const questions = Object.freeze(topics.flatMap((topic) => topic.questions));
 
-  const boundary = outline.findIndex((entry) => entry.label === APPENDIX_BOUNDARY_LABEL);
+  const boundary = outline.findIndex((entry) => isAppendixBoundaryLabel(entry.label));
   const body = boundary < 0 ? outline : outline.slice(0, boundary);
   const entryById = new Map(body.map((entry) => [entry.id, entry]));
   const numberCache = new Map<string, SectionNumber | null>();

@@ -1,4 +1,5 @@
 import { CONTENTS_HEADING_LABEL, isContentsHeading } from './paper-nav-groups';
+import { isAppendixBoundaryLabel } from './outline-hierarchy';
 
 /*
  * The paper authors a "Master Table of Contents" heading before the main report
@@ -66,6 +67,6 @@ export function presentContentsHeadingFirstLine(markdown: string, display: strin
  * in the appendix region from the boundary section onward.
  */
 export function sectionRegion(sectionLabels: readonly string[], index: number, boundaryLabel: string): PaperRegion {
-  const boundary = sectionLabels.findIndex((label) => label.trim() === boundaryLabel);
+  const boundary = sectionLabels.findIndex((label) => label.trim() === boundaryLabel || isAppendixBoundaryLabel(label));
   return boundary >= 0 && index >= boundary ? 'appendix' : 'main';
 }

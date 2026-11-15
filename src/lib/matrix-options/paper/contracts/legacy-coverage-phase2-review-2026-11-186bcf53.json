@@ -1,0 +1,329 @@
+{
+  "schemaVersion": "matrix-phase2-legacy-coverage-v1",
+  "releaseIdentity": "phase2-review-2026-11-186bcf53",
+  "coverageSourceSha256": "2f855743a5354080bea99ddb98a5cea9cdd60e360e17ba73830ff125ccc4c7fc",
+  "legacySourcesSha256": "9c84df3ff86463fe093aae3fca1b02a1f87fefe0fb983cd7e54cebf64e54ff91",
+  "entries": [
+    {
+      "legacyId": "rpq:v0.9.91:q01",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q02"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "rpq:v0.9.91:q02",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q02"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "rpq:v0.9.91:q03",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q02"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "rpq:v0.9.91:q04",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q01"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "rpq:v0.9.91:q05",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q01",
+        "rpq:phase2-review-2026-11-186bcf53:q04",
+        "rpq:phase2-review-2026-11-186bcf53:q05"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "rpq:v0.9.91:q06",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q04",
+        "rpq:phase2-review-2026-11-186bcf53:q05"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "rpq:v0.9.91:q07",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q04",
+        "rpq:phase2-review-2026-11-186bcf53:q07"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "rpq:v0.9.91:q08",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q06",
+        "rpq:phase2-review-2026-11-186bcf53:q07"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "rpq:v0.9.91:q09",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q07"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "rpq:v0.9.91:q10",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q04",
+        "rpq:phase2-review-2026-11-186bcf53:q05"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "rpq:v0.9.91:q11",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q02",
+        "rpq:phase2-review-2026-11-186bcf53:q05"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "rpq:v0.9.91:q12",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q07"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-A01",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q01"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-A06",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q02"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-A07",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q01",
+        "rpq:phase2-review-2026-11-186bcf53:q03",
+        "rpq:phase2-review-2026-11-186bcf53:q04",
+        "rpq:phase2-review-2026-11-186bcf53:q05"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-A03",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q02"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-A04",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q02",
+        "rpq:phase2-review-2026-11-186bcf53:q04"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-B04",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q04"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-B05",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q04",
+        "rpq:phase2-review-2026-11-186bcf53:q06"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-B07",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q04",
+        "rpq:phase2-review-2026-11-186bcf53:q06"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-B10",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q04"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-B08",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q04",
+        "rpq:phase2-review-2026-11-186bcf53:q06"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-A10",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q02",
+        "rpq:phase2-review-2026-11-186bcf53:q04",
+        "rpq:phase2-review-2026-11-186bcf53:q08"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-B01",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q05"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-B02",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q05"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-B03",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q05"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-C04",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q04",
+        "rpq:phase2-review-2026-11-186bcf53:q05",
+        "rpq:phase2-review-2026-11-186bcf53:q07"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-C01",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q06"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-C02",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q06",
+        "rpq:phase2-review-2026-11-186bcf53:q08"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-C03",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q06"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-A08",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q06",
+        "rpq:phase2-review-2026-11-186bcf53:q08"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-B09",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q06"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-C05",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q01",
+        "rpq:phase2-review-2026-11-186bcf53:q03"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-C06",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q03",
+        "rpq:phase2-review-2026-11-186bcf53:q07"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-C07",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q03",
+        "rpq:phase2-review-2026-11-186bcf53:q06",
+        "rpq:phase2-review-2026-11-186bcf53:q07"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-C09",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q02",
+        "rpq:phase2-review-2026-11-186bcf53:q07"
+      ],
+      "responseMigration": "NONE"
+    },
+    {
+      "legacyId": "N-C10",
+      "action": "REFRAME",
+      "focusQuestionIds": [
+        "rpq:phase2-review-2026-11-186bcf53:q07"
+      ],
+      "responseMigration": "NONE"
+    }
+  ]
+}
