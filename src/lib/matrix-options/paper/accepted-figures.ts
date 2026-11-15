@@ -1,8 +1,9 @@
 import r5FiguresContract from './contracts/accepted-figures-v0.9.88-r4-presentation-001.json';
 import v0991FiguresContract from './contracts/accepted-figures-v0.9.91-run109-001.json';
 import phase2FiguresContract from './contracts/accepted-figures-phase2-review-2026-11-186bcf53.json';
+import phase2R2FiguresContract from './contracts/accepted-figures-phase2-review-2026-11-fa356b89.json';
 import type { PaperMarkdownSegment } from './figures';
-import { PHASE2_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from './releases';
+import { isConcisePaperRelease, PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from './releases';
 
 /*
  * Accepted figures: the exact PNG placements of a release.
@@ -148,8 +149,8 @@ export function validateAcceptedFiguresContract(candidate: unknown, expectedRele
   if (!Array.isArray(candidate.placements) || candidate.placements.length === 0) fail('placements');
 
   const assets = new Map<string, AcceptedFigureAsset>();
-  const figureIdPattern = expectedReleaseIdentity === PHASE2_PAPER_VERSION ? PHASE2_FIGURE_ID : FIGURE_ID;
-  const assetFilePattern = expectedReleaseIdentity === PHASE2_PAPER_VERSION ? PHASE2_ASSET_FILE : ASSET_FILE;
+  const figureIdPattern = isConcisePaperRelease(expectedReleaseIdentity) ? PHASE2_FIGURE_ID : FIGURE_ID;
+  const assetFilePattern = isConcisePaperRelease(expectedReleaseIdentity) ? PHASE2_ASSET_FILE : ASSET_FILE;
   const files = new Set<string>();
   for (const raw of candidate.assets as readonly unknown[]) {
     if (!isRecord(raw)) fail('asset shape');
@@ -197,6 +198,7 @@ export function validateAcceptedFiguresContract(candidate: unknown, expectedRele
 let cachedR5Contract: AcceptedFiguresContract | undefined;
 let cachedV0991Contract: AcceptedFiguresContract | undefined;
 let cachedPhase2Contract: AcceptedFiguresContract | undefined;
+let cachedPhase2R2Contract: AcceptedFiguresContract | undefined;
 
 /** The accepted figures of a release, or null for a release that has none (the predecessor). */
 export function getAcceptedFiguresContract(documentVersion: string): AcceptedFiguresContract | null {
@@ -211,6 +213,10 @@ export function getAcceptedFiguresContract(documentVersion: string): AcceptedFig
   if (documentVersion === PHASE2_PAPER_VERSION) {
     cachedPhase2Contract ??= validateAcceptedFiguresContract(phase2FiguresContract, PHASE2_PAPER_VERSION);
     return cachedPhase2Contract;
+  }
+  if (documentVersion === PHASE2_R2_PAPER_VERSION) {
+    cachedPhase2R2Contract ??= validateAcceptedFiguresContract(phase2R2FiguresContract, PHASE2_R2_PAPER_VERSION);
+    return cachedPhase2R2Contract;
   }
   return null;
 }
@@ -337,7 +343,7 @@ export function splitAcceptedFigureCaption(figure: { readonly figureId: string; 
  * returned as the same segment object, so a release with no accepted figures
  * (the predecessor) is segmented exactly as before.
  */
-export function splitAcceptedFigureSegments(segments: readonly PaperMarkdownSegment[]): PaperMarkdownSegment[] {
+export function splitAcceptedFigureSegments(segments: readonly PaperMarkdownSegment[], releaseIdentity?: string): PaperMarkdownSegment[] {
   const result: PaperMarkdownSegment[] = [];
   for (const segment of segments) {
     if (segment.kind !== 'markdown' || (!segment.markdown.includes('MATRIX_FIGURE_PLACEMENT') && !segment.markdown.includes('](figures/'))) { result.push(segment); continue; }
@@ -351,7 +357,7 @@ export function splitAcceptedFigureSegments(segments: readonly PaperMarkdownSegm
     };
     for (const block of blocks) {
       pushProse(block.startLine);
-      const figure = resolveAcceptedFigure(block);
+      const figure = resolveAcceptedFigure(block, releaseIdentity);
       result.push(figure ? { kind: 'accepted-figure', figure } : { kind: 'accepted-figure-unavailable', figureId: block.figureId });
       cursor = block.endLine + 1;
     }

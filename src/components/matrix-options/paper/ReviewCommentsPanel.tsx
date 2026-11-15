@@ -11,7 +11,7 @@ import { reviewResponseRowSchema, reviewResponseStatusLabel } from '@/lib/matrix
 import type { ReviewResponseRow } from '@/lib/matrix-options/paper/review-responses';
 import { questionPromptSummary } from '@/lib/matrix-options/paper/review-navigation';
 import type { ReviewNavTopic } from '@/lib/matrix-options/paper/review-navigation';
-import { PAPER_RELEASES, PHASE2_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { isConcisePaperRelease, PAPER_RELEASES, PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import type { ReviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
@@ -391,7 +391,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
   const lineageAbortRef = useRef<AbortController | null>(null);
   const lineageVersion = lineage?.predecessorVersion;
   const lineageManifest = lineage?.predecessorManifestSha256;
-  const lineageHasReusableQuestion = Boolean(lineage && Object.values(lineage.predecessorQuestionIds).some((id) => typeof id === 'string'));
+  const lineageHasReusableQuestion = Boolean(documentVersion !== PHASE2_R2_PAPER_VERSION && lineage && Object.values(lineage.predecessorQuestionIds).some((id) => typeof id === 'string'));
   useEffect(() => {
     if (!lineageHasReusableQuestion || !lineageVersion || !lineageManifest || !/^[a-f0-9]{64}$/.test(lineageManifest) || !userKey || typeof fetch !== 'function') {
       // No predecessor, or no verified reviewer (signed out, or not loaded yet): nothing is shown.
@@ -990,7 +990,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
       : activeState === 'draft'
         ? `Draft saved${updatedAt ? ` ${updatedAt}` : ''}.`
         : '';
-  const notCollectingLabel = documentVersion === PHASE2_PAPER_VERSION ? 'This Phase 2 review draft does not collect responses yet.' : 'This earlier draft does not collect responses.';
+  const notCollectingLabel = isConcisePaperRelease(documentVersion) ? 'This Phase 2 review draft does not collect responses yet.' : 'This earlier draft does not collect responses.';
   const notCollectingStatus = activeDraft
     ? `${notCollectingLabel} Your text is kept in this browser only, and is cleared when you sign out.`
     : `${readOnlyRowStatus ? `${readOnlyRowStatus} ` : ''}${notCollectingLabel}`;
@@ -1054,17 +1054,20 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
     setOutcome(conflict.questionId, null);
   };
 
-  if (documentVersion === PHASE2_PAPER_VERSION) {
+  if (isConcisePaperRelease(documentVersion)) {
     return (
       <section ref={responseRef} tabIndex={-1} data-testid="active-question-response" aria-labelledby="review-questions-heading" className="min-w-0 space-y-4 focus:outline-none print:hidden">
         <div>
           <h3 id="review-questions-heading" className="text-sm font-semibold text-[var(--db-text-primary)]">Focus areas for comment</h3>
           <p role="status" className="mt-2 text-xs text-[var(--db-text-secondary)]">This Phase 2 review draft is read-only. Response collection is not enabled for these focus areas.</p>
+          {documentVersion === PHASE2_R2_PAPER_VERSION ? <a className="mt-2 inline-block text-xs text-[var(--db-accent-strong)] underline" href={paperWorkspaceHref(PHASE2_PAPER_VERSION, { mode: 'my-review', cohort: null, q: null, section: null })}>Read earlier focus areas and any responses in their original context</a> : null}
         </div>
         {sectionNote ? <p data-testid="review-section-note" role="status" className="text-xs text-[var(--db-text-secondary)]">{sectionNote}</p> : null}
         <ol data-testid="review-question-index" className="space-y-3">
           {questions.map((item) => {
             const open = item.number === question?.number;
+            const saved = rows.get(item.id);
+            const laterDraft = saved?.draft_text && (saved.submitted_revision === null || saved.revision > saved.submitted_revision);
             return (
               <li key={item.id} ref={(element) => { if (element) rowRefs.current.set(item.number, element); else rowRefs.current.delete(item.number); }} data-testid={`review-question-row-q${item.number}`} data-open={open ? 'true' : 'false'} className="min-w-0 rounded-md border border-[var(--db-border)] bg-[var(--db-surface)]">
                 <button type="button" data-testid={`review-question-toggle-q${item.number}`} aria-expanded={open} aria-controls={open ? `review-question-panel-${item.number}` : undefined} aria-current={item.number === highlightNumber ? 'true' : undefined} onClick={() => (open ? closeQuestionWithSave() : selectQuestionWithSave(item.number))} className="flex min-h-[44px] w-full min-w-0 items-start gap-2 rounded-md px-3 py-2 text-left text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)]">
@@ -1072,7 +1075,14 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
                   <span className="min-w-0 flex-1 font-medium text-[var(--db-text-primary)]">{questionPromptSummary(item.prompt)}</span>
                   <ChevronDown aria-hidden="true" className={cn('h-4 w-4 shrink-0 text-[var(--db-text-secondary)]', open && 'rotate-180')} />
                 </button>
-                {open ? <div id={`review-question-panel-${item.number}`} role="region" className="border-t border-[var(--db-border)] px-3 pb-3 pt-3 text-sm leading-relaxed text-[var(--db-text-primary)]"><MathRenderer content={item.prompt} /></div> : null}
+                {open ? <div id={`review-question-panel-${item.number}`} role="region" className="border-t border-[var(--db-border)] px-3 pb-3 pt-3 text-sm leading-relaxed text-[var(--db-text-primary)]">
+                  <MathRenderer content={item.prompt} />
+                  {saved?.submitted_text || laterDraft ? <div data-testid={`review-saved-response-q${item.number}`} className="mt-3 border-t border-[var(--db-border)] pt-3">
+                    <p className="text-xs font-semibold">Your saved response to this draft</p>
+                    {saved?.submitted_text ? <div className="mt-2"><p className="text-xs">Submitted{formatTimestamp(saved.submitted_at) ? ` ${formatTimestamp(saved.submitted_at)}` : ''}</p><p className="whitespace-pre-wrap">{saved.submitted_text}</p></div> : null}
+                    {laterDraft ? <div className="mt-2"><p className="text-xs">Saved draft{formatTimestamp(saved.updated_at) ? ` ${formatTimestamp(saved.updated_at)}` : ''}</p><p className="whitespace-pre-wrap">{saved.draft_text}</p></div> : null}
+                  </div> : null}
+                </div> : null}
               </li>
             );
           })}

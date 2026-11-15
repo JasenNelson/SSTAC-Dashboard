@@ -16,7 +16,7 @@ import {
   getPaperRelease,
   paperReleaseIdentity,
   paperReleaseSourceLabel,
-  PHASE2_PAPER_VERSION,
+  isConcisePaperRelease,
   V0991_PAPER_VERSION,
   type PaperReleaseVersion,
 } from './paper/releases';
@@ -574,7 +574,7 @@ export function compileRevisedPaperStructure(
         if (!appendixLStarted) fail(`unregistered heading before Appendix L at ${index}`);
         anchor = githubAnchor(label, anchors);
       }
-    } else if (release.documentVersion === PHASE2_PAPER_VERSION) {
+    } else if (isConcisePaperRelease(release.documentVersion)) {
       anchor = phase2HeadingAnchor(label);
       if (anchors.has(anchor)) fail(`duplicate Phase 2 heading id ${anchor}`);
       anchors.set(anchor, 1);

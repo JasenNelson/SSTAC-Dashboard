@@ -23,9 +23,15 @@ export const PREDECESSOR_PAPER_VERSION = '1.0.11-remediated-7-8-successor-202609
 export const R5_PAPER_VERSION = 'v0.9.88-r4-presentation-001' as const;
 export const V0991_PAPER_VERSION = 'v0.9.91' as const;
 export const PHASE2_PAPER_VERSION = 'phase2-review-2026-11-186bcf53' as const;
+export const PHASE2_R2_PAPER_VERSION = 'phase2-review-2026-11-fa356b89' as const;
 export const DEFAULT_PAPER_VERSION = V0991_PAPER_VERSION;
 
-export type PaperReleaseVersion = typeof PREDECESSOR_PAPER_VERSION | typeof R5_PAPER_VERSION | typeof V0991_PAPER_VERSION | typeof PHASE2_PAPER_VERSION;
+export type PaperReleaseVersion = typeof PREDECESSOR_PAPER_VERSION | typeof R5_PAPER_VERSION | typeof V0991_PAPER_VERSION | typeof PHASE2_PAPER_VERSION | typeof PHASE2_R2_PAPER_VERSION;
+
+/** Both concise drafts use the same reader shape, but retain distinct response identities. */
+export function isConcisePaperRelease(documentVersion: string): boolean {
+  return documentVersion === PHASE2_PAPER_VERSION || documentVersion === PHASE2_R2_PAPER_VERSION;
+}
 
 export type PaperReleaseActivation = 'DEFAULT' | 'SELECTABLE_NON_DEFAULT';
 
@@ -216,8 +222,28 @@ const PHASE2_RELEASE: PaperRelease = Object.freeze({
   contentsHeadingDisplay: null,
 });
 
+const PHASE2_R2_RELEASE: PaperRelease = Object.freeze({
+  documentVersion: PHASE2_R2_PAPER_VERSION,
+  sha256: 'fa356b89f2a80d783a39ef70b8f99b79794c5c5377e3b80567a1b23c624edda2',
+  bytes: 74568,
+  delivery: 'private-storage',
+  filename: null,
+  provenance: null,
+  activation: 'SELECTABLE_NON_DEFAULT',
+  label: 'Revised Phase 2 review draft - November 2026',
+  shortLabel: 'Revised Phase 2 draft',
+  summary: 'The revised concise SABCS proposal for review. Responses to earlier drafts remain with their original questions.',
+  headingDepthShift: 0,
+  frontMatter: true,
+  acceptedFigures: true,
+  predecessorVersion: PHASE2_PAPER_VERSION,
+  retiredSectionAnchors: Object.freeze({}),
+  withheld: null,
+  contentsHeadingDisplay: null,
+});
+
 /** Current entry first: the order the version control lists them in. */
-export const PAPER_RELEASES: readonly PaperRelease[] = Object.freeze([PHASE2_RELEASE, V0991_RELEASE, PREDECESSOR_RELEASE, R5_RELEASE]);
+export const PAPER_RELEASES: readonly PaperRelease[] = Object.freeze([PHASE2_R2_RELEASE, PHASE2_RELEASE, V0991_RELEASE, PREDECESSOR_RELEASE, R5_RELEASE]);
 
 export function isPaperReleaseVersion(value: unknown): value is PaperReleaseVersion {
   return typeof value === 'string' && PAPER_RELEASES.some((release) => release.documentVersion === value);

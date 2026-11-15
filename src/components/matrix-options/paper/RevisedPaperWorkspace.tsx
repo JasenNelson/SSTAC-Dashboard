@@ -40,7 +40,8 @@ import { DownloadFilesPanel } from './DownloadFilesPanel';
 import { PaperVersionControl, PaperVersionStatus, PaperWithheldNotice } from './PaperVersionControl';
 import type { VerifiedDownloadManifest } from '@/lib/matrix-options/paper/download-manifest';
 import { isContentsHeading } from '@/lib/matrix-options/paper/paper-nav-groups';
-import { getPaperRelease, PAPER_WITHHELD_NOTICE_ID, PHASE2_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, isConcisePaperRelease, PAPER_WITHHELD_NOTICE_ID, PHASE2_R2_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { R2_READER_LINKS } from '@/lib/matrix-options/paper/r2-reader-links';
 import type { ReviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 
 export interface RevisedPaperWorkspaceProps {
@@ -281,7 +282,7 @@ function CohortPaperPortion({ cohort, portion, headingRef, headingId = 'cohort-p
       </div>
       {portion.sectionAnchor ? <OpenInWorkingDraftLink documentVersion={documentVersion} sectionAnchor={portion.sectionAnchor} title={title} questionId={questionId} /> : null}
     </header>
-    <PaperText markdown={displayPortionText} nativeFigures={nativeFigures} className="mt-4" headingOffset={portionHeadingOffset(displayPortionText)} headingVariant="portion" />
+    <PaperText markdown={displayPortionText} documentVersion={documentVersion} nativeFigures={nativeFigures} className="mt-4" headingOffset={portionHeadingOffset(displayPortionText)} headingVariant="portion" />
   </section>;
 }
 
@@ -1392,7 +1393,7 @@ export function RevisedPaperWorkspace({ documentVersion, guide: reviewerGuide, r
             <nav aria-label="Workspace mode" className="flex items-center gap-0.5 rounded-lg bg-[var(--db-depth-1)] p-0.5">
               {/* Switching modes keeps the question the reviewer is on. */}
               <a href={paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: openQuestion?.id ?? null, section: null })} aria-current={isMyReview ? undefined : 'page'} className={modeLink(!isMyReview)}>Working Draft</a>
-              <a href={paperWorkspaceHref(documentVersion, { mode: 'my-review', cohort: activeQuestionCohortId, q: openQuestion?.id ?? null, section: null })} aria-current={isMyReview ? 'page' : undefined} className={modeLink(isMyReview)}>{documentVersion === PHASE2_PAPER_VERSION ? 'Focus Areas' : 'My Review'}</a>
+              <a href={paperWorkspaceHref(documentVersion, { mode: 'my-review', cohort: activeQuestionCohortId, q: openQuestion?.id ?? null, section: null })} aria-current={isMyReview ? 'page' : undefined} className={modeLink(isMyReview)}>{isConcisePaperRelease(documentVersion) ? 'Focus Areas' : 'My Review'}</a>
             </nav>
             <PaperVersionControl documentVersion={documentVersion} buttonClassName={headerButton} onOpen={() => { setDownloadOpen(false); setAboutOpen(false); }} {...versionLinkContext} />
             <button
@@ -1435,6 +1436,10 @@ export function RevisedPaperWorkspace({ documentVersion, guide: reviewerGuide, r
         </div>
         {/* Shown only for a draft that is not the default, so a reader always knows it is not the draft the workspace opens by default. */}
         <PaperVersionStatus documentVersion={documentVersion} {...versionLinkContext} />
+        {documentVersion === PHASE2_R2_PAPER_VERSION ? <aside data-testid="r2-reader-links" className="border-b border-[var(--db-border)] bg-[var(--db-surface)] px-4 py-2 text-xs sm:px-6" aria-label="Paper files">
+          <span className="font-semibold">Paper files:</span>{' '}
+          {R2_READER_LINKS.files.map((file, index) => <span key={file.label}>{index > 0 ? ' | ' : ''}<a href={file.href} target="_blank" rel="noopener noreferrer" className="text-[var(--db-accent-strong)] underline">{file.label}</a></span>)}
+        </aside> : null}
       </header>
       {/* One line, outside the header (which does not print) and outside the paper: a section this draft does not include. */}
       <PaperWithheldNotice documentVersion={documentVersion} mode={urlState.mode} />
@@ -1493,7 +1498,7 @@ export function RevisedPaperWorkspace({ documentVersion, guide: reviewerGuide, r
                   : <CohortPaperPortion cohort={selectedCohort} portion={undefined} headingRef={(element) => { noPortionHeadingRef.current = element; }} documentVersion={documentVersion} nativeFigures={nativeFigures} />)
                 : <CohortPortionsUnavailable workingDraftHref={workingDraftHref} />
               : sectionWindow && children
-                ? <PaperSectionWindowView sectionWindow={sectionWindow} api={sectionApi} scrollRootRef={documentColumnRef} nativeFigures={nativeFigures}>{children}</PaperSectionWindowView>
+                ? <PaperSectionWindowView sectionWindow={sectionWindow} api={sectionApi} scrollRootRef={documentColumnRef} nativeFigures={nativeFigures} documentVersion={documentVersion}>{children}</PaperSectionWindowView>
                 : children ?? <section data-testid="paper-document-unavailable" className="rounded-md border border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] p-5 text-sm"><h2 className="text-lg font-semibold">Paper text unavailable</h2><p role="status" className="mt-2">The paper text could not be loaded for this view. Try reloading the page.</p></section>}
           </div>
         </div>

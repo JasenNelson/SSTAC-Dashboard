@@ -1,0 +1,94 @@
+{
+  "schemaVersion": "matrix-paper-accepted-figures-v1",
+  "releaseIdentity": "phase2-review-2026-11-fa356b89",
+  "paperSha256": "fa356b89f2a80d783a39ef70b8f99b79794c5c5377e3b80567a1b23c624edda2",
+  "sources": {
+    "candidateManifestSha256": "3082c93dec2645a296ad8d19261366d5033bebf119ad42b17ecf98fd1e43457e",
+    "placementRegistrySha256": "c2402a5b635c6ee4bc1f80f83233a007c8edbb91e2fbf2efa1c8cf16304fda3a",
+    "interfaceOverlaySha256": "6b026611e5887dbaff7c39cb206e3015b44e86834c3fcbd44adffeb71a4643d7"
+  },
+  "assets": [
+    {
+      "id": "fig1_framework",
+      "file": "fig1_framework.png",
+      "sha256": "858b95304b21b7f767714bfb00daf2b63496b26e97b0f1f2246b19544d1edf60",
+      "bytes": 237548,
+      "width": 1950,
+      "height": 1200,
+      "placementIds": [
+        "1"
+      ]
+    },
+    {
+      "id": "fig2_routing",
+      "file": "fig2_routing.png",
+      "sha256": "393e68e322229b899e2fde7b6df3fcb2a5ba18108bfe0ebb856be24f274380d3",
+      "bytes": 297016,
+      "width": 1950,
+      "height": 1380,
+      "placementIds": [
+        "2"
+      ]
+    },
+    {
+      "id": "fig3_food_pathway",
+      "file": "fig3_food_pathway.png",
+      "sha256": "b344efaf7033fc18e6759e9a02f2ba88fbe47b72cf3e1059d0618fc4d4263c17",
+      "bytes": 139721,
+      "width": 1950,
+      "height": 1026,
+      "placementIds": [
+        "3"
+      ]
+    },
+    {
+      "id": "fig4_final_setting",
+      "file": "fig4_final_setting.png",
+      "sha256": "7a77c0ed185c5155f85129a3b8092324efee2c11c4c6346826bbf92108ff4b16",
+      "bytes": 204891,
+      "width": 1950,
+      "height": 1200,
+      "placementIds": [
+        "4"
+      ]
+    }
+  ],
+  "placements": [
+    {
+      "figureId": "1",
+      "assetId": "fig1_framework",
+      "textSha256": "0a6c58309d8627455a1e6dfe3d4309131a9347110e760736af942b9ed3f25269",
+      "sectionAnchor": "sec-phase2-3",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 169
+    },
+    {
+      "figureId": "2",
+      "assetId": "fig2_routing",
+      "textSha256": "63f697a509bacadc745b0783f9590e86a73d5555c4bca5c6a92893422595aac0",
+      "sectionAnchor": "sec-phase2-4",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 235
+    },
+    {
+      "figureId": "3",
+      "assetId": "fig3_food_pathway",
+      "textSha256": "9ee886000c9752e52b4c14a0abe6d5bf800d79123cdfb3ba26abd970b8955b82",
+      "sectionAnchor": "sec-phase2-6-2",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 413
+    },
+    {
+      "figureId": "4",
+      "assetId": "fig4_final_setting",
+      "textSha256": "9f330c6fca2e6744ef1d40c1e7f3dbac1624c5a8cec8bcc07b48a49115549e19",
+      "sectionAnchor": "sec-phase2-7",
+      "anchorSource": "registry",
+      "role": "primary",
+      "markerLine": 538
+    }
+  ]
+}

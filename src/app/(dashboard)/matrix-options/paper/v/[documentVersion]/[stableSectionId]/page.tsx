@@ -4,7 +4,7 @@ import {
   MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH,
   resolveMatrixOptionsPaperReviewNavigationGate,
 } from '@/lib/matrix-options/navigation';
-import { getPaperRelease, PAPER_WITHHELD_NOTICE_ID, PHASE2_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, isConcisePaperRelease, PAPER_WITHHELD_NOTICE_ID } from '@/lib/matrix-options/paper/releases';
 import type { PaperRelease } from '@/lib/matrix-options/paper/releases';
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import {
@@ -63,7 +63,7 @@ export default async function PaperSectionPage({ params }: { params: Promise<{ d
   // A private-storage release resolves a section only for its allowed reader (request-structure.ts).
   const { structure } = await loadPaperStructureForPage(release.documentVersion);
   const section = resolveLegacySectionAnchor(structure, stableSectionId, release.retiredSectionAnchors);
-  if (release.documentVersion === PHASE2_PAPER_VERSION && section === null) {
+  if (isConcisePaperRelease(release.documentVersion) && section === null) {
     return <main className="mx-auto max-w-2xl px-6 py-12" role="main"><h1 className="text-2xl font-semibold">Section not present in this release</h1><p className="mt-3">The section in this link has no verified counterpart in the Phase 2 review draft.</p><a className="mt-6 inline-block underline" href={paperWorkspaceHref(release.documentVersion, { mode: 'working-draft', cohort: null, q: null, section: null })}>Open the Phase 2 review draft</a></main>;
   }
   redirect(paperWorkspaceHref(release.documentVersion, { mode: 'working-draft', cohort: null, q: null, section }));

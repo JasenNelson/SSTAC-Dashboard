@@ -2,8 +2,9 @@ import cohortContract from './paper/contracts/cohorts-v1.json';
 import r5CohortContract from './paper/contracts/cohorts-v0.9.88-r4-presentation-001.json';
 import v0991CohortContract from './paper/contracts/cohorts-v0.9.91-run109-001.json';
 import phase2CohortContract from './paper/contracts/cohorts-phase2-review-2026-11-186bcf53.json';
+import phase2R2CohortContract from './paper/contracts/cohorts-phase2-review-2026-11-fa356b89.json';
 
-import { getPaperRelease, PHASE2_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION, type PaperReleaseVersion } from './paper/releases';
+import { getPaperRelease, isConcisePaperRelease, PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION, type PaperReleaseVersion } from './paper/releases';
 import { getReviewerGuideBinding, hasExactlyKeys } from './reviewer-guide';
 
 /** The DEFAULT release's cohort identity; every caller that names no version gets these cohorts. */
@@ -68,7 +69,7 @@ export function validateCohortManifest(candidate: unknown, releaseIdentity: stri
   if (manifest.schemaVersion !== 'matrix-paper-cohorts-v1') fail('schema version');
   if (!release || manifest.releaseIdentity !== release.documentVersion || manifest.status !== COHORT_STATUS) fail('release or status');
   const rawCohorts: unknown = (manifest as { readonly cohorts?: unknown }).cohorts;
-  const expectedIds: readonly string[] = releaseIdentity === PHASE2_PAPER_VERSION ? PHASE2_COHORT_IDS : COHORT_IDS;
+  const expectedIds: readonly string[] = isConcisePaperRelease(releaseIdentity) ? PHASE2_COHORT_IDS : COHORT_IDS;
   if (!Array.isArray(rawCohorts) || rawCohorts.length !== expectedIds.length) fail('cohort count');
   // A successor's cohort contract is CLOSED, for the same reason as its guide contract
   // (reviewer-guide.ts): it is hashed whole into the review manifest digest, so it carries
@@ -107,8 +108,8 @@ export function validateCohortManifest(candidate: unknown, releaseIdentity: stri
     if (!isNonBlankString(cohort.purpose) || !isNonBlankString(cohort.limitations) || !isNonBlankStringList(cohort.sourceLocators) || !isNonBlankStringList(cohort.packageContents)) fail(`incomplete ${cohort.id}`);
     // F-05: every "Reviewer's Guide lines a-b" locator names exactly one guide
     // evidence range, and every range has exactly one such locator.
-    const locatorPrefix = releaseIdentity === PHASE2_PAPER_VERSION ? PHASE2_LOCATOR_PREFIX : GUIDE_LOCATOR_PREFIX;
-    const locatorPattern = releaseIdentity === PHASE2_PAPER_VERSION ? PHASE2_LOCATOR : GUIDE_LOCATOR;
+    const locatorPrefix = isConcisePaperRelease(releaseIdentity) ? PHASE2_LOCATOR_PREFIX : GUIDE_LOCATOR_PREFIX;
+    const locatorPattern = isConcisePaperRelease(releaseIdentity) ? PHASE2_LOCATOR : GUIDE_LOCATOR;
     const locatorRanges = cohort.sourceLocators.filter((locator) => locatorPrefix.test(locator)).map((locator) => {
       const match = locatorPattern.exec(locator);
       if (!match) fail(`guide locator ${cohort.id}`);
@@ -127,5 +128,6 @@ export function getCohortManifest(documentVersion: string = COHORT_RELEASE_IDENT
   if (documentVersion === R5_PAPER_VERSION) return validateCohortManifest(r5CohortContract, R5_PAPER_VERSION);
   if (documentVersion === V0991_PAPER_VERSION) return validateCohortManifest(v0991CohortContract, V0991_PAPER_VERSION);
   if (documentVersion === PHASE2_PAPER_VERSION) return validateCohortManifest(phase2CohortContract, PHASE2_PAPER_VERSION);
+  if (documentVersion === PHASE2_R2_PAPER_VERSION) return validateCohortManifest(phase2R2CohortContract, PHASE2_R2_PAPER_VERSION);
   fail('release or status');
 }

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { PAPER_RELEASES, PHASE2_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION, SELECTABLE_PAPER_RELEASES, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { PAPER_RELEASES, PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION, SELECTABLE_PAPER_RELEASES, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 
 import { PaperVersionControl } from '../PaperVersionControl';
 
@@ -23,6 +23,7 @@ describe('R5 is out of the draft selector', () => {
     render(<PaperVersionControl documentVersion={V0991_PAPER_VERSION} phase2Available={false} buttonClassName="btn" {...context} />);
     fireEvent.click(screen.getByTestId('paper-version-toggle'));
     expect(screen.queryByTestId(`paper-version-option-${PHASE2_PAPER_VERSION}`)).toBeNull();
+    expect(screen.queryByTestId(`paper-version-option-${PHASE2_R2_PAPER_VERSION}`)).toBeNull();
   });
 
   it('offers Phase 2 after the guarded section route verifies its private release', async () => {
@@ -37,8 +38,19 @@ describe('R5 is out of the draft selector', () => {
       vi.unstubAllGlobals();
     }
   });
+  it('offers the revised draft only after its own guarded release check', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    try {
+      const popover = openPopover(V0991_PAPER_VERSION);
+      await waitFor(() => expect(within(popover).getByTestId(`paper-version-option-${PHASE2_R2_PAPER_VERSION}`)).toBeVisible());
+      expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining(`/api/matrix-options/paper/v/${PHASE2_R2_PAPER_VERSION}/sections/sec-phase2-about-this-paper?paper=`), expect.objectContaining({ cache: 'no-store' }));
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
   it('the selectable list excludes R5 and keeps the registry whole', () => {
-    expect(SELECTABLE_PAPER_RELEASES.map((release) => release.documentVersion)).toEqual([PHASE2_PAPER_VERSION, V0991_PAPER_VERSION, PREDECESSOR_PAPER_VERSION]);
+    expect(SELECTABLE_PAPER_RELEASES.map((release) => release.documentVersion)).toEqual([PHASE2_R2_PAPER_VERSION, PHASE2_PAPER_VERSION, V0991_PAPER_VERSION, PREDECESSOR_PAPER_VERSION]);
     expect(PAPER_RELEASES.map((release) => release.documentVersion)).toContain(R5_PAPER_VERSION);
   });
 
@@ -46,7 +58,7 @@ describe('R5 is out of the draft selector', () => {
     const popover = openPopover(version);
     expect(within(popover).queryByTestId(`paper-version-option-${R5_PAPER_VERSION}`)).toBeNull();
     expect(popover.querySelector(`a[href*="${R5_PAPER_VERSION}"]`)).toBeNull();
-    expect(within(popover).getAllByRole('listitem')).toHaveLength(SELECTABLE_PAPER_RELEASES.length);
+    expect(within(popover).getAllByRole('listitem')).toHaveLength(SELECTABLE_PAPER_RELEASES.length - 1);
   });
 
   it('viewing R5 directly: it is still shown, as the current entry and not a link', () => {
@@ -55,6 +67,6 @@ describe('R5 is out of the draft selector', () => {
     expect(current.tagName).toBe('DIV');
     expect(current).toHaveAttribute('aria-current', 'true');
     expect(popover.querySelector(`a[href*="${R5_PAPER_VERSION}"]`)).toBeNull();
-    expect(within(popover).getAllByRole('listitem')).toHaveLength(SELECTABLE_PAPER_RELEASES.length + 1);
+    expect(within(popover).getAllByRole('listitem')).toHaveLength(SELECTABLE_PAPER_RELEASES.length);
   });
 });
