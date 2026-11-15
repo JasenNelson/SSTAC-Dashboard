@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
-import { PHASE2_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { readReviewLocalDraft, writeReviewLocalDraft, writeReviewLocalDraftEntry } from '@/lib/matrix-options/paper/review-local-buffer';
 
 import { ReviewCommentsPanel } from '../ReviewCommentsPanel';
@@ -106,6 +106,48 @@ const textbox = () => screen.getByRole('textbox', { name: 'Your response' });
 const settle = async () => { await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); }); };
 
 describe('zero-write gate: every release except v0.9.91 never PUTs', () => {
+  it.each([
+    ['earlier concise draft', PHASE2_PAPER_VERSION],
+    ['revised concise draft', PHASE2_R2_PAPER_VERSION],
+  ])('%s shows its own saved synthetic response under its original question without writing', async (_label, version) => {
+    const question = { number: 1, id: `rpq:${version}:q01`, heading: 'Structure', prompt: `The exact ${version} structure wording.`, sourceLines: [1, 1] as const };
+    const row = {
+      id: 'synthetic-response-1', document_version: version, manifest_sha256: MANIFEST,
+      cohort_id: 'structure', question_id: question.id, draft_text: 'Synthetic saved draft',
+      submitted_text: 'Synthetic submitted response', revision: 2, submitted_revision: 1,
+      submitted_at: '2026-11-12T12:00:00Z', updated_at: '2026-11-13T12:00:00Z',
+    };
+    const { fetchMock, puts } = installFetch(version, { bootstraps: [{ persistence: 'available', userKey: REVIEWER, rows: [row] }] });
+    render(panelElement(version, { questions: [question], question, cohortId: 'structure' }));
+    await waitFor(() => expect(screen.getByTestId('review-saved-response-q1')).toHaveTextContent('Synthetic submitted response'));
+    expect(screen.getByTestId('review-question-row-q1')).toHaveTextContent(question.prompt);
+    expect(screen.getByTestId('review-saved-response-q1')).toHaveTextContent('Synthetic saved draft');
+    expect(screen.getByTestId('review-saved-response-q1')).toHaveTextContent('Nov 12');
+    expect(fetchMock.mock.calls.some(([url]) => String(url).includes(encodeURIComponent(version)))).toBe(true);
+    expect(puts).toHaveLength(0);
+    expect(row).toMatchObject({ id: 'synthetic-response-1', document_version: version, submitted_at: '2026-11-12T12:00:00Z', updated_at: '2026-11-13T12:00:00Z' });
+    if (version === PHASE2_R2_PAPER_VERSION) {
+      expect(screen.getByRole('link', { name: /earlier focus areas and any responses/i })).toHaveAttribute('href', expect.stringContaining(encodeURIComponent(PHASE2_PAPER_VERSION)));
+    }
+  });
+
+  it('does not repeat a submitted response as a draft at the same revision', async () => {
+    const version = PHASE2_R2_PAPER_VERSION;
+    const question = { number: 1, id: `rpq:${version}:q01`, heading: 'Structure', prompt: 'Original R2 focus wording.', sourceLines: [1, 1] as const };
+    const row = {
+      id: 'synthetic-submitted-1', document_version: version, manifest_sha256: MANIFEST,
+      cohort_id: 'structure', question_id: question.id, draft_text: 'Same submitted text',
+      submitted_text: 'Same submitted text', revision: 1, submitted_revision: 1,
+      submitted_at: '2026-11-12T12:00:00Z', updated_at: '2026-11-12T12:00:00Z',
+    };
+    const { puts } = installFetch(version, { bootstraps: [{ persistence: 'available', userKey: REVIEWER, rows: [row] }] });
+    render(panelElement(version, { questions: [question], question, cohortId: 'structure' }));
+    await waitFor(() => expect(screen.getByTestId('review-saved-response-q1')).toHaveTextContent('Same submitted text'));
+    expect(screen.getAllByText('Same submitted text')).toHaveLength(1);
+    expect(screen.queryByText(/Saved draft Nov 12/)).toBeNull();
+    expect(puts).toHaveLength(0);
+  });
+
   it('Phase 2 shows eight read-only focus areas with no response controls or writes', async () => {
     const { fetchMock } = installFetch(PHASE2_PAPER_VERSION);
     const focusQuestions = guide.questions.slice(0, 8);

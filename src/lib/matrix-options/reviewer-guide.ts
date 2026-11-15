@@ -2,7 +2,8 @@ import guideContract from './paper/contracts/reviewer-guide-v1.json';
 import r5GuideContract from './paper/contracts/reviewer-guide-v0.9.88-r4-presentation-001.json';
 import v0991GuideContract from './paper/contracts/reviewer-guide-v0.9.91-run109-001.json';
 import phase2GuideContract from './paper/contracts/reviewer-guide-phase2-review-2026-11-186bcf53.json';
-import { getPaperRelease, paperReleaseSourceLabel, PHASE2_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION, type PaperRelease, type PaperReleaseVersion } from './paper/releases';
+import phase2R2GuideContract from './paper/contracts/reviewer-guide-phase2-review-2026-11-fa356b89.json';
+import { getPaperRelease, isConcisePaperRelease, paperReleaseSourceLabel, PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION, type PaperRelease, type PaperReleaseVersion } from './paper/releases';
 
 /*
  * Reviewer guide contracts: the twelve review questions of a release.
@@ -128,7 +129,7 @@ function validateGuide(candidate: unknown, releaseIdentity: string, form: Review
   if (contract.schemaVersion !== 'matrix-paper-reviewer-guide-v1') fail('schema version');
   if (!release || contract.releaseIdentity !== release.documentVersion) fail('release identity');
   if (contract.sourcePath !== paperReleaseSourceLabel(release)) fail('source path');
-  if (!Array.isArray(contract.questions) || contract.questions.length !== (releaseIdentity === PHASE2_PAPER_VERSION ? 8 : 12)) fail('question count');
+  if (!Array.isArray(contract.questions) || contract.questions.length !== (isConcisePaperRelease(releaseIdentity) ? 8 : 12)) fail('question count');
   if ((contract.questions as readonly unknown[]).some((question) => !question || typeof question !== 'object' || Array.isArray(question))) fail('question shape');
   const numbers = contract.questions.map((question) => question.number);
   if (numbers.some((number, index) => number !== index + 1)) fail('question numbering');
@@ -192,6 +193,7 @@ export function getReviewerGuideBinding(documentVersion: string = REVIEW_GUIDE_R
   if (documentVersion === R5_PAPER_VERSION) return validateReviewerGuideBinding(r5GuideContract, R5_PAPER_VERSION);
   if (documentVersion === V0991_PAPER_VERSION) return validateReviewerGuideBinding(v0991GuideContract, V0991_PAPER_VERSION);
   if (documentVersion === PHASE2_PAPER_VERSION) return validateReviewerGuideBinding(phase2GuideContract, PHASE2_PAPER_VERSION);
+  if (documentVersion === PHASE2_R2_PAPER_VERSION) return validateReviewerGuideBinding(phase2R2GuideContract, PHASE2_R2_PAPER_VERSION);
   fail('release identity');
 }
 
@@ -248,7 +250,7 @@ export function resolveReviewerGuideAgainstLines(binding: ReviewerGuideBinding, 
     if (!Number.isInteger(start) || !Number.isInteger(end) || start < 1 || end < start || end > lines.length) fail(`source range ${question.number}`);
     let prompt: string;
     let heading: string | null;
-    if (binding.releaseIdentity === PHASE2_PAPER_VERSION) {
+    if (isConcisePaperRelease(binding.releaseIdentity)) {
       const source = lines.slice(start - 1, end).join(' ').replace(/\s+/g, ' ').trim();
       if (question.number === 8) {
         const sentence = source.match(/[^.!?]+[.!?]/g)?.[1]?.trim();
@@ -283,7 +285,7 @@ export function resolveReviewerGuideAgainstLines(binding: ReviewerGuideBinding, 
       const legacyAnchor = lines.includes(`<div id="${anchor}" class="section-anchor"></div>`);
       const pandocAnchor = lines.some((line) => /^#{1,6} .+ \{#[A-Za-z][A-Za-z0-9_-]*(?: \.[A-Za-z][A-Za-z0-9_-]*)*\}[ \t]*$/.test(line)
         && new RegExp(`\\{#${anchor}(?: |\\})`).test(line));
-      const phase2Anchor = binding.releaseIdentity === PHASE2_PAPER_VERSION && lines.some((line) => {
+      const phase2Anchor = isConcisePaperRelease(binding.releaseIdentity) && lines.some((line) => {
         const match = /^#{1,6} (\d{1,2}(?:\.\d{1,2})?)\.?(?: |$)/.exec(line);
         return match && `sec-phase2-${match[1].replace(/\./g, '-')}` === anchor;
       });

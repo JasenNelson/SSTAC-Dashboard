@@ -4,7 +4,7 @@ import type { CohortId, CohortManifest } from '@/lib/matrix-options/cohort-contr
 import type { CohortPortion } from '@/lib/matrix-options/paper/cohort-portions';
 import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import { numberedReviewTopicLabel } from '@/lib/matrix-options/paper/topic-labels';
-import { PHASE2_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { isConcisePaperRelease } from '@/lib/matrix-options/paper/releases';
 
 /*
  * M2 left rail: 5 collapsible cohorts, each listing its authenticated paper
@@ -47,7 +47,7 @@ export function CohortReviewNav({
   onSelectPortion,
   onSelectQuestion,
 }: CohortReviewNavProps) {
-  const focusAreas = cohortManifest.releaseIdentity === PHASE2_PAPER_VERSION;
+  const focusAreas = isConcisePaperRelease(cohortManifest.releaseIdentity);
   const questionCountLabel = (count: number) => `${count} ${focusAreas ? count === 1 ? 'focus area' : 'focus areas' : count === 1 ? 'question' : 'questions'}`;
   return (
     <nav aria-label="Review topics">

@@ -246,7 +246,8 @@ describe('PaperVersionControl and PaperVersionStatus', () => {
   const R5_STATUS_TEXT = 'Interim review draft. You are viewing an earlier draft. Responses to this draft are separate from the current Options Paper working draft.';
 
   it('binds exactly these names, and none of them names a version, a saved response or a future default', () => {
-    const [phase2Release, currentRelease, defaultRelease, r5Release] = PAPER_RELEASES;
+    const [r2Release, phase2Release, currentRelease, defaultRelease, r5Release] = PAPER_RELEASES;
+    expect(r2Release).toMatchObject({ label: 'Revised Phase 2 review draft - November 2026', activation: 'SELECTABLE_NON_DEFAULT' });
     expect(phase2Release).toMatchObject({ documentVersion: PHASE2_PAPER_VERSION, label: 'Phase 2 review draft - November 2026', activation: 'SELECTABLE_NON_DEFAULT' });
     expect(currentRelease).toMatchObject({ documentVersion: V0991_PAPER_VERSION, label: 'Current collaborative expert-review draft', shortLabel: 'Current draft', activation: 'DEFAULT' });
     expect(defaultRelease).toMatchObject({ documentVersion: REVISED_PAPER_VERSION, label: 'Earlier draft', shortLabel: 'Earlier draft', summary: 'The earlier draft of the paper. Responses to it remain separate from the current collaborative expert-review draft.' });
@@ -283,7 +284,7 @@ describe('PaperVersionControl and PaperVersionStatus', () => {
     expect(v0991.textContent).toBe(`${getPaperRelease(V0991_PAPER_VERSION)?.label}${getPaperRelease(V0991_PAPER_VERSION)?.summary}`);
     expect(within(popover).getAllByRole('link')).toHaveLength(2);
     // Every selectable release is offered, each exactly once (R5 is not selectable).
-    expect(within(popover).getAllByRole('listitem')).toHaveLength(SELECTABLE_PAPER_RELEASES.length);
+    expect(within(popover).getAllByRole('listitem')).toHaveLength(SELECTABLE_PAPER_RELEASES.length - 1);
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(screen.queryByTestId('paper-version-popover')).toBeNull();
     expect(toggle).toHaveAttribute('aria-expanded', 'false');

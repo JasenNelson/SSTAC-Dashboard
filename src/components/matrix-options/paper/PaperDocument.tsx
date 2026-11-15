@@ -48,6 +48,7 @@ export { PAPER_DOCUMENT_HEADING_OFFSET } from './PaperText';
 export interface PaperDocumentModel {
   readonly chunks: readonly PaperChunk[];
   readonly linkMap: Readonly<Record<string, string>>;
+  readonly documentVersion?: string;
 }
 
 const outlineCache = new WeakMap<object, readonly PaperOutlineNavEntry[]>();
@@ -140,7 +141,7 @@ export function buildPaperLinkMap(structure: RevisedPaperStructure): Readonly<Re
 export function getPaperDocumentModel(structure: RevisedPaperStructure): PaperDocumentModel {
   const cached = documentCache.get(structure);
   if (cached) return cached;
-  const model: PaperDocumentModel = Object.freeze({ chunks: buildPaperChunks(structure), linkMap: buildPaperLinkMap(structure) });
+  const model: PaperDocumentModel = Object.freeze({ chunks: buildPaperChunks(structure), linkMap: buildPaperLinkMap(structure), documentVersion: structure.manifest.source.version });
   documentCache.set(structure, model);
   return model;
 }
@@ -249,7 +250,7 @@ export function PaperDocument({ model, layout = 'article', region = 'main', nati
   let current: PaperRegion = region;
   const chunks = model.chunks.map((chunk) => {
     if (chunk.depth === 1 && chunk.label && isAppendixBoundaryLabel(chunk.label)) current = 'appendix';
-    return <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={model.linkMap} region={current} nativeFigures={nativeFigures} />;
+    return <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={model.linkMap} region={current} nativeFigures={nativeFigures} documentVersion={model.documentVersion} />;
   });
   if (layout === 'chunks') return <>{chunks}</>;
   return (

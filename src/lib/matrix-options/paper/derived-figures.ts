@@ -304,12 +304,12 @@ export function paperMarkdownSegments(markdown: string): PaperMarkdownSegment[] 
  * restoredFigureBinding); the smallest possible change from paperMarkdownSegments is simply
  * skipping applyDerivedFigures.
  */
-export function paperInlineSegments(markdown: string): PaperMarkdownSegment[] {
+export function paperInlineSegments(markdown: string, releaseIdentity?: string): PaperMarkdownSegment[] {
   // Two content-driven steps join the pipeline for a release that carries them (the R5 working
   // draft); a release with neither construct (the predecessor) passes through both unchanged:
   // empty pandoc anchor spans are dropped, and each accepted placement block becomes a segment
   // that draws the exact accepted PNG (accepted-figures.ts).
-  return splitQuoteSegments(splitAppendixLSourceMediaSegments(splitAcceptedFigureSegments(splitPaperMarkdown(stripPandocAnchorSpans(markdown)))));
+  return splitQuoteSegments(splitAppendixLSourceMediaSegments(splitAcceptedFigureSegments(splitPaperMarkdown(stripPandocAnchorSpans(markdown)), releaseIdentity)));
 }
 
 function splitAppendixLSourceMediaSegments(segments: readonly PaperMarkdownSegment[]): PaperMarkdownSegment[] {

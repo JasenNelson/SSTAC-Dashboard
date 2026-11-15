@@ -1,0 +1,128 @@
+{
+  "schemaVersion": "matrix-paper-reviewer-guide-v1",
+  "releaseIdentity": "phase2-review-2026-11-fa356b89",
+  "sourcePath": "presentation:phase2-review-2026-11-fa356b89",
+  "predecessorReleaseIdentity": "phase2-review-2026-11-186bcf53",
+  "questions": [
+    {
+      "number": 1,
+      "id": "rpq:phase2-review-2026-11-fa356b89:q01",
+      "sourceLines": [
+        614,
+        616
+      ],
+      "textSha256": "ff232a949794af65bf61f7d0bbce6d28c59761f8fe434dfb8fc5d943c566edca",
+      "sectionAnchors": [
+        "sec-phase2-3",
+        "sec-phase2-9"
+      ],
+      "predecessorEquivalence": "MATERIALLY_CHANGED_NO_AUTOMATIC_RESPONSE_CARRY_FORWARD",
+      "predecessorQuestionId": null
+    },
+    {
+      "number": 2,
+      "id": "rpq:phase2-review-2026-11-fa356b89:q02",
+      "sourceLines": [
+        617,
+        618
+      ],
+      "textSha256": "4286c625787c3478a09734562fdf79a03d9484d4bfd3cd616c06e1f93eb0e8d4",
+      "sectionAnchors": [
+        "sec-phase2-5",
+        "sec-phase2-9"
+      ],
+      "predecessorEquivalence": "EXACT_HEADING_AND_PROMPT_TEXT",
+      "predecessorQuestionId": "rpq:phase2-review-2026-11-186bcf53:q02"
+    },
+    {
+      "number": 3,
+      "id": "rpq:phase2-review-2026-11-fa356b89:q03",
+      "sourceLines": [
+        619,
+        620
+      ],
+      "textSha256": "e43ae6a918cd447cefeff5e8c801890dd13a1d00e021d802a6a45edb8bf3ca72",
+      "sectionAnchors": [
+        "sec-phase2-4",
+        "sec-phase2-9"
+      ],
+      "predecessorEquivalence": "MATERIALLY_CHANGED_NO_AUTOMATIC_RESPONSE_CARRY_FORWARD",
+      "predecessorQuestionId": null
+    },
+    {
+      "number": 4,
+      "id": "rpq:phase2-review-2026-11-fa356b89:q04",
+      "sourceLines": [
+        621,
+        621
+      ],
+      "textSha256": "29b8bc7b9813f243b4bfa3a60559ddfb7a0fee2f25c4c6182fd203d7442d111b",
+      "sectionAnchors": [
+        "sec-phase2-6-1",
+        "sec-phase2-9"
+      ],
+      "predecessorEquivalence": "EXACT_HEADING_AND_PROMPT_TEXT",
+      "predecessorQuestionId": "rpq:phase2-review-2026-11-186bcf53:q04"
+    },
+    {
+      "number": 5,
+      "id": "rpq:phase2-review-2026-11-fa356b89:q05",
+      "sourceLines": [
+        622,
+        623
+      ],
+      "textSha256": "3b7c41652710a81e94302a331151453a6fe9bef70a026620a19aaf0534d23bec",
+      "sectionAnchors": [
+        "sec-phase2-6-3",
+        "sec-phase2-9"
+      ],
+      "predecessorEquivalence": "EXACT_HEADING_AND_PROMPT_TEXT",
+      "predecessorQuestionId": "rpq:phase2-review-2026-11-186bcf53:q05"
+    },
+    {
+      "number": 6,
+      "id": "rpq:phase2-review-2026-11-fa356b89:q06",
+      "sourceLines": [
+        624,
+        626
+      ],
+      "textSha256": "4a6c7d0369d5a4bfe8583844398634c988fbfc4009fd77979092d8085f32deb7",
+      "sectionAnchors": [
+        "sec-phase2-7",
+        "sec-phase2-9"
+      ],
+      "predecessorEquivalence": "MATERIALLY_CHANGED_NO_AUTOMATIC_RESPONSE_CARRY_FORWARD",
+      "predecessorQuestionId": null
+    },
+    {
+      "number": 7,
+      "id": "rpq:phase2-review-2026-11-fa356b89:q07",
+      "sourceLines": [
+        627,
+        628
+      ],
+      "textSha256": "7e3c29546fe0d6fb2b2ddde18e795b48d85349eb3d2389d780b6c166c9e5622a",
+      "sectionAnchors": [
+        "sec-phase2-8",
+        "sec-phase2-9"
+      ],
+      "predecessorEquivalence": "EXACT_HEADING_AND_PROMPT_TEXT",
+      "predecessorQuestionId": "rpq:phase2-review-2026-11-186bcf53:q07"
+    },
+    {
+      "number": 8,
+      "id": "rpq:phase2-review-2026-11-fa356b89:q08",
+      "sourceLines": [
+        609,
+        612
+      ],
+      "textSha256": "f0cc841e55974f9e680183507c9bfd6333f833cc57dbaf4a11c6ecb371664237",
+      "sectionAnchors": [
+        "sec-phase2-9",
+        "sec-phase2-9"
+      ],
+      "predecessorEquivalence": "EXACT_HEADING_AND_PROMPT_TEXT",
+      "predecessorQuestionId": "rpq:phase2-review-2026-11-186bcf53:q08"
+    }
+  ]
+}

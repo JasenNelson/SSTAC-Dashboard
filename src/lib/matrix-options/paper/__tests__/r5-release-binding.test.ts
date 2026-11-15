@@ -70,7 +70,7 @@ afterEach(() => {
 
 describe('paper releases: current entry and preserved predecessor identities', () => {
   it('lists the newest entry first and keeps v0.9.91 as the only default', () => {
-    expect(PAPER_RELEASES.map((release) => release.documentVersion)).toEqual([PHASE2_PAPER_VERSION, V0991_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION]);
+    expect(PAPER_RELEASES.map((release) => release.documentVersion)).toEqual(['phase2-review-2026-11-fa356b89', PHASE2_PAPER_VERSION, V0991_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION]);
     expect(PAPER_RELEASES.filter((release) => release.activation === 'DEFAULT').map((release) => release.documentVersion)).toEqual([V0991_PAPER_VERSION]);
     expect(getDefaultPaperRelease().documentVersion).toBe(V0991_PAPER_VERSION);
     expect(r5Release.activation).toBe('SELECTABLE_NON_DEFAULT');

@@ -72,6 +72,7 @@ export function portionHeadingOffset(markdown: string): number {
 
 export interface PaperTextProps {
   readonly markdown: string;
+  readonly documentVersion?: string;
   readonly nativeFigures?: NativeFigureSet;
   readonly linkMap?: Readonly<Record<string, string>>;
   readonly className?: string;
@@ -97,8 +98,8 @@ export interface PaperTextProps {
  * and lists render as plain text, exactly as before derived figures existed. The markdown text
  * itself is unchanged.
  */
-export function PaperText({ markdown, nativeFigures, linkMap, className, headingOffset = 0, headingVariant }: PaperTextProps) {
-  const segments = paperInlineSegments(markdown);
+export function PaperText({ markdown, documentVersion, nativeFigures, linkMap, className, headingOffset = 0, headingVariant }: PaperTextProps) {
+  const segments = paperInlineSegments(markdown, documentVersion);
   return (
     // Inside the reading frame, body text and wide blocks share the frame's full width (globals.css .paper-reading-frame).
     <div className={cn('reader-prose min-w-0 max-w-none', paperHeadingClasses(headingOffset, headingVariant), className)}>

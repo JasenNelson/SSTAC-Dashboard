@@ -51,12 +51,12 @@ export function paperSectionLabelId(anchor: string): string {
  * anchor (the section id) are unchanged. A release with its own contents display
  * label never reaches that relabel: its chunk already carries the display label.
  */
-export function PaperChunkSection({ chunk, linkMap, region = 'main', nativeFigures }: { readonly chunk: PaperChunkView; readonly linkMap?: Readonly<Record<string, string>>; readonly region?: PaperRegion; readonly nativeFigures?: NativeFigureSet }) {
+export function PaperChunkSection({ chunk, linkMap, region = 'main', nativeFigures, documentVersion }: { readonly chunk: PaperChunkView; readonly linkMap?: Readonly<Record<string, string>>; readonly region?: PaperRegion; readonly nativeFigures?: NativeFigureSet; readonly documentVersion?: string }) {
   const markdown = presentChunkMarkdown(chunk.markdown, chunk.label, region);
   if (chunk.anchor === null) {
     return (
       <section data-paper-preamble="" className={PAPER_CHUNK_CLASSES}>
-        <PaperText markdown={markdown} linkMap={linkMap} nativeFigures={nativeFigures} headingOffset={PAPER_DOCUMENT_HEADING_OFFSET} />
+        <PaperText markdown={markdown} documentVersion={documentVersion} linkMap={linkMap} nativeFigures={nativeFigures} headingOffset={PAPER_DOCUMENT_HEADING_OFFSET} />
       </section>
     );
   }
@@ -72,7 +72,7 @@ export function PaperChunkSection({ chunk, linkMap, region = 'main', nativeFigur
       className={PAPER_CHUNK_CLASSES}
     >
       <span id={labelId} hidden>{presentChunkLabel(chunk.label, region)}</span>
-      <PaperText markdown={markdown} linkMap={linkMap} nativeFigures={nativeFigures} headingOffset={PAPER_DOCUMENT_HEADING_OFFSET} />
+      <PaperText markdown={markdown} documentVersion={documentVersion} linkMap={linkMap} nativeFigures={nativeFigures} headingOffset={PAPER_DOCUMENT_HEADING_OFFSET} />
     </section>
   );
 }
