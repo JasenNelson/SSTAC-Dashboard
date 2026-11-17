@@ -5,7 +5,8 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { expect, it } from 'vitest';
 
-import { PaperDocument, getPaperDocumentModel } from '@/components/matrix-options/paper/PaperDocument';
+import { PaperDocument, getPaperDocumentModel, getPaperNavOutline } from '@/components/matrix-options/paper/PaperDocument';
+import { GUIDED_R2_SECTION_ANCHORS } from '../guided-r2-contract';
 import { getCohortManifest } from '../../cohort-contract';
 import { describeAuthenticatedPaper } from '../../revised-paper';
 import { compileAuthenticatedRelease } from '../../revised-paper-structure';
@@ -79,6 +80,7 @@ it.skipIf(!process.env.MATRIX_R2_SOURCE_PATH)('authenticates the exact R2 paper 
     expect(bytes.readUInt32BE(20)).toBe(asset.height);
   }
   const structure = compileAuthenticatedRelease(describeAuthenticatedPaper(release, text));
+  expect(getPaperNavOutline(structure).map((entry) => entry.anchor).filter((anchor) => anchor.startsWith('sec-phase2-'))).toEqual([...GUIDED_R2_SECTION_ANCHORS]);
   const guide = resolveReviewerGuide(structure);
   expect(guide.questions.map((question) => question.heading)).toEqual(getCohortManifest(PHASE2_R2_PAPER_VERSION).cohorts.map((cohort) => cohort.name));
   const figures = paperInlineSegments(structure.content, PHASE2_R2_PAPER_VERSION).filter((segment) => segment.kind === 'accepted-figure');
