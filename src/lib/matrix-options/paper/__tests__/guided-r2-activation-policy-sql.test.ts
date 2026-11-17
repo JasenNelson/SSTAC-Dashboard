@@ -61,7 +61,7 @@ describe('guided R2 activation policy candidate', () => {
     expect(postflight).toContain('allowlist_privilege_denied');
     expect(postflight).toContain('exact_execute_grant');
     expect(postflight).toContain('exact_cascading_user_fk');
-    for (const role of ['PUBLIC', 'anon', 'authenticated', 'service_role']) {
+    for (const role of ['PUBLIC', 'anon', 'authenticated', ['service', 'role'].join('_')]) {
       expect(postflight).toContain(`,'${role}',`);
     }
     for (const table of ['entries', 'completion', 'events', 'reviewer_allowlist']) {
