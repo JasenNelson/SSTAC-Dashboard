@@ -69,22 +69,22 @@ afterEach(() => {
 });
 
 describe('paper releases: current entry and preserved predecessor identities', () => {
-  it('lists the newest entry first and keeps v0.9.91 as the only default', () => {
+  it('lists R2 first and keeps it as the only default', () => {
     expect(PAPER_RELEASES.map((release) => release.documentVersion)).toEqual(['phase2-review-2026-11-fa356b89', PHASE2_PAPER_VERSION, V0991_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION]);
-    expect(PAPER_RELEASES.filter((release) => release.activation === 'DEFAULT').map((release) => release.documentVersion)).toEqual([V0991_PAPER_VERSION]);
-    expect(getDefaultPaperRelease().documentVersion).toBe(V0991_PAPER_VERSION);
+    expect(PAPER_RELEASES.filter((release) => release.activation === 'DEFAULT').map((release) => release.documentVersion)).toEqual([DEFAULT_PAPER_VERSION]);
+    expect(getDefaultPaperRelease().documentVersion).toBe(DEFAULT_PAPER_VERSION);
     expect(r5Release.activation).toBe('SELECTABLE_NON_DEFAULT');
     expect(R5_PAPER_VERSION).toBe('v0.9.88-r4-presentation-001');
     expect(getPaperRelease(V0991_PAPER_VERSION)).toMatchObject({
       delivery: 'private-storage',
       filename: null,
-      activation: 'DEFAULT',
+      activation: 'SELECTABLE_NON_DEFAULT',
       predecessorVersion: R5_PAPER_VERSION,
     });
   });
 
   it('keeps historical predecessor constants and versioned routes bound to the predecessor', () => {
-    expect(DEFAULT_PAPER_VERSION).toBe(V0991_PAPER_VERSION);
+    expect(DEFAULT_PAPER_VERSION).toBe('phase2-review-2026-11-fa356b89');
     expect(PREDECESSOR_PAPER_VERSION).toBe(REVISED_PAPER_VERSION);
     expect(REVISED_PAPER_VERSION).toBe('1.0.11-remediated-7-8-successor-20260918-D');
     expect(REVISED_PAPER_ROUTE).toBe(`/matrix-options/paper/v/${REVISED_PAPER_VERSION}`);

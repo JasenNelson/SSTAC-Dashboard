@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, Layers } from 'lucide-react';
 
-import { getPaperRelease, isConcisePaperRelease, PAPER_RELEASES, PAPER_WITHHELD_NOTICE_ID, PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, SELECTABLE_PAPER_RELEASES } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, isConcisePaperRelease, PAPER_RELEASES, PAPER_WITHHELD_NOTICE_ID, PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, SELECTABLE_PAPER_RELEASES, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { COHORT_IDS, PHASE2_COHORT_IDS } from '@/lib/matrix-options/cohort-contract';
 import type { PaperRelease } from '@/lib/matrix-options/paper/releases';
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
@@ -46,7 +46,7 @@ export function paperVersionHref(release: Pick<PaperRelease, 'documentVersion'>,
     const validCohorts: readonly string[] = isConcisePaperRelease(release.documentVersion) ? PHASE2_COHORT_IDS : COHORT_IDS;
     return paperWorkspaceHref(release.documentVersion, { mode: 'my-review', cohort: context.cohort && validCohorts.includes(context.cohort) ? context.cohort : null, q: null, section: null });
   }
-  if (context.stableSectionId) return `/matrix-options/paper/v/${encodeURIComponent(release.documentVersion)}/${encodeURIComponent(context.stableSectionId)}`;
+  if (context.stableSectionId && !isConcisePaperRelease(release.documentVersion)) return `/matrix-options/paper/v/${encodeURIComponent(release.documentVersion)}/${encodeURIComponent(context.stableSectionId)}`;
   return paperWorkspaceHref(release.documentVersion, { mode: 'working-draft', cohort: null, q: null, section: null });
 }
 
@@ -168,11 +168,11 @@ export function PaperVersionStatus({ documentVersion, ...context }: { readonly d
   return (
     <p data-testid="paper-version-status" role="note" className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 border-t border-[var(--db-review-tint-border)] bg-[var(--db-review-tint)] px-4 py-1.5 text-sm text-[var(--db-text-primary)] sm:px-6 print:hidden">
       <span className="min-w-0">
-        <strong className="font-semibold">{current.label}.</strong> {phase2 ? 'This newer proposal is open for reading; response collection is not yet enabled. Earlier responses remain with their original draft.' : 'You are viewing an earlier draft. Responses to this draft are separate from the current Options Paper working draft.'}
+        <strong className="font-semibold">{current.label}.</strong> {phase2 ? 'This earlier concise proposal remains available for reading. Its responses remain with their original draft.' : current.documentVersion === V0991_PAPER_VERSION ? 'This scientific deep dive remains available for reading. Its existing responses and history remain separate from the current R2 review.' : 'You are viewing an earlier draft. Responses to this draft are separate from the current Options Paper working draft.'}
       </span>
       {/* A full 44px touch target on phones and tablets; from lg up the line stays one compact row. */}
       <a href={paperVersionHref(fallback, context)} data-testid="paper-version-status-default-link" className="inline-flex min-h-[44px] items-center font-medium lg:min-h-[32px] text-[var(--db-accent-strong)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] dark:text-[var(--db-accent)]">
-        {phase2 ? 'Go to the v0.9.91 review draft' : 'Go to the current draft'}
+        Go to the current R2 review draft
       </a>
     </p>
   );

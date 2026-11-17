@@ -16,7 +16,7 @@ import coverage from '../contracts/legacy-coverage-phase2-review-2026-11-fa356b8
 import { paperInlineSegments } from '../derived-figures';
 import { getReviewLineage } from '../review-lineage';
 import { R2_READER_LINKS } from '../r2-reader-links';
-import { DEFAULT_PAPER_VERSION, getPaperRelease, PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, V0991_PAPER_VERSION } from '../releases';
+import { DEFAULT_PAPER_VERSION, getDefaultPaperRelease, getPaperRelease, PAPER_RELEASES, PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION } from '../releases';
 import { resolveReviewerGuide } from '../reviewer-guide-server';
 import { parseFrontMatter } from '../source-presentation';
 
@@ -24,12 +24,14 @@ const digest = (bytes: Uint8Array | string) => createHash('sha256').update(bytes
 
 it('keeps R2 distinct from the earlier concise draft and all historical responses', () => {
   const release = getPaperRelease(PHASE2_R2_PAPER_VERSION)!;
-  expect(DEFAULT_PAPER_VERSION).toBe(V0991_PAPER_VERSION);
+  expect(DEFAULT_PAPER_VERSION).toBe(PHASE2_R2_PAPER_VERSION);
+  expect(PAPER_RELEASES.filter((item) => item.activation === 'DEFAULT')).toEqual([release]);
+  expect(getDefaultPaperRelease()).toBe(release);
   expect(release).toMatchObject({
     sha256: 'fa356b89f2a80d783a39ef70b8f99b79794c5c5377e3b80567a1b23c624edda2',
     bytes: 74568,
     delivery: 'private-storage',
-    activation: 'SELECTABLE_NON_DEFAULT',
+    activation: 'DEFAULT',
     predecessorVersion: PHASE2_PAPER_VERSION,
   });
   expect(release.sha256).not.toBe(getPaperRelease(PHASE2_PAPER_VERSION)?.sha256);

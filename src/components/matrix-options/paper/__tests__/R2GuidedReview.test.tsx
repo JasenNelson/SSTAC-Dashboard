@@ -15,7 +15,11 @@ const props = {
 };
 const userKey = '11111111-1111-4111-8111-111111111111';
 const fetchMock = vi.fn();
-const stateResponse = (entries: unknown[] = [], mode: 'read-only' | 'writable' = 'read-only') => ({ mode, userKey, entries, completion: null });
+const stateResponse = (entries: unknown[] = [], mode: 'read-only' | 'writable' = 'read-only') => ({
+  documentVersion: manifest.documentVersion, guidedManifestSha256: manifest.guidedManifestSha256,
+  reviewManifestSha256: manifest.reviewManifestSha256, mode, userKey, entries, completion: null,
+});
+const feedbackResponse = () => ({ guidedManifestSha256: manifest.guidedManifestSha256, reviewManifestSha256: manifest.reviewManifestSha256, items: [] });
 const savedEntry = (kind: string, id: string, values: Record<string, unknown> = {}) => ({
   user_id: userKey, document_version: manifest.documentVersion,
   guided_manifest_sha256: manifest.guidedManifestSha256, review_manifest_sha256: manifest.reviewManifestSha256,
@@ -32,7 +36,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals());
 
 it('keeps the exact paper readable when the state schema is unavailable', async () => {
-  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? { outcome: 'persistence_unavailable' } : { items: [] }), { status: url.includes('/state?') ? 503 : 200 })));
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? { outcome: 'persistence_unavailable' } : feedbackResponse()), { status: url.includes('/state?') ? 503 : 200 })));
   render(<R2GuidedReview {...props} />);
   expect(await screen.findByRole('alert')).toHaveTextContent('Your review state is temporarily unavailable. The paper remains readable.');
   expect(screen.getByText('Proposed framework')).toBeInTheDocument();
@@ -40,7 +44,7 @@ it('keeps the exact paper readable when the state schema is unavailable', async 
 });
 
 it('shows the account-data notice in the introduction and My Review', async () => {
-  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? { mode: 'read-only', userKey, entries: [], completion: null } : { items: [] }))));
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
   render(<R2GuidedReview {...props} initialMode="my-review" />);
   expect(await screen.findByText('Review responses are currently read-only. The paper remains available.')).toBeInTheDocument();
   expect(screen.getAllByText(/Feedback is optional, linked to your account/)).toHaveLength(2);
@@ -48,7 +52,7 @@ it('shows the account-data notice in the introduction and My Review', async () =
 });
 
 it('hides guided state for a noninvited reviewer while preserving paper access', async () => {
-  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? { outcome: 'reviewer_not_allowed' } : { items: [] }), { status: url.includes('/state?') ? 403 : 200 })));
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? { outcome: 'reviewer_not_allowed' } : feedbackResponse()), { status: url.includes('/state?') ? 403 : 200 })));
   render(<R2GuidedReview {...props} />);
   expect(await screen.findByRole('alert')).toHaveTextContent('Guided responses are available only to invited reviewers. The paper remains readable.');
   expect(screen.getByText('Proposed framework')).toBeInTheDocument();
@@ -56,7 +60,7 @@ it('hides guided state for a noninvited reviewer while preserving paper access',
 });
 
 it('shows inactive review as read-only and never offers an enabled Save button', async () => {
-  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? { mode: 'read-only', userKey, entries: [], completion: null } : { items: [] }), { status: 200 })));
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()), { status: 200 })));
   render(<R2GuidedReview {...props} />);
   expect(await screen.findByText('Review responses are currently read-only. The paper remains available.')).toBeInTheDocument();
   expect(screen.getAllByRole('button', { name: 'Save' }).every((button) => (button as HTMLButtonElement).disabled)).toBe(true);
@@ -64,7 +68,7 @@ it('shows inactive review as read-only and never offers an enabled Save button',
 });
 
 it('opens a bookmarked My Review URL in My Review mode', async () => {
-  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? { mode: 'read-only', userKey, entries: [], completion: null } : { items: [] }), { status: 200 })));
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()), { status: 200 })));
   render(<R2GuidedReview {...props} initialMode="my-review" />);
   expect(await screen.findByRole('heading', { name: 'My Review' })).toBeInTheDocument();
   expect(screen.queryByText('Proposed framework')).not.toBeInTheDocument();
@@ -76,7 +80,7 @@ it('shows all six persisted review areas with readable choices, unanswered promp
     savedEntry('section-comment', 'sec-phase2-3', { draft_text: 'Clarify the placement rule.' }),
     savedEntry('whole-paper-comment', 'whole-paper', { draft_text: 'Please add a short summary.' }),
   ];
-  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse(entries) : { items: [] }))));
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse(entries) : feedbackResponse()))));
   render(<R2GuidedReview {...props} initialMode="my-review" />);
   const checklist = await screen.findByRole('list', { name: 'Focus area checklist' });
   expect(within(checklist).getByText('Sound as proposed')).toBeInTheDocument();
@@ -100,7 +104,7 @@ it('shows all six persisted review areas with readable choices, unanswered promp
 });
 
 it('shows accessible progress and bounded next-area navigation while allowing direct area selection', async () => {
-  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : { items: [] }))));
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
   render(<R2GuidedReview {...props} />);
   expect(await screen.findByText('Review responses are currently read-only. The paper remains available.')).toBeInTheDocument();
   expect(screen.getAllByRole('progressbar', { name: 'Focus areas reviewed on this page' })).toHaveLength(2);
@@ -117,7 +121,7 @@ it('shows accessible progress and bounded next-area navigation while allowing di
 });
 
 it('shows unsaved edits in My Review and blocks completion until they are saved', async () => {
-  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse([], 'writable') : { items: [] }))));
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse([], 'writable') : feedbackResponse()))));
   render(<R2GuidedReview {...props} />);
   const choice = await screen.findAllByRole('radio', { name: 'Needs refinement' });
   fireEvent.click(choice[0]);
@@ -131,10 +135,10 @@ it('shows unsaved edits in My Review and blocks completion until they are saved'
 
 it('saves a typed choice with the exact identity and current user', async () => {
   fetchMock.mockImplementation((url: string, init?: RequestInit) => {
-    if (url.includes('/state?')) return Promise.resolve(new Response(JSON.stringify({ mode: 'writable', userKey, entries: [], completion: null })));
-    if (url.includes('/feedback?')) return Promise.resolve(new Response(JSON.stringify({ items: [] })));
+    if (url.includes('/state?')) return Promise.resolve(new Response(JSON.stringify(stateResponse([], 'writable'))));
+    if (url.includes('/feedback?')) return Promise.resolve(new Response(JSON.stringify(feedbackResponse())));
     const body = JSON.parse(String(init?.body));
-    return Promise.resolve(new Response(JSON.stringify({ outcome: 'ok', row: { user_id: userKey, document_version: manifest.documentVersion, guided_manifest_sha256: manifest.guidedManifestSha256, review_manifest_sha256: manifest.reviewManifestSha256, target_kind: body.targetKind, target_id: 'structure-approach', revision: 1, draft_choice_id: body.draft.choiceId, draft_rationale: null, draft_text: null, submitted_choice_id: null, submitted_rationale: null, submitted_text: null, submitted_revision: null, submitted_at: null, updated_at: '2026-11-16T00:00:00Z' } })));
+    return Promise.resolve(new Response(JSON.stringify({ outcome: 'ok', guidedManifestSha256: manifest.guidedManifestSha256, reviewManifestSha256: manifest.reviewManifestSha256, row: { user_id: userKey, document_version: manifest.documentVersion, guided_manifest_sha256: manifest.guidedManifestSha256, review_manifest_sha256: manifest.reviewManifestSha256, target_kind: body.targetKind, target_id: 'structure-approach', revision: 1, draft_choice_id: body.draft.choiceId, draft_rationale: null, draft_text: null, submitted_choice_id: null, submitted_rationale: null, submitted_text: null, submitted_revision: null, submitted_at: null, updated_at: '2026-11-16T00:00:00Z' } })));
   });
   render(<R2GuidedReview {...props} />);
   const choice = await screen.findAllByRole('radio', { name: 'Sound as proposed' });

@@ -10,11 +10,15 @@ it('opens the R2 preview only in explicitly enabled local development', () => {
   const local = new Headers({ host: '127.0.0.1:3100' });
   const remote = new Headers({ host: 'example.org' });
   const forged = new Headers({ host: '127.0.0.1:3100', 'x-forwarded-host': 'example.org' });
+  const sameForwarded = new Headers({ host: '127.0.0.1:3100', 'x-forwarded-host': '127.0.0.1:3100' });
+  const localhost = new Headers({ host: 'localhost:3100' });
   vi.stubEnv('NODE_ENV', 'development');
   vi.stubEnv('MATRIX_R2_REVIEW_PREVIEW', '1');
   expect(isLocalR2PreviewRequest(local)).toBe(true);
   expect(isLocalR2PreviewRequest(remote)).toBe(false);
   expect(isLocalR2PreviewRequest(forged)).toBe(false);
+  expect(isLocalR2PreviewRequest(sameForwarded)).toBe(true);
+  expect(isLocalR2PreviewRequest(localhost)).toBe(false);
   vi.stubEnv('MATRIX_R2_REVIEW_PREVIEW', '0');
   expect(isLocalR2PreviewRequest(local)).toBe(false);
   vi.stubEnv('MATRIX_R2_REVIEW_PREVIEW', '1');

@@ -18,13 +18,13 @@ import { paperInlineSegments } from '../derived-figures';
 import { buildPaperNavGroups } from '../paper-nav-groups';
 import { getPaperSectionWindowModel } from '../section-window';
 import { getReviewLineage } from '../review-lineage';
-import { PHASE2_PAPER_VERSION, DEFAULT_PAPER_VERSION, V0991_PAPER_VERSION, getPaperRelease } from '../releases';
+import { PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, DEFAULT_PAPER_VERSION, V0991_PAPER_VERSION, getPaperRelease } from '../releases';
 import { resolveReviewerGuide } from '../reviewer-guide-server';
 import { parseFrontMatter } from '../source-presentation';
 
 it('binds a nondefault read-only Phase 2 release with eight focus prompts', () => {
   const release = getPaperRelease(PHASE2_PAPER_VERSION);
-  expect(DEFAULT_PAPER_VERSION).toBe(V0991_PAPER_VERSION);
+  expect(DEFAULT_PAPER_VERSION).toBe(PHASE2_R2_PAPER_VERSION);
   expect(release).toMatchObject({ delivery: 'private-storage', activation: 'SELECTABLE_NON_DEFAULT', bytes: 63040, predecessorVersion: V0991_PAPER_VERSION });
   const guide = getReviewerGuideBinding(PHASE2_PAPER_VERSION);
   const cohorts = getCohortManifest(PHASE2_PAPER_VERSION);

@@ -2,92 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthAndRateLimit } from '@/app/api/_helpers/rate-limit-wrapper';
 import { resolveMatrixOptionsPaperReviewNavigationGate } from '@/lib/matrix-options/navigation';
-import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
-import { getReviewerGuideBinding } from '@/lib/matrix-options/reviewer-guide';
-import { V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
-import { findReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
-import {
-  reviewResponseOutcomeStatus,
-  reviewResponseRequestSchema,
-  reviewResponseRowSchema,
-  type ReviewResponseOutcome,
-} from '@/lib/matrix-options/paper/review-responses';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const noStoreHeaders = { 'Cache-Control': 'no-store' };
 
-function normalizeRpcData(data: unknown, expected: { documentVersion: string; manifestSha256: string; cohortId: string; questionId: string }): ReviewResponseOutcome {
-  const value = Array.isArray(data) ? data[0] : data;
-  if (!value || typeof value !== 'object') return { outcome: 'persistence_unavailable' };
-  const record = value as Record<string, unknown>;
-  const rawOutcome = record.outcome;
-  const supported = rawOutcome === 'ok' || rawOutcome === 'noop_already_submitted' || rawOutcome === 'stale_revision' || rawOutcome === 'unknown_identity' || rawOutcome === 'stale_manifest' || rawOutcome === 'unauthenticated' || rawOutcome === 'too_large' || rawOutcome === 'rate_limited' || rawOutcome === 'blank_submission' || rawOutcome === 'persistence_unavailable';
-  if (!supported) return { outcome: 'persistence_unavailable' };
-  const parsedRow = record.row === null || record.row === undefined ? null : reviewResponseRowSchema.safeParse(record.row);
-  const row = parsedRow?.success ? parsedRow.data : null;
-  const rowMatchesRequest = row !== null
-    && row.document_version === expected.documentVersion
-    && row.manifest_sha256 === expected.manifestSha256
-    && row.cohort_id === expected.cohortId
-    && row.question_id === expected.questionId;
-  // A stale_revision WITHOUT a row means the row the client's base revision
-  // named no longer exists (deleted, or a new manifest): a 409 the client can
-  // recover from by re-basing, never a 503 it can only retry forever.
-  if (rawOutcome === 'stale_revision' && (record.row === null || record.row === undefined)) return { outcome: 'stale_revision' };
-  if ((rawOutcome === 'ok' || rawOutcome === 'noop_already_submitted' || rawOutcome === 'stale_revision') && !rowMatchesRequest) return { outcome: 'persistence_unavailable' };
-  if (record.row !== null && record.row !== undefined && !rowMatchesRequest && rawOutcome !== 'unknown_identity' && rawOutcome !== 'stale_manifest' && rawOutcome !== 'unauthenticated' && rawOutcome !== 'too_large' && rawOutcome !== 'rate_limited' && rawOutcome !== 'blank_submission') return { outcome: 'persistence_unavailable' };
-  const rowBearingOutcome = rawOutcome === 'ok' || rawOutcome === 'noop_already_submitted' || rawOutcome === 'stale_revision';
-  return rowBearingOutcome && rowMatchesRequest ? { outcome: rawOutcome, row } as ReviewResponseOutcome : { outcome: rawOutcome } as ReviewResponseOutcome;
-}
-
-function errorOutcome(error: { readonly code?: string; readonly message?: string }): ReviewResponseOutcome {
-  if (error.code === 'PGRST202' || error.code === '42883' || error.code === '42P01' || /function .* does not exist|relation .* does not exist/i.test(error.message ?? '')) return { outcome: 'persistence_unavailable' };
-  return { outcome: 'persistence_unavailable' };
-}
-
-export async function PUT(request: NextRequest, { params }: { params: Promise<{ questionId: string }> }) {
-  if (resolveMatrixOptionsPaperReviewNavigationGate(process.env.MATRIX_OPTIONS_PAPER_WORKSPACE, process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION) !== 'REVIEW_NAVIGATION') return NextResponse.json({ error: 'Not found' }, { status: 404, headers: noStoreHeaders });
-  const { user, supabase, rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'default');
+/** Historical responses stay readable through GET/export; this route makes no new legacy writes. */
+export async function PUT(request: NextRequest, _context: { params: Promise<{ questionId: string }> }) {
+  if (resolveMatrixOptionsPaperReviewNavigationGate(process.env.MATRIX_OPTIONS_PAPER_WORKSPACE, process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION) !== 'REVIEW_NAVIGATION') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404, headers: noStoreHeaders });
+  }
+  const { user, rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'default');
   if (rateLimitResponse) return rateLimitResponse;
-  // Anonymous Supabase sessions are not reviewers (same rule as the downloads route).
-  if (!user || user.is_anonymous !== false) return NextResponse.json({ outcome: 'unauthenticated' }, { status: 401, headers: noStoreHeaders });
-
-  let body: unknown;
-  try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400, headers: noStoreHeaders }); }
-  const parsed = reviewResponseRequestSchema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: 'Invalid review response' }, { status: 400, headers: noStoreHeaders });
-  // Zero-write gate: only the current v0.9.91 draft collects responses. Every other release is
-  // refused here, before any manifest lookup or RPC, whatever the client sent.
-  if (parsed.data.documentVersion !== V0991_PAPER_VERSION) return NextResponse.json({ outcome: 'release_read_only' }, { status: reviewResponseOutcomeStatus('release_read_only'), headers: { ...noStoreHeaders, ...rateLimitHeaders } });
-  // Identity pin: a page opened by one reviewer never writes as another who has
-  // since signed in on the same browser (the cookie is shared by every tab).
-  if (parsed.data.expectedUserId !== undefined && parsed.data.expectedUserId !== user.id) return NextResponse.json({ outcome: 'identity_changed' }, { status: reviewResponseOutcomeStatus('identity_changed'), headers: { ...noStoreHeaders, ...rateLimitHeaders } });
-  const { questionId: encodedQuestionId } = await params;
-  let questionId: string;
-  try { questionId = decodeURIComponent(encodedQuestionId); } catch { return NextResponse.json({ error: 'Invalid question id' }, { status: 400, headers: { ...noStoreHeaders, ...rateLimitHeaders } }); }
-  // A write names one bound release by its version AND that release's own
-  // review manifest digest, and its question and cohort must belong to that
-  // same release. A question id of another release (for example a predecessor
-  // question sent under the successor's manifest) is an unknown identity, so a
-  // response can never be saved, copied or re-keyed across releases here.
-  const reviewManifest = findReviewManifest(parsed.data.documentVersion, parsed.data.manifestSha256);
-  if (!reviewManifest) return NextResponse.json({ error: 'Invalid review response' }, { status: 400, headers: noStoreHeaders });
-  // Question ids and numbers only: the stored binding of the release, which needs no paper text.
-  const question = getReviewerGuideBinding(reviewManifest.documentVersion).questions.find((candidate) => candidate.id === questionId);
-  const cohort = getCohortManifest(reviewManifest.documentVersion).cohorts.find((candidate) => candidate.id === parsed.data.cohortId && candidate.questionNumbers.includes(question?.number ?? -1));
-  if (!question || !cohort) return NextResponse.json({ outcome: 'unknown_identity' }, { status: reviewResponseOutcomeStatus('unknown_identity'), headers: { ...noStoreHeaders, ...rateLimitHeaders } });
-
-  const rpcName = parsed.data.action === 'submit' ? 'matrix_paper_review_submit' : 'matrix_paper_review_save_draft';
-  const { data, error } = await supabase.rpc(rpcName, {
-    p_document_version: parsed.data.documentVersion,
-    p_manifest_sha256: parsed.data.manifestSha256,
-    p_cohort_id: parsed.data.cohortId,
-    p_question_id: questionId,
-    p_text: parsed.data.text,
-    p_expected_revision: parsed.data.expectedRevision,
-  });
-  const outcome = error ? errorOutcome(error) : normalizeRpcData(data, { documentVersion: reviewManifest.documentVersion, manifestSha256: reviewManifest.sha256, cohortId: parsed.data.cohortId, questionId });
-  return NextResponse.json(outcome, { status: reviewResponseOutcomeStatus(outcome.outcome), headers: { ...noStoreHeaders, ...rateLimitHeaders } });
+  if (!user || user.is_anonymous !== false) {
+    return NextResponse.json({ outcome: 'unauthenticated' }, { status: 401, headers: noStoreHeaders });
+  }
+  return NextResponse.json({ outcome: 'release_read_only' }, { status: 403, headers: { ...noStoreHeaders, ...rateLimitHeaders } });
 }

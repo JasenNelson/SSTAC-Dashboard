@@ -9,7 +9,7 @@ import { compileAuthenticatedRelease } from '../revised-paper-structure';
 import { getAcceptedFiguresContract } from './accepted-figures';
 import { getPaperRelease, PHASE2_R2_PAPER_VERSION } from './releases';
 
-const LOCAL_HOST = /^(?:localhost|127\.0\.0\.1)(?::\d{1,5})?$/;
+const LOCAL_HOST = /^127\.0\.0\.1(?::\d{1,5})?$/;
 
 export function isLocalR2PreviewRequest(headers: Pick<Headers, 'get'>): boolean {
   const host = headers.get('host') ?? '';
@@ -17,7 +17,11 @@ export function isLocalR2PreviewRequest(headers: Pick<Headers, 'get'>): boolean 
   return process.env.NODE_ENV === 'development'
     && process.env.MATRIX_R2_REVIEW_PREVIEW === '1'
     && LOCAL_HOST.test(host)
-    && (!forwardedHost || forwardedHost === host);
+    // Next dev repeats the direct loopback host in this header. A different
+    // forwarded host is never a preview origin.
+    && (!forwardedHost || forwardedHost === host)
+    && !headers.get('x-original-host')
+    && !headers.get('forwarded');
 }
 
 function sourceRoot(): string {

@@ -74,7 +74,7 @@ export default async function RootLayout({
             </AdminProvider>
           </AuthProvider>
         </ThemeProvider>
-        <SpeedInsights />
+        {!(process.env.NODE_ENV === 'development' && process.env.MATRIX_R2_REVIEW_PREVIEW === '1') ? <SpeedInsights /> : null}
       </body>
     </html>
   );
