@@ -6,7 +6,7 @@ import path from 'node:path';
 
 // Both modules are isomorphic and import nothing: the release entries (versions, hashes, the
 // notice id and sentence) and the scroll authority's own bounds are read, not restated.
-import { getPaperRelease, PAPER_WITHHELD_NOTICE_ID, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '../src/lib/matrix-options/paper/releases';
+import { DEFAULT_PAPER_VERSION, getPaperRelease, PAPER_WITHHELD_NOTICE_ID, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '../src/lib/matrix-options/paper/releases';
 import { appendixLSourceMediaContract } from '../src/lib/matrix-options/paper/accepted-source-media';
 import { PAPER_LANDING_MAX_ATTEMPTS } from '../src/lib/matrix-options/paper/scroll-authority';
 import {
@@ -329,8 +329,8 @@ const exerciseReadOnlyReviewEditor = async (page: Page, options: { version: stri
   await expect(page.getByTestId('review-action-reason')).not.toContainText('cannot be saved');
   await expect(page.getByTestId('review-persistence-retry')).toHaveCount(0);
   const link = page.getByTestId('review-current-draft-link');
-  await expect(link).toHaveText('Go to the current review draft');
-  expect(await link.getAttribute('href')).toContain(encodeURIComponent(V0991_PAPER_VERSION));
+  await expect(link).toHaveText('Go to the current R2 review draft');
+  expect(await link.getAttribute('href')).toContain(encodeURIComponent(DEFAULT_PAPER_VERSION));
 
   // Question navigation: the seeded browser copy of Q2 is still displayed, read-only.
   const headingBeforeNext = await page.locator('#active-question-heading').innerText();
