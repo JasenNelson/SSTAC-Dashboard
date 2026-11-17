@@ -2414,7 +2414,6 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion', () => {
     requireJourney(testInfo.project.name);
     const media = appendixLSourceMediaContract();
     const canonicalPath = `/matrix-options/paper/publication/v/${V0991_PAPER_VERSION}`;
-    const imageResponsePromise = page.waitForResponse((response) => response.url().includes(`/figures/${encodeURIComponent(media.file)}?sha256=${media.sha256}`), { timeout: 60000 });
     await page.goto(`${v0991WorkspacePath}?mode=working-draft`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
     await expect.poll(() => pathAndQuery(page.url()), { timeout: 60000 }).toBe(`${canonicalPath}?mode=working-draft`);
@@ -2431,6 +2430,14 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion', () => {
 
     const paper = page.getByTestId('paper-document');
     await expect(paper.getByRole('heading', { name: 'Appendix L: Phase 2 Project Plan V2', exact: true })).toBeVisible({ timeout: 60000 });
+    const sourceTranscriptionLink = page.getByTestId('paper-outline-desktop').getByRole('link', { name: 'Source transcription', exact: true });
+    await expect(sourceTranscriptionLink).toBeVisible({ timeout: 60000 });
+    expect(await sourceTranscriptionLink.getAttribute('href')).toBe('?mode=working-draft&section=source-transcription');
+    const imageResponsePromise = page.waitForResponse((response) => response.url().includes(`/figures/${encodeURIComponent(media.file)}?sha256=${media.sha256}`), { timeout: 60000 });
+    await sourceTranscriptionLink.click();
+    await expect.poll(() => pathAndQuery(page.url()), { timeout: 60000 }).toBe(`${canonicalPath}?mode=working-draft&section=source-transcription`);
+    await waitForHydratedWorkspace(page);
+    await expect(paper.getByRole('heading', { name: 'Source transcription', exact: true })).toBeVisible({ timeout: 60000 });
     const image = paper.locator('[data-appendix-source-media] img');
     await expect(image).toBeVisible({ timeout: 60000 });
     const src = await image.getAttribute('src');
