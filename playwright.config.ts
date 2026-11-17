@@ -100,17 +100,17 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts/,
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts/,
     },
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts/,
     },
     ...(runAuthenticatedE2E
       ? [
@@ -134,7 +134,7 @@ export default defineConfig({
             // project while a full-suite run still goes green. That silent-skip shape is the
             // same one E2E_AUTH_ENABLED already has, so any new authenticated spec must be
             // added here deliberately.
-            testMatch: /(matrix-options(-phone-layout|-print|-paper)?|mo-map-access|mo-publish-rbac|ssd-workbench)\.spec\.ts/,
+            testMatch: /(matrix-options(-phone-layout|-print|-paper|-paper-guided-r2)?|mo-map-access|mo-publish-rbac|ssd-workbench)\.spec\.ts/,
             // A global logout here would revoke the session every other (and, fullyParallel,
             // every concurrent) test in this project shares; see e2e/session-teardown.ts.
             grepInvert: SESSION_TEARDOWN_GREP,

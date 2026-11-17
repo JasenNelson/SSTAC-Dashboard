@@ -244,13 +244,13 @@ export function getPaperStableSectionIds(structure: Pick<RevisedPaperStructure, 
  * client section window can place the server-rendered initial section inside its
  * own ordered article next to placeholders and client-loaded sections (S1).
  */
-export function PaperDocument({ model, layout = 'article', region = 'main', nativeFigures }: { readonly model: PaperDocumentModel; readonly layout?: 'article' | 'chunks'; readonly region?: PaperRegion; readonly nativeFigures?: NativeFigureSet }) {
+export function PaperDocument({ model, layout = 'article', region = 'main', nativeFigures, previewFigureBasePath }: { readonly model: PaperDocumentModel; readonly layout?: 'article' | 'chunks'; readonly region?: PaperRegion; readonly nativeFigures?: NativeFigureSet; readonly previewFigureBasePath?: string }) {
   // The region starts where the caller says (the initial section's) and turns
   // to 'appendix' at the appendix boundary heading.
   let current: PaperRegion = region;
   const chunks = model.chunks.map((chunk) => {
     if (chunk.depth === 1 && chunk.label && isAppendixBoundaryLabel(chunk.label)) current = 'appendix';
-    return <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={model.linkMap} region={current} nativeFigures={nativeFigures} documentVersion={model.documentVersion} />;
+    return <PaperChunkSection key={chunk.id} chunk={chunk} linkMap={model.linkMap} region={current} nativeFigures={nativeFigures} documentVersion={model.documentVersion} previewFigureBasePath={previewFigureBasePath} />;
   });
   if (layout === 'chunks') return <>{chunks}</>;
   return (

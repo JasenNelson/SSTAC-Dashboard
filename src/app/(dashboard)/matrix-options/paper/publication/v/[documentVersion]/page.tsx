@@ -6,7 +6,9 @@ import {
   resolveMatrixOptionsPaperReviewNavigationGate,
 } from '@/lib/matrix-options/navigation';
 import { REVISED_PAPER_ROUTE } from '@/lib/matrix-options/revised-paper';
-import { getPaperRelease, isConcisePaperRelease, PREDECESSOR_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { getPaperRelease, isConcisePaperRelease, PHASE2_R2_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { GUIDED_R2_SECTION_ANCHORS } from '@/lib/matrix-options/paper/guided-r2-contract';
+import { getGuidedR2Manifest } from '@/lib/matrix-options/paper/guided-r2-manifest';
 import { PrivateReleaseUnavailableError } from '@/lib/matrix-options/paper/private-release-assets';
 import type { PrivateReleaseFailureCode } from '@/lib/matrix-options/paper/private-release-assets';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -294,6 +296,14 @@ export default async function PublicationPage({
   // reader's session (PrivateReleaseSessionGate.tsx). A missing id is passed as it is and the
   // gate shows nothing. A repository release is returned as it is: no gate, no id.
   const gated = (workspace: JSX.Element): JSX.Element => (release.delivery === 'private-storage' ? <PrivateReleaseSessionGate servedTo={servedTo ?? ''}>{workspace}</PrivateReleaseSessionGate> : workspace);
+  if (documentVersion === PHASE2_R2_PAPER_VERSION && process.env.MATRIX_R2_GUIDED_REVIEW_UI === 'true') {
+    const outline = getPaperNavOutline(structure);
+    const actualAnchors = outline.map((entry) => entry.anchor).filter((anchor) => anchor.startsWith('sec-phase2-'));
+    if (actualAnchors.length !== GUIDED_R2_SECTION_ANCHORS.length || actualAnchors.some((anchor) => !GUIDED_R2_SECTION_ANCHORS.includes(anchor as typeof GUIDED_R2_SECTION_ANCHORS[number]))) failClosed('PAPER_DOCUMENT_UNAVAILABLE');
+    const manifest = getGuidedR2Manifest();
+    const { R2GuidedReview } = await import('@/components/matrix-options/paper/R2GuidedReview');
+    return gated(<R2GuidedReview documentVersion={documentVersion} guidedManifestSha256={manifest.guidedManifestSha256} reviewManifestSha256={manifest.reviewManifestSha256} initialMode={state.mode} outline={outline} paper={<PaperDocument model={getPaperDocumentModel(structure)} nativeFigures={nativeFigures} />} />);
+  }
   if (state.mode === 'my-review') {
     return gated(<RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} guide={guide} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} cohortPortions={cohortPortions} nativeFigures={nativeFigures} downloadManifests={downloadManifests} reviewLineage={reviewLineage} stableSectionIds={stableSectionIds} />);
   }

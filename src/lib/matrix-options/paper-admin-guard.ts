@@ -1,7 +1,7 @@
 import { getReviewerGuideBinding } from './reviewer-guide';
 import { getCohortManifest } from './cohort-contract';
 import { getReviewManifest } from './paper/review-manifest';
-import { DEFAULT_PAPER_VERSION, getPaperRelease, paperReleaseIdentity, type PaperReleaseVersion } from './paper/releases';
+import { V0991_PAPER_VERSION, getPaperRelease, paperReleaseIdentity, type PaperReleaseVersion } from './paper/releases';
 
 export const PAPER_ADMIN_ROLES = ['admin', 'matrix_admin'] as const;
 export type PaperAdminRole = (typeof PAPER_ADMIN_ROLES)[number];
@@ -13,8 +13,9 @@ type SupabaseLike = { auth: { getUser: () => Promise<{ data?: { user?: PaperAdmi
 export function isPaperAdminRole(role: unknown): role is PaperAdminRole { return role === 'admin' || role === 'matrix_admin'; }
 export async function getPaperAdminAccess(client: SupabaseLike): Promise<PaperAdminAccess> { let authResult: Awaited<ReturnType<SupabaseLike['auth']['getUser']>>; try { authResult = await client.auth.getUser(); } catch { return { allowed: false, status: 401, reason: 'unauthenticated' }; } const user = authResult.data?.user; if (authResult.error || !user?.id) return { allowed: false, status: 401, reason: 'unauthenticated' }; let roleResult: { data?: Array<{ role?: unknown }>; error?: unknown }; try { roleResult = await client.from('user_roles').select('role').eq('user_id', user.id).in('role', PAPER_ADMIN_ROLES); } catch { return { allowed: false, status: 403, reason: 'forbidden' }; } if (roleResult.error) return { allowed: false, status: 403, reason: 'forbidden' }; const role = roleResult.data?.map((row) => row.role).find(isPaperAdminRole); return role ? { allowed: true, user, role } : { allowed: false, status: 403, reason: 'forbidden' }; }
 export async function getTrustedPaperReviewIdentity(): Promise<TrustedPaperReviewIdentity> {
-  const release = getPaperRelease(DEFAULT_PAPER_VERSION);
-  if (!release || release.documentVersion !== DEFAULT_PAPER_VERSION || release.activation !== 'DEFAULT') {
+  // The legacy admin export keeps its exact v0.9.91 row identity after a later default switch.
+  const release = getPaperRelease(V0991_PAPER_VERSION);
+  if (!release || release.documentVersion !== V0991_PAPER_VERSION) {
     throw new Error('Trusted paper release identity mismatch');
   }
 

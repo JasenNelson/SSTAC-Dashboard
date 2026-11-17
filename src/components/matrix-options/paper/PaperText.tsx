@@ -74,6 +74,7 @@ export interface PaperTextProps {
   readonly markdown: string;
   readonly documentVersion?: string;
   readonly nativeFigures?: NativeFigureSet;
+  readonly previewFigureBasePath?: string;
   readonly linkMap?: Readonly<Record<string, string>>;
   readonly className?: string;
   /**
@@ -98,7 +99,7 @@ export interface PaperTextProps {
  * and lists render as plain text, exactly as before derived figures existed. The markdown text
  * itself is unchanged.
  */
-export function PaperText({ markdown, documentVersion, nativeFigures, linkMap, className, headingOffset = 0, headingVariant }: PaperTextProps) {
+export function PaperText({ markdown, documentVersion, nativeFigures, previewFigureBasePath, linkMap, className, headingOffset = 0, headingVariant }: PaperTextProps) {
   const segments = paperInlineSegments(markdown, documentVersion);
   return (
     // Inside the reading frame, body text and wide blocks share the frame's full width (globals.css .paper-reading-frame).
@@ -108,7 +109,7 @@ export function PaperText({ markdown, documentVersion, nativeFigures, linkMap, c
           // The verified private model can come from the authenticated release or a local test candidate.
           nativeFigures && segment.figure.releaseIdentity === nativeFigures.releaseIdentity
             ? <NativeAcceptedPaperFigure key={`native-figure-${segment.figure.placement.figureId}`} figure={segment.figure} nativeFigures={nativeFigures} />
-            : <AcceptedPaperFigure key={`accepted-figure-${segment.figure.placement.figureId}`} figure={segment.figure} />
+            : <AcceptedPaperFigure key={`accepted-figure-${segment.figure.placement.figureId}`} figure={segment.figure} previewFigureBasePath={previewFigureBasePath} />
         ) : segment.kind === 'accepted-figure-unavailable' ? (
           <AcceptedPaperFigureUnavailable key={`accepted-figure-unavailable-${segment.figureId}-${index}`} figureId={segment.figureId} />
         ) : segment.kind === 'appendix-source-media' ? (

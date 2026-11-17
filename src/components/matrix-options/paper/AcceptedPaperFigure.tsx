@@ -73,12 +73,14 @@ export function acceptedFigureViewsInPage(releaseIdentity: string): boolean {
   return getPaperRelease(releaseIdentity)?.delivery === 'private-storage';
 }
 
-export function AcceptedPaperFigure({ figure }: { readonly figure: AcceptedFigureBinding }) {
+export function AcceptedPaperFigure({ figure, previewFigureBasePath }: { readonly figure: AcceptedFigureBinding; readonly previewFigureBasePath?: string }) {
   const { placement, asset } = figure;
   const id = acceptedFigureDomId(placement.figureId);
   const captionId = `paper-figure-caption-${id}`;
   const { label, text } = splitAcceptedFigureCaption({ figureId: placement.figureId, caption: figure.caption });
-  const href = acceptedFigureAssetHref(figure);
+  const href = previewFigureBasePath
+    ? `${previewFigureBasePath}/${encodeURIComponent(asset.file)}?sha256=${asset.sha256}`
+    : acceptedFigureAssetHref(figure);
   const opensInOwnTab = acceptedFigureOpensInOwnTab(figure.releaseIdentity);
   const viewsInPage = acceptedFigureViewsInPage(figure.releaseIdentity);
   return (

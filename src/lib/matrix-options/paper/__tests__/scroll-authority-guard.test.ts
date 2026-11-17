@@ -49,6 +49,7 @@ const EXCEPTIONS = [
   'src/components/matrix-options/CategorySelector.tsx',
   'src/components/matrix-options/EcoFoodBSAFCalculator.tsx',
   'src/components/matrix-options/EvidenceLibrary.tsx',
+  'src/components/matrix-options/paper/R2ReviewPreview.tsx',
   'src/components/matrix-options/HHFoodWebCalculator.tsx',
   'src/components/matrix-options/MatrixOptionsPrimaryNavigation.tsx',
   'src/components/matrix-options/SedimentUseNavigator.tsx',
@@ -255,6 +256,10 @@ describe('scroll authority static guard', () => {
       forms: ['scrollTo', 'scrollTop assignment'],
       reason: 'Manual scroll reset on evidence panel content change.'
     },
+    'src/components/matrix-options/paper/R2ReviewPreview.tsx': {
+      forms: ['scrollIntoView', 'scrollTop assignment', 'focus without preventScroll'],
+      reason: 'Frozen local loopback development preview; the production guided review uses PaperScrollAuthority.'
+    },
     'src/components/matrix-options/HHFoodWebCalculator.tsx': {
       forms: ['focus without preventScroll'],
       reason: 'Roving tabindex focus follow-up on calculator input.'
@@ -314,7 +319,7 @@ describe('scroll authority static guard', () => {
       'src/components/matrix-options/CategorySelector.tsx': "export function c(el: HTMLElement) { el.focus(); el.scrollIntoView(); }", // Extra form
       'src/components/matrix-options/EvidenceLibrary.tsx': "export function e(el: HTMLElement) { el.scrollTo({top: 0}); }", // Missing form
       'src/components/matrix-options/review/Clean.tsx': "export function clean() {}",
-      ...Object.fromEntries(Object.entries(EXCEPTION_DETAILS).filter(([k]) => k !== 'src/components/matrix-options/CategorySelector.tsx' && k !== 'src/components/matrix-options/EvidenceLibrary.tsx').map(([k, v]) => [k, `// dummy\n${v.forms.map(f => f === 'focus without preventScroll' ? 'el.focus();' : f === 'scrollTo' ? 'el.scrollTo();' : 'el.scrollTop = 0;').join('\n')}`]))
+      ...Object.fromEntries(Object.entries(EXCEPTION_DETAILS).filter(([k]) => k !== 'src/components/matrix-options/CategorySelector.tsx' && k !== 'src/components/matrix-options/EvidenceLibrary.tsx').map(([k, v]) => [k, `// dummy\n${v.forms.map(f => f === 'focus without preventScroll' ? 'el.focus();' : f === 'scrollIntoView' ? 'el.scrollIntoView();' : f === 'scrollTo' ? 'el.scrollTo();' : 'el.scrollTop = 0;').join('\n')}`]))
     };
 
     const violations = guardVerdict(Object.keys(synthetic), (file) => synthetic[file as keyof typeof synthetic]);

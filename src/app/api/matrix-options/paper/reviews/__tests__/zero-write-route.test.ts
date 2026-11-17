@@ -9,7 +9,7 @@ const { getAuthAndRateLimitMock, rpcMock } = vi.hoisted(() => ({
 vi.mock('@/app/api/_helpers/rate-limit-wrapper', () => ({ getAuthAndRateLimit: getAuthAndRateLimitMock }));
 vi.mock('server-only', () => ({}));
 
-import { PHASE2_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, PREDECESSOR_PAPER_VERSION, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { getReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
 import { PUT } from '../[questionId]/route';
 
@@ -39,7 +39,7 @@ beforeEach(() => {
 });
 
 describe('review writes: only v0.9.91 collects responses', () => {
-  it.each([['the predecessor', PREDECESSOR_PAPER_VERSION], ['R5', R5_PAPER_VERSION], ['Phase 2', PHASE2_PAPER_VERSION]])('%s: 403 release_read_only and no RPC', async (_name, version) => {
+  it.each([['the predecessor', PREDECESSOR_PAPER_VERSION], ['R5', R5_PAPER_VERSION], ['Phase 2', PHASE2_PAPER_VERSION], ['revised Phase 2 R2', PHASE2_R2_PAPER_VERSION]])('%s: 403 release_read_only and no RPC', async (_name, version) => {
     const response = await put(version, getReviewManifest(version).sha256);
     expect(response.status).toBe(403);
     expect(await response.json()).toEqual({ outcome: 'release_read_only' });
