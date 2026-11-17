@@ -2,19 +2,19 @@ import { describe, expect, it, vi } from 'vitest';
 import { getPaperAdminAccess, getTrustedPaperReviewIdentity, isPaperAdminRole, validateTrustedReviewFilters } from '../paper-admin-guard';
 import { getCohortManifest } from '../cohort-contract';
 import { getReviewManifest } from '../paper/review-manifest';
-import { DEFAULT_PAPER_VERSION, getPaperRelease, paperReleaseIdentity } from '../paper/releases';
+import { V0991_PAPER_VERSION, getPaperRelease, paperReleaseIdentity } from '../paper/releases';
 import { getReviewerGuideBinding } from '../reviewer-guide';
 function client(user: { id: string } | null, roles: unknown[] = [], error?: unknown) { const query: any = { select: vi.fn(() => query), eq: vi.fn(() => query), in: vi.fn(async () => ({ data: roles, error })) }; return { auth: { getUser: vi.fn(async () => ({ data: { user } })) }, from: vi.fn(() => query) } as any; }
 describe('paper admin guard', () => {
   it.each(['admin', 'matrix_admin'])('allows %s', async (role) => { await expect(getPaperAdminAccess(client({ id: 'u1' }, [{ role }]))).resolves.toMatchObject({ allowed: true, role }); });
   it('rejects unauthenticated, forbidden, and role-query errors', async () => { await expect(getPaperAdminAccess(client(null))).resolves.toMatchObject({ status: 401 }); await expect(getPaperAdminAccess(client({ id: 'u1' }, [{ role: 'reviewer' }]))).resolves.toMatchObject({ status: 403 }); await expect(getPaperAdminAccess(client({ id: 'u1' }, [], new Error('RLS')))).resolves.toMatchObject({ status: 403 }); });
   it('recognizes only explicit admin roles', () => { expect(isPaperAdminRole('admin')).toBe(true); expect(isPaperAdminRole('matrix_admin')).toBe(true); expect(isPaperAdminRole('owner')).toBe(false); });
-  it('binds the default v0.9.91 identity to the exact release, manifest, guide, and five cohorts', async () => {
+  it('binds the legacy v0.9.91 identity to the exact release, manifest, guide, and five cohorts', async () => {
     const identity = await getTrustedPaperReviewIdentity();
-    const release = getPaperRelease(DEFAULT_PAPER_VERSION)!;
-    const manifest = getReviewManifest(DEFAULT_PAPER_VERSION);
-    const guide = getReviewerGuideBinding(DEFAULT_PAPER_VERSION);
-    const cohorts = getCohortManifest(DEFAULT_PAPER_VERSION);
+    const release = getPaperRelease(V0991_PAPER_VERSION)!;
+    const manifest = getReviewManifest(V0991_PAPER_VERSION);
+    const guide = getReviewerGuideBinding(V0991_PAPER_VERSION);
+    const cohorts = getCohortManifest(V0991_PAPER_VERSION);
     expect(identity.documentVersion).toBe('v0.9.91');
     expect(identity.documentVersion).toBe(release.documentVersion);
     expect(identity.manifestSha256).toBe('6d336b08b7214a17456ff943eb6f56f33e90d3477f4bd9fe1488c5fe0846a272');
