@@ -1,8 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
-import { ArrowRight, BookOpen, Check, MessageSquareText, X } from 'lucide-react';
+import type { CSSProperties, ReactNode } from 'react';
+import { ArrowRight, BookOpen, Check, Maximize2, MessageSquareText, Minimize2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, RotateCcw, X } from 'lucide-react';
 
 import { GUIDED_R2_FOCUS_AREAS, GUIDED_R2_PROMPTS, GUIDED_R2_SECTION_ANCHORS, type GuidedEntry, type GuidedTargetKind } from '@/lib/matrix-options/paper/guided-r2-contract';
 import { guidedR2DraftSetDigest } from '@/lib/matrix-options/paper/guided-r2-digest';
@@ -11,7 +11,11 @@ import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import { previewAreaForAnchor } from '@/lib/matrix-options/paper/r2-review-preview';
 import { createGuidedTransport, type GuidedFeedbackItem, type GuidedStateReply, type GuidedTransport } from '@/lib/matrix-options/paper/guided-r2-transport';
 import { PaperScrollAuthority } from '@/lib/matrix-options/paper/scroll-authority';
-import { PAPER_SHELL_CLASSES } from './PaperRail';
+import { maxPanelWidth, readPanelPreferences, resolvePanelWidths, writePanelPreferences, type PanelPreferences, type PanelSide } from '@/lib/matrix-options/paper/panel-layout';
+import { DEFAULT_READER_WIDTH, readReaderWidth, writeReaderWidth, type ReaderWidth } from '@/lib/matrix-options/paper/reader-width';
+import { PanelResizeHandle, PaperRail, PaperRailToggle, PAPER_LEFT_WIDTH_VAR, PAPER_RIGHT_WIDTH_VAR, PAPER_SHELL_CLASSES } from './PaperRail';
+import { ReaderWidthControl } from './ReaderWidthControl';
+import { R2_READING_FRAME_CLASSES } from './R2GuidedReview.styles';
 
 interface OutlineEntry { readonly anchor: string; readonly label: string }
 interface Draft { choiceId: string | null; rationale: string; text: string }
@@ -60,14 +64,43 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
   const [mobileOpen, setMobileOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
+  const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({});
+  const [navigationOpen, setNavigationOpen] = useState(true);
+  const [reviewOpen, setReviewOpen] = useState(true);
+  const [panelPreferences, setPanelPreferences] = useState<PanelPreferences>({});
+  const [draftPreferences, setDraftPreferences] = useState<PanelPreferences | null>(null);
+  const [layoutWidth, setLayoutWidth] = useState(0);
+  const [resizing, setResizing] = useState(false);
+  const [readerWidth, setReaderWidth] = useState<ReaderWidth>(DEFAULT_READER_WIDTH);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const actionRef = useRef<HTMLButtonElement>(null);
   const paperRef = useRef<HTMLDivElement>(null);
+  const layoutRef = useRef<HTMLDivElement>(null);
+  const navigationToggleRef = useRef<HTMLButtonElement>(null);
+  const reviewToggleRef = useRef<HTMLButtonElement>(null);
   const [authority] = useState(() => new PaperScrollAuthority());
   const identity = useMemo(() => ({ documentVersion, guidedManifestSha256, reviewManifestSha256 }), [documentVersion, guidedManifestSha256, reviewManifestSha256]);
   // Strict Mode remounts effects in development. One preview bootstrap keeps
   // those duplicate state reads from creating two cookie-bound users.
   const transport = useMemo(() => transportMode === 'preview' ? getPreviewTransport() : createGuidedTransport('production'), [transportMode]);
+  useEffect(() => {
+    try { setPanelPreferences(readPanelPreferences(window.localStorage)); }
+    catch { setPanelPreferences({}); }
+    setReaderWidth(readReaderWidth());
+  }, []);
+  useEffect(() => {
+    const element = layoutRef.current;
+    if (!element) return;
+    const measure = () => setLayoutWidth(Math.round(element.getBoundingClientRect().width));
+    measure();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', measure);
+      return () => window.removeEventListener('resize', measure);
+    }
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
   const viewHref = (mode: 'working-draft' | 'my-review', section: string | null = null) => {
     if (transportMode === 'preview') {
       const query = new URLSearchParams({ mode });
@@ -156,26 +189,30 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
     window.history.pushState(null, '', viewHref('working-draft'));
   };
 
+  const scrollPaperToSection = (anchor: string) => {
+    // Desktop paper has its own scrollport. Never move the outer page.
+    // On mobile the paper is in document flow, so selection changes state only.
+    if (window.innerWidth < 1024) return;
+    const root = paperRef.current;
+    const target = document.getElementById(anchor);
+    if (!root || !target) return;
+    authority.scrollTargetWithin(root, target);
+  };
+
   const selectArea = (id: string) => {
     const area = GUIDED_R2_FOCUS_AREAS.find((item) => item.id === id);
     if (!area) return;
     setView('paper'); setActiveAreaId(id); setActiveAnchor(area.anchor); setMobileOpen(false);
     setVisitedAreaIds((current) => current.includes(id) ? current : [...current, id]);
     window.history.pushState(null, '', viewHref('working-draft', area.anchor));
-    requestAnimationFrame(() => {
-      const target = document.getElementById(area.anchor);
-      if (target) authority.scrollTargetIntoView(target);
-    });
+    requestAnimationFrame(() => scrollPaperToSection(area.anchor));
   };
   const selectSection = (anchor: string) => {
     const owner = previewAreaForAnchor(anchor);
     if (owner) { setActiveAreaId(owner); setVisitedAreaIds((current) => current.includes(owner) ? current : [...current, owner]); }
     setView('paper'); setActiveAnchor(anchor); setMobileOpen(false);
     window.history.pushState(null, '', viewHref('working-draft', anchor));
-    requestAnimationFrame(() => {
-      const target = document.getElementById(anchor);
-      if (target) authority.scrollTargetIntoView(target);
-    });
+    requestAnimationFrame(() => scrollPaperToSection(anchor));
   };
   const updateDraft = (kind: GuidedTargetKind, id: string, patch: Partial<Draft>) => {
     const key = targetKey(kind, id);
@@ -231,6 +268,29 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
   };
   const commentHasText = (id: string) => Boolean(draftValue('section-comment', id).text.trim());
   const sectionLabel = outline.find((item) => item.anchor === activeAnchor)?.label ?? activeAnchor;
+  const effectivePreferences = draftPreferences ?? panelPreferences;
+  const panelWidths = resolvePanelWidths(layoutWidth, effectivePreferences, { left: navigationOpen, right: reviewOpen && view !== 'my-review' });
+  const panelMax = (side: PanelSide) => maxPanelWidth(side, layoutWidth || 1440, side === 'left' ? panelWidths.right : panelWidths.left, side === 'left' ? reviewOpen && view !== 'my-review' : navigationOpen);
+  const persistPanelPreferences = (next: PanelPreferences) => {
+    setPanelPreferences(next);
+    setDraftPreferences(null);
+    try { writePanelPreferences(window.localStorage, next); } catch { /* Widths still apply for this visit. */ }
+  };
+  const resizePanel = (side: PanelSide, width: number) => setDraftPreferences({ ...panelPreferences, [side]: width });
+  const commitPanel = (side: PanelSide, width: number) => persistPanelPreferences({ ...panelPreferences, [side]: width });
+  const resetPanel = (side: PanelSide) => persistPanelPreferences(side === 'left' ? { right: panelPreferences.right } : { left: panelPreferences.left });
+  const closePanel = (side: PanelSide) => {
+    authority.panelActivated();
+    if (side === 'left') { setNavigationOpen(false); navigationToggleRef.current?.focus({ preventScroll: true }); }
+    else { setReviewOpen(false); reviewToggleRef.current?.focus({ preventScroll: true }); }
+  };
+  const togglePanel = (side: PanelSide, open: boolean) => {
+    if (open) { closePanel(side); return; }
+    authority.panelActivated();
+    if (side === 'left') setNavigationOpen(true);
+    else setReviewOpen(true);
+  };
+  const layoutStyle = { [PAPER_LEFT_WIDTH_VAR]: `${panelWidths.left}px`, [PAPER_RIGHT_WIDTH_VAR]: `${panelWidths.right}px` } as CSSProperties;
   const editor = (prefix: string) => {
     if (!state) return readError ? null : <p role="status">Loading your review state...</p>;
     const writable = state.mode === 'writable';
@@ -238,10 +298,21 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
       const key = targetKey(kind, id);
       const value = drafts[key] ?? emptyDraft();
       const entry = state.entries.find((item) => item.target_kind === kind && item.target_id === id);
+      const textareaId = `${prefix}-${id}${choiceOptions ? '-rationale' : ''}`;
+      const countId = `${textareaId}-count`;
+      const text = choiceOptions ? value.rationale : value.text;
+      const expanded = Boolean(expandedFields[key]);
       return <section key={key} className="border-t border-[var(--db-border)] pt-5">
         <h3 className="text-sm font-semibold">{label}</h3>
         {choiceOptions ? <fieldset className="mt-3 space-y-2"><legend className="sr-only">{label}</legend>{choiceOptions.map((option) => <label key={option.id} className="flex min-h-[44px] items-center gap-3 rounded-md border border-[var(--db-border)] px-3 py-2 text-sm"><input type="radio" name={`${prefix}-${id}`} checked={value.choiceId === option.id} onChange={() => updateDraft(kind, id, { choiceId: option.id })} disabled={!writable || busy} />{option.label}</label>)}<button type="button" disabled={!writable || busy || value.choiceId === null} onClick={() => updateDraft(kind, id, { choiceId: null })} className="min-h-[44px] text-xs underline">Clear selection</button></fieldset> : null}
-        {choiceOptions ? <><label htmlFor={`${prefix}-${id}-rationale`} className="mt-3 block text-sm">{rationaleLabel} (optional)</label><textarea id={`${prefix}-${id}-rationale`} rows={3} maxLength={20000} value={value.rationale} onChange={(event) => updateDraft(kind, id, { rationale: event.target.value })} disabled={!writable || busy} className={inputClass} /></> : <textarea aria-label={label} id={`${prefix}-${id}`} rows={rows} maxLength={20000} value={value.text} onChange={(event) => updateDraft(kind, id, { text: event.target.value })} disabled={!writable || busy} className={inputClass} />}
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <label htmlFor={textareaId} className={choiceOptions ? 'text-sm' : 'sr-only'}>{choiceOptions ? `${rationaleLabel} (optional)` : label}</label>
+          <button type="button" aria-pressed={expanded} aria-controls={textareaId} onClick={() => setExpandedFields((current) => ({ ...current, [key]: !current[key] }))} className="inline-flex min-h-[44px] items-center gap-1 rounded px-2 text-xs focus-visible:outline-2 focus-visible:outline-[var(--db-focus-ring)]">
+            {expanded ? <Minimize2 aria-hidden="true" className="h-4 w-4" /> : <Maximize2 aria-hidden="true" className="h-4 w-4" />}{expanded ? 'Collapse editor' : 'Expand editor'}
+          </button>
+        </div>
+        <textarea id={textareaId} rows={rows} maxLength={20000} value={text} onChange={(event) => updateDraft(kind, id, choiceOptions ? { rationale: event.target.value } : { text: event.target.value })} disabled={!writable || busy} aria-describedby={countId} data-expanded={expanded ? 'true' : undefined} className={`${inputClass} resize-y ${expanded ? 'h-[min(70vh,44rem)] min-h-80' : 'h-56 min-h-32'}`} />
+        <p id={countId} aria-live={20000 - text.length <= 1000 ? 'polite' : undefined} className="mt-1 text-right text-xs tabular-nums text-[var(--db-text-muted)]">{text.length} / 20000</p>
         <div className="mt-2 flex items-center gap-3"><button type="button" className={actionClass} disabled={!writable || busy || !dirty[key]} onClick={() => void save(kind, id)}>Save</button><span className="text-xs text-[var(--db-text-secondary)]">{dirty[key] ? 'Unsaved' : entryStatus(entry)}</span></div>
       </section>;
     };
@@ -289,16 +360,23 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
 
   return <div className="min-h-screen bg-[var(--db-surface)] text-[var(--db-text-primary)]">
     <header className="border-b border-[var(--db-border)] px-4 py-5 sm:px-6"><div className="mx-auto max-w-[1600px]"><p className="text-xs font-semibold uppercase tracking-wide text-[var(--db-text-secondary)]">Matrix Options Paper</p><h1 className="mt-1 text-2xl font-semibold">Phase 2 review draft</h1><p className="mt-1 text-sm">Read the proposed approach, answer key questions where you have a view, and comment on any section. Move freely between six focus areas, then check My Review before finishing.</p><p className="mt-1 text-xs text-[var(--db-text-secondary)]">Questions and comments are optional. Save each response before finishing; marking an area reviewed on this page is separate from saving it.</p><p className="mt-2 max-w-3xl text-xs text-[var(--db-text-secondary)]">{dataNotice}</p><div className="mt-3 flex flex-wrap items-center gap-4 text-xs"><span className="inline-flex items-center gap-1"><BookOpen className="h-4 w-4" aria-hidden="true" />Exact R2 paper</span>{R2_READER_LINKS.files.map((file) => <a key={file.label} href={file.href} target="_blank" rel="noopener noreferrer" className="underline">{file.label}</a>)}<a href="/matrix-options/paper/v/v0.9.91" className="underline">Scientific deep dive (v0.9.91)</a></div></div></header>
+    <div className="mx-auto hidden max-w-[1600px] items-center justify-end gap-2 border-b border-[var(--db-border)] px-4 py-1 lg:flex">
+      {panelPreferences.left !== undefined || panelPreferences.right !== undefined ? <button type="button" onClick={() => persistPanelPreferences({})} aria-label="Reset panel widths" className="inline-flex min-h-[44px] items-center gap-1 rounded px-2 text-sm focus-visible:outline-2 focus-visible:outline-[var(--db-focus-ring)]"><RotateCcw aria-hidden="true" className="h-4 w-4" />Reset panel widths</button> : null}
+      <PaperRailToggle label="Navigation" testId="r2-navigation-toggle" open={navigationOpen} controls="r2-navigation-rail" buttonRef={navigationToggleRef} onClick={() => togglePanel('left', navigationOpen)} icon={navigationOpen ? <PanelLeftClose aria-hidden="true" className="h-4 w-4" /> : <PanelLeftOpen aria-hidden="true" className="h-4 w-4" />} />
+      {view !== 'my-review' ? <PaperRailToggle label="Review this section" testId="r2-review-toggle" open={reviewOpen} controls="r2-review-rail" buttonRef={reviewToggleRef} onClick={() => togglePanel('right', reviewOpen)} icon={reviewOpen ? <PanelRightClose aria-hidden="true" className="h-4 w-4" /> : <PanelRightOpen aria-hidden="true" className="h-4 w-4" />} /> : null}
+    </div>
     {state?.mode === 'read-only' ? <p role="status" className="border-b border-[var(--db-border)] bg-[var(--db-depth-1)] px-4 py-3 text-sm">Review responses are currently read-only. The paper remains available.</p> : null}
     {readError ? <p role="alert" className="border-b border-[var(--db-border)] px-4 py-3 text-sm">{readError}</p> : null}
     <p role="status" className="border-b border-[var(--db-border)] px-4 py-2 text-sm" aria-live="polite">{notice}</p>
     <div className="border-b border-[var(--db-border)] px-4 py-3 lg:hidden"><label htmlFor="r2-guided-picker" className="text-xs font-semibold">Go to a focus area</label><select id="r2-guided-picker" className={inputClass} value={view === 'my-review' ? 'my-review' : view === 'whole-paper' ? 'whole-paper' : activeAreaId} onChange={(event) => event.target.value === 'my-review' ? selectMyReview() : event.target.value === 'whole-paper' ? selectWholePaper() : selectArea(event.target.value)}>{GUIDED_R2_FOCUS_AREAS.map((item, index) => <option key={item.id} value={item.id}>{index + 1}. {item.label}</option>)}<option value="whole-paper">Whole-paper comments</option><option value="my-review">My Review</option></select><p className="mt-2 text-xs text-[var(--db-text-secondary)]">{view === 'paper' ? `Current area: ${area.label}. ` : ''}{reviewedCount} of 6 areas marked reviewed on this page.</p><div role="progressbar" aria-label="Focus areas reviewed on this page" aria-valuenow={reviewedCount} aria-valuemin={0} aria-valuemax={6} className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--db-depth-2)]"><div className="h-full bg-[var(--db-accent)]" style={{ width: `${reviewedCount / 6 * 100}%` }} /></div></div>
-    <div className={`${PAPER_SHELL_CLASSES} mx-auto max-w-[1600px] lg:h-[calc(100dvh-12rem)]`}>
-      <aside aria-label="Review navigation" className="hidden w-72 shrink-0 overflow-y-auto border-r border-[var(--db-border)] bg-[var(--db-depth-1)] p-4 lg:block"><h2 className="text-sm font-semibold">Focus areas</h2><p className="mt-1 text-xs text-[var(--db-text-secondary)]">{reviewedCount} of 6 marked reviewed on this page</p><div role="progressbar" aria-label="Focus areas reviewed on this page" aria-valuenow={reviewedCount} aria-valuemin={0} aria-valuemax={6} className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--db-depth-2)]"><div className="h-full bg-[var(--db-accent)]" style={{ width: `${reviewedCount / 6 * 100}%` }} /></div><ol className="mt-4 space-y-1">{GUIDED_R2_FOCUS_AREAS.map((item, index) => <li key={item.id}><button type="button" onClick={() => selectArea(item.id)} aria-current={view === 'paper' && activeAreaId === item.id ? 'step' : undefined} className={`min-h-[44px] w-full rounded-md px-3 py-2 text-left text-sm hover:bg-[var(--db-depth-2)] focus-visible:outline-2 focus-visible:outline-[var(--db-focus-ring)] ${view === 'paper' && activeAreaId === item.id ? 'bg-[var(--db-accent-tint)] font-semibold' : ''}`}>{index + 1}. {item.label}<span className="mt-1 block text-xs font-normal text-[var(--db-text-secondary)]">{reviewedAreaIds.includes(item.id) ? 'Reviewed on this page' : visitedAreaIds.includes(item.id) ? 'Visited' : 'Not visited'}</span></button></li>)}</ol><div className="mt-4 border-t border-[var(--db-border)] pt-3"><button type="button" onClick={selectWholePaper} className="flex min-h-[44px] items-center gap-2 text-sm"><MessageSquareText className="h-4 w-4" aria-hidden="true" />Whole-paper comments</button><button type="button" onClick={selectMyReview} className="mt-2 flex min-h-[44px] items-center gap-2 text-sm"><Check className="h-4 w-4" aria-hidden="true" />My Review</button></div></aside>
-      <main ref={paperRef} className="min-w-0 flex-1 bg-[var(--db-surface)] lg:overflow-y-auto">{view === 'my-review' ? myReview : <div className="paper-reading-frame mx-auto max-w-4xl space-y-5 px-4 py-6 pb-28 sm:px-8 lg:pb-8"><p className="text-sm text-[var(--db-text-secondary)]">Read in any order. Use the review panel or phone action to respond; your current focus area is {area.label}.</p>{paper}</div>}</main>
-      {view !== 'my-review' ? <aside aria-label="Review this section" className="hidden w-80 shrink-0 overflow-y-auto border-l border-[var(--db-border)] p-5 lg:block">{editor('desktop')}</aside> : null}
+    <div ref={layoutRef} style={layoutStyle} data-testid="r2-workspace-layout" data-resizing={resizing ? 'true' : undefined} className={`${PAPER_SHELL_CLASSES} group/layout mx-auto max-w-[1600px] lg:h-[calc(100dvh-15rem)] ${resizing ? 'cursor-col-resize select-none' : ''}`}>
+      <div className="hidden lg:contents"><PaperRail id="r2-navigation-rail" side="left" open={navigationOpen} heading="Review navigation" headingId="r2-navigation-rail-heading" onEscape={() => closePanel('left')}><h2 className="text-sm font-semibold">Focus areas</h2><p className="mt-1 text-xs text-[var(--db-text-secondary)]">{reviewedCount} of 6 marked reviewed on this page</p><div role="progressbar" aria-label="Focus areas reviewed on this page" aria-valuenow={reviewedCount} aria-valuemin={0} aria-valuemax={6} className="mt-3 h-1.5 overflow-hidden rounded-full bg-[var(--db-depth-2)]"><div className="h-full bg-[var(--db-accent)]" style={{ width: `${reviewedCount / 6 * 100}%` }} /></div><ol className="mt-4 space-y-1">{GUIDED_R2_FOCUS_AREAS.map((item, index) => <li key={item.id}><button type="button" onClick={() => selectArea(item.id)} aria-current={view === 'paper' && activeAreaId === item.id ? 'step' : undefined} className={`min-h-[44px] w-full rounded-md px-3 py-2 text-left text-sm hover:bg-[var(--db-depth-2)] focus-visible:outline-2 focus-visible:outline-[var(--db-focus-ring)] ${view === 'paper' && activeAreaId === item.id ? 'bg-[var(--db-accent-tint)] font-semibold' : ''}`}>{index + 1}. {item.label}<span className="mt-1 block text-xs font-normal text-[var(--db-text-secondary)]">{reviewedAreaIds.includes(item.id) ? 'Reviewed on this page' : visitedAreaIds.includes(item.id) ? 'Visited' : 'Not visited'}</span></button></li>)}</ol><div className="mt-4 border-t border-[var(--db-border)] pt-3"><button type="button" onClick={selectWholePaper} className="flex min-h-[44px] items-center gap-2 text-sm"><MessageSquareText className="h-4 w-4" aria-hidden="true" />Whole-paper comments</button><button type="button" onClick={selectMyReview} className="mt-2 flex min-h-[44px] items-center gap-2 text-sm"><Check className="h-4 w-4" aria-hidden="true" />My Review</button></div></PaperRail></div>
+      {navigationOpen ? <PanelResizeHandle side="left" label="Resize navigation panel" controls="r2-navigation-rail" width={panelWidths.left} max={panelMax('left')} onResize={(width) => resizePanel('left', width)} onCommit={(width) => commitPanel('left', width)} onReset={() => resetPanel('left')} onDragChange={setResizing} /> : null}
+      <main ref={paperRef} data-testid="r2-paper-scrollport" className="min-w-0 flex-1 bg-[var(--db-surface)] lg:overflow-y-auto">{view === 'my-review' ? myReview : <div data-testid="r2-reading-frame" data-reader-width={readerWidth} className={`paper-reading-frame ${R2_READING_FRAME_CLASSES} mx-auto space-y-5 px-4 py-6 pb-28 sm:px-8 lg:pb-8`}><ReaderWidthControl value={readerWidth} onChange={(value) => { setReaderWidth(value); writeReaderWidth(value); }} /><p className="text-sm text-[var(--db-text-secondary)]">Read in any order. Use the review panel or phone action to respond; your current focus area is {area.label}.</p>{paper}</div>}</main>
+      {view !== 'my-review' && reviewOpen ? <PanelResizeHandle side="right" label="Resize review panel" controls="r2-review-rail" width={panelWidths.right} max={panelMax('right')} onResize={(width) => resizePanel('right', width)} onCommit={(width) => commitPanel('right', width)} onReset={() => resetPanel('right')} onDragChange={setResizing} /> : null}
+      {view !== 'my-review' ? <div className="hidden lg:contents"><PaperRail id="r2-review-rail" side="right" open={reviewOpen} heading="Review this section" headingId="r2-review-rail-heading" onEscape={() => closePanel('right')}>{editor('desktop')}</PaperRail></div> : null}
     </div>
-    {view !== 'my-review' ? <button ref={actionRef} type="button" onClick={() => setMobileOpen(true)} className={`${actionClass} fixed inset-x-4 bottom-4 z-20 shadow-lg lg:hidden`}>Review this section</button> : null}
-    <dialog ref={dialogRef} onClose={() => { setMobileOpen(false); actionRef.current?.focus({ preventScroll: true }); }} aria-label="Review this section" className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto rounded-t-xl border border-[var(--db-border)] bg-[var(--db-surface)] p-5 text-[var(--db-text-primary)] shadow-xl backdrop:bg-black/50 lg:hidden"><div className="mb-4 flex items-center justify-between border-b border-[var(--db-border)] pb-3"><p className="text-sm font-semibold">Review this section</p><button type="button" onClick={() => setMobileOpen(false)} aria-label="Close review panel" className="flex h-11 w-11 items-center justify-center"><X className="h-5 w-5" aria-hidden="true" /></button></div>{editor('mobile')}</dialog>
+    {view !== 'my-review' ? <button ref={actionRef} type="button" data-testid="r2-mobile-review-action" onClick={() => setMobileOpen(true)} className={`${actionClass} fixed inset-x-4 bottom-4 z-20 shadow-lg lg:hidden`}>Review this section</button> : null}
+    <dialog ref={dialogRef} data-testid="r2-mobile-review-dialog" onClose={() => { setMobileOpen(false); actionRef.current?.focus({ preventScroll: true }); }} aria-label="Review this section" className="fixed inset-x-0 bottom-0 top-auto m-0 max-h-[85dvh] w-full max-w-none overflow-y-auto rounded-t-xl border border-[var(--db-border)] bg-[var(--db-surface)] p-5 text-[var(--db-text-primary)] shadow-xl backdrop:bg-black/50 lg:hidden"><div className="mb-4 flex items-center justify-between border-b border-[var(--db-border)] pb-3"><p className="text-sm font-semibold">Review this section</p><button type="button" onClick={() => setMobileOpen(false)} aria-label="Close review panel" className="flex h-11 w-11 items-center justify-center"><X className="h-5 w-5" aria-hidden="true" /></button></div>{editor('mobile')}</dialog>
   </div>;
 }

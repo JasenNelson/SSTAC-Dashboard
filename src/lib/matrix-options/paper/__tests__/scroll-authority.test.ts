@@ -501,6 +501,25 @@ describe('scroll authority: arbitrated scrolls and landing checks', () => {
     expect(env.intoView).toContain(element);
   });
 
+  it('scrolls a dedicated paper port without moving the page and respects reveal ownership', () => {
+    const { authority } = setup();
+    const root = document.createElement('main');
+    const target = document.createElement('section');
+    root.append(target);
+    root.scrollTop = 50;
+    Object.defineProperty(root, 'getBoundingClientRect', { value: () => ({ top: 100 }) });
+    Object.defineProperty(target, 'getBoundingClientRect', { value: () => ({ top: 300 }) });
+    const before = window.scrollY;
+    const live = authority.beginReveal(authority.requestRevealCause());
+    expect(authority.scrollTargetWithin(root, target)).toBe(false);
+    expect(root.scrollTop).toBe(50);
+    live.finish();
+    expect(authority.scrollTargetWithin(root, target)).toBe(true);
+    expect(root.scrollTop).toBe(234);
+    expect(window.scrollY).toBe(before);
+    expect(authority.scrollTargetWithin(root, document.createElement('div'))).toBe(false);
+  });
+
   it('a landing check asked for while a reveal is entitled is dropped and NOT re-queued when it releases (M1R6-03)', () => {
     const { env, authority } = setup();
     const element = document.createElement('section');

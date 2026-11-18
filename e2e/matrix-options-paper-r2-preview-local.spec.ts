@@ -87,3 +87,84 @@ test('exact fixture page uses only loopback preview state through save, conflict
   expect(requests.some((url) => url.includes('/api/matrix-options/paper/preview-r2'))).toBe(true);
   expect(blocked).toEqual([]);
 });
+
+test('restored R2 controls resize, count and navigate within the paper without moving the page', async ({ page }) => {
+  const blocked: string[] = [];
+  await page.route('**/*', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.hostname !== '127.0.0.1' || url.pathname.startsWith('/api/matrix-options/paper/guided-r2')) {
+      blocked.push(url.href);
+      await route.abort();
+    } else await route.continue();
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  expect((await page.goto('/r2-guided-fixture'))?.status()).toBe(200);
+  const navigation = page.getByRole('complementary', { name: 'Review navigation' });
+  const panel = page.getByRole('complementary', { name: 'Review this section' });
+  const paper = page.getByTestId('r2-paper-scrollport');
+  const layout = page.getByTestId('r2-workspace-layout');
+  const before = await page.evaluate(() => window.scrollY);
+  const paperBefore = await paper.evaluate((element) => element.scrollTop);
+  await navigation.getByRole('button', { name: /Overall approach and paper structure/ }).click();
+  await expect.poll(() => paper.evaluate((element) => element.scrollTop)).toBeGreaterThan(paperBefore);
+  expect(await page.evaluate(() => window.scrollY)).toBe(before);
+  await expect(navigation.getByRole('button', { name: /Overall approach and paper structure/ })).toHaveAttribute('aria-current', 'step');
+
+  const handle = page.getByRole('separator', { name: 'Resize review panel' });
+  const widthBefore = await layout.evaluate((element) => Number.parseInt(element.style.getPropertyValue('--paper-right-width'), 10));
+  const handleBox = await handle.boundingBox();
+  expect(handleBox).not.toBeNull();
+  await page.mouse.move(handleBox!.x + handleBox!.width / 2, handleBox!.y + handleBox!.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(handleBox!.x - 40, handleBox!.y + handleBox!.height / 2, { steps: 5 });
+  await page.mouse.up();
+  const widthAfter = await layout.evaluate((element) => Number.parseInt(element.style.getPropertyValue('--paper-right-width'), 10));
+  expect(widthAfter).toBeGreaterThan(widthBefore);
+  await handle.focus();
+  await page.keyboard.press('ArrowRight');
+  const keyboardWidth = await layout.evaluate((element) => Number.parseInt(element.style.getPropertyValue('--paper-right-width'), 10));
+  expect(keyboardWidth).toBe(widthAfter - 16);
+  await page.reload();
+  await expect(layout).toHaveCSS('--paper-right-width', `${keyboardWidth}px`);
+  await page.getByRole('button', { name: 'Reset panel widths' }).click();
+  await expect(layout).toHaveCSS('--paper-right-width', '400px');
+  const comfortableWidth = await page.getByTestId('r2-reading-frame').evaluate((element) => element.getBoundingClientRect().width);
+  await page.getByRole('radio', { name: 'Wide' }).click();
+  await expect(page.getByTestId('r2-reading-frame')).toHaveAttribute('data-reader-width', 'wide');
+  const wideWidth = await page.getByTestId('r2-reading-frame').evaluate((element) => element.getBoundingClientRect().width);
+  expect(wideWidth).toBeGreaterThan(comfortableWidth + 60);
+
+  const rationale = panel.locator('#desktop-structure-approach-rationale');
+  await rationale.fill('A short rationale');
+  await expect(panel.locator('#desktop-structure-approach-rationale-count')).toHaveText('17 / 20000');
+  const field = rationale.locator('xpath=ancestor::section[1]');
+  await field.getByRole('button', { name: 'Expand editor' }).click();
+  await expect(rationale).toHaveAttribute('data-expanded', 'true');
+  await expect(rationale).toHaveCSS('resize', 'vertical');
+  await field.getByRole('button', { name: 'Collapse editor' }).click();
+  await expect(rationale).not.toHaveAttribute('data-expanded');
+  await rationale.scrollIntoViewIfNeeded();
+  const textareaBox = await rationale.boundingBox();
+  expect(textareaBox).not.toBeNull();
+  await page.mouse.move(textareaBox!.x + textareaBox!.width - 4, textareaBox!.y + textareaBox!.height - 4);
+  await page.mouse.down();
+  await page.mouse.move(textareaBox!.x + textareaBox!.width - 4, textareaBox!.y + textareaBox!.height + 40, { steps: 5 });
+  await page.mouse.up();
+  const resizedBox = await rationale.boundingBox();
+  expect(resizedBox!.height).toBeGreaterThan(textareaBox!.height);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  const mobileBefore = await page.evaluate(() => window.scrollY);
+  await page.getByLabel('Go to a focus area').selectOption('uses-waterbodies');
+  expect(await page.evaluate(() => window.scrollY)).toBe(mobileBefore);
+  const action = page.getByTestId('r2-mobile-review-action');
+  await action.click();
+  const dialog = page.getByTestId('r2-mobile-review-dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('#mobile-site-assignment-count')).toHaveText('0 / 20000');
+  await dialog.getByRole('button', { name: 'Close review panel' }).click();
+  await expect(action).toBeFocused();
+  expect(await page.evaluate(() => window.scrollY)).toBe(mobileBefore);
+  expect(blocked).toEqual([]);
+});
