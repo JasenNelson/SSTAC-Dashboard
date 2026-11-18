@@ -745,14 +745,6 @@ html.dark ::-webkit-scrollbar-thumb:hover,
   .paper-reading-frame[data-reader-width='wide'] {
     max-width: 96rem;
   }
-  @media (min-width: 64rem) {
-    .paper-reading-frame.r2-reading-frame {
-      width: min(100%, max(42rem, 86%));
-    }
-    .paper-reading-frame.r2-reading-frame[data-reader-width='wide'] {
-      width: 100%;
-    }
-  }
   /* Outside the reading frame, prose keeps the previous fixed measure. */
   .reader-prose .math-renderer > :where(p, ul, ol, blockquote) {
     max-width: 84ch;
@@ -763,8 +755,6 @@ html.dark ::-webkit-scrollbar-thumb:hover,
   @media print {
     .paper-reading-frame,
     .paper-reading-frame[data-reader-width] { max-width: none; }
-    .paper-reading-frame.r2-reading-frame,
-    .paper-reading-frame.r2-reading-frame[data-reader-width='wide'] { width: 100%; }
   }
 }
 
