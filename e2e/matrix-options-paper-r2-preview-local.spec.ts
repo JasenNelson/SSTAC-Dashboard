@@ -20,12 +20,21 @@ test('exact fixture page uses only loopback preview state through save, conflict
   const firstState = await firstStateResponse.json();
   const identity = firstStateResponse.request().postDataJSON().identity;
   await expect(page.getByRole('heading', { name: 'Phase 2 review draft' })).toBeVisible();
+  await expect(page.getByText('Review the proposed approach and share feedback where you have a view. All questions are optional.')).toBeVisible();
+  const disclosure = page.locator('header details');
+  await expect(disclosure).not.toHaveAttribute('open');
+  await disclosure.locator('summary').focus();
+  await page.keyboard.press('Enter');
+  await expect(disclosure).toHaveAttribute('open');
+  await expect(disclosure.getByText(/Soft deletion retains them until permanent deletion/)).toBeVisible();
   const navigation = page.getByRole('complementary', { name: 'Review navigation' });
   const panel = page.getByRole('complementary', { name: 'Review this section' });
   await navigation.getByRole('button', { name: /Overall approach and paper structure/ }).click();
   await expect(panel.getByRole('heading', { name: 'Overall approach and paper structure' })).toBeVisible();
   await panel.getByRole('radio', { name: 'Sound as proposed' }).check();
+  await expect(panel.getByText('Marking an area reviewed does not save a response.')).toBeVisible();
   await panel.locator('#desktop-structure-approach-rationale').fill('Keep the structure');
+  await expect(panel.getByText('Unsaved - save before finishing').first()).toBeVisible();
   const firstSaveResponse = page.waitForResponse((response) => response.url().endsWith('/api/matrix-options/paper/preview-r2')
     && response.request().postDataJSON()?.operation === 'save');
   await panel.locator('#desktop-structure-approach-rationale').locator('xpath=ancestor::section[1]').getByRole('button', { name: 'Save' }).click();
@@ -155,6 +164,8 @@ test('restored R2 controls resize, count and navigate within the paper without m
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
+  await expect(page.getByText('Review the proposed approach and share feedback where you have a view. All questions are optional.')).toBeVisible();
+  await expect(page.locator('header details')).not.toHaveAttribute('open');
   const mobileBefore = await page.evaluate(() => window.scrollY);
   await page.getByLabel('Go to a focus area').selectOption('uses-waterbodies');
   expect(await page.evaluate(() => window.scrollY)).toBe(mobileBefore);
