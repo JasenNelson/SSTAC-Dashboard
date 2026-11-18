@@ -6,7 +6,7 @@ import path from 'node:path';
 
 // Both modules are isomorphic and import nothing: the release entries (versions, hashes, the
 // notice id and sentence) and the scroll authority's own bounds are read, not restated.
-import { getPaperRelease, PAPER_WITHHELD_NOTICE_ID, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '../src/lib/matrix-options/paper/releases';
+import { DEFAULT_PAPER_VERSION, getPaperRelease, PAPER_WITHHELD_NOTICE_ID, R5_PAPER_VERSION, V0991_PAPER_VERSION } from '../src/lib/matrix-options/paper/releases';
 import { appendixLSourceMediaContract } from '../src/lib/matrix-options/paper/accepted-source-media';
 import { PAPER_LANDING_MAX_ATTEMPTS } from '../src/lib/matrix-options/paper/scroll-authority';
 import {
@@ -248,9 +248,9 @@ const failOnLogin = (url: string) => {
 const waitForHydratedWorkspace = (page: Page) => page.waitForFunction(() => document.querySelector('[data-testid="workspace-shell"]')?.getAttribute('data-hydrated') === 'true', null, { timeout: 180000 });
 
 /*
- * REVIEW-WRITE SAFETY (commit d5012d77). Only v0.9.91 collects responses; every earlier release is
- * a read-only editor that never sends a PUT. The local dev server talks to PRODUCTION Supabase, so
- * no journey below may reach the per-question review API over the network:
+ * REVIEW-WRITE SAFETY. The production paper workspace presents legacy releases, including
+ * v0.9.91, as read-only; current responses use the R2 guided review. The local dev server talks to
+ * PRODUCTION Supabase, so no journey below may reach the per-question review API over the network:
  * - watchReviewApiRequests counts, from a listener installed BEFORE navigation, every PUT and every
  *   request to the per-question review API (the 'request' event fires even for a request a route
  *   then aborts or fulfils, so it counts attempts, not only what escaped);
@@ -329,8 +329,8 @@ const exerciseReadOnlyReviewEditor = async (page: Page, options: { version: stri
   await expect(page.getByTestId('review-action-reason')).not.toContainText('cannot be saved');
   await expect(page.getByTestId('review-persistence-retry')).toHaveCount(0);
   const link = page.getByTestId('review-current-draft-link');
-  await expect(link).toHaveText('Go to the current review draft');
-  expect(await link.getAttribute('href')).toContain(encodeURIComponent(V0991_PAPER_VERSION));
+  await expect(link).toHaveText('Go to the current R2 review draft');
+  expect(await link.getAttribute('href')).toContain(encodeURIComponent(DEFAULT_PAPER_VERSION));
 
   // Question navigation: the seeded browser copy of Q2 is still displayed, read-only.
   const headingBeforeNext = await page.locator('#active-question-heading').innerText();
@@ -782,9 +782,8 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
   });
 
   /*
-   * Since commit d5012d77 only v0.9.91 collects responses. The M2 typing journey and the M3
-   * save/submit/CAS journey therefore moved to the 'v0.9.91 Appendix L inclusion -- review write
-   * journeys' describe (the private-fixture leg); this release proves the read-only editor.
+   * The predecessor and v0.9.91 now both keep their own historical responses read-only.
+   * The private-fixture leg proves the v0.9.91 behavior separately.
    */
   test('authenticated real release the predecessor review editor is read-only: a seeded browser copy is kept and displayed, no PUT is sent, and the page says it does not collect responses', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
@@ -2413,14 +2412,51 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion', () => {
 
   test('authenticated section navigation renders the source image through its hash-bound route', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
+    const pageErrorCategories = new Map<string, number>();
+    let consoleErrorCount = 0;
+    page.on('pageerror', (error) => {
+      const category = ['Error', 'TypeError', 'ReferenceError', 'SyntaxError', 'RangeError'].includes(error.name) ? error.name : 'Other';
+      pageErrorCategories.set(category, (pageErrorCategories.get(category) ?? 0) + 1);
+    });
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrorCount++;
+    });
+    const assertCleanDevPortal = async () => {
+      const state = await page.evaluate(() => {
+        const portals = [...document.querySelectorAll('nextjs-portal')];
+        const markerSelector = [
+          '[data-nextjs-dialog]',
+          '[data-nextjs-dialog-overlay]',
+          '[role="dialog"]',
+          '[role="alertdialog"]',
+          '[data-nextjs-error-overlay-nav]',
+          '[data-nextjs-error-code]',
+          '[data-nextjs-data-runtime-error-copy-stack]',
+          '[data-nextjs-terminal]',
+          '[role="alert"]',
+          '[data-nextjs-devtools-panel-overlay]',
+        ].join(', ');
+        return {
+          count: portals.length,
+          closed: portals.filter((portal) => !portal.shadowRoot).length,
+          unknown: portals.filter((portal) => !portal.shadowRoot?.querySelector('[data-nextjs-dev-tools-button]')).length,
+          markers: portals.reduce((count, portal) => count + (portal.shadowRoot?.querySelectorAll(markerSelector).length ?? 0), 0),
+        };
+      });
+      expect(state.count).toBeLessThanOrEqual(4);
+      expect(state.closed).toBe(0);
+      expect(state.unknown).toBe(0);
+      expect(state.markers).toBe(0);
+      expect(consoleErrorCount).toBe(0);
+      expect(pageErrorCategories.size).toBe(0);
+    };
     const media = appendixLSourceMediaContract();
     const canonicalPath = `/matrix-options/paper/publication/v/${V0991_PAPER_VERSION}`;
-    const imageResponsePromise = page.waitForResponse((response) => response.url().includes(`/figures/${encodeURIComponent(media.file)}?sha256=${media.sha256}`), { timeout: 60000 });
-    await page.goto('/matrix-options/paper', { waitUntil: 'domcontentloaded' });
+    await page.goto(`${v0991WorkspacePath}?mode=working-draft`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
     await expect.poll(() => pathAndQuery(page.url()), { timeout: 60000 }).toBe(`${canonicalPath}?mode=working-draft`);
-    await expect(page.getByTestId('paper-version-toggle')).toContainText('Current draft');
-    await expect(page.getByTestId('paper-version-status')).toHaveCount(0);
+    await expect(page.getByTestId('paper-version-toggle')).toContainText('Scientific deep dive');
+    await expect(page.getByTestId('paper-version-status')).toContainText('This scientific deep dive remains available for reading.');
     await waitForHydratedWorkspace(page);
     await openOutlineGroup(page, 'Appendices');
     const appendixLLink = page.getByTestId('paper-outline-desktop').getByRole('link', { name: 'Appendix L: Phase 2 Project Plan V2', exact: true });
@@ -2432,6 +2468,25 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion', () => {
 
     const paper = page.getByTestId('paper-document');
     await expect(paper.getByRole('heading', { name: 'Appendix L: Phase 2 Project Plan V2', exact: true })).toBeVisible({ timeout: 60000 });
+    const appendixLDisclosure = page.getByTestId('paper-outline-desktop').getByRole('button', { name: 'Subsections of Appendix L: Phase 2 Project Plan V2', exact: true });
+    await expect(appendixLDisclosure).toBeVisible({ timeout: 60000 });
+    await expect(appendixLDisclosure).toBeEnabled();
+    await expect(appendixLDisclosure).toHaveAttribute('aria-expanded', 'false');
+    await assertCleanDevPortal();
+    await expect(appendixLDisclosure).toHaveAttribute('aria-expanded', 'false');
+    await appendixLDisclosure.focus();
+    await expect(appendixLDisclosure).toBeFocused();
+    await appendixLDisclosure.press('Enter');
+    await expect(appendixLDisclosure).toHaveAttribute('aria-expanded', 'true');
+    await assertCleanDevPortal();
+    const sourceTranscriptionLink = page.getByTestId('paper-outline-desktop').getByRole('link', { name: 'Source transcription', exact: true });
+    await expect(sourceTranscriptionLink).toBeVisible({ timeout: 60000 });
+    expect(await sourceTranscriptionLink.getAttribute('href')).toBe('?mode=working-draft&section=source-transcription');
+    const imageResponsePromise = page.waitForResponse((response) => response.url().includes(`/figures/${encodeURIComponent(media.file)}?sha256=${media.sha256}`), { timeout: 60000 });
+    await sourceTranscriptionLink.click();
+    await expect.poll(() => pathAndQuery(page.url()), { timeout: 60000 }).toBe(`${canonicalPath}?mode=working-draft&section=source-transcription`);
+    await waitForHydratedWorkspace(page);
+    await expect(paper.getByRole('heading', { name: 'Source transcription', exact: true })).toBeVisible({ timeout: 60000 });
     const image = paper.locator('[data-appendix-source-media] img');
     await expect(image).toBeVisible({ timeout: 60000 });
     const src = await image.getAttribute('src');
@@ -2451,24 +2506,22 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion', () => {
     expect(response.headers()['content-type']).toContain('image/png');
     expect(response.headers().etag).toBe(`"${media.sha256}"`);
     expect(sha256Hex(await response.body())).toBe(media.sha256);
+    expect(consoleErrorCount).toBe(0);
+    expect(pageErrorCategories.size).toBe(0);
   });
 
 });
 
 /*
- * The review WRITE journeys, moved here from the 1.0.11 predecessor (commit d5012d77 made every
- * release except v0.9.91 read-only). The title carries 'v0.9.91 Appendix L inclusion' so the
- * private-fixture wrapper leg (--grep 'v0.9.91 Appendix L inclusion') runs them, and the gate is
- * the same as the Appendix L journey above (V0991_APPENDIX_L_JOURNEY, the review flags, the
- * recording-off check).
+ * The private-fixture leg also proves that the v0.9.91 scientific deep dive keeps its historical
+ * responses readable without collecting new ones. The title keeps these journeys in the same
+ * authenticated, recording-off Appendix L gate as the source-image journey above.
  *
- * SAFETY: the local dev server talks to PRODUCTION Supabase, so neither journey makes a real
- * write. Every request to the per-question review API is intercepted BEFORE navigation: M3 answers
- * it with its own mocked rows; M2 (the local-buffer journey) answers the bootstrap as
- * 'unavailable' itself and aborts any PUT, then asserts that the page never even attempted one
- * (the 'request' listener counts attempts, so a real-network PUT count of 0 is proven, not assumed).
+ * SAFETY: the local dev server talks to PRODUCTION Supabase. Intercept the bootstrap read and
+ * abort every per-question review API request before navigation. The request listener counts
+ * attempted PUTs even when a route aborts them.
  */
-test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion -- review write journeys', () => {
+test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion -- read-only review journeys', () => {
   test.skip(!V0991_APPENDIX_L_JOURNEY, 'The private v0.9.91 source fixture is required and is never requested in a public or fixture-free run.');
   test.skip(!reviewNavigationEnabled, 'The standard E2E harness supplies both exact-true paper flags for this journey.');
   test.beforeEach(({ page, trace, screenshot, video }, testInfo) => {
@@ -2476,15 +2529,11 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion -- review write
     holdNavigationsUntilHydrated(page, testInfo);
   });
 
-  /*
-   * M2 (PLAN-R4 3.B.3): local-buffer-only draft text. The bootstrap is answered 'unavailable' here,
-   * so the editor accepts typing into the browser copy and nothing is ever sent.
-   */
-  test('v0.9.91 Appendix L inclusion M2: question index opens a question, a typed draft survives a reload, and the char count/progress update', async ({ page }, testInfo) => {
+  test('v0.9.91 Appendix L inclusion M2: question navigation keeps the scientific deep dive read-only with zero PUTs', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
     const seen = watchReviewApiRequests(page);
     await abortReviewWrites(page);
-    const bootstrap = await mockReviewBootstrap(page, 'unavailable', V0991_PAPER_VERSION);
+    const bootstrap = await mockReviewBootstrap(page, 'available', V0991_PAPER_VERSION);
     await page.goto(`${v0991WorkspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
 
@@ -2496,94 +2545,83 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion -- review write
     await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
 
     const textarea = page.getByRole('textbox', { name: 'Your response' });
-    await textarea.fill('E2E authenticated draft text for question 4.');
-    await expect(page.getByTestId('review-comment-char-count')).toHaveText(/^44 \/ 20000$/);
-    // review-progress no longer names the active question ("N of 12 submitted"
-    // [, drafts] is a whole-review summary); the active question is read from
-    // the question heading and the topic combobox instead.
+    const initialText = await textarea.inputValue();
+    await expect(textarea).toHaveAttribute('readonly', '');
+    await expect(page.getByTestId('review-save-status')).toContainText('This scientific deep dive is read-only. Existing responses remain available.');
+    await expect(page.getByTestId('review-action-reason')).toContainText('This scientific deep dive is read-only.');
+    await expect(page.getByTestId('review-save-draft')).toBeDisabled();
+    await expect(page.getByTestId('review-submit')).toBeDisabled();
+    const currentDraftLink = page.getByTestId('review-current-draft-link');
+    await expect(currentDraftLink).toHaveText('Go to the current R2 review draft');
+    expect(await currentDraftLink.getAttribute('href')).toContain(encodeURIComponent(DEFAULT_PAPER_VERSION));
+    await textarea.click();
+    await page.keyboard.type('a new response must not be accepted');
+    await expect(textarea).toHaveValue(initialText);
+    await expect(page.getByTestId('review-comment-char-count')).toHaveText(`${initialText.length} / 20000`);
     await expect(page.locator('#active-question-heading')).toHaveText(/^Question 4:/);
     await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
     await expect(page.getByTestId('review-progress-count')).toHaveText(/^\d+ of 12 complete$/);
-    await page.getByTestId('review-progress-toggle').click();
-    await expect(page.getByTestId('review-progress')).toContainText(/^\d+ of 12 submitted/);
-    await expect(page.getByTestId('review-progress')).toContainText(/1 draft\b/);
-    await expect(questionIndex.getByTestId('review-question-toggle-q4')).toContainText(/Draft in this browser only|Draft saved|Unsaved changes/);
-    // Past the 1.5 s autosave delay: the 'unavailable' editor still sends nothing.
     await page.waitForTimeout(3000);
 
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('E2E authenticated draft text for question 4.');
+    await expect.poll(() => new URL(page.url()).searchParams.get('q')).toBe(`rpq:${V0991_PAPER_VERSION}:q04`);
+    await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue(initialText);
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveAttribute('readonly', '');
+    await expect(page.getByTestId('review-comment-char-count')).toHaveText(`${initialText.length} / 20000`);
+    await expect(page.getByTestId('review-save-draft')).toBeDisabled();
+    await expect(page.getByTestId('review-submit')).toBeDisabled();
     expect(bootstrap.reads).toBeGreaterThan(0);
     expect(seen.puts).toHaveLength(0);
     expect(seen.questionApi).toHaveLength(0);
   });
 
-  test('v0.9.91 Appendix L inclusion M3: intercepted response save, submit, reload and CAS conflict expose the authenticated workflow', async ({ page }, testInfo) => {
+  test('v0.9.91 Appendix L inclusion M3: historical responses survive reload without accepting new writes', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
     const questionId = `rpq:${V0991_PAPER_VERSION}:q01`;
-    // Every PUT is answered by the mock below; the request listener proves each one was a request
-    // the mock fulfilled (none reached the network), and the counts are asserted at the end.
     const seen = watchReviewApiRequests(page);
-    let fulfilledWrites = 0;
-    // The signed-in E2E reviewer's own id, read from the real route (which names
-    // it even while persistence is unavailable): a made-up id would be a
-    // different reviewer, and the page's identity guard would rightly stop saving.
+    await abortReviewWrites(page);
     let userKey = '';
-    let reviewManifestSha256 = '';
-    let savedRow: Record<string, unknown> | null = null;
-    let forceConflict = false;
     await page.route('**/api/matrix-options/paper/reviews?*', async (route) => {
       const requestUrl = new URL(route.request().url());
-      const isCurrentDraft = requestUrl.searchParams.get('documentVersion') === V0991_PAPER_VERSION;
-      // Only the v0.9.91 read names the manifest the saved row carries; the panel also reads the
-      // predecessor's lineage (a different documentVersion and manifest), which must not overwrite it.
-      if (isCurrentDraft) reviewManifestSha256 = requestUrl.searchParams.get('manifestSha256') ?? '';
+      const isDeepDive = requestUrl.searchParams.get('documentVersion') === V0991_PAPER_VERSION;
       if (!userKey) {
         const real = await route.fetch();
         userKey = String(((await real.json().catch(() => ({}))) as { userKey?: unknown }).userKey ?? '');
         expect(userKey).toMatch(/\S/);
       }
-      await route.fulfill({ status: 200, headers: { 'Cache-Control': 'no-store' }, contentType: 'application/json', body: JSON.stringify({ persistence: 'available', userKey, rows: isCurrentDraft && savedRow ? [savedRow] : [] }) });
-    });
-    await page.route('**/api/matrix-options/paper/reviews/**', async (route) => {
-      fulfilledWrites += 1;
-      const body = JSON.parse(route.request().postData() ?? '{}') as { action?: string; text?: string; expectedRevision?: number | null };
-      if (forceConflict) {
-        await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ outcome: 'stale_revision', row: { ...savedRow, draft_text: 'saved in another tab', revision: 9 } }) });
-        return;
-      }
-      const revision = Number(savedRow?.revision ?? 0) + 1;
-      savedRow = { id: 'response-1', document_version: V0991_PAPER_VERSION, manifest_sha256: reviewManifestSha256, cohort_id: 'categories', question_id: questionId, draft_text: body.text ?? '', submitted_text: body.action === 'submit' ? body.text ?? '' : (savedRow?.submitted_text ?? null), revision, submitted_revision: body.action === 'submit' ? revision : (savedRow?.submitted_revision ?? null), submitted_at: body.action === 'submit' ? new Date().toISOString() : (savedRow?.submitted_at ?? null), updated_at: new Date().toISOString() };
-      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ outcome: 'ok', row: savedRow }) });
+      const rows = isDeepDive ? [{
+        id: 'historical-response-1', document_version: V0991_PAPER_VERSION,
+        manifest_sha256: requestUrl.searchParams.get('manifestSha256') ?? '',
+        cohort_id: 'categories', question_id: questionId,
+        draft_text: 'Historical updated draft', submitted_text: 'Historical submitted response',
+        revision: 2, submitted_revision: 1,
+        submitted_at: '2026-10-01T10:00:00.000Z', updated_at: '2026-10-02T10:00:00.000Z',
+      }] : [];
+      await route.fulfill({ status: 200, headers: { 'Cache-Control': 'no-store' }, contentType: 'application/json', body: JSON.stringify({ persistence: 'available', userKey, rows }) });
     });
     await page.goto(`${v0991WorkspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
     await openQuestion(page, 1);
     const textarea = page.getByRole('textbox', { name: 'Your response' });
-    await textarea.fill('intercepted M3 response');
-    await page.getByRole('button', { name: 'Save draft' }).click();
-    await expect(page.getByTestId('review-save-status')).toContainText(/Draft saved/);
-    await page.getByRole('button', { name: 'Submit response' }).click();
-    await expect(page.getByRole('button', { name: 'Re-submit response' })).toBeVisible();
+    await expect(textarea).toHaveValue('Historical updated draft');
+    await expect(textarea).toHaveAttribute('readonly', '');
+    await expect(page.getByTestId('review-save-status')).toContainText('Changed since submission');
+    await expect(page.getByTestId('review-save-status')).toContainText('This scientific deep dive is read-only. Existing responses remain available.');
+    await page.getByTestId('review-submitted-version').locator('summary').click();
+    await expect(page.getByText('Historical submitted response')).toBeVisible();
+    await expect(page.getByTestId('review-save-draft')).toBeDisabled();
+    await expect(page.getByTestId('review-submit')).toBeDisabled();
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('intercepted M3 response');
-    forceConflict = true;
-    await page.getByRole('textbox', { name: 'Your response' }).fill('local conflict text');
-    await page.getByRole('button', { name: 'Save draft' }).click();
-    await expect(page.getByTestId('review-conflict')).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Keep mine' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Use saved' })).toBeVisible();
-    await page.getByRole('button', { name: 'Use saved' }).click();
-    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('saved in another tab');
-    // Every write the page attempted was one the mock fulfilled: none reached the network.
-    expect(fulfilledWrites).toBeGreaterThanOrEqual(3);
-    expect(seen.questionApi).toHaveLength(fulfilledWrites);
-    expect(seen.puts).toHaveLength(fulfilledWrites);
-    expect(seen.questionApi.every((label) => label.startsWith('PUT '))).toBe(true);
-    // The Logout assertion that used to end this test now lives in the dedicated
-    // SESSION_TEARDOWN_TAG tests in this file. Logout calls supabase.auth.signOut() with the default
-    // GLOBAL scope, which revokes every session of the E2E user - including the shared
-    // storage-state session every later test in this project starts from. Run here, it sent
-    // each subsequent authenticated test to /login.
+    await openQuestion(page, 1);
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('Historical updated draft');
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveAttribute('readonly', '');
+    await expect(page.getByTestId('review-save-status')).toContainText('Changed since submission');
+    await page.getByTestId('review-submitted-version').locator('summary').click();
+    await expect(page.getByText('Historical submitted response')).toBeVisible();
+    await expect(page.getByTestId('review-save-draft')).toBeDisabled();
+    await expect(page.getByTestId('review-submit')).toBeDisabled();
+    expect(seen.puts).toHaveLength(0);
+    expect(seen.questionApi).toHaveLength(0);
   });
 });

@@ -38,7 +38,7 @@ describe('/matrix-options/paper', () => {
     process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'true';
     await expect(MatrixOptionsPaperResolverPage()).rejects.toThrow('NEXT_REDIRECT');
     expect(redirectMock).toHaveBeenCalledTimes(1);
-    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/v0.9.91?mode=working-draft');
+    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/phase2-review-2026-11-fa356b89?mode=working-draft');
   });
 
   it('lands on the canonical Working Draft URL when both flags are absent', async () => {
@@ -48,7 +48,7 @@ describe('/matrix-options/paper', () => {
     expect(screen.getByText('workspace child')).toBeInTheDocument();
     await expect(MatrixOptionsPaperResolverPage()).rejects.toThrow('NEXT_REDIRECT');
     expect(redirectMock).toHaveBeenCalledTimes(1);
-    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/v0.9.91?mode=working-draft');
+    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/phase2-review-2026-11-fa356b89?mode=working-draft');
   });
 
   it('F-06: gives the header actions slot a named group role and hides it while empty', () => {

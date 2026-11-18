@@ -258,10 +258,13 @@ describe('prefetch on approach (M1R3-02)', () => {
 
     // The loaded section leaves the placeholder set, so the observer is rebuilt
     // over what is still unloaded and the superseded one is disconnected.
-    const latest = FakeIntersectionObserver.instances[FakeIntersectionObserver.instances.length - 1];
-    expect(latest).not.toBe(first);
-    expect(observedAnchors(latest)).toEqual(['results']);
-    expect(first.disconnectCount).toBeGreaterThan(0);
+    await waitFor(() => {
+      const latest = liveObserver();
+      expect(latest).not.toBe(first);
+      expect(observedAnchors(latest)).toEqual(['results']);
+      expect(first.disconnectCount).toBeGreaterThan(0);
+    });
+    const latest = liveObserver();
 
     unmount();
     expect(latest.disconnectCount).toBeGreaterThan(0);

@@ -4112,14 +4112,13 @@ describe('Round 3: Back/Forward make the open editor agree with the restored URL
   });
 
   // History mechanics only: this hands the predecessor guide (its question ids) to the v0.9.91 version and manifest, a combination production never renders (page.tsx resolves the v0.9.91 guide from its own paper). Not a v0.9.91 rendering contract.
-  it('My Review (writable v0.9.91 release): close, then Back to an entry naming a question reopens it with its saved draft; an entry without q closes it', async () => {
-    window.localStorage.clear();
+  it('My Review (read-only v0.9.91 deep dive): Back reopens the question without accepting a new draft', async () => {
     const fetchMock = vi.fn(() => Promise.resolve(new Response(JSON.stringify({ persistence: 'available', userKey: 'user-a', rows: [] }), { status: 200 })));
     vi.stubGlobal('fetch', fetchMock);
     render(<RevisedPaperWorkspace documentVersion={V0991_PAPER_VERSION} guide={defaultGuide} reviewManifestSha256={getReviewManifest(V0991_PAPER_VERSION).sha256} urlState={state({ mode: 'my-review' })} assignment={getProductionAssignment()} cohortPortions={realPortions()} />);
     fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
     const q1Url = window.location.pathname + window.location.search;
-    await waitFor(() => expect(screen.getByTestId('review-comment-draft')).not.toHaveAttribute('readonly'));
+    await waitFor(() => expect(screen.getByTestId('review-comment-draft')).toHaveAttribute('readonly'));
     fireEvent.change(screen.getByTestId('review-comment-draft'), { target: { value: 'Draft kept across history' } });
     fireEvent.click(screen.getByTestId('review-question-toggle-q1'));
     expect(openRows()).toEqual([]);
@@ -4127,11 +4126,10 @@ describe('Round 3: Back/Forward make the open editor agree with the restored URL
 
     popTo(q1Url);
     expect(openRows()).toEqual(['review-question-row-q1']);
-    expect(screen.getByTestId('review-comment-draft')).toHaveValue('Draft kept across history');
+    expect(screen.getByTestId('review-comment-draft')).toHaveValue('');
     popTo(`${window.location.pathname}?mode=my-review&cohort=${new URLSearchParams(q1Url.split('?')[1]).get('cohort') ?? ''}`);
     expect(openRows()).toEqual([]);
     expect(pushState).not.toHaveBeenCalled();
-    window.localStorage.clear();
   });
 
   it('My Review (earlier draft): the editor is read-only, so nothing typed is kept across Back', () => {

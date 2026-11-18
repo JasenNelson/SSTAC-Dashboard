@@ -11,7 +11,7 @@ import { reviewResponseRowSchema, reviewResponseStatusLabel } from '@/lib/matrix
 import type { ReviewResponseRow } from '@/lib/matrix-options/paper/review-responses';
 import { questionPromptSummary } from '@/lib/matrix-options/paper/review-navigation';
 import type { ReviewNavTopic } from '@/lib/matrix-options/paper/review-navigation';
-import { isConcisePaperRelease, PAPER_RELEASES, PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
+import { DEFAULT_PAPER_VERSION, isConcisePaperRelease, PAPER_RELEASES, PHASE2_PAPER_VERSION, PHASE2_R2_PAPER_VERSION, V0991_PAPER_VERSION } from '@/lib/matrix-options/paper/releases';
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import type { ReviewLineageView } from '@/lib/matrix-options/paper/review-lineage';
 import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
@@ -52,6 +52,8 @@ interface ConflictState { readonly questionId: string; readonly row: ReviewRespo
 
 export interface ReviewCommentsPanelProps {
   readonly documentVersion: string;
+  /** The production workspace closes legacy writes while retaining response history. */
+  readonly legacyReadOnly?: boolean;
   readonly manifestSha256?: string;
   readonly cohortId?: string | null;
   readonly questions: readonly Question[];
@@ -129,7 +131,7 @@ function headingCitation(heading: string): string | null {
 /** Why a review row is revealed: an explicit selection, or the q deep link at mount. */
 export type ReviewRevealCause = 'selection' | 'url';
 
-export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', cohortId, questions, question, highlightQuestionNumber, onCloseQuestion, revealElement, openRequest = 0, responseRef, onSelectQuestion, onPreviousQuestion, onNextQuestion, topics, sectionNote = null, cohortForQuestion, lineage }: ReviewCommentsPanelProps) {
+export function ReviewCommentsPanel({ documentVersion, legacyReadOnly = false, manifestSha256 = '', cohortId, questions, question, highlightQuestionNumber, onCloseQuestion, revealElement, openRequest = 0, responseRef, onSelectQuestion, onPreviousQuestion, onNextQuestion, topics, sectionNote = null, cohortForQuestion, lineage }: ReviewCommentsPanelProps) {
   /*
    * STATE MODEL -- one source of truth per question.
    *
@@ -151,8 +153,8 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
    *   row's. While one is open only Keep mine / Use saved write; typing keeps
    *   the conflict and updates the text Keep mine will save.
    */
-  // The one write predicate: only the current v0.9.91 draft collects responses.
-  const writable = documentVersion === V0991_PAPER_VERSION;
+  // The production workspace closes legacy writes; the old mechanics remain testable in isolation.
+  const writable = documentVersion === V0991_PAPER_VERSION && !legacyReadOnly;
   const [serverPersistence, setPersistence] = useState<PersistenceState>(manifestSha256 ? 'loading' : 'unavailable');
   const persistence: PersistenceState = writable ? serverPersistence : 'not-collecting';
   const [userKey, setUserKey] = useState<string | null>(null);
@@ -990,7 +992,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
       : activeState === 'draft'
         ? `Draft saved${updatedAt ? ` ${updatedAt}` : ''}.`
         : '';
-  const notCollectingLabel = isConcisePaperRelease(documentVersion) ? 'This Phase 2 review draft does not collect responses yet.' : 'This earlier draft does not collect responses.';
+  const notCollectingLabel = documentVersion === V0991_PAPER_VERSION ? 'This scientific deep dive is read-only. Existing responses remain available.' : isConcisePaperRelease(documentVersion) ? 'Use the current R2 guided review to respond.' : 'This earlier draft does not collect responses.';
   const notCollectingStatus = activeDraft
     ? `${notCollectingLabel} Your text is kept in this browser only, and is cleared when you sign out.`
     : `${readOnlyRowStatus ? `${readOnlyRowStatus} ` : ''}${notCollectingLabel}`;
@@ -1213,7 +1215,7 @@ export function ReviewCommentsPanel({ documentVersion, manifestSha256 = '', coho
                       {actionReason ? (
                         <div data-testid="review-action-reason" className="flex flex-wrap items-center gap-2">
                           <p id="review-action-reason" className="min-w-0 flex-1 text-xs text-[var(--db-text-secondary)]">{actionReason}</p>
-                          {persistence === 'not-collecting' ? <a href={paperWorkspaceHref(V0991_PAPER_VERSION, { mode: 'my-review', cohort: null, q: null, section: null })} data-testid="review-current-draft-link" className="inline-flex min-h-[44px] items-center text-xs font-medium text-[var(--db-accent-strong)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] dark:text-[var(--db-accent)]">Go to the current review draft</a> : null}
+                          {persistence === 'not-collecting' && documentVersion !== DEFAULT_PAPER_VERSION ? <a href={paperWorkspaceHref(DEFAULT_PAPER_VERSION, { mode: 'my-review', cohort: null, q: null, section: null })} data-testid="review-current-draft-link" className="inline-flex min-h-[44px] items-center text-xs font-medium text-[var(--db-accent-strong)] underline-offset-4 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--db-focus-ring)] dark:text-[var(--db-accent)]">Go to the current R2 review draft</a> : null}
                           {(persistence === 'unavailable' || persistence === 'unauthenticated') && manifestSha256 ? <button type="button" data-testid="review-persistence-retry" onClick={retryPersistence} className={cn(secondaryButton, 'text-xs')}>Try again</button> : null}
                         </div>
                       ) : null}

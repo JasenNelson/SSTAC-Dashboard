@@ -100,17 +100,17 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts|matrix-options-paper-r2-preview-local\.spec\.ts/,
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts|matrix-options-paper-r2-preview-local\.spec\.ts/,
     },
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts|matrix-options-paper-r2-preview-local\.spec\.ts/,
     },
     ...(runAuthenticatedE2E
       ? [

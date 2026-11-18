@@ -28,7 +28,7 @@ describePrivateV0991('v0.9.91 private review draft (exact private fixture)', () 
     const release = getPaperRelease(V0991_PAPER_VERSION);
     expect(release).not.toBeNull();
     expect(release).toMatchObject({
-      activation: 'DEFAULT',
+      activation: 'SELECTABLE_NON_DEFAULT',
       predecessorVersion: R5_PAPER_VERSION,
       withheld: null,
       acceptedFigures: true,

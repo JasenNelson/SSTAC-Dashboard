@@ -51,7 +51,7 @@ describe('v0.9.91 release contracts (clean checkout)', () => {
       bytes: 607464,
       delivery: 'private-storage',
       filename: null,
-      activation: 'DEFAULT',
+      activation: 'SELECTABLE_NON_DEFAULT',
       predecessorVersion: R5_PAPER_VERSION,
       withheld: null,
       acceptedFigures: true,

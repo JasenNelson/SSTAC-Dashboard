@@ -207,8 +207,8 @@ describe('zero-write gate: every release except v0.9.91 never PUTs', () => {
     expect(screen.getByTestId('review-action-reason')).toHaveTextContent('This earlier draft does not collect responses.');
     expect(screen.getByTestId('review-action-reason').textContent).not.toMatch(/cannot be saved/);
     const link = screen.getByTestId('review-current-draft-link');
-    expect(link).toHaveTextContent('Go to the current review draft');
-    expect(link.getAttribute('href')).toContain(encodeURIComponent(V0991_PAPER_VERSION));
+    expect(link).toHaveTextContent('Go to the current R2 review draft');
+    expect(link.getAttribute('href')).toContain(encodeURIComponent(PHASE2_R2_PAPER_VERSION));
   });
 
   // Plan R4: only v0.9.91 collects responses.
@@ -227,6 +227,17 @@ describe('zero-write gate: every release except v0.9.91 never PUTs', () => {
     render(panelElement(V0991_PAPER_VERSION));
     await bootstrapped();
     expect(textbox()).not.toHaveAttribute('readonly');
+  });
+
+  it('production v0.9.91 keeps history but rejects new UI responses', async () => {
+    const { fetchMock, puts } = installFetch(V0991_PAPER_VERSION);
+    render(panelElement(V0991_PAPER_VERSION, { legacyReadOnly: true }));
+    await notCollectingReady(fetchMock);
+    expect(textbox()).toHaveAttribute('readonly');
+    expect(screen.getByTestId('review-action-reason')).toHaveTextContent('This scientific deep dive is read-only.');
+    expect(screen.getByTestId('review-save-draft')).toBeDisabled();
+    expect(screen.getByTestId('review-submit')).toBeDisabled();
+    expect(puts).toHaveLength(0);
   });
 
   it('v0.9.91 positive control: the same flow still PUTs a draft', async () => {

@@ -2,7 +2,7 @@
  * The Matrix Options Paper releases this application can address.
  *
  * Bound releases retain their own source identities. The normal paper entry
- * selects v0.9.91; explicit predecessor URLs and review identities remain
+ * selects the concise R2 review; explicit predecessor URLs and review identities remain
  * addressable. Default selection does not confer scientific finality.
  *
  * Isomorphic: no fs, no crypto, no server-only import, and NOTHING that locates
@@ -24,7 +24,7 @@ export const R5_PAPER_VERSION = 'v0.9.88-r4-presentation-001' as const;
 export const V0991_PAPER_VERSION = 'v0.9.91' as const;
 export const PHASE2_PAPER_VERSION = 'phase2-review-2026-11-186bcf53' as const;
 export const PHASE2_R2_PAPER_VERSION = 'phase2-review-2026-11-fa356b89' as const;
-export const DEFAULT_PAPER_VERSION = V0991_PAPER_VERSION;
+export const DEFAULT_PAPER_VERSION = PHASE2_R2_PAPER_VERSION;
 
 export type PaperReleaseVersion = typeof PREDECESSOR_PAPER_VERSION | typeof R5_PAPER_VERSION | typeof V0991_PAPER_VERSION | typeof PHASE2_PAPER_VERSION | typeof PHASE2_R2_PAPER_VERSION;
 
@@ -180,9 +180,9 @@ const V0991_RELEASE: PaperRelease = Object.freeze({
   delivery: 'private-storage',
   filename: null,
   provenance: null,
-  activation: 'DEFAULT',
-  label: 'Current collaborative expert-review draft',
-  shortLabel: 'Current draft',
+  activation: 'SELECTABLE_NON_DEFAULT',
+  label: 'Scientific deep dive (v0.9.91)',
+  shortLabel: 'Scientific deep dive',
   summary: 'The complete v0.9.91 working draft includes Appendix L. Responses to it remain separate from other paper versions; it is not a final standards decision.',
   headingDepthShift: 1,
   frontMatter: true,
@@ -229,7 +229,7 @@ const PHASE2_R2_RELEASE: PaperRelease = Object.freeze({
   delivery: 'private-storage',
   filename: null,
   provenance: null,
-  activation: 'SELECTABLE_NON_DEFAULT',
+  activation: 'DEFAULT',
   label: 'Revised Phase 2 review draft - November 2026',
   shortLabel: 'Revised Phase 2 draft',
   summary: 'The revised concise SABCS proposal for review. Responses to earlier drafts remain with their original questions.',
@@ -255,7 +255,11 @@ export function getPaperRelease(documentVersion: string | undefined | null): Pap
 }
 
 export function getDefaultPaperRelease(): PaperRelease {
-  return V0991_RELEASE;
+  const defaults = PAPER_RELEASES.filter((release) => release.activation === 'DEFAULT');
+  if (defaults.length !== 1 || defaults[0].documentVersion !== DEFAULT_PAPER_VERSION) {
+    throw new Error('Paper release registry must have exactly one bound default');
+  }
+  return defaults[0];
 }
 
 /** `matrix-options-paper:<version>:<sha256>`, the identity structure ids are hashed with. */

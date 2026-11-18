@@ -14,7 +14,7 @@ import { getReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
 import { PUT } from '../[questionId]/route';
 
 /*
- * Zero-write gate, server side: only v0.9.91 collects responses. Any other release is refused
+ * Zero-write gate, server side: every legacy release rejects new responses
  * with 403 release_read_only before any manifest lookup or RPC.
  */
 
@@ -38,7 +38,7 @@ beforeEach(() => {
   }));
 });
 
-describe('review writes: only v0.9.91 collects responses', () => {
+describe('review writes: legacy responses are read-only', () => {
   it.each([['the predecessor', PREDECESSOR_PAPER_VERSION], ['R5', R5_PAPER_VERSION], ['Phase 2', PHASE2_PAPER_VERSION], ['revised Phase 2 R2', PHASE2_R2_PAPER_VERSION]])('%s: 403 release_read_only and no RPC', async (_name, version) => {
     const response = await put(version, getReviewManifest(version).sha256);
     expect(response.status).toBe(403);
@@ -52,17 +52,17 @@ describe('review writes: only v0.9.91 collects responses', () => {
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
-  it('rejects a direct Phase 2 write even when the caller supplies the writable release digest', async () => {
+  it('rejects a direct Phase 2 write even when the caller supplies the v0.9.91 digest', async () => {
     const response = await put(PHASE2_PAPER_VERSION, getReviewManifest(V0991_PAPER_VERSION).sha256);
     expect(response.status).toBe(403);
     expect(await response.json()).toEqual({ outcome: 'release_read_only' });
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
-  it('v0.9.91 still reaches the RPC', async () => {
+  it('v0.9.91 is also read-only and never reaches the RPC', async () => {
     const response = await put(V0991_PAPER_VERSION, getReviewManifest(V0991_PAPER_VERSION).sha256);
-    expect(response.status).toBe(200);
-    expect(rpcMock).toHaveBeenCalledTimes(1);
-    expect(rpcMock).toHaveBeenCalledWith('matrix_paper_review_save_draft', expect.objectContaining({ p_document_version: V0991_PAPER_VERSION }));
+    expect(response.status).toBe(403);
+    expect(await response.json()).toEqual({ outcome: 'release_read_only' });
+    expect(rpcMock).not.toHaveBeenCalled();
   });
 });
