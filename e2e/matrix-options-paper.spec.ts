@@ -2430,6 +2430,10 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion', () => {
 
     const paper = page.getByTestId('paper-document');
     await expect(paper.getByRole('heading', { name: 'Appendix L: Phase 2 Project Plan V2', exact: true })).toBeVisible({ timeout: 60000 });
+    const appendixLDisclosure = page.getByTestId('paper-outline-desktop').getByRole('button', { name: 'Subsections of Appendix L: Phase 2 Project Plan V2', exact: true });
+    await expect(appendixLDisclosure).toBeVisible({ timeout: 60000 });
+    if ((await appendixLDisclosure.getAttribute('aria-expanded')) !== 'true') await appendixLDisclosure.click();
+    await expect(appendixLDisclosure).toHaveAttribute('aria-expanded', 'true');
     const sourceTranscriptionLink = page.getByTestId('paper-outline-desktop').getByRole('link', { name: 'Source transcription', exact: true });
     await expect(sourceTranscriptionLink).toBeVisible({ timeout: 60000 });
     expect(await sourceTranscriptionLink.getAttribute('href')).toBe('?mode=working-draft&section=source-transcription');
