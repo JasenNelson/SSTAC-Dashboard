@@ -2412,6 +2412,44 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion', () => {
 
   test('authenticated section navigation renders the source image through its hash-bound route', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
+    const pageErrorCategories = new Map<string, number>();
+    let consoleErrorCount = 0;
+    page.on('pageerror', (error) => {
+      const category = ['Error', 'TypeError', 'ReferenceError', 'SyntaxError', 'RangeError'].includes(error.name) ? error.name : 'Other';
+      pageErrorCategories.set(category, (pageErrorCategories.get(category) ?? 0) + 1);
+    });
+    page.on('console', (message) => {
+      if (message.type() === 'error') consoleErrorCount++;
+    });
+    const assertCleanDevPortal = async () => {
+      const state = await page.evaluate(() => {
+        const portals = [...document.querySelectorAll('nextjs-portal')];
+        const markerSelector = [
+          '[data-nextjs-dialog]',
+          '[data-nextjs-dialog-overlay]',
+          '[role="dialog"]',
+          '[role="alertdialog"]',
+          '[data-nextjs-error-overlay-nav]',
+          '[data-nextjs-error-code]',
+          '[data-nextjs-data-runtime-error-copy-stack]',
+          '[data-nextjs-terminal]',
+          '[role="alert"]',
+          '[data-nextjs-devtools-panel-overlay]',
+        ].join(', ');
+        return {
+          count: portals.length,
+          closed: portals.filter((portal) => !portal.shadowRoot).length,
+          unknown: portals.filter((portal) => !portal.shadowRoot?.querySelector('[data-nextjs-dev-tools-button]')).length,
+          markers: portals.reduce((count, portal) => count + (portal.shadowRoot?.querySelectorAll(markerSelector).length ?? 0), 0),
+        };
+      });
+      expect(state.count).toBeLessThanOrEqual(4);
+      expect(state.closed).toBe(0);
+      expect(state.unknown).toBe(0);
+      expect(state.markers).toBe(0);
+      expect(consoleErrorCount).toBe(0);
+      expect(pageErrorCategories.size).toBe(0);
+    };
     const media = appendixLSourceMediaContract();
     const canonicalPath = `/matrix-options/paper/publication/v/${V0991_PAPER_VERSION}`;
     await page.goto(`${v0991WorkspacePath}?mode=working-draft`, { waitUntil: 'domcontentloaded' });
@@ -2432,8 +2470,15 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion', () => {
     await expect(paper.getByRole('heading', { name: 'Appendix L: Phase 2 Project Plan V2', exact: true })).toBeVisible({ timeout: 60000 });
     const appendixLDisclosure = page.getByTestId('paper-outline-desktop').getByRole('button', { name: 'Subsections of Appendix L: Phase 2 Project Plan V2', exact: true });
     await expect(appendixLDisclosure).toBeVisible({ timeout: 60000 });
-    if ((await appendixLDisclosure.getAttribute('aria-expanded')) !== 'true') await appendixLDisclosure.click();
+    await expect(appendixLDisclosure).toBeEnabled();
+    await expect(appendixLDisclosure).toHaveAttribute('aria-expanded', 'false');
+    await assertCleanDevPortal();
+    await expect(appendixLDisclosure).toHaveAttribute('aria-expanded', 'false');
+    await appendixLDisclosure.focus();
+    await expect(appendixLDisclosure).toBeFocused();
+    await appendixLDisclosure.press('Enter');
     await expect(appendixLDisclosure).toHaveAttribute('aria-expanded', 'true');
+    await assertCleanDevPortal();
     const sourceTranscriptionLink = page.getByTestId('paper-outline-desktop').getByRole('link', { name: 'Source transcription', exact: true });
     await expect(sourceTranscriptionLink).toBeVisible({ timeout: 60000 });
     expect(await sourceTranscriptionLink.getAttribute('href')).toBe('?mode=working-draft&section=source-transcription');
@@ -2461,6 +2506,8 @@ test.describe('Matrix Options Paper v0.9.91 Appendix L inclusion', () => {
     expect(response.headers()['content-type']).toContain('image/png');
     expect(response.headers().etag).toBe(`"${media.sha256}"`);
     expect(sha256Hex(await response.body())).toBe(media.sha256);
+    expect(consoleErrorCount).toBe(0);
+    expect(pageErrorCategories.size).toBe(0);
   });
 
 });
