@@ -442,6 +442,15 @@ export class PaperScrollAuthority {
     return true;
   }
 
+  /** Align a target inside a dedicated paper scrollport without moving the page. */
+  scrollTargetWithin(scrollport: HTMLElement, target: Element, gap = 16): boolean {
+    if (this.ownsScrollport() || !scrollport.contains(target)) return false;
+    const top = scrollport.scrollTop + target.getBoundingClientRect().top - scrollport.getBoundingClientRect().top - gap;
+    if (!Number.isFinite(top)) return false;
+    scrollport.scrollTop = Math.max(0, top);
+    return true;
+  }
+
   /* ------------------------------------------------------------------ */
   /* Pin policy -- the one place                                          */
   /* ------------------------------------------------------------------ */

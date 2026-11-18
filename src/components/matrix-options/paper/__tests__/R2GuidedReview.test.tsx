@@ -32,8 +32,13 @@ const savedEntry = (kind: string, id: string, values: Record<string, unknown> = 
 beforeEach(() => {
   fetchMock.mockReset();
   vi.stubGlobal('fetch', fetchMock);
+  window.localStorage.clear();
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+  Reflect.deleteProperty(HTMLDialogElement.prototype, 'close');
+});
 
 it('keeps the exact paper readable when the state schema is unavailable', async () => {
   fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? { outcome: 'persistence_unavailable' } : feedbackResponse()), { status: url.includes('/state?') ? 503 : 200 })));
@@ -65,6 +70,117 @@ it('shows inactive review as read-only and never offers an enabled Save button',
   expect(await screen.findByText('Review responses are currently read-only. The paper remains available.')).toBeInTheDocument();
   expect(screen.getAllByRole('button', { name: 'Save' }).every((button) => (button as HTMLButtonElement).disabled)).toBe(true);
   expect(fetchMock).toHaveBeenCalledTimes(2);
+});
+
+it('restores desktop panel widths, keyboard resize, reset, collapse and focus return', async () => {
+  window.localStorage.setItem('mtwg-paper-panel-widths-v1', JSON.stringify({ left: 300, right: 450 }));
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
+  render(<R2GuidedReview {...props} />);
+  await screen.findByText('Review responses are currently read-only. The paper remains available.');
+  const layout = screen.getByTestId('r2-workspace-layout');
+  expect(layout.style.getPropertyValue('--paper-left-width')).toBe('300px');
+  expect(layout.style.getPropertyValue('--paper-right-width')).toBe('450px');
+  const handle = screen.getByRole('separator', { name: 'Resize review panel' });
+  fireEvent.keyDown(handle, { key: 'ArrowLeft' });
+  expect(layout.style.getPropertyValue('--paper-right-width')).toBe('466px');
+  expect(JSON.parse(window.localStorage.getItem('mtwg-paper-panel-widths-v1') ?? '{}')).toEqual({ left: 300, right: 466 });
+  fireEvent.doubleClick(handle);
+  expect(layout.style.getPropertyValue('--paper-right-width')).toBe('352px');
+  const toggle = screen.getByTestId('r2-review-toggle');
+  fireEvent.keyDown(screen.getByRole('complementary', { name: 'Review this section' }), { key: 'Escape' });
+  expect(toggle).toHaveFocus();
+  expect(toggle).toHaveAttribute('aria-expanded', 'false');
+  expect(screen.getByRole('complementary', { name: 'Review this section' })).toHaveAttribute('inert');
+  fireEvent.click(toggle);
+  expect(toggle).toHaveAttribute('aria-expanded', 'true');
+  fireEvent.click(screen.getByTestId('r2-navigation-toggle'));
+  expect(screen.getByTestId('r2-navigation-toggle')).toHaveAttribute('aria-expanded', 'false');
+  fireEvent.click(screen.getByRole('button', { name: 'Reset panel widths' }));
+  expect(window.localStorage.getItem('mtwg-paper-panel-widths-v1')).toBeNull();
+});
+
+it('restores fluid Comfortable/Wide reader preference without enabling writes', async () => {
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
+  render(<R2GuidedReview {...props} />);
+  await screen.findByText('Review responses are currently read-only. The paper remains available.');
+  const frame = screen.getByTestId('r2-reading-frame');
+  expect(frame).toHaveAttribute('data-reader-width', 'comfortable');
+  fireEvent.click(screen.getByRole('radio', { name: 'Wide' }));
+  expect(frame).toHaveAttribute('data-reader-width', 'wide');
+  expect(window.localStorage.getItem('mtwg-paper-reader-width-v1')).toBe('wide');
+  expect(screen.getAllByRole('button', { name: 'Save' }).every((button) => (button as HTMLButtonElement).disabled)).toBe(true);
+});
+
+it('shows 20,000-character counts and expandable manual-height editors for all text targets', async () => {
+  const entries = [
+    savedEntry('choice-prompt', 'structure-approach', { draft_rationale: 'Keep it.' }),
+    savedEntry('text-prompt', 'site-assignment', { draft_text: 'Site details.' }),
+    savedEntry('section-comment', 'sec-phase2-3', { draft_text: 'x'.repeat(19000) }),
+    savedEntry('whole-paper-comment', 'whole-paper', { draft_text: 'x'.repeat(18999) }),
+  ];
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse(entries) : feedbackResponse()))));
+  render(<R2GuidedReview {...props} />);
+  await screen.findByText('Review responses are currently read-only. The paper remains available.');
+  const rationale = document.getElementById('desktop-structure-approach-rationale') as HTMLTextAreaElement;
+  expect(rationale).toBeDisabled();
+  expect(rationale).toHaveAttribute('maxLength', '20000');
+  expect(rationale.className).toContain('resize-y');
+  expect(rationale.className).toContain('h-56');
+  expect(document.getElementById('desktop-structure-approach-rationale-count')).toHaveTextContent('8 / 20000');
+  const expand = within(rationale.closest('section') as HTMLElement).getByRole('button', { name: 'Expand editor' });
+  fireEvent.click(expand);
+  expect(expand).toHaveAttribute('aria-pressed', 'true');
+  expect(expand).toHaveAttribute('aria-controls', rationale.id);
+  expect(rationale).toHaveAttribute('data-expanded', 'true');
+  expect(rationale.className).toContain('h-[min(70vh,44rem)]');
+  expect(document.getElementById('mobile-structure-approach-rationale')).toBeInTheDocument();
+  expect(document.querySelectorAll('#desktop-structure-approach-rationale')).toHaveLength(1);
+  expect(document.querySelectorAll('#mobile-structure-approach-rationale')).toHaveLength(1);
+  expect(document.getElementById('desktop-sec-phase2-3-count')).toHaveTextContent('19000 / 20000');
+  expect(document.getElementById('desktop-sec-phase2-3-count')).toHaveAttribute('aria-live', 'polite');
+  fireEvent.change(screen.getByLabelText('Go to a focus area'), { target: { value: 'uses-waterbodies' } });
+  expect(document.getElementById('desktop-site-assignment-count')).toHaveTextContent('13 / 20000');
+  fireEvent.click(within(screen.getByRole('complementary', { name: 'Review navigation' })).getByRole('button', { name: 'Whole-paper comments' }));
+  expect(document.getElementById('desktop-whole-paper-count')).toHaveTextContent('18999 / 20000');
+  expect(document.getElementById('desktop-whole-paper-count')).not.toHaveAttribute('aria-live');
+});
+
+it('keeps the window fixed while focus-area selection scrolls only the desktop paper', async () => {
+  vi.stubGlobal('innerWidth', 1440);
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { callback(0); return 1; });
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
+  render(<R2GuidedReview {...props} />);
+  await screen.findByText('Review responses are currently read-only. The paper remains available.');
+  const paper = screen.getByTestId('r2-paper-scrollport');
+  const target = document.getElementById('sec-phase2-3') as HTMLElement;
+  paper.scrollTop = 50;
+  vi.spyOn(paper, 'getBoundingClientRect').mockReturnValue({ top: 100 } as DOMRect);
+  vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({ top: 300 } as DOMRect);
+  const before = window.scrollY;
+  const button = within(screen.getByRole('complementary', { name: 'Review navigation' })).getByRole('button', { name: /Overall approach and paper structure/ });
+  fireEvent.click(button);
+  expect(paper.scrollTop).toBe(234);
+  expect(window.scrollY).toBe(before);
+  expect(button).toHaveAttribute('aria-current', 'step');
+});
+
+it('keeps the mobile picker and dialog without a document jump', async () => {
+  vi.stubGlobal('innerWidth', 390);
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { callback(0); return 1; });
+  Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value(this: HTMLDialogElement) { this.setAttribute('open', ''); } });
+  Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value(this: HTMLDialogElement) { this.removeAttribute('open'); this.dispatchEvent(new Event('close')); } });
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
+  render(<R2GuidedReview {...props} />);
+  await screen.findByText('Review responses are currently read-only. The paper remains available.');
+  const before = window.scrollY;
+  fireEvent.change(screen.getByLabelText('Go to a focus area'), { target: { value: 'uses-waterbodies' } });
+  expect(window.scrollY).toBe(before);
+  const action = screen.getByTestId('r2-mobile-review-action');
+  fireEvent.click(action);
+  expect(screen.getByTestId('r2-mobile-review-dialog')).toHaveAttribute('open');
+  fireEvent.click(screen.getByRole('button', { name: 'Close review panel' }));
+  expect(action).toHaveFocus();
+  expect(window.scrollY).toBe(before);
 });
 
 it('opens a bookmarked My Review URL in My Review mode', async () => {
