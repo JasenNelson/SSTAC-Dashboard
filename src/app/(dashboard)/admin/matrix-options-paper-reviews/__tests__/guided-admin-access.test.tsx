@@ -5,6 +5,7 @@ vi.mock('server-only', () => ({}));
 const state = vi.hoisted(() => ({
   access: { allowed: true, user: { id: '99999999-9999-4999-8999-999999999999' }, role: 'admin' } as unknown,
   reads: 0,
+  queryError: false,
 }));
 const shaA = 'a'.repeat(64);
 const shaB = 'b'.repeat(64);
@@ -21,12 +22,21 @@ vi.mock('next/headers', () => ({ cookies: vi.fn(async () => ({ get: vi.fn() })) 
 vi.mock('@supabase/ssr', () => ({ createServerClient: vi.fn(() => ({})) }));
 vi.mock('@/lib/matrix-options/paper-admin-guard', () => ({ getPaperAdminAccess: vi.fn(async () => state.access) }));
 vi.mock('@/lib/matrix-options/paper/guided-r2-manifest', () => ({ getGuidedR2Manifest: vi.fn(() => identity) }));
-vi.mock('@/lib/matrix-options/paper/guided-r2-admin-query', () => ({ fetchGuidedAdminState: vi.fn(async () => { state.reads += 1; return { entries: [entry], completions: [] }; }) }));
+vi.mock('@/lib/matrix-options/paper/guided-r2-admin-query', () => ({ fetchGuidedAdminState: vi.fn(async () => { state.reads += 1; if (state.queryError) throw new Error('guided provider unavailable'); return { entries: [entry], completions: [] }; }) }));
 
 import MatrixOptionsPaperReviewsPage from '../page';
 import { GET as exportGuided } from '@/app/api/matrix-options/paper/guided-r2/export/route';
 
-beforeEach(() => { state.access = { allowed: true, user: { id: '99999999-9999-4999-8999-999999999999' }, role: 'admin' }; state.reads = 0; });
+beforeEach(() => { state.access = { allowed: true, user: { id: '99999999-9999-4999-8999-999999999999' }, role: 'admin' }; state.reads = 0; state.queryError = false; });
+
+it('keeps the legacy review link available if the explicit guided query fails', async () => {
+  state.queryError = true;
+  const page = await MatrixOptionsPaperReviewsPage({ searchParams: Promise.resolve({ view: 'guided' }) });
+  render(page);
+  expect(screen.getByRole('alert')).toHaveTextContent('Guided review query failed.');
+  expect(screen.getByRole('link', { name: 'Legacy v0.9.91' })).toHaveAttribute('href', '/admin/matrix-options-paper-reviews?view=legacy');
+  expect(state.reads).toBe(1);
+});
 
 it('denies guided page and CSV before any guided data query', async () => {
   state.access = { allowed: false, status: 403, reason: 'forbidden' };

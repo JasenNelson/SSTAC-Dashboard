@@ -114,3 +114,22 @@ test('guided administrator read policies are bound to the reviewed legacy role h
   }
   assert.doesNotMatch(migration, /grant select on public\.matrix_guided_r2_events/i);
 });
+
+test('hard user deletion cascades through all guided reviewer tables without direct API deletion', () => {
+  const base = readFileSync(path.join(repoRoot, 'supabase/migrations/20261117003834_matrix_guided_r2_inactive_20261116.sql'), 'utf8');
+  assert.match(base, /create trigger matrix_guided_r2_events_append_only_trigger before update or delete on public\.matrix_guided_r2_events/i);
+  const source = base.match(/create function public\.matrix_guided_r2_events_append_only\(\) returns trigger[\s\S]*?as \$\$([\s\S]*?)\$\$;/)?.[1];
+  assert.ok(source);
+  const sourceHash = createHash('md5').update(source.replace(/\r\n/g, '\n')).digest('hex');
+  assert.equal(sourceHash, '000e7626f3d93f82a43f6f9e1c703fe9');
+  assert.equal((migration.match(/md5\(p\.prosrc\) in \('000e7626f3d93f82a43f6f9e1c703fe9'/g) ?? []).length, 2);
+  for (const table of ['entries', 'completion', 'events']) {
+    assert.match(migration, new RegExp(`alter table public\\.matrix_guided_r2_${table}\\s+add constraint matrix_guided_r2_${table}_user_fk foreign key \\(user_id\\)\\s+references auth\\.users \\(id\\) on delete cascade;`, 'i'));
+  }
+  assert.match(migration, /drop trigger matrix_guided_r2_events_append_only_trigger on public\.matrix_guided_r2_events;\s*create trigger matrix_guided_r2_events_append_only_trigger\s+before update on public\.matrix_guided_r2_events/i);
+  assert.match(migration, /t\.tgtype = 27/);
+  assert.match(migration, /t\.tgtype = 19/);
+  assert.match(migration, /c\.confdeltype = 'c' and c\.convalidated/);
+  assert.match(migration, /pg_catalog\.has_table_privilege\(r\.rolname,c\.oid,'DELETE'\)/);
+  assert.doesNotMatch(migration, /grant delete on public\.matrix_guided_r2_/i);
+});

@@ -92,6 +92,20 @@ begin
       and not attisdropped) then
     raise exception 'auth.users live-user marker missing';
   end if;
+  if not exists (select 1 from pg_catalog.pg_trigger t
+    where t.tgrelid = to_regclass('public.matrix_guided_r2_events')
+      and t.tgname = 'matrix_guided_r2_events_append_only_trigger'
+      and t.tgfoid = to_regprocedure('public.matrix_guided_r2_events_append_only()')
+      and t.tgtype = 27 and t.tgenabled = 'O' and not t.tgisinternal) then
+    raise exception 'guided R2 event mutation trigger differs from reviewed base';
+  end if;
+  if not exists (select 1 from pg_catalog.pg_proc p
+    where p.oid = to_regprocedure('public.matrix_guided_r2_events_append_only()')
+      and not p.prosecdef and pg_catalog.pg_get_userbyid(p.proowner) = 'postgres'
+      and md5(p.prosrc) in ('000e7626f3d93f82a43f6f9e1c703fe9',
+        '685603210fd1b5a65224ba017df0ec1c')) then
+    raise exception 'guided R2 event mutation guard differs from reviewed base';
+  end if;
   select enabled into strict v_enabled from public.matrix_guided_r2_activation
     where document_version = 'phase2-review-2026-11-fa356b89'
       and guided_manifest_sha256 = '25e9a8cf1ed7017a55773b144ac699ba474cc9e73941c3e03982f38bab9ab576'
@@ -134,6 +148,26 @@ begin
   end if;
 end;
 $guard$;
+
+-- Hard deletion of an auth user removes every guided reviewer row. Soft deletion
+-- retains the rows; the existing live-user admission gate still blocks writes.
+-- Validated foreign keys fail the migration if historical orphan rows exist.
+alter table public.matrix_guided_r2_entries
+  add constraint matrix_guided_r2_entries_user_fk foreign key (user_id)
+  references auth.users (id) on delete cascade;
+alter table public.matrix_guided_r2_completion
+  add constraint matrix_guided_r2_completion_user_fk foreign key (user_id)
+  references auth.users (id) on delete cascade;
+alter table public.matrix_guided_r2_events
+  add constraint matrix_guided_r2_events_user_fk foreign key (user_id)
+  references auth.users (id) on delete cascade;
+
+-- The base trigger blocks DELETE, including FK cascades. Retain the UPDATE
+-- guard; table ACLs continue to deny direct DELETE to API roles.
+drop trigger matrix_guided_r2_events_append_only_trigger on public.matrix_guided_r2_events;
+create trigger matrix_guided_r2_events_append_only_trigger
+  before update on public.matrix_guided_r2_events
+  for each row execute function public.matrix_guided_r2_events_append_only();
 
 -- Add only authenticated administrator reads to the two review-state tables.
 -- The existing own-read policies and all table grants remain unchanged.
@@ -399,6 +433,36 @@ begin
          to_regclass('public.matrix_guided_r2_completion'),
          to_regclass('public.matrix_guided_r2_events'))
          and c.relkind = 'r' and c.relrowsecurity) <> 5
+     or (select count(*) from pg_catalog.pg_constraint c
+       join (values
+         ('matrix_guided_r2_entries_user_fk','public.matrix_guided_r2_entries'),
+         ('matrix_guided_r2_completion_user_fk','public.matrix_guided_r2_completion'),
+         ('matrix_guided_r2_events_user_fk','public.matrix_guided_r2_events'))
+         as expected(name,table_name)
+         on c.conname = expected.name and c.conrelid = to_regclass(expected.table_name)
+       join pg_catalog.pg_attribute a on a.attrelid = c.conrelid and a.attname = 'user_id'
+       join pg_catalog.pg_attribute b on b.attrelid = c.confrelid and b.attname = 'id'
+       where c.confrelid = to_regclass('auth.users') and c.contype = 'f'
+         and c.conkey = array[a.attnum]::smallint[]
+         and c.confkey = array[b.attnum]::smallint[]
+         and c.confdeltype = 'c' and c.convalidated) <> 3
+     or not exists (select 1 from pg_catalog.pg_trigger t
+       where t.tgrelid = to_regclass('public.matrix_guided_r2_events')
+         and t.tgname = 'matrix_guided_r2_events_append_only_trigger'
+         and t.tgfoid = to_regprocedure('public.matrix_guided_r2_events_append_only()')
+         and t.tgtype = 19 and t.tgenabled = 'O' and not t.tgisinternal)
+     or not exists (select 1 from pg_catalog.pg_proc p
+       where p.oid = to_regprocedure('public.matrix_guided_r2_events_append_only()')
+         and not p.prosecdef and pg_catalog.pg_get_userbyid(p.proowner) = 'postgres'
+         and md5(p.prosrc) in ('000e7626f3d93f82a43f6f9e1c703fe9',
+           '685603210fd1b5a65224ba017df0ec1c'))
+     or exists (select 1 from pg_catalog.pg_class c
+       cross join pg_catalog.pg_roles r
+       where c.oid in (to_regclass('public.matrix_guided_r2_entries'),
+         to_regclass('public.matrix_guided_r2_completion'),
+         to_regclass('public.matrix_guided_r2_events'))
+         and r.rolname in ('anon','authenticated','service_role')
+         and pg_catalog.has_table_privilege(r.rolname,c.oid,'DELETE'))
      or (select count(*) from pg_catalog.pg_policies p
        where p.schemaname = 'public'
          and p.tablename in ('matrix_guided_r2_activation','matrix_guided_r2_targets',

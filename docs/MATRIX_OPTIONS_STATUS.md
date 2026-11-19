@@ -531,7 +531,12 @@ v0.9.91 review. The owner-approved parity correction is a local candidate in
 guided entries and completion, a Guided R2 view and structured CSV in the existing admin review
 destination, and reviewer unsaved-draft reload recovery with leave-page protection. The guided
 editor still requires explicit Save and Finish Review. The legacy v0.9.91 admin view, responses,
-filters, route and CSV remain on their existing read-only history path.
+filters, route and CSV remain on their existing read-only history path. The admin destination
+opens on legacy v0.9.91 by default; Guided R2 is an explicit tab so an unavailable guided query
+does not displace legacy review. The unapplied migration adds validated auth-user deletion
+cascades for guided entries, completion and events. Soft deletion retains those rows; hard
+deletion removes them. The event guard continues to block updates while permitting FK deletion
+cascades, and API roles retain no direct table DELETE grant.
 
 This candidate has not been pushed, applied to Supabase, deployed, or activated. Its local
 reviewer-to-admin fixture uses process memory and loopback only; it is evidence for behavior in

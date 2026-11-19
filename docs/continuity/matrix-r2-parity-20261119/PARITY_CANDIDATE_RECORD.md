@@ -18,7 +18,13 @@ packet is `.tmp/mission-control/matrix-r2-end-to-end-parity-20261119/`.
   and disabled activation remain bounded.
 - One admin destination with separate Guided R2 and Legacy v0.9.91 views. Guided R2 reads
   structured choices, rationales, text, revisions, timestamps and completion. Guided CSV
-  exports those same fields. Legacy query, integrity checks and CSV are retained.
+  exports those same fields. Legacy query, integrity checks and CSV are retained. The legacy
+  view is the default until provider-backed guided connectivity is verified; a guided query
+  failure retains a direct link back to legacy review.
+- The unapplied admission migration adds validated auth.users ON DELETE CASCADE foreign keys
+  for guided entries, completion and events. Soft deletion retains them; hard user deletion
+  cascades through all three tables. The event trigger still blocks UPDATE but permits the
+  cascade DELETE, and API roles gain no direct DELETE grant.
 - Reviewer browser draft buffer keyed to account and both R2 manifests. Reload recovery is
   local only; it does not submit or save automatically. Revision conflict requires an explicit
   choice. Sign-out clears that account's local drafts. Page exit warns on unsaved work.
@@ -41,3 +47,7 @@ whitespace-only saved responses. Those findings were corrected with focused regr
 The exact final review verdict and local commit are carried in the
 lane recovery packet and reported to Mission Control. No provider write, push, PR, merge,
 deployment or activation was authorized in this batch.
+
+The subsequent local correction to the unapplied migration and admin default is separately
+tracked in the lane recovery packet. Its final review, gates and commit must be read there;
+the results above refer to the preceding 7265d226 candidate and do not prove a provider apply.

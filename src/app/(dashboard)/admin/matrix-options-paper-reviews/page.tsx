@@ -26,11 +26,10 @@ export default async function MatrixOptionsPaperReviewsPage({ searchParams }: { 
   if (!access.allowed) redirect(access.status === 401 ? '/login' : '/dashboard');
   const params = searchParams ? await searchParams : {};
   const view = first(params.view);
-  const legacyDeepLink = !view && keys.some((key) => params[key] !== undefined);
-  if (view !== 'legacy' && !legacyDeepLink) {
+  if (view === 'guided') {
     const userId = first(params.userId);
     const status = first(params.status);
-    if (view && view !== 'guided' || userId && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(userId) || status && !new Set(['saved-draft','submitted','changed-since-submit','completion-only']).has(status)) {
+    if (userId && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(userId) || status && !new Set(['saved-draft','submitted','changed-since-submit','completion-only']).has(status)) {
       return <GuidedAdminClient rows={[]} identity={null} state="integrity-error" />;
     }
     let identity;
