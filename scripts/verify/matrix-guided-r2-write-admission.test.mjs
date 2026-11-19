@@ -2,8 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-
-const { test } = process.env.VITEST === 'true' ? await import('vitest') : await import('node:test');
+import { test } from 'vitest';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const migration = readFileSync(path.join(repoRoot, 'supabase/migrations/20261118000001_matrix_guided_r2_all_users_write_admission.sql'), 'utf8');
