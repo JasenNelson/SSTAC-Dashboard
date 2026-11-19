@@ -85,3 +85,15 @@ test('migration rejects unexpected EXECUTE grantees before and after replacement
   assert.match(migration, /revoke all on function public\.matrix_guided_r2_save[\s\S]*?from public, anon, authenticated, service_role;/);
   assert.equal((migration.match(/c\.relkind = 'r' and c\.relrowsecurity/g) ?? []).length, 2);
 });
+
+test('migration final assertion checks the lowercase public pseudo-role', () => {
+  for (const signature of [
+    'matrix_guided_r2_reviewer_allowed(text,text,text)',
+    'matrix_guided_r2_save(text,text,text,text,text,text,text,text,bigint,uuid)',
+    'matrix_guided_r2_complete(text,text,text,uuid,bigint,text)',
+  ]) {
+    assert.ok(migration.includes(`has_function_privilege('public','public.${signature}','EXECUTE')`));
+  }
+  assert.equal((migration.match(/has_function_privilege\('public',/g) ?? []).length, 3);
+  assert.doesNotMatch(migration, /has_function_privilege\('PUBLIC',/);
+});
