@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { test } from 'node:test';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const migration = readFileSync(new URL('../../supabase/migrations/20261118000001_matrix_guided_r2_all_users_write_admission.sql', import.meta.url), 'utf8');
-const route = readFileSync(new URL('../../src/lib/matrix-options/paper/guided-r2-route.ts', import.meta.url), 'utf8');
-const saveRoute = readFileSync(new URL('../../src/app/api/matrix-options/paper/guided-r2/targets/[targetId]/route.ts', import.meta.url), 'utf8');
-const completeRoute = readFileSync(new URL('../../src/app/api/matrix-options/paper/guided-r2/complete/route.ts', import.meta.url), 'utf8');
+const { test } = process.env.VITEST === 'true' ? await import('vitest') : await import('node:test');
+
+const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
+const migration = readFileSync(path.join(repoRoot, 'supabase/migrations/20261118000001_matrix_guided_r2_all_users_write_admission.sql'), 'utf8');
+const route = readFileSync(path.join(repoRoot, 'src/lib/matrix-options/paper/guided-r2-route.ts'), 'utf8');
+const saveRoute = readFileSync(path.join(repoRoot, 'src/app/api/matrix-options/paper/guided-r2/targets/[targetId]/route.ts'), 'utf8');
+const completeRoute = readFileSync(path.join(repoRoot, 'src/app/api/matrix-options/paper/guided-r2/complete/route.ts'), 'utf8');
 
 function body(name) {
   const start = migration.indexOf(`create or replace function public.${name}(`);
