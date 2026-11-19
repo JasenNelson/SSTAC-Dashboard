@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -96,4 +97,20 @@ test('migration final assertion checks the lowercase public pseudo-role', () => 
   }
   assert.equal((migration.match(/has_function_privilege\('public',/g) ?? []).length, 3);
   assert.doesNotMatch(migration, /has_function_privilege\('PUBLIC',/);
+});
+
+test('guided administrator read policies are bound to the reviewed legacy role helper', () => {
+  const legacy = readFileSync(path.join(repoRoot, 'docs/apply-drafts/MATRIX_PAPER_REVIEW_PERSISTENCE_DRAFT_2026_09_22.sql'), 'utf8');
+  const start = legacy.indexOf('CREATE FUNCTION public.is_matrix_options_paper_admin()');
+  assert.notEqual(start, -1);
+  const open = legacy.indexOf('AS $$', start) + 'AS $$'.length;
+  const close = legacy.indexOf('$$;', open);
+  const helper = legacy.slice(open, close).replace(/\r\n/g, '\n');
+  const hash = createHash('md5').update(helper).digest('hex');
+  assert.equal(hash, '93b33dd6870def48c4e34007c7f6b97f');
+  assert.equal((migration.match(/md5\(p\.prosrc\) in \('93b33dd6870def48c4e34007c7f6b97f'/g) ?? []).length, 2);
+  for (const table of ['entries','completion']) {
+    assert.match(migration, new RegExp(`create policy matrix_guided_r2_${table}_admin_read on public\\.matrix_guided_r2_${table}[\\s\\S]*?for select to authenticated[\\s\\S]*?is_matrix_options_paper_admin\\(\\)`));
+  }
+  assert.doesNotMatch(migration, /grant select on public\.matrix_guided_r2_events/i);
 });

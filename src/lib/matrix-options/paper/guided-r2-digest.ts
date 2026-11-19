@@ -1,7 +1,7 @@
 import type { GuidedEntry } from './guided-r2-contract';
 
 function active(entry: GuidedEntry): boolean {
-  return Boolean(entry.draft_choice_id || entry.draft_rationale?.trim() || entry.draft_text?.trim());
+  return entry.draft_choice_id !== null || entry.draft_rationale !== null || entry.draft_text !== null;
 }
 
 async function sha256(value: string): Promise<string> {

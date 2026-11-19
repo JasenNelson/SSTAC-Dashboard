@@ -5,6 +5,10 @@ import { redirect } from 'next/navigation';
 import AdminReviewsClient from './AdminReviewsClient';
 import { getPaperAdminAccess, getTrustedPaperReviewIdentity, validateTrustedReviewFilters } from '@/lib/matrix-options/paper-admin-guard';
 import { normalizeReviewRows } from '@/lib/matrix-options/paper/review-csv';
+import { getGuidedR2Manifest } from '@/lib/matrix-options/paper/guided-r2-manifest';
+import { fetchGuidedAdminState } from '@/lib/matrix-options/paper/guided-r2-admin-query';
+import { normalizeGuidedAdminRows } from '@/lib/matrix-options/paper/guided-r2-admin';
+import GuidedAdminClient from './GuidedAdminClient';
 
 type SearchParams = Record<string, string | string[] | undefined>;
 const keys = ['documentVersion', 'manifestSha256', 'cohortId', 'questionId', 'userId', 'status'] as const;
@@ -21,6 +25,25 @@ export default async function MatrixOptionsPaperReviewsPage({ searchParams }: { 
   const access = await getPaperAdminAccess(supabase);
   if (!access.allowed) redirect(access.status === 401 ? '/login' : '/dashboard');
   const params = searchParams ? await searchParams : {};
+  const view = first(params.view);
+  const legacyDeepLink = !view && keys.some((key) => params[key] !== undefined);
+  if (view !== 'legacy' && !legacyDeepLink) {
+    const userId = first(params.userId);
+    const status = first(params.status);
+    if (view && view !== 'guided' || userId && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(userId) || status && !new Set(['saved-draft','submitted','changed-since-submit','completion-only']).has(status)) {
+      return <GuidedAdminClient rows={[]} identity={null} state="integrity-error" />;
+    }
+    let identity;
+    try { const manifest = getGuidedR2Manifest(); identity = { documentVersion: manifest.documentVersion, guidedManifestSha256: manifest.guidedManifestSha256, reviewManifestSha256: manifest.reviewManifestSha256 }; }
+    catch { return <GuidedAdminClient rows={[]} identity={null} state="integrity-error" />; }
+    let raw;
+    try { raw = await fetchGuidedAdminState(supabase as unknown as Parameters<typeof fetchGuidedAdminState>[0], identity); }
+    catch { return <GuidedAdminClient rows={[]} identity={identity} state="query-error" />; }
+    const rows = normalizeGuidedAdminRows(raw.entries, raw.completions, identity);
+    if (rows === null) return <GuidedAdminClient rows={[]} identity={identity} state="integrity-error" />;
+    const filtered = rows.filter((row) => (!userId || row.userId === userId) && (!status || row.status === status));
+    return <GuidedAdminClient rows={filtered} identity={identity} state={filtered.length ? 'ready' : 'empty'} userId={userId} status={status} />;
+  }
   const initialFilters = Object.fromEntries(keys.map((key) => [key, first(params[key])])) as Record<string, string>;
   let trusted;
   try { trusted = await getTrustedPaperReviewIdentity(); } catch { return <AdminReviewsClient rows={[]} state={{ kind: 'integrity-error' }} initialFilters={initialFilters} />; }

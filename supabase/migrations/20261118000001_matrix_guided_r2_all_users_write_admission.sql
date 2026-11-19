@@ -20,6 +20,20 @@ begin
   if to_regclass('public.matrix_guided_r2_reviewer_allowlist') is not null then
     raise exception 'guided R2 allowlist policy unexpectedly installed';
   end if;
+  if not exists (select 1 from pg_catalog.pg_proc p
+    where p.oid = to_regprocedure('public.is_matrix_options_paper_admin()')
+      and p.prosecdef and pg_catalog.pg_get_userbyid(p.proowner) = 'postgres'
+      -- Both hashes are the same reviewed legacy body with LF or CRLF source.
+      and md5(p.prosrc) in ('93b33dd6870def48c4e34007c7f6b97f',
+        'c4f76e9be72d5de458781bb261edb4f2'))
+     or not pg_catalog.has_function_privilege('authenticated',
+       'public.is_matrix_options_paper_admin()','EXECUTE')
+     or pg_catalog.has_function_privilege('anon',
+       'public.is_matrix_options_paper_admin()','EXECUTE')
+     or pg_catalog.has_function_privilege('service_role',
+       'public.is_matrix_options_paper_admin()','EXECUTE') then
+    raise exception 'legacy paper admin helper shape mismatch';
+  end if;
   if (select count(*) from pg_catalog.pg_policies p
     where p.schemaname = 'public'
       and ((p.tablename = 'matrix_guided_r2_entries'
@@ -120,6 +134,17 @@ begin
   end if;
 end;
 $guard$;
+
+-- Add only authenticated administrator reads to the two review-state tables.
+-- The existing own-read policies and all table grants remain unchanged.
+create policy matrix_guided_r2_entries_admin_read on public.matrix_guided_r2_entries
+  for select to authenticated
+  using (coalesce(((select auth.jwt())->>'is_anonymous')::boolean,true) = false
+    and (select public.is_matrix_options_paper_admin()));
+create policy matrix_guided_r2_completion_admin_read on public.matrix_guided_r2_completion
+  for select to authenticated
+  using (coalesce(((select auth.jwt())->>'is_anonymous')::boolean,true) = false
+    and (select public.is_matrix_options_paper_admin()));
 
 create or replace function public.matrix_guided_r2_reviewer_allowed(
   p_document_version text, p_guided_manifest_sha256 text,
@@ -374,6 +399,25 @@ begin
          to_regclass('public.matrix_guided_r2_completion'),
          to_regclass('public.matrix_guided_r2_events'))
          and c.relkind = 'r' and c.relrowsecurity) <> 5
+     or (select count(*) from pg_catalog.pg_policies p
+       where p.schemaname = 'public'
+         and p.tablename in ('matrix_guided_r2_activation','matrix_guided_r2_targets',
+           'matrix_guided_r2_entries','matrix_guided_r2_completion',
+           'matrix_guided_r2_events')) <> 4
+     or (select count(*) from pg_catalog.pg_policies p
+       where p.schemaname = 'public'
+         and ((p.tablename = 'matrix_guided_r2_entries'
+           and p.policyname = 'matrix_guided_r2_entries_admin_read')
+           or (p.tablename = 'matrix_guided_r2_completion'
+           and p.policyname = 'matrix_guided_r2_completion_admin_read'))
+         and p.cmd = 'SELECT' and p.permissive = 'PERMISSIVE'
+         and p.roles = array['authenticated'::name]
+         and p.qual like '%is_matrix_options_paper_admin()%') <> 2
+     or not exists (select 1 from pg_catalog.pg_proc p
+       where p.oid = to_regprocedure('public.is_matrix_options_paper_admin()')
+         and p.prosecdef and pg_catalog.pg_get_userbyid(p.proowner) = 'postgres'
+         and md5(p.prosrc) in ('93b33dd6870def48c4e34007c7f6b97f',
+           'c4f76e9be72d5de458781bb261edb4f2'))
      or not has_function_privilege('authenticated','public.matrix_guided_r2_reviewer_allowed(text,text,text)','EXECUTE')
      or not has_function_privilege('authenticated','public.matrix_guided_r2_save(text,text,text,text,text,text,text,text,bigint,uuid)','EXECUTE')
      or not has_function_privilege('authenticated','public.matrix_guided_r2_complete(text,text,text,uuid,bigint,text)','EXECUTE')

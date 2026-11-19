@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 
 import { R2GuidedReview } from '../R2GuidedReview';
 import { getGuidedR2Manifest } from '@/lib/matrix-options/paper/guided-r2-manifest';
@@ -59,10 +59,10 @@ it('keeps the account-data notice in collapsed disclosures in the introduction a
   expect(screen.getAllByText(/Soft deletion retains them until permanent deletion/)).toHaveLength(2);
 });
 
-it('hides guided state for a noninvited reviewer while preserving paper access', async () => {
+it('hides guided state for an ineligible account while preserving paper access', async () => {
   fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? { outcome: 'reviewer_not_allowed' } : feedbackResponse()), { status: url.includes('/state?') ? 403 : 200 })));
   render(<R2GuidedReview {...props} />);
-  expect(await screen.findByRole('alert')).toHaveTextContent('Guided responses are available only to invited reviewers. The paper remains readable.');
+  expect(await screen.findByRole('alert')).toHaveTextContent('Guided responses are unavailable for this account. The paper remains readable.');
   expect(screen.getByText('Proposed framework')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
 });
@@ -269,4 +269,85 @@ it('saves a typed choice with the exact identity and current user', async () => 
   const call = fetchMock.mock.calls.find(([url]) => String(url).includes('/targets/'));
   expect(call).toBeDefined();
   expect(JSON.parse(String(call![1].body))).toMatchObject({ documentVersion: manifest.documentVersion, guidedManifestSha256: manifest.guidedManifestSha256, reviewManifestSha256: manifest.reviewManifestSha256, targetKind: 'choice-prompt', expectedRevision: 0, expectedUserId: userKey, draft: { choiceId: 'sound' } });
+});
+
+it('recovers an unsaved response after reload and protects leaving the page', async () => {
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse([], 'writable') : feedbackResponse()))));
+  const first = render(<R2GuidedReview {...props} />);
+  await screen.findAllByRole('radio', { name: 'Sound as proposed' });
+  fireEvent.change(document.getElementById('desktop-structure-approach-rationale')!, { target: { value: 'Unsaved rationale' } });
+  const leave = new Event('beforeunload', { cancelable: true });
+  window.dispatchEvent(leave);
+  expect(leave.defaultPrevented).toBe(true);
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+  const outbound = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+  screen.getByRole('link', { name: 'Scientific deep dive (v0.9.91)' }).dispatchEvent(outbound);
+  expect(confirm).toHaveBeenCalledWith('You have unsaved review changes. Leave this page?');
+  expect(outbound.defaultPrevented).toBe(true);
+  confirm.mockRestore();
+  first.unmount();
+  render(<R2GuidedReview {...props} />);
+  await waitFor(() => expect(document.getElementById('desktop-structure-approach-rationale')).toHaveProperty('value', 'Unsaved rationale'));
+  expect(screen.getByText('Unsaved local changes recovered. Save each item before finishing.')).toBeInTheDocument();
+  expect(screen.getAllByRole('button', { name: 'Save' })[0]).toBeEnabled();
+});
+
+it('retains a local draft after failed save and blocks completion in read-only mode', async () => {
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse([], 'writable') : url.includes('/feedback?') ? feedbackResponse() : { outcome: 'persistence_unavailable' }), { status: url.includes('/targets/') ? 503 : 200 })));
+  const first = render(<R2GuidedReview {...props} />);
+  await screen.findAllByRole('radio', { name: 'Sound as proposed' });
+  fireEvent.change(document.getElementById('desktop-structure-approach-rationale')!, { target: { value: 'Keep this text' } });
+  fireEvent.click(screen.getAllByRole('button', { name: 'Save' })[0]);
+  await screen.findByText('Save failed. Your text remains here.');
+  first.unmount();
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse([], 'read-only') : feedbackResponse()))));
+  render(<R2GuidedReview {...props} />);
+  await waitFor(() => expect(document.getElementById('desktop-structure-approach-rationale')).toHaveProperty('value', 'Keep this text'));
+  expect(screen.getAllByRole('button', { name: 'Save' })[0]).toBeDisabled();
+});
+
+it('discards a delayed old-user state response after sign-out', async () => {
+  let resolveState!: (response: Response) => void;
+  const pending = new Promise<Response>((resolve) => { resolveState = resolve; });
+  fetchMock.mockImplementation((url: string) => url.includes('/state?') ? pending : Promise.resolve(new Response(JSON.stringify(feedbackResponse()))));
+  render(<R2GuidedReview {...props} />);
+  await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+  act(() => { window.dispatchEvent(new Event('matrix-options-auth-signed-out')); });
+  await act(async () => { resolveState(new Response(JSON.stringify(stateResponse([savedEntry('text-prompt', 'site-assignment', { draft_text: 'Old user secret' })], 'writable')))); });
+  expect(screen.queryByText('Old user secret')).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+});
+
+it('discards delayed save and completion results after sign-out', async () => {
+  let resolveSave!: (response: Response) => void;
+  const pendingSave = new Promise<Response>((resolve) => { resolveSave = resolve; });
+  fetchMock.mockImplementation((url: string) => url.includes('/state?') ? Promise.resolve(new Response(JSON.stringify(stateResponse([], 'writable'))))
+    : url.includes('/feedback?') ? Promise.resolve(new Response(JSON.stringify(feedbackResponse()))) : pendingSave);
+  const first = render(<R2GuidedReview {...props} />);
+  await screen.findAllByRole('radio', { name: 'Sound as proposed' });
+  fireEvent.click(screen.getAllByRole('radio', { name: 'Sound as proposed' })[0]);
+  fireEvent.click(screen.getAllByRole('button', { name: 'Save' })[0]);
+  act(() => { window.dispatchEvent(new Event('matrix-options-auth-signed-out')); });
+  await act(async () => { resolveSave(new Response(JSON.stringify({ outcome: 'ok', guidedManifestSha256: manifest.guidedManifestSha256, reviewManifestSha256: manifest.reviewManifestSha256,
+    row: savedEntry('choice-prompt', 'structure-approach', { draft_choice_id: 'sound' }) })));
+  });
+  expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+  expect(screen.queryByText('Saved.')).not.toBeInTheDocument();
+  first.unmount();
+
+  let resolveComplete!: (response: Response) => void;
+  const pendingComplete = new Promise<Response>((resolve) => { resolveComplete = resolve; });
+  fetchMock.mockImplementation((url: string) => url.includes('/state?') ? Promise.resolve(new Response(JSON.stringify(stateResponse([], 'writable'))))
+    : url.includes('/feedback?') ? Promise.resolve(new Response(JSON.stringify(feedbackResponse()))) : pendingComplete);
+  render(<R2GuidedReview {...props} initialMode="my-review" />);
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Finish review' })).toBeEnabled());
+  fireEvent.click(screen.getByRole('button', { name: 'Finish review' }));
+  await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/complete'))).toBe(true));
+  act(() => { window.dispatchEvent(new Event('matrix-options-auth-signed-out')); });
+  await act(async () => { resolveComplete(new Response(JSON.stringify({ outcome: 'ok', guidedManifestSha256: manifest.guidedManifestSha256, reviewManifestSha256: manifest.reviewManifestSha256,
+    entries: [], completion: { user_id: userKey, document_version: manifest.documentVersion,
+      guided_manifest_sha256: manifest.guidedManifestSha256, review_manifest_sha256: manifest.reviewManifestSha256,
+      revision: 1, submitted_set_digest: 'a'.repeat(64), submitted_at: '2026-11-19T00:00:00Z' } }))); });
+  expect(screen.queryByText('Review finished.')).not.toBeInTheDocument();
+  expect(screen.queryByText(/^Last finished /)).not.toBeInTheDocument();
 });

@@ -19,9 +19,11 @@ verification date; and the co-update rule in item 4 below names every site that 
 If the owner prefers, the durable fix is a lane-scoped carve-out added to
 `current_status_claims_policy` itself -- that is a manifest policy change and was not made
 unilaterally here.
-**Verified against:** Correction 001 working-tree candidate based on HEAD
+**Baseline verification for sections 1-3.4 and 4-7:** Correction 001 working-tree candidate based on HEAD
 `f609b8ebc4ac3a6732bafb1d5caf409879805017`
-**Verification date:** 2026-08-28
+**Baseline verification date:** 2026-08-28. Section 3.5 records its dated v0.9.91 history;
+section 3.6 has its own 2026-11-19 local-candidate verification and is not a claim that the
+earlier baseline sections were reverified on that date.
 **Supersedes for CURRENT status:** the dated Matrix Options status snapshots listed in section 6.
 
 ---
@@ -34,12 +36,12 @@ had been overtaken by shipped code.
 
 Rules:
 
-1. This file states CURRENT lane state, re-verified against source and evidence on the date above.
+1. This file states lane state within the verification date and source scope of each section.
 2. The dated snapshots in section 6 remain valid as HISTORICAL claim lists tied to their own dates.
    Where they contradict this file, THIS file is current and they are not.
-3. Every claim below was verified either from the source state named above, from a recomputation
-   over the actual catalog files, or from a named evidence artifact. Claims that could not be
-   verified are marked as such rather than repeated from prior prose.
+3. Baseline claims were verified from the baseline source state named above, recomputation over
+   catalog files, or named evidence. Section 3.6 has its own dated candidate evidence. Claims
+   that could not be verified are marked as such rather than repeated from prior prose.
 4. Do not add volatile project-wide metrics here. Lane facts are recorded CANONICALLY in the
    manifest under `facts.matrix_options_catalog` and `facts.option_c_d2_apply`, with provenance.
    This file states those numerals in its section 1 and section 2 tables and, where a passage
@@ -375,7 +377,7 @@ regulatory-value selection or promotion.
 
 ### 3.5 Options Paper -- Working Draft + My Review longform UX (M1 + M2)
 
-**Status (current truth, 2026-10-15): v0.9.91 is the default paper in production; reading,
+**Historical v0.9.91 milestone (2026-10-15): v0.9.91 was the default paper in production; reading,
 review saving, submission and the admin review view are LIVE. The review backend (the three
 `matrix_paper_review_*` tables and the save-draft / submit functions) was applied to the live
 database on 2026-10-15 under exact owner approvals (activation plus a submit-body corrective), and
@@ -520,6 +522,23 @@ M3.**
 Documentation coverage for the M1 candidate follows PLAN-R4 section 10.4's manual checklist; see
 `.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/m1/docs-r12/DOCS_CHECKLIST_M1.md`. The M2
 checklist is `.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/m2/docs/DOCS_CHECKLIST_M2.md`.
+
+### 3.6 Guided R2 reviewer-to-admin parity candidate (2026-11-19)
+
+The guided R2 interface and structured persistence are a separate release from the historical
+v0.9.91 review. The owner-approved parity correction is a local candidate in
+`codex/matrix-r2-public-privilege-fix-20261119`. It adds authenticated administrator reads of
+guided entries and completion, a Guided R2 view and structured CSV in the existing admin review
+destination, and reviewer unsaved-draft reload recovery with leave-page protection. The guided
+editor still requires explicit Save and Finish Review. The legacy v0.9.91 admin view, responses,
+filters, route and CSV remain on their existing read-only history path.
+
+This candidate has not been pushed, applied to Supabase, deployed, or activated. Its local
+reviewer-to-admin fixture uses process memory and loopback only; it is evidence for behavior in
+the candidate, not a production or credential-backed verification. The exact review, gate and
+commit result is recorded in
+`docs/continuity/matrix-r2-parity-20261119/PARITY_CANDIDATE_RECORD.md`.
+The live activation gate remains separate and requires a future approved provider procedure.
 
 ---
 
