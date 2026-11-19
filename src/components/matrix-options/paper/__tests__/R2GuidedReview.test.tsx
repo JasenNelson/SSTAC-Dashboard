@@ -48,10 +48,13 @@ it('keeps the exact paper readable when the state schema is unavailable', async 
   expect(fetchMock).toHaveBeenCalledTimes(2);
 });
 
-it('shows the account-data notice in the introduction and My Review', async () => {
+it('keeps the account-data notice in collapsed disclosures in the introduction and My Review', async () => {
   fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
   render(<R2GuidedReview {...props} initialMode="my-review" />);
   expect(await screen.findByText('Review responses are currently read-only. The paper remains available.')).toBeInTheDocument();
+  expect(screen.getByText('Review the proposed approach and share feedback where you have a view. All questions are optional.')).toBeInTheDocument();
+  expect(screen.getAllByText('How your feedback is used', { selector: 'summary' })).toHaveLength(2);
+  expect(screen.getAllByText('How your feedback is used', { selector: 'summary' }).every((summary) => !summary.closest('details')?.open)).toBe(true);
   expect(screen.getAllByText(/Feedback is optional, linked to your account/)).toHaveLength(2);
   expect(screen.getAllByText(/Soft deletion retains them until permanent deletion/)).toHaveLength(2);
 });
@@ -241,6 +244,7 @@ it('shows unsaved edits in My Review and blocks completion until they are saved'
   render(<R2GuidedReview {...props} />);
   const choice = await screen.findAllByRole('radio', { name: 'Needs refinement' });
   fireEvent.click(choice[0]);
+  expect(screen.getAllByText('Unsaved - save before finishing').length).toBeGreaterThan(0);
   fireEvent.change(screen.getByLabelText('Go to a focus area'), { target: { value: 'my-review' } });
   expect(within(screen.getByRole('list', { name: 'Focus area checklist' })).getByText('Needs refinement')).toBeInTheDocument();
   expect(screen.getByText('Unsaved - return to this area to save')).toBeInTheDocument();
