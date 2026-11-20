@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -84,4 +85,51 @@ test('migration rejects unexpected EXECUTE grantees before and after replacement
   assert.equal((migration.match(/a\.is_grantable/g) ?? []).length, 2);
   assert.match(migration, /revoke all on function public\.matrix_guided_r2_save[\s\S]*?from public, anon, authenticated, service_role;/);
   assert.equal((migration.match(/c\.relkind = 'r' and c\.relrowsecurity/g) ?? []).length, 2);
+});
+
+test('migration final assertion checks the lowercase public pseudo-role', () => {
+  for (const signature of [
+    'matrix_guided_r2_reviewer_allowed(text,text,text)',
+    'matrix_guided_r2_save(text,text,text,text,text,text,text,text,bigint,uuid)',
+    'matrix_guided_r2_complete(text,text,text,uuid,bigint,text)',
+  ]) {
+    assert.ok(migration.includes(`has_function_privilege('public','public.${signature}','EXECUTE')`));
+  }
+  assert.equal((migration.match(/has_function_privilege\('public',/g) ?? []).length, 3);
+  assert.doesNotMatch(migration, /has_function_privilege\('PUBLIC',/);
+});
+
+test('guided administrator read policies are bound to the reviewed legacy role helper', () => {
+  const legacy = readFileSync(path.join(repoRoot, 'docs/apply-drafts/MATRIX_PAPER_REVIEW_PERSISTENCE_DRAFT_2026_09_22.sql'), 'utf8');
+  const start = legacy.indexOf('CREATE FUNCTION public.is_matrix_options_paper_admin()');
+  assert.notEqual(start, -1);
+  const open = legacy.indexOf('AS $$', start) + 'AS $$'.length;
+  const close = legacy.indexOf('$$;', open);
+  const helper = legacy.slice(open, close).replace(/\r\n/g, '\n');
+  const hash = createHash('md5').update(helper).digest('hex');
+  assert.equal(hash, '93b33dd6870def48c4e34007c7f6b97f');
+  assert.equal((migration.match(/md5\(p\.prosrc\) in \('93b33dd6870def48c4e34007c7f6b97f'/g) ?? []).length, 2);
+  for (const table of ['entries','completion']) {
+    assert.match(migration, new RegExp(`create policy matrix_guided_r2_${table}_admin_read on public\\.matrix_guided_r2_${table}[\\s\\S]*?for select to authenticated[\\s\\S]*?is_matrix_options_paper_admin\\(\\)`));
+  }
+  assert.doesNotMatch(migration, /grant select on public\.matrix_guided_r2_events/i);
+});
+
+test('hard user deletion cascades through all guided reviewer tables without direct API deletion', () => {
+  const base = readFileSync(path.join(repoRoot, 'supabase/migrations/20261117003834_matrix_guided_r2_inactive_20261116.sql'), 'utf8');
+  assert.match(base, /create trigger matrix_guided_r2_events_append_only_trigger before update or delete on public\.matrix_guided_r2_events/i);
+  const source = base.match(/create function public\.matrix_guided_r2_events_append_only\(\) returns trigger[\s\S]*?as \$\$([\s\S]*?)\$\$;/)?.[1];
+  assert.ok(source);
+  const sourceHash = createHash('md5').update(source.replace(/\r\n/g, '\n')).digest('hex');
+  assert.equal(sourceHash, '000e7626f3d93f82a43f6f9e1c703fe9');
+  assert.equal((migration.match(/md5\(p\.prosrc\) in \('000e7626f3d93f82a43f6f9e1c703fe9'/g) ?? []).length, 2);
+  for (const table of ['entries', 'completion', 'events']) {
+    assert.match(migration, new RegExp(`alter table public\\.matrix_guided_r2_${table}\\s+add constraint matrix_guided_r2_${table}_user_fk foreign key \\(user_id\\)\\s+references auth\\.users \\(id\\) on delete cascade;`, 'i'));
+  }
+  assert.match(migration, /drop trigger matrix_guided_r2_events_append_only_trigger on public\.matrix_guided_r2_events;\s*create trigger matrix_guided_r2_events_append_only_trigger\s+before update on public\.matrix_guided_r2_events/i);
+  assert.match(migration, /t\.tgtype = 27/);
+  assert.match(migration, /t\.tgtype = 19/);
+  assert.match(migration, /c\.confdeltype = 'c' and c\.convalidated/);
+  assert.match(migration, /pg_catalog\.has_table_privilege\(r\.rolname,c\.oid,'DELETE'\)/);
+  assert.doesNotMatch(migration, /grant delete on public\.matrix_guided_r2_/i);
 });

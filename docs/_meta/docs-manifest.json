@@ -3505,7 +3505,19 @@
         "option-c",
         "status"
       ],
-      "notes": "SINGLE current-status entrypoint for the Matrix Options / Matrix Map / Option C lane. Lane-scoped ONLY -- it does not claim global project status, which remains docs/INDEX.md plus facts. Records the 2026-08-01 Option C D2 apply, zero member publication, repository-versus-database drift, the 2026-08-04 owner-approved baseline-only v1 boundary, D2/D3/T33/T34 closure, Cohort 0 reachability, and the frozen R20/C1 not-a-production-prerequisite disposition."
+      "notes": "SINGLE current-status entrypoint for the Matrix Options / Matrix Map / Option C lane. Lane-scoped ONLY -- it does not claim global project status, which remains docs/INDEX.md plus facts. Records the Option C and Matrix Options baseline and the dated local Guided R2 parity candidate in section 3.6, including legacy admin default and guided hard-delete cascades; the candidate is not applied, deployed or activated."
+    },
+    {
+      "id": "continuity.matrix_r2_parity_candidate_2026_11_19",
+      "path": "docs/continuity/matrix-r2-parity-20261119/PARITY_CANDIDATE_RECORD.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "continuity",
+        "matrix-options",
+        "phase-2",
+        "review"
+      ],
+      "notes": "Dated local Guided R2 reviewer-to-admin parity candidate record. Includes the legacy admin default and guided hard-delete cascade correction, routes current lane status to docs/MATRIX_OPTIONS_STATUS.md, and does not claim provider apply, production deployment or activation."
     },
     {
       "id": "continuity.pr791_frontend_completion_2026_08_23",

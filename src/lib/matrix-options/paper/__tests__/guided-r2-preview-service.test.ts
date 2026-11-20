@@ -2,7 +2,8 @@ import { expect, it, vi } from 'vitest';
 
 vi.mock('server-only', () => ({}));
 
-import { GUIDED_R2_TARGETS } from '../guided-r2-contract';
+import { GUIDED_R2_TARGETS, type GuidedEntry } from '../guided-r2-contract';
+import { buildGuidedAdminCsv, normalizeGuidedAdminRows } from '../guided-r2-admin';
 import { guidedR2DraftSetDigest } from '../guided-r2-digest';
 import { getGuidedR2Manifest } from '../guided-r2-manifest';
 import { createPreviewR2Service } from '../guided-r2-preview-service';
@@ -32,6 +33,42 @@ it('matches production digest, noop and completion CAS ordering', async () => {
   const changedDigest = await guidedR2DraftSetDigest((current.body as { entries: [] }).entries);
   expect((await complete(0, changedDigest)).body).toMatchObject({ outcome: 'stale_revision' });
   expect((await complete(1, changedDigest)).body).toMatchObject({ outcome: 'ok' });
+});
+
+it('keeps blank saved entries unsubmitted and hashes persisted tab-only fields', async () => {
+  const service = createPreviewR2Service();
+  const first = await service.handle(stateRequest, undefined);
+  const token = first.sessionToken!;
+  const user = (first.body as { userKey: string }).userKey;
+  const target = GUIDED_R2_TARGETS.find((item) => item.kind === 'text-prompt')!;
+  const save = (revision: number, text: string) => service.handle({ operation: 'save', targetId: target.id, body: {
+    ...identity, targetKind: target.kind, expectedRevision: revision, expectedUserId: user, draft: { text },
+  } }, token);
+  const complete = (revision: number, digest: string) => service.handle({ operation: 'complete', body: {
+    ...identity, expectedUserId: user, expectedCompletionRevision: revision, draftSetDigest: digest,
+  } }, token);
+  const entries = () => service.adminSnapshot().entries as GuidedEntry[];
+
+  expect((await save(0, 'Answer')).body).toMatchObject({ outcome: 'ok' });
+  expect((await complete(0, await guidedR2DraftSetDigest(entries()))).body).toMatchObject({ outcome: 'ok' });
+  expect(entries()[0].submitted_revision).toBe(1);
+
+  expect((await save(1, '   ')).body).toMatchObject({ outcome: 'ok', row: { draft_text: null } });
+  expect((await complete(1, await guidedR2DraftSetDigest(entries()))).body).toMatchObject({ outcome: 'ok' });
+  expect(entries()[0]).toMatchObject({ draft_text: null, submitted_text: null, submitted_revision: null, submitted_at: null });
+  const rows = normalizeGuidedAdminRows(entries(), service.adminSnapshot().completions, identity);
+  expect(rows).toMatchObject([{ status: 'saved-draft', submittedRevision: null, completionRevision: 2 }]);
+  expect(buildGuidedAdminCsv(rows!, identity)).toContain('"saved-draft"');
+
+  expect((await save(2, '\t')).body).toMatchObject({ outcome: 'ok', row: { draft_text: '\t' } });
+  const tabDigest = await guidedR2DraftSetDigest(entries());
+  expect(tabDigest).not.toBe(await guidedR2DraftSetDigest([]));
+  expect((await complete(2, tabDigest)).body).toMatchObject({ outcome: 'ok' });
+  expect(entries()[0]).toMatchObject({ draft_text: '\t', submitted_text: '\t', submitted_revision: 3 });
+
+  expect((await save(3, ' \n')).body).toMatchObject({ outcome: 'ok', row: { draft_text: ' \n' } });
+  expect((await complete(3, await guidedR2DraftSetDigest(entries()))).body).toMatchObject({ outcome: 'ok' });
+  expect(entries()[0]).toMatchObject({ draft_text: ' \n', submitted_text: ' \n', submitted_revision: 4 });
 });
 
 it('expires idle sessions, rotates stale cookies and evicts the least recently used session', async () => {

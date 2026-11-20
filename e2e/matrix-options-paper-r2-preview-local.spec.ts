@@ -71,7 +71,8 @@ test('exact fixture page uses only loopback preview state through save, conflict
   expect(direct).toBe(200);
   await panel.locator('#desktop-structure-approach-rationale').fill('My newer edit');
   await panel.locator('#desktop-structure-approach-rationale').locator('xpath=ancestor::section[1]').getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'This item changed elsewhere' })).toBeVisible();
+  await expect(panel.getByText('Conflict - compare with saved response before saving')).toBeVisible();
+  await panel.getByRole('button', { name: 'Keep my local response' }).click();
   await panel.locator('#desktop-structure-approach-rationale').locator('xpath=ancestor::section[1]').getByRole('button', { name: 'Save' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible();
 
@@ -93,8 +94,50 @@ test('exact fixture page uses only loopback preview state through save, conflict
   await expect(main.getByText('Section five comment')).toBeVisible();
   await expect(main.getByText('Whole paper comment')).toBeVisible();
   await expect(page.getByText(/^Last finished /)).toBeVisible();
+  expect((await page.goto('/r2-guided-admin-fixture'))?.status()).toBe(200);
+  const adminTable = page.getByRole('table', { name: 'Guided R2 review responses' });
+  await expect(adminTable).toBeVisible();
+  await expect(adminTable.getByRole('row').filter({ hasText: 'My newer edit' })).toBeVisible();
+  await expect(adminTable.getByRole('row').filter({ hasText: 'Site assignment answer' })).toBeVisible();
+  await expect(adminTable.getByRole('row').filter({ hasText: 'Section five comment' })).toBeVisible();
+  await expect(adminTable.getByRole('row').filter({ hasText: 'Whole paper comment' })).toBeVisible();
+  await expect(page.getByRole('table').getByText('submitted').first()).toBeVisible();
+  const csv = await page.request.get('/api/matrix-options/paper/preview-r2?admin=csv');
+  expect(csv.status()).toBe(200);
+  const csvText = await csv.text();
+  expect(csvText).toContain('My newer edit');
+  expect(csvText).toContain('Site assignment answer');
+  expect(csvText).toContain('Section five comment');
+  expect(csvText).toContain('Whole paper comment');
   expect(requests.some((url) => url.includes('/api/matrix-options/paper/preview-r2'))).toBe(true);
   expect(blocked).toEqual([]);
+});
+
+test('unsaved guided response survives reload without becoming submitted', async ({ page }) => {
+  page.on('dialog', (dialog) => { void dialog.accept(); });
+  expect((await page.goto('/r2-guided-fixture'))?.status()).toBe(200);
+  const rationale = page.locator('#desktop-structure-approach-rationale');
+  await rationale.fill('Recovered after reload');
+  await expect(page.getByText('Unsaved - save before finishing').first()).toBeVisible();
+  await page.reload();
+  await expect(rationale).toHaveValue('Recovered after reload');
+  await expect(page.getByText('Unsaved local changes recovered. Save each item before finishing.')).toBeVisible();
+  await page.getByRole('complementary', { name: 'Review navigation' }).getByRole('button', { name: 'My Review' }).click();
+  await expect(page.getByRole('button', { name: 'Finish review' })).toBeDisabled();
+});
+
+test('unsaved guided response blocks client-route Back until the reviewer confirms', async ({ page }) => {
+  expect((await page.goto('/r2-guided-admin-fixture'))?.status()).toBe(200);
+  await page.getByRole('link', { name: 'Reviewer preview' }).click();
+  const rationale = page.locator('#desktop-structure-approach-rationale');
+  await rationale.fill('Do not lose this');
+  page.once('dialog', (dialog) => { void dialog.dismiss(); });
+  await page.evaluate(() => window.history.back());
+  await expect(page).toHaveURL(/\/r2-guided-fixture/);
+  await expect(rationale).toHaveValue('Do not lose this');
+  page.once('dialog', (dialog) => { void dialog.accept(); });
+  await page.evaluate(() => window.history.back());
+  await expect(page).toHaveURL(/\/r2-guided-admin-fixture/);
 });
 
 test('restored R2 controls resize, count and navigate within the paper without moving the page', async ({ page }) => {

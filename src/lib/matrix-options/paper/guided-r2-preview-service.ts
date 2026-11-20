@@ -22,6 +22,7 @@ type PreviewOptions = { readonly now?: () => number; readonly ttlMs?: number; re
 
 const failure = (outcome: string, status: number): PreviewReply => ({ status, body: { outcome } });
 const entryKey = (kind: string, id: string) => `${kind}:${id}`;
+const savedText = (value: string | null | undefined) => value === undefined || value === null || !/[^ ]/.test(value) ? null : value;
 
 function boundIdentity(value: { documentVersion: string; guidedManifestSha256: string; reviewManifestSha256: string }): boolean {
   const manifest = getGuidedR2Manifest();
@@ -48,6 +49,13 @@ export function createPreviewR2Service(writable = true, options: PreviewOptions 
   }
   return {
     sessionCount: () => sessions.size,
+    adminSnapshot: () => {
+      prune(clockNow());
+      return {
+        entries: [...sessions.values()].flatMap((session) => [...session.entries.values()]),
+        completions: [...sessions.values()].flatMap((session) => session.completion ? [session.completion] : []),
+      };
+    },
     async handle(raw: unknown, token: string | undefined): Promise<PreviewReply> {
       const parsed = previewTransportRequestSchema.safeParse(raw);
       if (!parsed.success) return failure('invalid_payload', 422);
@@ -117,8 +125,8 @@ export function createPreviewR2Service(writable = true, options: PreviewOptions 
           user_id: session.userKey, document_version: manifest.documentVersion,
           guided_manifest_sha256: manifest.guidedManifestSha256, review_manifest_sha256: manifest.reviewManifestSha256,
           target_kind: target.kind, target_id: target.id, revision: (old?.revision ?? 0) + 1,
-          draft_choice_id: draft.choiceId ?? null, draft_rationale: draft.rationale ?? null,
-          draft_text: draft.text ?? null, submitted_choice_id: old?.submitted_choice_id ?? null,
+          draft_choice_id: draft.choiceId ?? null, draft_rationale: savedText(draft.rationale),
+          draft_text: savedText(draft.text), submitted_choice_id: old?.submitted_choice_id ?? null,
           submitted_rationale: old?.submitted_rationale ?? null, submitted_text: old?.submitted_text ?? null,
           submitted_revision: old?.submitted_revision ?? null, submitted_at: old?.submitted_at ?? null,
           updated_at: now,
@@ -140,10 +148,11 @@ export function createPreviewR2Service(writable = true, options: PreviewOptions 
       if (request.body.expectedCompletionRevision !== (session.completion?.revision ?? 0)) return failure('stale_revision', 409);
       const now = new Date().toISOString();
       for (const entry of entries) {
+        const hasDraft = entry.draft_choice_id !== null || entry.draft_rationale !== null || entry.draft_text !== null;
         session.entries.set(entryKey(entry.target_kind, entry.target_id), {
-          ...entry, submitted_choice_id: entry.draft_choice_id,
-          submitted_rationale: entry.draft_rationale, submitted_text: entry.draft_text,
-          submitted_revision: entry.revision, submitted_at: now,
+          ...entry, submitted_choice_id: hasDraft ? entry.draft_choice_id : null,
+          submitted_rationale: hasDraft ? entry.draft_rationale : null, submitted_text: hasDraft ? entry.draft_text : null,
+          submitted_revision: hasDraft ? entry.revision : null, submitted_at: hasDraft ? now : null,
         });
       }
       session.completion = {

@@ -4,12 +4,14 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import type { CSSProperties, ReactNode } from 'react';
 import { ArrowRight, BookOpen, Check, Maximize2, MessageSquareText, Minimize2, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, RotateCcw, X } from 'lucide-react';
 
-import { GUIDED_R2_FOCUS_AREAS, GUIDED_R2_PROMPTS, GUIDED_R2_SECTION_ANCHORS, type GuidedEntry, type GuidedTargetKind } from '@/lib/matrix-options/paper/guided-r2-contract';
+import { GUIDED_R2_FOCUS_AREAS, GUIDED_R2_PROMPTS, GUIDED_R2_SECTION_ANCHORS, GUIDED_R2_TARGETS, type GuidedEntry, type GuidedTargetKind } from '@/lib/matrix-options/paper/guided-r2-contract';
 import { guidedR2DraftSetDigest } from '@/lib/matrix-options/paper/guided-r2-digest';
+import { clearGuidedDraft, clearGuidedDraftsForUser, readGuidedDraft, writeGuidedDraft } from '@/lib/matrix-options/paper/guided-r2-local-drafts';
 import { R2_READER_LINKS } from '@/lib/matrix-options/paper/r2-reader-links';
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import { previewAreaForAnchor } from '@/lib/matrix-options/paper/r2-review-preview';
 import { createGuidedTransport, type GuidedFeedbackItem, type GuidedStateReply, type GuidedTransport } from '@/lib/matrix-options/paper/guided-r2-transport';
+import { createClient } from '@/lib/supabase/client';
 import { PaperScrollAuthority } from '@/lib/matrix-options/paper/scroll-authority';
 import { maxPanelWidth, readPanelPreferences, resolvePanelWidths, writePanelPreferences, type PanelPreferences, type PanelSide } from '@/lib/matrix-options/paper/panel-layout';
 import { DEFAULT_READER_WIDTH, readReaderWidth, writeReaderWidth, type ReaderWidth } from '@/lib/matrix-options/paper/reader-width';
@@ -57,12 +59,21 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
   const [readError, setReadError] = useState('');
   const [feedback, setFeedback] = useState<GuidedFeedbackItem[]>([]);
   const [feedbackError, setFeedbackError] = useState('');
+  const [feedbackRefresh, setFeedbackRefresh] = useState(0);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const draftsRef = useRef(drafts);
   draftsRef.current = drafts;
   const [dirty, setDirty] = useState<Record<string, boolean>>({});
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
+  const [conflicts, setConflicts] = useState<Record<string, boolean>>({});
+  const allowLeaveRef = useRef(false);
+  const generationRef = useRef(0);
+  const lastLocationRef = useRef('');
+  const authUserRef = useRef<string | null>(null);
+  const needsAuthBootstrapRef = useRef(false);
+  const stateRef = useRef(state);
+  stateRef.current = state;
   const [activeAreaId, setActiveAreaId] = useState<string>(GUIDED_R2_FOCUS_AREAS[0].id);
   const [visitedAreaIds, setVisitedAreaIds] = useState<readonly string[]>([GUIDED_R2_FOCUS_AREAS[0].id]);
   const [reviewedAreaIds, setReviewedAreaIds] = useState<readonly string[]>([]);
@@ -118,25 +129,82 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
   };
 
   const loadState = useCallback(async (preserveEdits = true) => {
+    const requestGeneration = generationRef.current;
     try {
       const response = await transport.state(identity);
-      if (!response.ok) { setReadError(response.status === 403 ? 'Guided responses are available only to invited reviewers. The paper remains readable.' : response.status === 409 ? 'This review version changed. Reload this page before saving.' : 'Your review state is temporarily unavailable. The paper remains readable.'); setState(response.status === 403 ? null : (current) => current ? { ...current, mode: 'read-only' } : current); if (response.status === 403) { setDrafts({}); setFeedback([]); } return; }
+      if (requestGeneration !== generationRef.current) return;
+      if (!response.ok) { setReadError(response.status === 403 ? 'Guided responses are unavailable for this account. The paper remains readable.' : response.status === 409 ? 'This review version changed. Reload this page before saving.' : 'Your review state is temporarily unavailable. The paper remains readable.'); setState(response.status === 403 ? null : (current) => current ? { ...current, mode: 'read-only' } : current); if (response.status === 403) { setDrafts({}); setDirty({}); setConflicts({}); setFeedback([]); } return; }
       const next = response.value;
       if (next.userKey && Array.isArray(next.entries) && (next.mode === 'read-only' || next.mode === 'writable')) {
+        if (transportMode === 'production' && authUserRef.current && authUserRef.current !== next.userKey) return;
+        const sameUser = stateRef.current?.userKey === next.userKey;
+        if (stateRef.current && !sameUser) generationRef.current += 1;
+        const recovered: Record<string, Draft> = {};
+        const recoveredDirty: Record<string, boolean> = {};
+        const recoveredConflicts: Record<string, boolean> = {};
+        for (const target of GUIDED_R2_TARGETS) {
+          const key = targetKey(target.kind, target.id);
+          const entry = next.entries.find((row) => row.target_kind === target.kind && row.target_id === target.id);
+          const saved = entry ? { choiceId: entry.draft_choice_id, rationale: entry.draft_rationale ?? '', text: entry.draft_text ?? '' } : emptyDraft();
+          const local = readGuidedDraft({ userKey: next.userKey, ...identity, targetKind: target.kind, targetId: target.id });
+          recovered[key] = preserveEdits && sameUser && dirtyRef.current[key] ? draftsRef.current[key] ?? saved : local?.value ?? saved;
+          recoveredDirty[key] = Boolean(preserveEdits && sameUser && dirtyRef.current[key] || local);
+          recoveredConflicts[key] = Boolean(local && local.baseRevision !== (entry?.revision ?? 0));
+        }
         setState(next); setReadError('');
-        setDrafts((current) => {
-          const result = { ...current };
-          for (const entry of next.entries) {
-            const key = targetKey(entry.target_kind, entry.target_id);
-            if (!preserveEdits || !dirtyRef.current[key]) result[key] = { choiceId: entry.draft_choice_id, rationale: entry.draft_rationale ?? '', text: entry.draft_text ?? '' };
-          }
-          return result;
-        });
+        setDrafts(recovered); setDirty(recoveredDirty); setConflicts(recoveredConflicts);
+        if (Object.values(recoveredConflicts).some(Boolean)) setNotice('A saved item changed since your local draft. Compare it before saving; your local text is retained.');
+        else if (Object.values(recoveredDirty).some(Boolean)) setNotice('Unsaved local changes recovered. Save each item before finishing.');
       } else setReadError('Your review state is temporarily unavailable.');
-    } catch { setReadError('Your review state is temporarily unavailable. The paper remains readable.'); setState((current) => current ? { ...current, mode: 'read-only' } : current); }
-  }, [identity, transport]);
+    } catch { if (requestGeneration !== generationRef.current) return; setReadError('Your review state is temporarily unavailable. The paper remains readable.'); setState((current) => current ? { ...current, mode: 'read-only' } : current); }
+  }, [identity, transport, transportMode]);
 
-  useEffect(() => { void loadState(false); }, [loadState]);
+  useEffect(() => { void loadState(false); return () => { generationRef.current += 1; }; }, [loadState]);
+  useEffect(() => {
+    const onLeave = (event: BeforeUnloadEvent) => {
+      if (allowLeaveRef.current || !Object.values(dirtyRef.current).some(Boolean)) return;
+      event.preventDefault(); event.returnValue = '';
+    };
+    const onLink = (event: MouseEvent) => {
+      if (!Object.values(dirtyRef.current).some(Boolean) || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = event.target instanceof Element ? event.target.closest('a[href]') as HTMLAnchorElement | null : null;
+      if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) return;
+      const destination = new URL(anchor.href, window.location.href);
+      if (destination.origin === window.location.origin && destination.pathname === window.location.pathname) return;
+      if (!window.confirm('You have unsaved review changes. Leave this page?')) event.preventDefault();
+      else { allowLeaveRef.current = true; window.setTimeout(() => { allowLeaveRef.current = false; }, 1000); }
+    };
+    window.addEventListener('beforeunload', onLeave);
+    document.addEventListener('click', onLink, true);
+    return () => { window.removeEventListener('beforeunload', onLeave); document.removeEventListener('click', onLink, true); };
+  }, []);
+  useEffect(() => {
+    const onSignedOut = () => {
+      generationRef.current += 1;
+      needsAuthBootstrapRef.current = true;
+      if (stateRef.current?.userKey) clearGuidedDraftsForUser(stateRef.current.userKey);
+      setState(null); setDrafts({}); setDirty({}); setConflicts({}); setFeedback([]); setFeedbackError(''); setBusy(false); setNotice('');
+    };
+    window.addEventListener('matrix-options-auth-signed-out', onSignedOut);
+    let subscription: { unsubscribe: () => void } | undefined;
+    if (transportMode === 'production') {
+      try { subscription = createClient().auth.onAuthStateChange((event, session) => {
+        if (event === 'SIGNED_OUT') { authUserRef.current = null; onSignedOut(); return; }
+        const nextUser = session?.user?.id;
+        if (!nextUser) return;
+        const switched = Boolean(authUserRef.current && authUserRef.current !== nextUser ||
+          stateRef.current?.userKey && stateRef.current.userKey !== nextUser);
+        authUserRef.current = nextUser;
+        if (switched) onSignedOut();
+        if (switched || needsAuthBootstrapRef.current) {
+          needsAuthBootstrapRef.current = false;
+          setFeedbackRefresh((current) => current + 1);
+          void loadState(false);
+        }
+      }).data.subscription; } catch { /* The server state remains authoritative. */ }
+    }
+    return () => { window.removeEventListener('matrix-options-auth-signed-out', onSignedOut); subscription?.unsubscribe(); };
+  }, [loadState, transportMode]);
   useLayoutEffect(() => {
     authority.observe(window);
     return () => authority.dispose();
@@ -148,16 +216,18 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
   }, [authority, view]);
   useEffect(() => {
     let cancelled = false;
+    const requestGeneration = generationRef.current;
     void (async () => {
       try {
         const response = await transport.feedback(identity);
+        if (requestGeneration !== generationRef.current) return;
         if (!response.ok) throw new Error('feedback');
         const data = response.value;
         if (!cancelled) { setFeedback(Array.isArray(data.items) ? data.items : []); setFeedbackError(''); }
-      } catch { if (!cancelled) { setFeedback([]); setFeedbackError('Earlier feedback is temporarily unavailable.'); } }
+      } catch { if (!cancelled && requestGeneration === generationRef.current) { setFeedback([]); setFeedbackError('Earlier feedback is temporarily unavailable.'); } }
     })();
     return () => { cancelled = true; };
-  }, [identity, transport]);
+  }, [feedbackRefresh, identity, transport]);
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -182,18 +252,44 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
   }, [view]);
 
   useEffect(() => {
-    const onHistory = () => setView(new URLSearchParams(window.location.search).get('mode') === 'my-review' ? 'my-review' : 'paper');
-    window.addEventListener('popstate', onHistory);
-    return () => window.removeEventListener('popstate', onHistory);
+    lastLocationRef.current = window.location.href;
+    const pagePath = window.location.pathname;
+    // A same-URL history entry gives Back one in-page stop before a client
+    // router can leave this component. Keep Next's existing history state.
+    if (!window.history.state?.matrixR2LeaveGuard) {
+      window.history.replaceState({ ...window.history.state, matrixR2LeaveBase: true }, '', window.location.href);
+      window.history.pushState({ ...window.history.state, matrixR2LeaveBase: false, matrixR2LeaveGuard: true }, '', window.location.href);
+    }
+    const onHistory = (event: PopStateEvent) => {
+      if (event.state?.matrixR2LeaveBase) {
+        if (Object.values(dirtyRef.current).some(Boolean)
+          && !window.confirm('You have unsaved review changes. Leave this page?')) window.history.forward();
+        else { allowLeaveRef.current = true; window.history.back(); }
+        event.stopImmediatePropagation();
+        return;
+      }
+      if (window.location.pathname !== pagePath && Object.values(dirtyRef.current).some(Boolean)
+        && !allowLeaveRef.current && !window.confirm('You have unsaved review changes. Leave this page?')) {
+        window.history.pushState(null, '', lastLocationRef.current);
+        event.stopImmediatePropagation();
+        return;
+      }
+      lastLocationRef.current = window.location.href;
+      setView(new URLSearchParams(window.location.search).get('mode') === 'my-review' ? 'my-review' : 'paper');
+    };
+    window.addEventListener('popstate', onHistory, true);
+    return () => window.removeEventListener('popstate', onHistory, true);
   }, []);
 
   const selectMyReview = () => {
     setView('my-review'); setMobileOpen(false);
     window.history.pushState(null, '', viewHref('my-review'));
+    lastLocationRef.current = window.location.href;
   };
   const selectWholePaper = () => {
     setView('whole-paper'); setMobileOpen(false);
     window.history.pushState(null, '', viewHref('working-draft'));
+    lastLocationRef.current = window.location.href;
   };
 
   const scrollPaperToSection = (anchor: string) => {
@@ -212,6 +308,7 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
     setView('paper'); setActiveAreaId(id); setActiveAnchor(area.anchor); setMobileOpen(false);
     setVisitedAreaIds((current) => current.includes(id) ? current : [...current, id]);
     window.history.pushState(null, '', viewHref('working-draft', area.anchor));
+    lastLocationRef.current = window.location.href;
     requestAnimationFrame(() => scrollPaperToSection(area.anchor));
   };
   const selectSection = (anchor: string) => {
@@ -219,16 +316,25 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
     if (owner) { setActiveAreaId(owner); setVisitedAreaIds((current) => current.includes(owner) ? current : [...current, owner]); }
     setView('paper'); setActiveAnchor(anchor); setMobileOpen(false);
     window.history.pushState(null, '', viewHref('working-draft', anchor));
+    lastLocationRef.current = window.location.href;
     requestAnimationFrame(() => scrollPaperToSection(anchor));
   };
   const updateDraft = (kind: GuidedTargetKind, id: string, patch: Partial<Draft>) => {
     const key = targetKey(kind, id);
-    setDrafts((current) => ({ ...current, [key]: { ...(current[key] ?? emptyDraft()), ...patch } }));
+    const next = { ...(draftsRef.current[key] ?? emptyDraft()), ...patch };
+    let buffered = true;
+    if (state) {
+      const baseRevision = state.entries.find((entry) => entry.target_kind === kind && entry.target_id === id)?.revision ?? 0;
+      buffered = writeGuidedDraft({ userKey: state.userKey, ...identity, targetKind: kind, targetId: id }, next, baseRevision);
+    }
+    setDrafts((current) => ({ ...current, [key]: next }));
     setDirty((current) => ({ ...current, [key]: true }));
-    setNotice('Unsaved changes.');
+    setNotice(buffered ? 'Unsaved changes.' : 'Unsaved changes. This browser cannot keep a recovery copy; save before leaving.');
   };
   const save = async (kind: GuidedTargetKind, id: string) => {
     if (!state || state.mode !== 'writable' || busy) return;
+    const requestGeneration = generationRef.current;
+    const requestUser = state.userKey;
     setBusy(true); setNotice('Saving...');
     const key = targetKey(kind, id);
     const existing = state.entries.find((entry) => entry.target_kind === kind && entry.target_id === id);
@@ -236,31 +342,40 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
       const draft = drafts[key] ?? emptyDraft();
       const payload = kind === 'choice-prompt' ? { choiceId: draft.choiceId, rationale: draft.rationale } : { text: draft.text };
       const response = await transport.save(id, { ...identity, targetKind: kind, expectedRevision: existing?.revision ?? 0, expectedUserId: state.userKey, draft: payload });
+      if (requestGeneration !== generationRef.current || stateRef.current?.userKey !== requestUser) return;
       if (!response.ok) {
         setNotice(response.status === 409 ? 'This item changed elsewhere. Your text remains here; review it before retrying.' : response.status === 403 ? 'Saving is currently closed. Your text remains here.' : 'Save failed. Your text remains here.');
         if (response.status === 409) void loadState(true);
       } else {
         setState((current) => current ? { ...current, entries: [...current.entries.filter((entry) => !(entry.target_kind === kind && entry.target_id === id)), response.value.row] } : current);
         const changedDuringSave = JSON.stringify(draftsRef.current[key] ?? emptyDraft()) !== JSON.stringify(draft);
-        if (!changedDuringSave) setDirty((current) => ({ ...current, [key]: false }));
+        if (!changedDuringSave) {
+          clearGuidedDraft({ userKey: state.userKey, ...identity, targetKind: kind, targetId: id });
+          setDirty((current) => ({ ...current, [key]: false }));
+          setConflicts((current) => ({ ...current, [key]: false }));
+        } else writeGuidedDraft({ userKey: state.userKey, ...identity, targetKind: kind, targetId: id }, draftsRef.current[key], response.value.row.revision);
         setNotice(changedDuringSave ? 'An earlier edit was saved. Save your newer changes before finishing.' : 'Saved.');
       }
-    } catch { setNotice('Save failed. Your text remains here.'); }
-    finally { setBusy(false); }
+    } catch { if (requestGeneration === generationRef.current && stateRef.current?.userKey === requestUser) setNotice('Save failed. Your text remains here.'); }
+    finally { if (requestGeneration === generationRef.current && stateRef.current?.userKey === requestUser) setBusy(false); }
   };
   const complete = async () => {
     if (!state || state.mode !== 'writable' || busy) return;
     if (Object.values(dirty).some(Boolean)) { setNotice('Save your changes before finishing.'); return; }
+    const requestGeneration = generationRef.current;
+    const requestUser = state.userKey;
     setBusy(true); setNotice('Finishing review...');
     try {
       const digest = await guidedR2DraftSetDigest(state.entries);
+      if (requestGeneration !== generationRef.current || stateRef.current?.userKey !== requestUser) return;
       const response = await transport.complete({ ...identity, expectedUserId: state.userKey, expectedCompletionRevision: state.completion?.revision ?? 0, draftSetDigest: digest });
+      if (requestGeneration !== generationRef.current || stateRef.current?.userKey !== requestUser) return;
       if (!response.ok) {
         setNotice(response.status === 409 ? 'Your review changed elsewhere. Refresh the saved state before finishing.' : 'Could not finish the review. Your saved entries remain available.');
         if (response.status === 409) void loadState(true);
       } else { setState((current) => current ? { ...current, entries: response.value.entries, completion: response.value.completion } : current); setNotice(response.value.outcome === 'ok' ? 'Review finished.' : 'This review was already finished with the same saved entries.'); }
-    } catch { setNotice('Could not finish the review. Your saved entries remain available.'); }
-    finally { setBusy(false); }
+    } catch { if (requestGeneration === generationRef.current && stateRef.current?.userKey === requestUser) setNotice('Could not finish the review. Your saved entries remain available.'); }
+    finally { if (requestGeneration === generationRef.current && stateRef.current?.userKey === requestUser) setBusy(false); }
   };
 
   const area = GUIDED_R2_FOCUS_AREAS.find((item) => item.id === activeAreaId) ?? GUIDED_R2_FOCUS_AREAS[0];
@@ -320,7 +435,8 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
         </div>
         <textarea id={textareaId} rows={rows} maxLength={20000} value={text} onChange={(event) => updateDraft(kind, id, choiceOptions ? { rationale: event.target.value } : { text: event.target.value })} disabled={!writable || busy} aria-describedby={countId} data-expanded={expanded ? 'true' : undefined} className={`${inputClass} resize-y ${expanded ? 'h-[min(70vh,44rem)] min-h-80' : 'h-56 min-h-32'}`} />
         <p id={countId} aria-live={20000 - text.length <= 1000 ? 'polite' : undefined} className="mt-1 text-right text-xs tabular-nums text-[var(--db-text-muted)]">{text.length} / 20000</p>
-        <div className="mt-2 flex items-center gap-3"><button type="button" className={actionClass} disabled={!writable || busy || !dirty[key]} onClick={() => void save(kind, id)}>Save</button><span className="text-xs text-[var(--db-text-secondary)]">{dirty[key] ? 'Unsaved - save before finishing' : entryStatus(entry)}</span></div>
+        <div className="mt-2 flex items-center gap-3"><button type="button" className={actionClass} disabled={!writable || busy || !dirty[key] || conflicts[key]} onClick={() => void save(kind, id)}>Save</button><span className="text-xs text-[var(--db-text-secondary)]">{conflicts[key] ? 'Conflict - compare with saved response before saving' : dirty[key] ? 'Unsaved - save before finishing' : entryStatus(entry)}</span></div>
+        {conflicts[key] ? <div className="mt-2 rounded border border-[var(--db-border)] p-3 text-xs"><p>The server has a newer revision. Your local response is still in the editor.</p><p className="mt-2 whitespace-pre-wrap">Saved response: {choiceOptions ? `${entry?.draft_choice_id ?? '(no choice)'} - ${entry?.draft_rationale ?? ''}` : entry?.draft_text ?? '(empty)'}</p><button type="button" className="mt-2 underline" onClick={() => { const next = draftsRef.current[key] ?? emptyDraft(); writeGuidedDraft({ userKey: state.userKey, ...identity, targetKind: kind, targetId: id }, next, entry?.revision ?? 0); setConflicts((current) => ({ ...current, [key]: false })); }}>Keep my local response</button><button type="button" className="ml-3 underline" onClick={() => { clearGuidedDraft({ userKey: state.userKey, ...identity, targetKind: kind, targetId: id }); setDrafts((current) => ({ ...current, [key]: entry ? { choiceId: entry.draft_choice_id, rationale: entry.draft_rationale ?? '', text: entry.draft_text ?? '' } : emptyDraft() })); setDirty((current) => ({ ...current, [key]: false })); setConflicts((current) => ({ ...current, [key]: false })); }}>Use saved response</button></div> : null}
       </section>;
     };
     if (view === 'whole-paper') return <div className="space-y-5"><h2 className="text-lg font-semibold">Whole-paper comments</h2><p className="text-sm">For feedback that does not belong to one section.</p>{field('whole-paper-comment', 'whole-paper', 'General comments on the proposed paper', 7)}<EarlierFeedback areaId="whole-paper" feedback={feedback} error={feedbackError} /></div>;
