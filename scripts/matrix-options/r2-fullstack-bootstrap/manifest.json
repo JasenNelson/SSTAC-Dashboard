@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "matrix-r2-fullstack-bootstrap-v1",
+  "purpose": "Local-only reconstruction of the production objects the Guided R2 reviewer, admin and legacy v0.9.91 paths depend on, for the disposable local preview. Passing local checks proves parity only with captured/provider-fingerprint.json (a hash-pinned production baseline); it proves nothing about production, and no production activation tooling is part of this preview.",
+  "supabaseCli": "supabase@2.122.1",
+  "dbContainer": "supabase_db_<run project id> (derived per run by custody.mjs runResources; never fixed)",
+  "migrations": [
+    {
+      "order": 1,
+      "source": "scripts/matrix-options/r2-fullstack-bootstrap/captured/provider-only-pre.sql",
+      "target": "20260510000000_preview_capture_provider_only_pre.sql",
+      "sha256": "b2bb7c57a4e1e8fc03e56e6c4eaec9971220abc19c7b33bdcf2283af7a172777",
+      "provides": [
+        "public.user_roles exactly as production (table, identity, constraints, RLS, policies, ACL)",
+        "public.update_updated_at_column()",
+        "public.is_admin()",
+        "role matrix_map_owner"
+      ],
+      "dependsOn": [],
+      "note": "Replaces the branch-replay backfills 20260510000001/20260511000001 for the preview: they build a user_roles table that differs from production's pre-migration table (fingerprint showed constraint, check, foreign key and function differences)."
+    },
+    {
+      "order": 2,
+      "source": "docs/apply-drafts/MATRIX_PAPER_REVIEW_V0991_ACTIVATION_2026_10_14.sql",
+      "target": "20261014000001_matrix_paper_review_v0991_activation_2026_10_14.sql",
+      "sha256": "ab08d9d268a6cd6f273d054c1749186bfaa23efb579cb25d84997a51a316391f",
+      "provides": [
+        "legacy v0.9.91 tables, RPCs, policies, trigger, 12 question rows",
+        "public.is_matrix_options_paper_admin()"
+      ],
+      "dependsOn": [
+        1
+      ],
+      "note": "Applied to production 2026-10-15 (docs/apply-drafts/MATRIX_PAPER_REVIEW_V0991_APPLIED_RECORD_2026_10_15.md; same sha256). The production SUBMIT_CORRECTIVE is not replayed: it restored exactly the approved submit body this file already carries when applied without transport decoding, and it raises unless the transport-mangled body is installed. The fingerprint pins the resulting submit body."
+    },
+    {
+      "order": 3,
+      "source": "supabase/migrations/20261117003834_matrix_guided_r2_inactive_20261116.sql",
+      "target": "20261117003834_matrix_guided_r2_inactive_20261116.sql",
+      "sha256": "2c1ca572802df4a609ae15edd4e119aa81419edcf872953544f71de36fddc595",
+      "provides": [
+        "guided R2 tables, targets, activation row (false), RPCs"
+      ],
+      "dependsOn": [
+        2
+      ]
+    },
+    {
+      "order": 4,
+      "source": "supabase/migrations/20261118000001_matrix_guided_r2_all_users_write_admission.sql",
+      "target": "20261118000001_matrix_guided_r2_all_users_write_admission.sql",
+      "sha256": "06f55a31e2e7c6523dd969391ae4ba4a6d03672f47bb48e75e5ad02b9d8e5555",
+      "provides": [
+        "reviewer admission RPC, admin read policies, user FKs with cascade, events UPDATE-only trigger"
+      ],
+      "dependsOn": [
+        2,
+        3
+      ],
+      "note": "Production ledger records this file as version 20261120060356; the local ledger records 20261118000001 (fingerprint rule N4). The file's own pre-guard and post-assert run unchanged."
+    }
+  ],
+  "postStart": [
+    {
+      "order": 5,
+      "source": "scripts/matrix-options/r2-fullstack-bootstrap/captured/provider-only-storage.sql",
+      "sha256": "7b206ca6d11617363757828f578036ecaa6e415b3356cfc8d156cb458d27cccc",
+      "provides": [
+        "bucket matrix-paper-review-assets",
+        "storage policy matrix_paper_r2_select_authenticated_exact"
+      ],
+      "dependsOn": [
+        4
+      ],
+      "note": "Runs after supabase start so storage-api has completed its own schema migrations."
+    }
+  ],
+  "parity": {
+    "query": "scripts/matrix-options/r2-fullstack-bootstrap/fingerprint.sql",
+    "querySha256": "550551fbf3215e28190ad23be9a2fc7cd04cf292af0e8350c48f03a0f9061676",
+    "baseline": "scripts/matrix-options/r2-fullstack-bootstrap/captured/provider-fingerprint.json",
+    "baselineSha256": "4445aebe353271bd85e21cb25653fff396c2fd3bb6517e4928b4644149095c67",
+    "rule": "Every baseline row must exist locally with an equal fp, and no extra local row may exist. Run before seeding (the activation identity row excludes the enabled flag)."
+  },
+  "configTemplateSha256": "2e4ece2c4bcc1053df1b9af54af58b507b378e2aa2a3bbbf55ec2bb0a4c658f1"
+}

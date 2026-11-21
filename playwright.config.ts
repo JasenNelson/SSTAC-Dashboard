@@ -64,7 +64,7 @@ const adminAuthState = path.join(__dirname, 'e2e', '.auth', 'admin.json');
 export default defineConfig({
   testDir: './e2e',
   // The production canary is run ONLY via playwright.paper-canary.config.ts, never by default e2e.
-  testIgnore: /matrix-options-paper-canary\.spec\.ts/,
+  testIgnore: /matrix-options-paper-canary\.spec\.ts|matrix-options-paper-r2-fullstack\.spec\.ts/,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -100,17 +100,17 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts|matrix-options-paper-r2-preview-local\.spec\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts|matrix-options-paper-r2-preview-local\.spec\.ts|matrix-options-paper-r2-fullstack\.spec\.ts/,
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts|matrix-options-paper-r2-preview-local\.spec\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts|matrix-options-paper-r2-preview-local\.spec\.ts|matrix-options-paper-r2-fullstack\.spec\.ts/,
     },
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts|matrix-options-paper-r2-preview-local\.spec\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts|matrix-options-paper-canary\.spec\.ts|matrix-options-paper-guided-r2\.spec\.ts|matrix-options-paper-r2-preview-local\.spec\.ts|matrix-options-paper-r2-fullstack\.spec\.ts/,
     },
     ...(runAuthenticatedE2E
       ? [
