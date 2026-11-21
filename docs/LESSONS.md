@@ -3752,8 +3752,64 @@ defects.
 
 ---
 
-**Last Updated:** October 15, 2026 (local gate environment: private fixture mode and e2e logins)
-**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); 2026-07-13 added 1 (HIGH); 2026-07-21 added 1 (HIGH); 2026-08-05 added 2 (2 HIGH); 2026-08-06 added 1 (HIGH); 2026-08-10 added 1 (HIGH); 2026-10-15 added 1 (MEDIUM); prior totals not re-tallied.
+## 2026-11-20 - Production Supabase is not reproducible from supabase/migrations alone [HIGH]
+
+### Problem or Discovery
+Building a faithful local stack for the Guided R2 review showed that replaying
+`supabase/migrations/` cannot rebuild what production runs. The legacy v0.9.91 review objects were
+applied from `docs/apply-drafts/`; the private R2 bucket, its read policy, one `user_roles` policy
+("Allow system function inserts") and the production `user_roles` table shape exist only on the
+provider; and the branch-replay backfill builds a different `user_roles` table. Separately, the
+production migration ledger records the guided admission migration as `20261120060356` while the
+repo file is `20261118000001` (same bytes). A local app on loopback Supabase also fails silently: the
+middleware CSP `connect-src` allows only `https://*.supabase.co`, so browser auth calls are blocked
+and the page bounces to `/login`.
+
+### Root Cause or Context
+Early schema was hand-applied in Studio, later lanes applied reviewed SQL through MCP
+`execute_sql`, and storage DDL was never captured as a migration.
+
+### Solution or Pattern
+- Reproduce production locally only against a hash-pinned, read-only catalog fingerprint
+  (`scripts/matrix-options/r2-fullstack-bootstrap/fingerprint.sql` and
+  `captured/provider-fingerprint.json`); restate provider-only objects verbatim from the catalog;
+  fail closed on any difference. Never infer missing DDL.
+- Serve local Supabase through the app's own loopback origin (`same-origin-proxy.mjs`, the
+  `e2e/fixtures/native-local-proxy.cjs` pattern) instead of editing the protected CSP.
+- Seed fresh disposable local identities for every preview run (new emails on the reserved local
+  domain, new random passwords, kept only in the run's gitignored state). Never reuse real or shared
+  test-account credentials in a local stack: a mis-bound port or a replaced listener then exposes
+  nothing that matters, and no credential proof machinery is needed.
+- Docker Desktop publishes Supabase CLI ports on 0.0.0.0 unless the engine setting
+  `"ip": "127.0.0.1"` is set, and the CLI has no bind option. A "local" stack is then reachable
+  from the LAN with well-known default credentials. Check `docker ps` bindings and fail closed
+  before loading real accounts or private objects (`bootstrap.mjs ports`).
+- Do not share fixed Docker project ids, volumes or ports between runs and then build lease
+  machinery to protect them. Derive every resource (project id, volumes, port block, directories) from a
+  unique run id, claim only the port block atomically, never attach anything pre-existing, and tear
+  down from the run's own records with verification. Bind the local Docker Desktop engine before the
+  first docker or Supabase CLI call (an inherited `DOCKER_HOST` or context can point elsewhere), and
+  prove a listener's process tree and served BUILD_ID instead of trusting a port
+  (`r2-fullstack-bootstrap/custody.mjs`).
+- Browser recovery copies must be keyed per page instance, not per user/release/target: two tabs
+  otherwise replace or delete each other's copy even though the server's revision check is correct.
+  Recover across reloads by adopting the tab's own closed predecessor first (sessionStorage), and
+  delete originals only by compare-and-delete (`guided-r2-local-drafts.ts`).
+- Do not repair the ledger version; note the mismatch for anyone using the Supabase CLI.
+
+### File References
+- `scripts/matrix-options/r2-fullstack-bootstrap/` (manifest, captured fixtures, accounts.mjs)
+- `scripts/matrix-options/r2-fullstack-preview.ps1`
+- `docs/MATRIX_OPTIONS_STATUS.md` section 3.6
+
+### Key Takeaway
+Before relying on a local or branch Supabase, compare it with production by catalog fingerprint;
+"the migrations folder" is not the schema of record for this project.
+
+---
+
+**Last Updated:** November 20, 2026 (production Supabase not reproducible from migrations alone)
+**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); 2026-07-13 added 1 (HIGH); 2026-07-21 added 1 (HIGH); 2026-08-05 added 2 (2 HIGH); 2026-08-06 added 1 (HIGH); 2026-08-10 added 1 (HIGH); 2026-10-15 added 1 (MEDIUM); 2026-11-20 added 1 (HIGH); prior totals not re-tallied.
 **Security Status:** Phase 2 COMPLETE - All 5 tasks done, 3 critical vulnerabilities fixed, 6 security headers added
 **Refactoring Status:** TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
 **Maintained By:** Claude Sessions with /update-docs skill
