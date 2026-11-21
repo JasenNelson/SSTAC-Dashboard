@@ -6,7 +6,8 @@ import { ArrowRight, BookOpen, Check, Maximize2, MessageSquareText, Minimize2, P
 
 import { GUIDED_R2_FOCUS_AREAS, GUIDED_R2_PROMPTS, GUIDED_R2_SECTION_ANCHORS, GUIDED_R2_TARGETS, type GuidedEntry, type GuidedTargetKind } from '@/lib/matrix-options/paper/guided-r2-contract';
 import { guidedR2DraftSetDigest } from '@/lib/matrix-options/paper/guided-r2-digest';
-import { clearGuidedDraft, clearGuidedDraftsForUser, readGuidedDraft, writeGuidedDraft } from '@/lib/matrix-options/paper/guided-r2-local-drafts';
+import { guidedRetryWaitSeconds, runGuidedSaveQueue, type GuidedQueueResult, type GuidedQueueStepOutcome } from '@/lib/matrix-options/paper/guided-r2-save-queue';
+import { GUIDED_DRAFT_HEARTBEAT_MS, clearGuidedDraftsForUser, createGuidedDraftSession, type GuidedDraftIdentity, type GuidedDraftSession } from '@/lib/matrix-options/paper/guided-r2-local-drafts';
 import { R2_READER_LINKS } from '@/lib/matrix-options/paper/r2-reader-links';
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import { previewAreaForAnchor } from '@/lib/matrix-options/paper/r2-review-preview';
@@ -27,6 +28,10 @@ let sharedPreviewTransport: GuidedTransport | null = null;
 const getPreviewTransport = () => sharedPreviewTransport ??= createGuidedTransport('preview');
 const inputClass = 'mt-2 w-full rounded-md border border-[var(--db-border-strong)] bg-[var(--db-surface)] px-3 py-2 text-sm text-[var(--db-text-primary)] focus-visible:outline-2 focus-visible:outline-[var(--db-focus-ring)]';
 const actionClass = 'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-[var(--db-accent)] px-4 py-2 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-[var(--db-focus-ring)] disabled:opacity-50';
+// Neutral: true before responses open and after a later DISABLE.
+export const GUIDED_READ_ONLY_NOTICE = 'Review responses are not open right now. The paper remains readable.';
+const secondaryActionClass = 'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md border border-[var(--db-border-strong)] px-4 py-2 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-[var(--db-focus-ring)] disabled:opacity-50';
+interface QueueProgress { readonly saved: number; readonly total: number; readonly remaining: number; readonly waitingSeconds: number | null }
 const dataNotice = "Feedback is optional, linked to your account, and used for this paper review. If your account is permanently deleted, this guided review's drafts, submissions, completion, and events are removed. Soft deletion retains them until permanent deletion or a separately approved purge. This review does not authorize research export; any future export needs separate approval.";
 
 function FeedbackUseDisclosure() {
@@ -50,10 +55,12 @@ function EarlierFeedback({ areaId, feedback, error }: { readonly areaId: string;
   </section>;
 }
 
-export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewManifestSha256, initialMode = 'working-draft', outline, paper, transportMode = 'production' }: {
+export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewManifestSha256, initialMode = 'working-draft', outline, paper, transportMode = 'production', recoverySessionStorage }: {
   readonly documentVersion: string; readonly guidedManifestSha256: string; readonly reviewManifestSha256: string;
   readonly initialMode?: 'working-draft' | 'my-review'; readonly outline: readonly OutlineEntry[]; readonly paper: ReactNode;
   readonly transportMode?: 'production' | 'preview';
+  /** Test seam: the tab's sessionStorage (defaults to window.sessionStorage). */
+  readonly recoverySessionStorage?: Pick<Storage, 'getItem' | 'setItem'>;
 }) {
   const [state, setState] = useState<GuidedStateReply | null>(null);
   const [readError, setReadError] = useState('');
@@ -67,6 +74,42 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
   const [conflicts, setConflicts] = useState<Record<string, boolean>>({});
+  const conflictsRef = useRef(conflicts);
+  conflictsRef.current = conflicts;
+  // Synchronous ref + state writers: the Save-all queue reads these between awaits.
+  const replaceDrafts = (next: Record<string, Draft>) => { draftsRef.current = next; setDrafts(next); };
+  const replaceDirty = (next: Record<string, boolean>) => { dirtyRef.current = next; setDirty(next); };
+  const replaceConflicts = (next: Record<string, boolean>) => { conflictsRef.current = next; setConflicts(next); };
+  const patchDirty = (key: string, value: boolean) => replaceDirty({ ...dirtyRef.current, [key]: value });
+  const patchConflicts = (key: string, value: boolean) => replaceConflicts({ ...conflictsRef.current, [key]: value });
+  // Per-tab base revision of every dirty draft: the server revision this tab's edit started from.
+  // It lives only in memory, so another tab's localStorage writes or removals cannot move it, and
+  // it is the revision every save sends. A stale base therefore stays a server-side 409 and a
+  // client-side conflict until the reviewer explicitly keeps their text or takes the saved one.
+  const baseRef = useRef<Record<string, number>>({});
+  // This page instance's own recovery store (per instance, never shared with another tab or mount).
+  // Created lazily on the client; null when storage is unavailable, which never affects drafts in memory.
+  const recoveryRef = useRef<GuidedDraftSession | null | undefined>(undefined);
+  const recovery = (): GuidedDraftSession | null => {
+    if (recoveryRef.current === undefined) {
+      try { recoveryRef.current = typeof window === 'undefined' ? null : createGuidedDraftSession(recoverySessionStorage ? { session: recoverySessionStorage } : {}); }
+      catch { recoveryRef.current = null; }
+    }
+    return recoveryRef.current;
+  };
+  const adoptedForRef = useRef<string | null>(null);
+  // A page restored from the back/forward cache reopens its recovery liveness and refreshes the saved
+  // state before any edit or save resumes; until then edits and saves are held.
+  const resumingRef = useRef(false);
+  const [resuming, setResuming] = useState(false);
+  const retryAdoptionRef = useRef<() => void>(() => undefined);
+  const resumeAfterRestoreRef = useRef<() => void>(() => undefined);
+  /** Adoption never touches a target with unsaved in-memory edits (neither copies nor removes its records). */
+  const protectDirty = (id: GuidedDraftIdentity) => Boolean(dirtyRef.current[targetKey(id.targetKind, id.targetId)]);
+  const serverRevision = (kind: GuidedTargetKind, id: string) =>
+    stateRef.current?.entries.find((entry) => entry.target_kind === kind && entry.target_id === id)?.revision ?? 0;
+  const [queue, setQueue] = useState<QueueProgress | null>(null);
+  const queueCancelRef = useRef(false);
   const allowLeaveRef = useRef(false);
   const generationRef = useRef(0);
   const lastLocationRef = useRef('');
@@ -133,7 +176,7 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
     try {
       const response = await transport.state(identity);
       if (requestGeneration !== generationRef.current) return;
-      if (!response.ok) { setReadError(response.status === 403 ? 'Guided responses are unavailable for this account. The paper remains readable.' : response.status === 409 ? 'This review version changed. Reload this page before saving.' : 'Your review state is temporarily unavailable. The paper remains readable.'); setState(response.status === 403 ? null : (current) => current ? { ...current, mode: 'read-only' } : current); if (response.status === 403) { setDrafts({}); setDirty({}); setConflicts({}); setFeedback([]); } return; }
+      if (!response.ok) { setReadError(response.status === 403 ? 'Guided responses are unavailable for this account. The paper remains readable.' : response.status === 409 ? 'This review version changed. Reload this page before saving.' : 'Your review state is temporarily unavailable. The paper remains readable.'); setState(response.status === 403 ? null : (current) => current ? { ...current, mode: 'read-only' } : current); if (response.status === 403) { baseRef.current = {}; replaceDrafts({}); replaceDirty({}); replaceConflicts({}); setFeedback([]); } return; }
       const next = response.value;
       if (next.userKey && Array.isArray(next.entries) && (next.mode === 'read-only' || next.mode === 'writable')) {
         if (transportMode === 'production' && authUserRef.current && authUserRef.current !== next.userKey) return;
@@ -142,24 +185,62 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
         const recovered: Record<string, Draft> = {};
         const recoveredDirty: Record<string, boolean> = {};
         const recoveredConflicts: Record<string, boolean> = {};
+        const recoveredBases: Record<string, number> = {};
+        // Once per signed-in user: take over the recovery copies of this tab's previous (closed)
+        // instance, and of other long-closed or crashed instances; then bounded cleanup.
+        if (adoptedForRef.current !== next.userKey) {
+          adoptedForRef.current = next.userKey;
+          recovery()?.adopt({ userKey: next.userKey, ...identity }, protectDirty);
+          recovery()?.sweep();
+        }
         for (const target of GUIDED_R2_TARGETS) {
           const key = targetKey(target.kind, target.id);
           const entry = next.entries.find((row) => row.target_kind === target.kind && row.target_id === target.id);
           const saved = entry ? { choiceId: entry.draft_choice_id, rationale: entry.draft_rationale ?? '', text: entry.draft_text ?? '' } : emptyDraft();
-          const local = readGuidedDraft({ userKey: next.userKey, ...identity, targetKind: target.kind, targetId: target.id });
-          recovered[key] = preserveEdits && sameUser && dirtyRef.current[key] ? draftsRef.current[key] ?? saved : local?.value ?? saved;
-          recoveredDirty[key] = Boolean(preserveEdits && sameUser && dirtyRef.current[key] || local);
-          recoveredConflicts[key] = Boolean(local && local.baseRevision !== (entry?.revision ?? 0));
+          const savedRevision = entry?.revision ?? 0;
+          if (preserveEdits && sameUser && dirtyRef.current[key]) {
+            // This tab's in-memory draft wins and keeps its own base. Shared localStorage is not
+            // consulted, so its loss, removal or another tab's write cannot clear a conflict.
+            const base = baseRef.current[key] ?? savedRevision;
+            recovered[key] = draftsRef.current[key] ?? saved;
+            recoveredDirty[key] = true;
+            recoveredBases[key] = base;
+            recoveredConflicts[key] = Boolean(conflictsRef.current[key]) || base !== savedRevision;
+            continue;
+          }
+          const local = recovery()?.read({ userKey: next.userKey, ...identity, targetKind: target.kind, targetId: target.id }) ?? null;
+          recovered[key] = local?.value ?? saved;
+          recoveredDirty[key] = Boolean(local);
+          if (local) recoveredBases[key] = local.baseRevision;
+          recoveredConflicts[key] = Boolean(local && local.baseRevision !== savedRevision);
         }
-        setState(next); setReadError('');
-        setDrafts(recovered); setDirty(recoveredDirty); setConflicts(recoveredConflicts);
+        baseRef.current = recoveredBases;
+        stateRef.current = next; setState(next); setReadError('');
+        replaceDrafts(recovered); replaceDirty(recoveredDirty); replaceConflicts(recoveredConflicts);
         if (Object.values(recoveredConflicts).some(Boolean)) setNotice('A saved item changed since your local draft. Compare it before saving; your local text is retained.');
         else if (Object.values(recoveredDirty).some(Boolean)) setNotice('Unsaved local changes recovered. Save each item before finishing.');
       } else setReadError('Your review state is temporarily unavailable.');
     } catch { if (requestGeneration !== generationRef.current) return; setReadError('Your review state is temporarily unavailable. The paper remains readable.'); setState((current) => current ? { ...current, mode: 'read-only' } : current); }
   }, [identity, transport, transportMode]);
 
-  useEffect(() => { void loadState(false); return () => { generationRef.current += 1; }; }, [loadState]);
+  useEffect(() => { void loadState(false); return () => { generationRef.current += 1; queueCancelRef.current = true; }; }, [loadState]);
+  // Liveness of this instance's recovery store: a heartbeat while open, and a close marker on
+  // pagehide (reload, navigation) or unmount so the next instance of this tab adopts its drafts.
+  useEffect(() => {
+    const store = recovery();
+    if (!store) return;
+    store.open();
+    // Every heartbeat also retries adoption, so a closed tab's copies (after the grace period) and a
+    // crashed tab's copies (after the stale bound) are recovered without a reload.
+    const timer = window.setInterval(() => { store.heartbeat(); retryAdoptionRef.current(); }, GUIDED_DRAFT_HEARTBEAT_MS);
+    const onPageHide = () => store.close();
+    const onPageShow = (event: PageTransitionEvent) => { if (event.persisted) resumeAfterRestoreRef.current(); };
+    window.addEventListener('pagehide', onPageHide);
+    window.addEventListener('pageshow', onPageShow);
+    return () => { window.clearInterval(timer); window.removeEventListener('pagehide', onPageHide); window.removeEventListener('pageshow', onPageShow); store.close(); };
+    // The store is created once per mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => {
     const onLeave = (event: BeforeUnloadEvent) => {
       if (allowLeaveRef.current || !Object.values(dirtyRef.current).some(Boolean)) return;
@@ -183,7 +264,9 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
       generationRef.current += 1;
       needsAuthBootstrapRef.current = true;
       if (stateRef.current?.userKey) clearGuidedDraftsForUser(stateRef.current.userKey);
-      setState(null); setDrafts({}); setDirty({}); setConflicts({}); setFeedback([]); setFeedbackError(''); setBusy(false); setNotice('');
+      adoptedForRef.current = null;
+      queueCancelRef.current = true;
+      stateRef.current = null; setState(null); baseRef.current = {}; replaceDrafts({}); replaceDirty({}); replaceConflicts({}); setFeedback([]); setFeedbackError(''); setBusy(false); setQueue(null); setNotice('');
     };
     window.addEventListener('matrix-options-auth-signed-out', onSignedOut);
     let subscription: { unsubscribe: () => void } | undefined;
@@ -293,12 +376,14 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
   };
 
   const scrollPaperToSection = (anchor: string) => {
-    // Desktop paper has its own scrollport. Never move the outer page.
-    // On mobile the paper is in document flow, so selection changes state only.
-    if (window.innerWidth < 1024) return;
-    const root = paperRef.current;
     const target = document.getElementById(anchor);
-    if (!root || !target) return;
+    if (!target) return;
+    // On mobile the paper is in document flow and the page is its scroller, so the selected
+    // section is brought into view there. Desktop paper has its own scrollport: never move the
+    // outer page.
+    if (window.innerWidth < 1024) { authority.scrollTargetIntoView(target); return; }
+    const root = paperRef.current;
+    if (!root) return;
     authority.scrollTargetWithin(root, target);
   };
 
@@ -319,63 +404,279 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
     lastLocationRef.current = window.location.href;
     requestAnimationFrame(() => scrollPaperToSection(anchor));
   };
+  /** Records adopted after the first load become unsaved drafts, never replacing an in-memory edit. */
+  const applyAdopted = (adopted: readonly GuidedDraftIdentity[]) => {
+    const current = stateRef.current;
+    if (!current || adopted.length === 0) return;
+    const drafts = { ...draftsRef.current }; const dirtyNext = { ...dirtyRef.current }; const conflictsNext = { ...conflictsRef.current }; const bases = { ...baseRef.current };
+    let applied = false; let conflicted = false;
+    for (const target of adopted) {
+      const key = targetKey(target.targetKind, target.targetId);
+      if (dirtyNext[key] || target.userKey !== current.userKey) continue;
+      const local = recovery()?.read(target);
+      if (!local) continue;
+      const savedRevision = serverRevision(target.targetKind, target.targetId);
+      drafts[key] = local.value; dirtyNext[key] = true; bases[key] = local.baseRevision;
+      conflictsNext[key] = local.baseRevision !== savedRevision; conflicted = conflicted || conflictsNext[key];
+      applied = true;
+    }
+    if (!applied) return;
+    baseRef.current = bases; replaceDrafts(drafts); replaceDirty(dirtyNext); replaceConflicts(conflictsNext);
+    setNotice(conflicted ? 'A saved item changed since your local draft. Compare it before saving; your local text is retained.' : 'Unsaved local changes recovered. Save each item before finishing.');
+  };
+  retryAdoptionRef.current = () => {
+    const current = stateRef.current;
+    if (!current || resumingRef.current) return;
+    applyAdopted(recovery()?.adoptTargets({ userKey: current.userKey, ...identity }, protectDirty) ?? []);
+  };
+  const RECONNECTING = 'Reconnecting this restored page. Edits and saves resume in a moment; your text remains here.';
+  resumeAfterRestoreRef.current = () => {
+    const store = recovery();
+    resumingRef.current = true; setResuming(true); setNotice(RECONNECTING);
+    store?.open();
+    // Another tab may have adopted this instance's copies while it was closed: re-own every unsaved
+    // in-memory draft under this instance before anything else resumes.
+    const current = stateRef.current;
+    if (current && store) {
+      for (const [key, isDirty] of Object.entries(dirtyRef.current)) {
+        const base = baseRef.current[key];
+        if (!isDirty || base === undefined) continue;
+        const separator = key.indexOf(':');
+        store.write({ userKey: current.userKey, ...identity, targetKind: key.slice(0, separator) as GuidedTargetKind, targetId: key.slice(separator + 1) }, draftsRef.current[key] ?? emptyDraft(), base);
+      }
+    }
+    void loadState(true).finally(() => {
+      resumingRef.current = false; setResuming(false);
+      setNotice((value) => (value === RECONNECTING ? '' : value));
+      retryAdoptionRef.current();
+    });
+  };
+  const holdWhileResuming = () => {
+    if (!resumingRef.current) return false;
+    setNotice(RECONNECTING);
+    return true;
+  };
   const updateDraft = (kind: GuidedTargetKind, id: string, patch: Partial<Draft>) => {
+    if (holdWhileResuming()) return;
     const key = targetKey(kind, id);
     const next = { ...(draftsRef.current[key] ?? emptyDraft()), ...patch };
     let buffered = true;
-    if (state) {
-      const baseRevision = state.entries.find((entry) => entry.target_kind === kind && entry.target_id === id)?.revision ?? 0;
-      buffered = writeGuidedDraft({ userKey: state.userKey, ...identity, targetKind: kind, targetId: id }, next, baseRevision);
+    const current = stateRef.current;
+    if (current) {
+      // The base is fixed when this tab starts editing; later keystrokes never move it forward.
+      if (!dirtyRef.current[key] || baseRef.current[key] === undefined) baseRef.current = { ...baseRef.current, [key]: serverRevision(kind, id) };
+      buffered = recovery()?.write({ userKey: current.userKey, ...identity, targetKind: kind, targetId: id }, next, baseRef.current[key]) ?? false;
     }
-    setDrafts((current) => ({ ...current, [key]: next }));
-    setDirty((current) => ({ ...current, [key]: true }));
+    replaceDrafts({ ...draftsRef.current, [key]: next });
+    patchDirty(key, true);
     setNotice(buffered ? 'Unsaved changes.' : 'Unsaved changes. This browser cannot keep a recovery copy; save before leaving.');
   };
+  const rateNotice = (retryAfterSeconds?: number | null) => `Save limit reached. Wait about ${guidedRetryWaitSeconds(retryAfterSeconds)} seconds, then try again. Your text remains here.`;
+  /** One target save. Reads refs (not render closures) so the Save-all queue sees each prior result. */
+  const saveTarget = async (kind: GuidedTargetKind, id: string): Promise<GuidedQueueStepOutcome> => {
+    const current = stateRef.current;
+    if (!current || current.mode !== 'writable') return { kind: 'closed' };
+    // A restored page sends nothing until its liveness and saved state are refreshed.
+    if (resumingRef.current) return { kind: 'aborted' };
+    const requestGeneration = generationRef.current;
+    const requestUser = current.userKey;
+    const key = targetKey(kind, id);
+    // An unresolved conflict never reaches the server, whatever the caller.
+    if (conflictsRef.current[key]) return { kind: 'conflict' };
+    const existing = current.entries.find((entry) => entry.target_kind === kind && entry.target_id === id);
+    const draft = draftsRef.current[key] ?? emptyDraft();
+    // The tab's own base, not the latest server revision: a refresh that brought another tab's save
+    // must not turn this draft into a silent overwrite.
+    const base = baseRef.current[key] ?? existing?.revision ?? 0;
+    const stale = () => requestGeneration !== generationRef.current || stateRef.current?.userKey !== requestUser;
+    try {
+      const payload = kind === 'choice-prompt' ? { choiceId: draft.choiceId, rationale: draft.rationale } : { text: draft.text };
+      const response = await transport.save(id, { ...identity, targetKind: kind, expectedRevision: base, expectedUserId: requestUser, draft: payload });
+      if (stale()) return { kind: 'aborted' };
+      if (!response.ok) {
+        // Refresh first so the caller's summary notice is the last word.
+        if (response.status === 409) {
+          await loadState(true);
+          if (stale()) return { kind: 'aborted' };
+          // A stale revision stays blocked until the reviewer chooses; the refresh alone never clears it.
+          if (response.outcome === 'stale_revision' && dirtyRef.current[key]) patchConflicts(key, true);
+          return { kind: 'conflict' };
+        }
+        if (response.status === 429) return { kind: 'rate_limited', retryAfterSeconds: response.retryAfterSeconds ?? null };
+        // A closed release refreshes state so the editor turns read-only; edits are kept.
+        if (response.status === 403) { await loadState(true); return stale() ? { kind: 'aborted' } : { kind: 'closed' }; }
+        return { kind: 'failed' };
+      }
+      const latest = stateRef.current;
+      if (latest) {
+        const nextState = { ...latest, entries: [...latest.entries.filter((entry) => !(entry.target_kind === kind && entry.target_id === id)), response.value.row] };
+        stateRef.current = nextState; setState(nextState);
+      }
+      const changedDuringSave = JSON.stringify(draftsRef.current[key] ?? emptyDraft()) !== JSON.stringify(draft);
+      if (!changedDuringSave) {
+        // Clear only the recovery record proven to be this saved draft on this base; another tab's
+        // copy under the same key is kept.
+        recovery()?.clearIfMatches({ userKey: requestUser, ...identity, targetKind: kind, targetId: id }, draft, base);
+        const otherBases = { ...baseRef.current };
+        delete otherBases[key];
+        baseRef.current = otherBases;
+        patchDirty(key, false);
+        patchConflicts(key, false);
+      } else {
+        // Newer local text now builds on this tab's own save.
+        baseRef.current = { ...baseRef.current, [key]: response.value.row.revision };
+        recovery()?.write({ userKey: requestUser, ...identity, targetKind: kind, targetId: id }, draftsRef.current[key], response.value.row.revision);
+      }
+      return { kind: 'ok' };
+    } catch { return stale() ? { kind: 'aborted' } : { kind: 'failed' }; }
+  };
+  /** Conflict decision 1: keep this tab's text, rebased on the saved revision the reviewer has seen. */
+  const keepLocalResponse = (kind: GuidedTargetKind, id: string) => {
+    if (holdWhileResuming()) return;
+    const current = stateRef.current;
+    if (!current) return;
+    const key = targetKey(kind, id);
+    const base = serverRevision(kind, id);
+    baseRef.current = { ...baseRef.current, [key]: base };
+    recovery()?.write({ userKey: current.userKey, ...identity, targetKind: kind, targetId: id }, draftsRef.current[key] ?? emptyDraft(), base);
+    patchConflicts(key, false);
+  };
+  /** Conflict decision 2: discard this tab's text and show the saved response. */
+  const takeSavedResponse = (kind: GuidedTargetKind, id: string) => {
+    if (holdWhileResuming()) return;
+    const current = stateRef.current;
+    if (!current) return;
+    const key = targetKey(kind, id);
+    const base = baseRef.current[key];
+    if (base !== undefined) recovery()?.clearIfMatches({ userKey: current.userKey, ...identity, targetKind: kind, targetId: id }, draftsRef.current[key] ?? emptyDraft(), base);
+    const otherBases = { ...baseRef.current };
+    delete otherBases[key];
+    baseRef.current = otherBases;
+    const entry = current.entries.find((item) => item.target_kind === kind && item.target_id === id);
+    replaceDrafts({ ...draftsRef.current, [key]: entry ? { choiceId: entry.draft_choice_id, rationale: entry.draft_rationale ?? '', text: entry.draft_text ?? '' } : emptyDraft() });
+    patchDirty(key, false);
+    patchConflicts(key, false);
+  };
   const save = async (kind: GuidedTargetKind, id: string) => {
-    if (!state || state.mode !== 'writable' || busy) return;
+    if (!state || state.mode !== 'writable' || busy || holdWhileResuming()) return;
     const requestGeneration = generationRef.current;
     const requestUser = state.userKey;
     setBusy(true); setNotice('Saving...');
     const key = targetKey(kind, id);
-    const existing = state.entries.find((entry) => entry.target_kind === kind && entry.target_id === id);
     try {
-      const draft = drafts[key] ?? emptyDraft();
-      const payload = kind === 'choice-prompt' ? { choiceId: draft.choiceId, rationale: draft.rationale } : { text: draft.text };
-      const response = await transport.save(id, { ...identity, targetKind: kind, expectedRevision: existing?.revision ?? 0, expectedUserId: state.userKey, draft: payload });
-      if (requestGeneration !== generationRef.current || stateRef.current?.userKey !== requestUser) return;
+      const outcome = await saveTarget(kind, id);
+      if (outcome.kind === 'aborted') return;
+      setNotice(outcome.kind === 'ok' ? (dirtyRef.current[key] ? 'An earlier edit was saved. Save your newer changes before finishing.' : 'Saved.')
+        : outcome.kind === 'conflict' ? 'This item changed elsewhere. Your text remains here; review it before retrying.'
+        : outcome.kind === 'rate_limited' ? rateNotice(outcome.retryAfterSeconds)
+        : outcome.kind === 'closed' ? 'Saving is currently closed. Your text remains here.' : 'Save failed. Your text remains here.');
+    } finally { if (requestGeneration === generationRef.current && stateRef.current?.userKey === requestUser) setBusy(false); }
+  };
+  /** Finish with the saved set. Callers ensure nothing is dirty. */
+  const completeReview = async (): Promise<GuidedQueueStepOutcome & { readonly noop?: boolean }> => {
+    const current = stateRef.current;
+    if (!current || current.mode !== 'writable') return { kind: 'closed' };
+    if (resumingRef.current) return { kind: 'aborted' };
+    if (Object.values(dirtyRef.current).some(Boolean)) return { kind: 'failed' };
+    const requestGeneration = generationRef.current;
+    const requestUser = current.userKey;
+    const stale = () => requestGeneration !== generationRef.current || stateRef.current?.userKey !== requestUser;
+    try {
+      const digest = await guidedR2DraftSetDigest(current.entries);
+      if (stale()) return { kind: 'aborted' };
+      const response = await transport.complete({ ...identity, expectedUserId: requestUser, expectedCompletionRevision: current.completion?.revision ?? 0, draftSetDigest: digest });
+      if (stale()) return { kind: 'aborted' };
       if (!response.ok) {
-        setNotice(response.status === 409 ? 'This item changed elsewhere. Your text remains here; review it before retrying.' : response.status === 403 ? 'Saving is currently closed. Your text remains here.' : 'Save failed. Your text remains here.');
-        if (response.status === 409) void loadState(true);
-      } else {
-        setState((current) => current ? { ...current, entries: [...current.entries.filter((entry) => !(entry.target_kind === kind && entry.target_id === id)), response.value.row] } : current);
-        const changedDuringSave = JSON.stringify(draftsRef.current[key] ?? emptyDraft()) !== JSON.stringify(draft);
-        if (!changedDuringSave) {
-          clearGuidedDraft({ userKey: state.userKey, ...identity, targetKind: kind, targetId: id });
-          setDirty((current) => ({ ...current, [key]: false }));
-          setConflicts((current) => ({ ...current, [key]: false }));
-        } else writeGuidedDraft({ userKey: state.userKey, ...identity, targetKind: kind, targetId: id }, draftsRef.current[key], response.value.row.revision);
-        setNotice(changedDuringSave ? 'An earlier edit was saved. Save your newer changes before finishing.' : 'Saved.');
+        // Refresh first so the caller's summary notice is the last word.
+        if (response.status === 409) { await loadState(true); return stale() ? { kind: 'aborted' } : { kind: 'conflict' }; }
+        if (response.status === 429) return { kind: 'rate_limited', retryAfterSeconds: response.retryAfterSeconds ?? null };
+        // A closed release refreshes state so the editor turns read-only; edits are kept.
+        if (response.status === 403) { await loadState(true); return stale() ? { kind: 'aborted' } : { kind: 'closed' }; }
+        return { kind: 'failed' };
       }
-    } catch { if (requestGeneration === generationRef.current && stateRef.current?.userKey === requestUser) setNotice('Save failed. Your text remains here.'); }
-    finally { if (requestGeneration === generationRef.current && stateRef.current?.userKey === requestUser) setBusy(false); }
+      const latest = stateRef.current;
+      if (latest) { const nextState = { ...latest, entries: response.value.entries, completion: response.value.completion }; stateRef.current = nextState; setState(nextState); }
+      return { kind: 'ok', noop: response.value.outcome !== 'ok' };
+    } catch { return stale() ? { kind: 'aborted' } : { kind: 'failed' }; }
   };
   const complete = async () => {
-    if (!state || state.mode !== 'writable' || busy) return;
+    if (!state || state.mode !== 'writable' || busy || holdWhileResuming()) return;
     if (Object.values(dirty).some(Boolean)) { setNotice('Save your changes before finishing.'); return; }
     const requestGeneration = generationRef.current;
     const requestUser = state.userKey;
     setBusy(true); setNotice('Finishing review...');
     try {
-      const digest = await guidedR2DraftSetDigest(state.entries);
+      const outcome = await completeReview();
+      if (outcome.kind === 'aborted') return;
+      setNotice(outcome.kind === 'ok' ? (outcome.noop ? 'This review was already finished with the same saved entries.' : 'Review finished.')
+        : outcome.kind === 'conflict' ? 'Your review changed elsewhere. Refresh the saved state before finishing.'
+        : outcome.kind === 'rate_limited' ? rateNotice(outcome.retryAfterSeconds)
+        : 'Could not finish the review. Your saved entries remain available.');
+    } finally { if (requestGeneration === generationRef.current && stateRef.current?.userKey === requestUser) setBusy(false); }
+  };
+  const orderedTargetKeys = GUIDED_R2_TARGETS.map((target) => targetKey(target.kind, target.id));
+  const queueRemaining = () => orderedTargetKeys.filter((key) => dirtyRef.current[key] && !conflictsRef.current[key]);
+  const queueWait = (seconds: number) => new Promise<boolean>((resolve) => {
+    let left = seconds;
+    const tick = () => {
+      if (queueCancelRef.current) { resolve(false); return; }
+      if (left <= 0) { resolve(true); return; }
+      setQueue((current) => current ? { ...current, waitingSeconds: left } : current);
+      left -= 1;
+      window.setTimeout(tick, 1000);
+    };
+    tick();
+  });
+  const queueSummary = (result: GuidedQueueResult, finishing: boolean, conflicted: number): string => {
+    const progress = result.total ? `Saved ${result.saved} of ${result.total}. ` : '';
+    if (result.status === 'finished') return `${progress}Review finished.`;
+    if (result.status === 'saved' && conflicted > 0) return `${progress}${conflicted} item${conflicted === 1 ? ' needs' : 's need'} a conflict decision before ${conflicted === 1 ? 'it' : 'they'} can be saved.`;
+    if (result.status === 'saved') return result.total ? `Saved ${result.saved} of ${result.total}. All changes are saved.` : 'Nothing to save.';
+    switch (result.reason) {
+      case 'conflict': return `${progress}Stopped: an item changed elsewhere. Compare it with the saved response; your text remains here.`;
+      case 'closed': return `${progress}Saving is currently closed. Your text remains here.`;
+      case 'rate_limited': return `${progress}The save limit is still reached. Wait a minute, then choose Save all again. Your text remains here.`;
+      case 'cancelled': return `${progress}Save all stopped. Remaining changes are still unsaved.`;
+      case 'changed_during_save': return `${progress}Some items changed while saving. Choose Save all again to save the newer text.`;
+      case 'not_ready_to_finish': return `${progress}Resolve the items marked Conflict before finishing.`;
+      default: return `${progress}A save failed. Your text remains here; try again.${finishing ? ' The review was not finished.' : ''}`;
+    }
+  };
+  const saveAll = async (finishing: boolean) => {
+    if (!state || state.mode !== 'writable' || busy || holdWhileResuming()) return;
+    const requestGeneration = generationRef.current;
+    const requestUser = state.userKey;
+    queueCancelRef.current = false;
+    let finishedAsNoop = false;
+    setBusy(true); setNotice(finishing ? 'Saving all changes, then finishing...' : 'Saving all changes...');
+    try {
+      const result = await runGuidedSaveQueue({
+        remaining: queueRemaining,
+        saveOne: (key) => { const separator = key.indexOf(':'); return saveTarget(key.slice(0, separator) as GuidedTargetKind, key.slice(separator + 1)); },
+        finish: finishing ? async () => { const outcome = await completeReview(); finishedAsNoop = outcome.kind === 'ok' && Boolean(outcome.noop); return outcome; } : undefined,
+        finishBlocked: () => Object.values(conflictsRef.current).some(Boolean) || Object.values(dirtyRef.current).some(Boolean),
+        wait: queueWait,
+        cancelled: () => queueCancelRef.current || requestGeneration !== generationRef.current || stateRef.current?.userKey !== requestUser,
+        onProgress: (progress) => setQueue(progress),
+      });
       if (requestGeneration !== generationRef.current || stateRef.current?.userKey !== requestUser) return;
-      const response = await transport.complete({ ...identity, expectedUserId: state.userKey, expectedCompletionRevision: state.completion?.revision ?? 0, draftSetDigest: digest });
-      if (requestGeneration !== generationRef.current || stateRef.current?.userKey !== requestUser) return;
-      if (!response.ok) {
-        setNotice(response.status === 409 ? 'Your review changed elsewhere. Refresh the saved state before finishing.' : 'Could not finish the review. Your saved entries remain available.');
-        if (response.status === 409) void loadState(true);
-      } else { setState((current) => current ? { ...current, entries: response.value.entries, completion: response.value.completion } : current); setNotice(response.value.outcome === 'ok' ? 'Review finished.' : 'This review was already finished with the same saved entries.'); }
-    } catch { if (requestGeneration === generationRef.current && stateRef.current?.userKey === requestUser) setNotice('Could not finish the review. Your saved entries remain available.'); }
-    finally { if (requestGeneration === generationRef.current && stateRef.current?.userKey === requestUser) setBusy(false); }
+      setNotice(result.status === 'finished' && finishedAsNoop && result.saved === 0 ? 'This review was already finished with the same saved entries.'
+        : queueSummary(result, finishing, orderedTargetKeys.filter((key) => dirtyRef.current[key] && conflictsRef.current[key]).length));
+    } finally {
+      if (requestGeneration === generationRef.current && stateRef.current?.userKey === requestUser) { setBusy(false); setQueue(null); }
+    }
+  };
+  const dirtyCount = Object.values(dirty).filter(Boolean).length;
+  const saveAllControls = (withFinish: boolean) => {
+    const writableNow = state?.mode === 'writable';
+    return <div className="space-y-2" data-testid={withFinish ? 'r2-save-all-review' : 'r2-save-all-rail'}>
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" className={secondaryActionClass} disabled={!writableNow || busy || resuming || dirtyCount === 0} onClick={() => void saveAll(false)}>Save all unsaved changes{dirtyCount ? ` (${dirtyCount})` : ''}</button>
+        {withFinish ? <button type="button" className={actionClass} disabled={!writableNow || busy} onClick={() => void saveAll(true)}>Save all and finish</button> : null}
+        {queue ? <button type="button" className="min-h-[44px] text-sm underline" onClick={() => { queueCancelRef.current = true; }}>Stop saving</button> : null}
+      </div>
+      {queue ? <p role="status" className="text-xs tabular-nums text-[var(--db-text-secondary)]">{queue.waitingSeconds !== null ? `Save limit reached - continuing in ${queue.waitingSeconds}s with ${queue.remaining} remaining.` : `Saved ${queue.saved} of ${queue.total}.`}</p> : null}
+    </div>;
   };
 
   const area = GUIDED_R2_FOCUS_AREAS.find((item) => item.id === activeAreaId) ?? GUIDED_R2_FOCUS_AREAS[0];
@@ -435,12 +736,12 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
         </div>
         <textarea id={textareaId} rows={rows} maxLength={20000} value={text} onChange={(event) => updateDraft(kind, id, choiceOptions ? { rationale: event.target.value } : { text: event.target.value })} disabled={!writable || busy} aria-describedby={countId} data-expanded={expanded ? 'true' : undefined} className={`${inputClass} resize-y ${expanded ? 'h-[min(70vh,44rem)] min-h-80' : 'h-56 min-h-32'}`} />
         <p id={countId} aria-live={20000 - text.length <= 1000 ? 'polite' : undefined} className="mt-1 text-right text-xs tabular-nums text-[var(--db-text-muted)]">{text.length} / 20000</p>
-        <div className="mt-2 flex items-center gap-3"><button type="button" className={actionClass} disabled={!writable || busy || !dirty[key] || conflicts[key]} onClick={() => void save(kind, id)}>Save</button><span className="text-xs text-[var(--db-text-secondary)]">{conflicts[key] ? 'Conflict - compare with saved response before saving' : dirty[key] ? 'Unsaved - save before finishing' : entryStatus(entry)}</span></div>
-        {conflicts[key] ? <div className="mt-2 rounded border border-[var(--db-border)] p-3 text-xs"><p>The server has a newer revision. Your local response is still in the editor.</p><p className="mt-2 whitespace-pre-wrap">Saved response: {choiceOptions ? `${entry?.draft_choice_id ?? '(no choice)'} - ${entry?.draft_rationale ?? ''}` : entry?.draft_text ?? '(empty)'}</p><button type="button" className="mt-2 underline" onClick={() => { const next = draftsRef.current[key] ?? emptyDraft(); writeGuidedDraft({ userKey: state.userKey, ...identity, targetKind: kind, targetId: id }, next, entry?.revision ?? 0); setConflicts((current) => ({ ...current, [key]: false })); }}>Keep my local response</button><button type="button" className="ml-3 underline" onClick={() => { clearGuidedDraft({ userKey: state.userKey, ...identity, targetKind: kind, targetId: id }); setDrafts((current) => ({ ...current, [key]: entry ? { choiceId: entry.draft_choice_id, rationale: entry.draft_rationale ?? '', text: entry.draft_text ?? '' } : emptyDraft() })); setDirty((current) => ({ ...current, [key]: false })); setConflicts((current) => ({ ...current, [key]: false })); }}>Use saved response</button></div> : null}
+        <div className="mt-2 flex items-center gap-3"><button type="button" className={actionClass} disabled={!writable || busy || resuming || !dirty[key] || conflicts[key]} onClick={() => void save(kind, id)}>Save</button><span className="text-xs text-[var(--db-text-secondary)]">{conflicts[key] ? 'Conflict - compare with saved response before saving' : dirty[key] ? 'Unsaved - save before finishing' : entryStatus(entry)}</span></div>
+        {conflicts[key] ? <div className="mt-2 rounded border border-[var(--db-border)] p-3 text-xs"><p>The server has a newer revision. Your local response is still in the editor.</p><p className="mt-2 whitespace-pre-wrap">Saved response: {choiceOptions ? `${choiceOptions.find((option) => option.id === entry?.draft_choice_id)?.label ?? '(no choice)'}${entry?.draft_rationale ? ` - ${entry.draft_rationale}` : ''}` : entry?.draft_text || '(empty)'}</p><button type="button" className="mt-2 underline" onClick={() => keepLocalResponse(kind, id)}>Keep my local response</button><button type="button" className="ml-3 underline" onClick={() => takeSavedResponse(kind, id)}>Use saved response</button></div> : null}
       </section>;
     };
-    if (view === 'whole-paper') return <div className="space-y-5"><h2 className="text-lg font-semibold">Whole-paper comments</h2><p className="text-sm">For feedback that does not belong to one section.</p>{field('whole-paper-comment', 'whole-paper', 'General comments on the proposed paper', 7)}<EarlierFeedback areaId="whole-paper" feedback={feedback} error={feedbackError} /></div>;
-    return <div className="space-y-5"><div><p className="text-xs font-semibold uppercase tracking-wide">Focus area {GUIDED_R2_FOCUS_AREAS.indexOf(area) + 1} of 6</p><h2 className="mt-1 text-lg font-semibold">{area.label}</h2><p className="mt-2 text-sm text-[var(--db-text-secondary)]">{area.orientation}</p></div><section aria-label="Key questions" className="space-y-5"><h3 className="text-base font-semibold">Key questions</h3>{GUIDED_R2_PROMPTS.filter((prompt) => prompt.areaId === area.id).map((prompt) => prompt.kind === 'choice' ? field('choice-prompt', prompt.id, prompt.label, 3, prompt.options, prompt.rationaleLabel) : field('text-prompt', prompt.id, prompt.label))}</section>{GUIDED_R2_SECTION_ANCHORS.includes(activeAnchor as typeof GUIDED_R2_SECTION_ANCHORS[number]) ? field('section-comment', activeAnchor, `Comment on this section: ${sectionLabel}`) : null}<EarlierFeedback areaId={area.id} feedback={feedback} error={feedbackError} /><div className="border-t border-[var(--db-border)] pt-5"><button type="button" className={actionClass} onClick={() => setReviewedAreaIds((current) => current.includes(area.id) ? current : [...current, area.id])} disabled={reviewedAreaIds.includes(area.id)}>Mark area reviewed on this page</button><p className="mt-2 text-xs text-[var(--db-text-secondary)]">Marking an area reviewed does not save a response.</p><button type="button" onClick={nextAreaOrReview} className="mt-3 flex min-h-[44px] items-center gap-2 text-sm font-medium text-[var(--db-accent-strong)] underline underline-offset-2">{nextArea ? 'Next focus area' : 'Go to My Review'}<ArrowRight aria-hidden="true" className="h-4 w-4" /></button></div></div>;
+    if (view === 'whole-paper') return <div className="space-y-5">{writable ? saveAllControls(false) : null}<h2 className="text-lg font-semibold">Whole-paper comments</h2><p className="text-sm">For feedback that does not belong to one section.</p>{field('whole-paper-comment', 'whole-paper', 'General comments on the proposed paper', 7)}<EarlierFeedback areaId="whole-paper" feedback={feedback} error={feedbackError} /></div>;
+    return <div className="space-y-5">{writable ? saveAllControls(false) : null}<div><p className="text-xs font-semibold uppercase tracking-wide">Focus area {GUIDED_R2_FOCUS_AREAS.indexOf(area) + 1} of 6</p><h2 className="mt-1 text-lg font-semibold">{area.label}</h2><p className="mt-2 text-sm text-[var(--db-text-secondary)]">{area.orientation}</p></div><section aria-label="Key questions" className="space-y-5"><h3 className="text-base font-semibold">Key questions</h3>{GUIDED_R2_PROMPTS.filter((prompt) => prompt.areaId === area.id).map((prompt) => prompt.kind === 'choice' ? field('choice-prompt', prompt.id, prompt.label, 3, prompt.options, prompt.rationaleLabel) : field('text-prompt', prompt.id, prompt.label))}</section>{GUIDED_R2_SECTION_ANCHORS.includes(activeAnchor as typeof GUIDED_R2_SECTION_ANCHORS[number]) ? field('section-comment', activeAnchor, `Comment on this section: ${sectionLabel}`) : null}<EarlierFeedback areaId={area.id} feedback={feedback} error={feedbackError} /><div className="border-t border-[var(--db-border)] pt-5"><button type="button" className={actionClass} onClick={() => setReviewedAreaIds((current) => current.includes(area.id) ? current : [...current, area.id])} disabled={reviewedAreaIds.includes(area.id)}>Mark area reviewed on this page</button><p className="mt-2 text-xs text-[var(--db-text-secondary)]">Marking an area reviewed does not save a response.</p><button type="button" onClick={nextAreaOrReview} className="mt-3 flex min-h-[44px] items-center gap-2 text-sm font-medium text-[var(--db-accent-strong)] underline underline-offset-2">{nextArea ? 'Next focus area' : 'Go to My Review'}<ArrowRight aria-hidden="true" className="h-4 w-4" /></button></div></div>;
   };
 
   const myReview = <div id="r2-guided-my-review" className="mx-auto max-w-3xl space-y-6 px-4 py-8 pb-28 sm:px-8 lg:pb-8">
@@ -476,7 +777,8 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
       {GUIDED_R2_SECTION_ANCHORS.filter(commentHasText).length ? <ul className="mt-2 space-y-3">{GUIDED_R2_SECTION_ANCHORS.filter(commentHasText).map((anchor) => <li key={anchor}><p className="text-xs font-semibold text-[var(--db-text-secondary)]">{outline.find((entry) => entry.anchor === anchor)?.label ?? anchor}{dirty[targetKey('section-comment', anchor)] ? ' - Unsaved' : ''}</p><p className="mt-1 whitespace-pre-wrap text-sm">{draftValue('section-comment', anchor).text.trim()}</p><button type="button" onClick={() => selectSection(anchor)} className="mt-1 min-h-[44px] text-sm font-medium text-[var(--db-accent-strong)] underline underline-offset-2">Return to section</button></li>)}</ul> : <p className="mt-2 text-sm">No section comments</p>}
     </section>
     <section className="border-t border-[var(--db-border)] pt-4"><h3 className="font-semibold">Whole-paper comments</h3><p className="mt-2 whitespace-pre-wrap text-sm">{draftValue('whole-paper-comment', 'whole-paper').text.trim() || 'No whole-paper comment'}</p>{dirty[targetKey('whole-paper-comment', 'whole-paper')] ? <p className="mt-1 text-xs">Unsaved - return to whole-paper comments to save</p> : null}<button type="button" onClick={selectWholePaper} className="mt-2 min-h-[44px] text-sm font-medium text-[var(--db-accent-strong)] underline underline-offset-2">Edit whole-paper comment</button></section>
-    {Object.values(dirty).some(Boolean) ? <p role="alert" className="text-sm">Save your changes before finishing. Return to the relevant area or comment to save.</p> : null}
+    {Object.values(dirty).some(Boolean) ? <p role="alert" className="text-sm">Save your changes before finishing: choose Save all and finish, or return to the relevant area or comment to save.</p> : null}
+    {state?.mode === 'writable' ? saveAllControls(true) : null}
     <button type="button" className={actionClass} disabled={state?.mode !== 'writable' || busy || Object.values(dirty).some(Boolean)} onClick={() => void complete()}>Finish review</button>
     {state?.completion ? <p className="text-sm">Last finished {state.completion.submitted_at}.</p> : null}
   </div>;
@@ -488,7 +790,7 @@ export function R2GuidedReview({ documentVersion, guidedManifestSha256, reviewMa
       <PaperRailToggle label="Navigation" testId="r2-navigation-toggle" open={navigationOpen} controls="r2-navigation-rail" buttonRef={navigationToggleRef} onClick={() => togglePanel('left', navigationOpen)} icon={navigationOpen ? <PanelLeftClose aria-hidden="true" className="h-4 w-4" /> : <PanelLeftOpen aria-hidden="true" className="h-4 w-4" />} />
       {view !== 'my-review' ? <PaperRailToggle label="Review this section" testId="r2-review-toggle" open={reviewOpen} controls="r2-review-rail" buttonRef={reviewToggleRef} onClick={() => togglePanel('right', reviewOpen)} icon={reviewOpen ? <PanelRightClose aria-hidden="true" className="h-4 w-4" /> : <PanelRightOpen aria-hidden="true" className="h-4 w-4" />} /> : null}
     </div>
-    {state?.mode === 'read-only' ? <p role="status" className="border-b border-[var(--db-border)] bg-[var(--db-depth-1)] px-4 py-3 text-sm">Review responses are currently read-only. The paper remains available.</p> : null}
+    {state?.mode === 'read-only' && !readError ? <p role="status" className="border-b border-[var(--db-border)] bg-[var(--db-depth-1)] px-4 py-3 text-sm">{GUIDED_READ_ONLY_NOTICE}</p> : null}
     {readError ? <p role="alert" className="border-b border-[var(--db-border)] px-4 py-3 text-sm">{readError}</p> : null}
     <p role="status" className="border-b border-[var(--db-border)] px-4 py-2 text-sm" aria-live="polite">{notice}</p>
     <div className="border-b border-[var(--db-border)] px-4 py-3 lg:hidden"><label htmlFor="r2-guided-picker" className="text-xs font-semibold">Go to a focus area</label><select id="r2-guided-picker" className={inputClass} value={view === 'my-review' ? 'my-review' : view === 'whole-paper' ? 'whole-paper' : activeAreaId} onChange={(event) => event.target.value === 'my-review' ? selectMyReview() : event.target.value === 'whole-paper' ? selectWholePaper() : selectArea(event.target.value)}>{GUIDED_R2_FOCUS_AREAS.map((item, index) => <option key={item.id} value={item.id}>{index + 1}. {item.label}</option>)}<option value="whole-paper">Whole-paper comments</option><option value="my-review">My Review</option></select><p className="mt-2 text-xs text-[var(--db-text-secondary)]">{view === 'paper' ? `Current area: ${area.label}. ` : ''}{reviewedCount} of 6 areas marked reviewed on this page.</p><div role="progressbar" aria-label="Focus areas reviewed on this page" aria-valuenow={reviewedCount} aria-valuemin={0} aria-valuemax={6} className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--db-depth-2)]"><div className="h-full bg-[var(--db-accent)]" style={{ width: `${reviewedCount / 6 * 100}%` }} /></div></div>

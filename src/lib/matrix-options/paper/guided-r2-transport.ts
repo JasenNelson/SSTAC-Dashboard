@@ -67,7 +67,14 @@ export const guidedFailureOutcomeSchema = z.enum([
 ]);
 export type GuidedFailureOutcome = z.infer<typeof guidedFailureOutcomeSchema>;
 export type GuidedResult<T> = { readonly ok: true; readonly status: number; readonly value: T }
-  | { readonly ok: false; readonly status: number; readonly outcome: GuidedFailureOutcome };
+  | { readonly ok: false; readonly status: number; readonly outcome: GuidedFailureOutcome; readonly retryAfterSeconds?: number };
+
+/** Whole seconds from a delta-seconds Retry-After header; HTTP-date and invalid values are ignored. */
+export function guidedRetryAfterSeconds(header: string | null): number | undefined {
+  if (header === null || !/^\d{1,4}$/.test(header.trim())) return undefined;
+  const seconds = Number(header.trim());
+  return seconds > 0 ? seconds : undefined;
+}
 
 export interface GuidedTransport {
   state(identity: GuidedIdentity): Promise<GuidedResult<GuidedStateReply>>;
@@ -93,7 +100,39 @@ const completionMatches = (completion: z.infer<typeof guidedCompletionSchema>, u
   && completion.guided_manifest_sha256 === identity.guidedManifestSha256
   && completion.review_manifest_sha256 === identity.reviewManifestSha256;
 
+/** Longest wait derived from a reset time; anything later or unparseable falls back to the queue default. */
+export const GUIDED_MAX_RESET_WAIT_SECONDS = 3600;
+
+/**
+ * Whole seconds until an epoch-millisecond reset time (the application rate-limit wrapper's
+ * `resetTime`). Past, non-finite, non-numeric or implausibly distant values are ignored.
+ */
+export function guidedResetTimeSeconds(resetTime: unknown, now: number = Date.now()): number | undefined {
+  if (typeof resetTime !== 'number' || !Number.isFinite(resetTime)) return undefined;
+  const seconds = Math.ceil((resetTime - now) / 1000);
+  return seconds > 0 && seconds <= GUIDED_MAX_RESET_WAIT_SECONDS ? seconds : undefined;
+}
+
+/**
+ * Any HTTP 429 is a rate refusal, whichever layer produced it: the route wrapper replies
+ * `{error, resetTime}` with Retry-After, the RPC path replies `{outcome: 'rate_limited'}` with
+ * Retry-After. It is normalized BEFORE envelope validation so it never becomes a 503. Retry-After
+ * wins; the wrapper's resetTime is the fallback; neither present leaves the queue default.
+ */
+async function rateLimited(response: Response): Promise<GuidedResult<never>> {
+  let retryAfterSeconds = guidedRetryAfterSeconds(response.headers.get('Retry-After'));
+  if (retryAfterSeconds === undefined) {
+    try {
+      const raw: unknown = await response.json();
+      if (raw && typeof raw === 'object') retryAfterSeconds = guidedResetTimeSeconds((raw as Record<string, unknown>).resetTime);
+    } catch { /* An unreadable 429 body is still a rate refusal. */ }
+  }
+  return retryAfterSeconds === undefined ? { ok: false, status: 429, outcome: 'rate_limited' }
+    : { ok: false, status: 429, outcome: 'rate_limited', retryAfterSeconds };
+}
+
 async function result<T>(response: Response, schema: z.ZodType<T>, matches: (value: T) => boolean): Promise<GuidedResult<T>> {
+  if (response.status === 429) return rateLimited(response);
   let raw: unknown;
   try { raw = await response.json(); } catch { return unavailable(); }
   if (response.ok) {
@@ -101,7 +140,8 @@ async function result<T>(response: Response, schema: z.ZodType<T>, matches: (val
     return parsed.success && matches(parsed.data) ? { ok: true, status: response.status, value: parsed.data } : unavailable();
   }
   const failure = z.object({ outcome: guidedFailureOutcomeSchema }).passthrough().safeParse(raw);
-  return failure.success ? { ok: false, status: response.status, outcome: failure.data.outcome } : unavailable();
+  if (!failure.success) return unavailable();
+  return { ok: false, status: response.status, outcome: failure.data.outcome };
 }
 
 function identityValid(value: unknown): value is GuidedIdentity {

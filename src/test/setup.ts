@@ -22,6 +22,11 @@ const localStorageMock = (() => {
     clear: () => {
       store = {};
     },
+    // Enumeration, as real Storage provides (key order is insertion order here).
+    key: (index: number) => Object.keys(store)[index] ?? null,
+    get length() {
+      return Object.keys(store).length;
+    },
   };
 })();
 Object.defineProperty(window, 'localStorage', {

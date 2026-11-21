@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 
 import { guidedEntrySchema, guidedCompletionSchema, guidedR2EntryValid } from '@/lib/matrix-options/paper/guided-r2-contract';
 import { getGuidedR2Manifest } from '@/lib/matrix-options/paper/guided-r2-manifest';
-import { guidedActivationStatus, guidedAuth, guidedGateResponse, guidedQueryIdentity, guidedR2UiEnabled, guidedR2WritesEnabled, guidedResponse, guidedReviewerGate, guidedSessionUnchanged } from '@/lib/matrix-options/paper/guided-r2-route';
+import { guidedActivationStatus, guidedAuth, guidedGateResponse, guidedQueryIdentity, guidedR2UiEnabled, guidedResponse, guidedReviewerGate, guidedSessionUnchanged } from '@/lib/matrix-options/paper/guided-r2-route';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,5 +28,5 @@ export async function GET(request: NextRequest) {
   const completion = completionResult.data === null ? null : guidedCompletionSchema.safeParse(completionResult.data);
   if (entries.some((entry) => !entry.success || !guidedR2EntryValid(entry.data, user.id, manifest.guidedManifestSha256, manifest.reviewManifestSha256)) || (completion && (!completion.success || completion.data.user_id !== user.id || completion.data.document_version !== manifest.documentVersion || completion.data.guided_manifest_sha256 !== manifest.guidedManifestSha256 || completion.data.review_manifest_sha256 !== manifest.reviewManifestSha256))) return guidedResponse({ outcome: 'persistence_unavailable' }, 503, rateLimitHeaders);
   if (!await guidedSessionUnchanged(supabase, user.id)) return guidedResponse({ outcome: 'identity_changed' }, 409, rateLimitHeaders);
-  return guidedResponse({ mode: guidedR2WritesEnabled() && activation ? 'writable' : 'read-only', userKey: user.id, documentVersion: manifest.documentVersion, guidedManifestSha256: manifest.guidedManifestSha256, reviewManifestSha256: manifest.reviewManifestSha256, entries: entries.map((entry) => entry.data), completion: completion?.success ? completion.data : null }, 200, rateLimitHeaders);
+  return guidedResponse({ mode: activation ? 'writable' : 'read-only', userKey: user.id, documentVersion: manifest.documentVersion, guidedManifestSha256: manifest.guidedManifestSha256, reviewManifestSha256: manifest.reviewManifestSha256, entries: entries.map((entry) => entry.data), completion: completion?.success ? completion.data : null }, 200, rateLimitHeaders);
 }
