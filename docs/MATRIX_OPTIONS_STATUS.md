@@ -22,8 +22,8 @@ unilaterally here.
 **Baseline verification for sections 1-3.4 and 4-7:** Correction 001 working-tree candidate based on HEAD
 `f609b8ebc4ac3a6732bafb1d5caf409879805017`
 **Baseline verification date:** 2026-08-28. Section 3.5 records its dated v0.9.91 history;
-section 3.6 has its own 2026-11-19 local-candidate verification and is not a claim that the
-earlier baseline sections were reverified on that date.
+section 3.6 carries its own dates (2026-11-20 read-only provider facts; 2026-11-22 candidate and
+preview record) and is not a claim that the earlier baseline sections were reverified then.
 **Supersedes for CURRENT status:** the dated Matrix Options status snapshots listed in section 6.
 
 ---
@@ -523,9 +523,28 @@ Documentation coverage for the M1 candidate follows PLAN-R4 section 10.4's manua
 `.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/m1/docs-r12/DOCS_CHECKLIST_M1.md`. The M2
 checklist is `.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/m2/docs/DOCS_CHECKLIST_M2.md`.
 
-### 3.6 Guided R2 review completion (updated 2026-11-20)
+### 3.6 Guided R2 review completion (updated 2026-11-22)
 
-State (verified read-only 2026-11-20):
+Architecture authority (read before ANY change to the Guided R2 page, routes, Supabase objects,
+admin view or CSV): `docs/design/matrix-options/GUIDED_R2_REVIEW_ARCHITECTURE.md`. Content
+revisions change content and configuration inside that system; they never authorize rebuilding
+it, replacing its storage or disconnecting the admin/export paths.
+
+Candidate (recorded 2026-11-22): branch `feat/matrix-r2-guided-completion-20261120`, product
+candidate HEAD `0ec2afe2ab7083d8b739c7985131560972d799e3` (tree
+`ff5c273fc706e4c5fc81b07333b3ef1d97bdc74a`): three commits on base `45f3c080` (`93780ab9` Save all,
+recovery and conflicts; `95733518` full-stack preview tooling; `0ec2afe2` status, handoff and
+archives). The candidate is COMMITTED; Mission Control reports it reviewed and six-gate GREEN
+(those gate logs are not committed). A documentation-only commit for the architecture authority
+follows it on the same branch; its own six gates must run on that tip (pending at the time this
+section was written; results are reported with the commit, not here). NOT pushed, no PR, not merged,
+not deployed, not activated.
+
+Owner preview (2026-11-22): accepted on the non-Docker preview (`PREVIEW ACCEPTED`). Owner
+evidence: the reviewer could type and save comments successfully. Administrator visibility after
+that save was NOT separately owner-confirmed.
+
+Provider state (verified read-only 2026-11-20; not re-verified since):
 - The reviewer-to-admin parity work merged in PR #832 (merge `45f3c080`). Its admission migration
   is APPLIED to production: the ledger records it as version `20261120060356`, while the repo file
   is `supabase/migrations/20261118000001_matrix_guided_r2_all_users_write_admission.sql` (same
@@ -537,9 +556,10 @@ State (verified read-only 2026-11-20):
   `MATRIX_R2_GUIDED_REVIEW_WRITES` route flag. The database activation row is now the single write
   switch: both write RPCs check it first, and it already covered direct PostgREST callers, which
   the route flag never did. Removing the flag drops one route-layer defense-in-depth key; the
-  replacement evidence is two-sided route tests and direct-RPC and activation-ACL checks in the
-  disposable local full stack. Production ACL and RPC verification belongs to the deferred
-  activation unit (below).
+  replacement evidence in the candidate is two-sided route tests and the SQL source-guard tests.
+  The direct-RPC and activation-ACL checks of the disposable local full stack were never run end
+  to end (that route is retired, below). Production ACL and RPC verification belongs to the
+  authenticated production smoke and the deferred activation unit (below).
 - Reviewers get "Save all unsaved changes" and "Save all and finish". The queue saves one target at
   a time, never resends a saved target, waits for `Retry-After` (60 s) on the RPC's 24-events-per-
   minute limit (or the route rate limiter's 429, normalized to the same outcome) and resumes with
@@ -556,40 +576,34 @@ State (verified read-only 2026-11-20):
 
 Scope (owner-approved scope reduction, 2026-11-20): this candidate restores Guided R2 product parity
 (reviewer and administrator experience, legacy v0.9.91 read-only history) and adds a disposable local
-full-stack preview. It contains NO production go-live packet and no activation or canary tooling:
-production activation and go-live automation are deferred to a separate later unit, after owner
-preview acceptance and merge. The production activation row remains `false` and no provider
-operation is authorized. Preview acceptance, review GREEN, commits, the six gates, the PR, merge and
-deployment are all still pending.
+full-stack preview (tooling retained, but RETIRED as a preview route; below). It contains NO production go-live packet and no activation or canary tooling:
+production activation and go-live automation are deferred to a separate later unit, after merge.
+The production activation row remains `false` (as last verified, above) and no provider operation
+or activation is authorized. Still pending: push, one integrated PR, required CI, owner merge
+approval of the exact head, merge, deployment, the authenticated production persistence smoke, and
+the separate activation unit.
 
-Disposable local full-stack preview (never touches the provider; never reads `.env.local` or any real
-or test-account credential):
-- `scripts/matrix-options/r2-fullstack-preview.ps1` (`up`, `seed`, `build`, `start`, `status`,
-  `down`, `accept`). `up` proves and binds the local Docker Desktop engine, requires Docker to
-  publish on 127.0.0.1, and creates a NEW run whose every resource is derived from its unique run id
-  (`r2-fullstack-bootstrap/custody.mjs`): its own Supabase project id (new containers and volumes),
-  a port block claimed atomically (the only machine-wide state), its run directory and its preview
-  worktree. It refuses to start when anything of that project or any listener on its ports exists.
-  `up` prints the run id; every later command requires it explicitly as `-RunId`. One live wrapper
-  acts on a run at a time; every long child command is bounded, recorded and heartbeated; a timeout
-  keeps the run for reconciliation; `down` releases the port block only after verified teardown (no
-  container, volume, listener or recorded process of the run left).
-- The stack is built from the hash-pinned manifest `scripts/matrix-options/r2-fullstack-bootstrap/manifest.json`
-  (config template, provider-only fixtures captured read-only from production) and must match all 123
-  fingerprinted objects in `captured/provider-fingerprint.json`; that proves parity only with the
-  pinned baseline, nothing about production.
-- `seed` creates three fresh disposable accounts (reviewer A, reviewer B, administrator) with new
-  random passwords, kept only in the run's gitignored sign-in state; `start` prints only those
-  sign-ins once the app's listener is proven to be this run's build.
-- `e2e/matrix-options-paper-r2-fullstack.spec.ts` is the local reviewer -> administrator journey;
-  `accept -RunId <id>` writes a receipt bound to the candidate tree under `.tmp/gate-logs/`. The
-  administrator view and scoped CSV must exactly match reviewer A's stored entries and completion
-  (`src/lib/matrix-options/paper/guided-r2-admin-evidence.ts`), and the legacy export must be unchanged.
-- Owner launcher (outside the repository, `C:\Users\jasen\.codex\p\matrix-r2-preview.ps1`): NOT READY
-  and unmodified. After a reviewed commit it must be regenerated from the run-token contract in the
-  header of `r2-fullstack-preview.ps1` (never an automatic `down`; capture the run id `up` prints and
-  pass it to seed, build, start, accept, status and down), independently reviewed and hash-pinned
-  before owner use.
+Accepted preview (non-Docker, 2026-11-22): `scripts/matrix-options/run-r2-guided-preview.ps1
+-SourceRoot <R2 source>` (`next dev` on 127.0.0.1:49232, `MATRIX_R2_REVIEW_PREVIEW=1`, dead Supabase
+URL). Reviewer `/r2-guided-fixture` renders the real `R2GuidedReview` over the real paper and
+figures (byte and SHA-256 checked against the release); administrator `/r2-guided-admin-fixture`
+renders the real `GuidedAdminClient`; CSV `/api/matrix-options/paper/preview-r2?admin=csv`. Storage
+is the in-memory preview service (anonymous per-browser sessions, lost when the server stops). It
+proves frontend interaction and the shared admin and CSV components; it does NOT prove sign-in,
+RLS, the SECURITY DEFINER RPCs, activation, admission, private-storage delivery or account
+deletion. Production persistence remains a controlled authenticated smoke after merge and
+deployment and before permanent activation; because writes need the activation row `true`, that
+smoke itself requires a separate owner-approved, bounded enabling of the row under the `CLAUDE.md`
+Supabase write gate (architecture authority, sections 14-15). Nothing here authorizes it.
+
+RETIRED (2026-11-22, Mission Control correction): the Docker-based disposable full-stack preview
+(`scripts/matrix-options/r2-fullstack-preview.ps1` with `r2-fullstack-bootstrap/`,
+`playwright.r2-fullstack.config.ts`, `e2e/matrix-options-paper-r2-fullstack.spec.ts`) is no longer
+an owner preview route and is not required for page operation. Its `up` was never run for this
+candidate (the read-only prerequisite audit stopped on the Docker loopback and engine state); no
+run, port reservation, container or volume was created. The files remain in the repository
+unchanged. The external owner launcher `C:\Users\jasen\.codex\p\matrix-r2-preview.ps1` is retired
+and must not be regenerated or used.
 
 The superseded parity record is `docs/continuity/matrix-r2-parity-20261119/PARITY_CANDIDATE_RECORD.md`.
 

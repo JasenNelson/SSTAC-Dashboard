@@ -196,6 +196,14 @@ npm scripts:
 - **Fork existing components over designing new ones.** Per `cross_project_fork_existing_over_design_new.md`:
   when owner points at a working component as the pattern, `cp` it first. Do not author
   from-scratch design docs when an example exists.
+- **Guided R2 review: preserve in place (HIGH AUTHORITY).** Before changing the Matrix Options
+  Guided R2 reviewer page, its `/api/matrix-options/paper/guided-r2/**` routes, its Supabase
+  objects, the administrator Guided R2 view or CSV, or the legacy v0.9.91 history, read
+  `docs/design/matrix-options/GUIDED_R2_REVIEW_ARCHITECTURE.md`, the current code, the relevant
+  Git history and a comparable working reviewer flow. Content revisions change content and
+  configuration inside the established system; they never authorize rebuilding the page,
+  replacing storage, bypassing Supabase, disconnecting the admin view or export, or accepting
+  visual similarity as functional parity. Run that document's parity checks before claiming done.
 - **Never delete regression tests.** Per `cross_project_never_delete_regression_tests_during_cleanup.md`:
   investigate why a test was added before deleting it. Fix the test; only delete in the
   same PR as the documented feature removal.
