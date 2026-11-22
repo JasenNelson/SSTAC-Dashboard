@@ -51,7 +51,7 @@ it('keeps the exact paper readable when the state schema is unavailable', async 
 it('keeps the account-data notice in collapsed disclosures in the introduction and My Review', async () => {
   fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
   render(<R2GuidedReview {...props} initialMode="my-review" />);
-  expect(await screen.findByText('Review responses are currently read-only. The paper remains available.')).toBeInTheDocument();
+  expect(await screen.findByText('Review responses are not open right now. The paper remains readable.')).toBeInTheDocument();
   expect(screen.getByText('Review the proposed approach and share feedback where you have a view. All questions are optional.')).toBeInTheDocument();
   expect(screen.getAllByText('How your feedback is used', { selector: 'summary' })).toHaveLength(2);
   expect(screen.getAllByText('How your feedback is used', { selector: 'summary' }).every((summary) => !summary.closest('details')?.open)).toBe(true);
@@ -70,7 +70,7 @@ it('hides guided state for an ineligible account while preserving paper access',
 it('shows inactive review as read-only and never offers an enabled Save button', async () => {
   fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()), { status: 200 })));
   render(<R2GuidedReview {...props} />);
-  expect(await screen.findByText('Review responses are currently read-only. The paper remains available.')).toBeInTheDocument();
+  expect(await screen.findByText('Review responses are not open right now. The paper remains readable.')).toBeInTheDocument();
   expect(screen.getAllByRole('button', { name: 'Save' }).every((button) => (button as HTMLButtonElement).disabled)).toBe(true);
   expect(fetchMock).toHaveBeenCalledTimes(2);
 });
@@ -79,7 +79,7 @@ it('restores desktop panel widths, keyboard resize, reset, collapse and focus re
   window.localStorage.setItem('mtwg-paper-panel-widths-v1', JSON.stringify({ left: 300, right: 450 }));
   fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
   render(<R2GuidedReview {...props} />);
-  await screen.findByText('Review responses are currently read-only. The paper remains available.');
+  await screen.findByText('Review responses are not open right now. The paper remains readable.');
   const layout = screen.getByTestId('r2-workspace-layout');
   expect(layout.style.getPropertyValue('--paper-left-width')).toBe('300px');
   expect(layout.style.getPropertyValue('--paper-right-width')).toBe('450px');
@@ -105,7 +105,7 @@ it('restores desktop panel widths, keyboard resize, reset, collapse and focus re
 it('restores fluid Comfortable/Wide reader preference without enabling writes', async () => {
   fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
   render(<R2GuidedReview {...props} />);
-  await screen.findByText('Review responses are currently read-only. The paper remains available.');
+  await screen.findByText('Review responses are not open right now. The paper remains readable.');
   const frame = screen.getByTestId('r2-reading-frame');
   expect(frame).toHaveAttribute('data-reader-width', 'comfortable');
   fireEvent.click(screen.getByRole('radio', { name: 'Wide' }));
@@ -123,7 +123,7 @@ it('shows 20,000-character counts and expandable manual-height editors for all t
   ];
   fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse(entries) : feedbackResponse()))));
   render(<R2GuidedReview {...props} />);
-  await screen.findByText('Review responses are currently read-only. The paper remains available.');
+  await screen.findByText('Review responses are not open right now. The paper remains readable.');
   const rationale = document.getElementById('desktop-structure-approach-rationale') as HTMLTextAreaElement;
   expect(rationale).toBeDisabled();
   expect(rationale).toHaveAttribute('maxLength', '20000');
@@ -153,7 +153,7 @@ it('keeps the window fixed while focus-area selection scrolls only the desktop p
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { callback(0); return 1; });
   fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
   render(<R2GuidedReview {...props} />);
-  await screen.findByText('Review responses are currently read-only. The paper remains available.');
+  await screen.findByText('Review responses are not open right now. The paper remains readable.');
   const paper = screen.getByTestId('r2-paper-scrollport');
   const target = document.getElementById('sec-phase2-3') as HTMLElement;
   paper.scrollTop = 50;
@@ -173,11 +173,19 @@ it('keeps the mobile picker and dialog without a document jump', async () => {
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value(this: HTMLDialogElement) { this.setAttribute('open', ''); } });
   Object.defineProperty(HTMLDialogElement.prototype, 'close', { configurable: true, value(this: HTMLDialogElement) { this.removeAttribute('open'); this.dispatchEvent(new Event('close')); } });
   fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
-  render(<R2GuidedReview {...props} />);
-  await screen.findByText('Review responses are currently read-only. The paper remains available.');
+  render(<R2GuidedReview {...props} paper={<article><section id="sec-phase2-3"><h2>Proposed framework</h2></section><section id="sec-phase2-5"><h2>Uses</h2></section></article>} />);
+  await screen.findByText('Review responses are not open right now. The paper remains readable.');
   const before = window.scrollY;
-  fireEvent.change(screen.getByLabelText('Go to a focus area'), { target: { value: 'uses-waterbodies' } });
-  expect(window.scrollY).toBe(before);
+  const intoView = vi.fn();
+  const original = Element.prototype.scrollIntoView;
+  Element.prototype.scrollIntoView = intoView;
+  try {
+    fireEvent.change(screen.getByLabelText('Go to a focus area'), { target: { value: 'uses-waterbodies' } });
+    // Mobile: the page is the paper's scroller, so the chosen section is brought into view.
+    expect(intoView.mock.contexts.some((element) => element instanceof HTMLElement && element.id === 'sec-phase2-5')).toBe(true);
+  } finally {
+    if (original) Element.prototype.scrollIntoView = original; else Reflect.deleteProperty(Element.prototype, 'scrollIntoView');
+  }
   const action = screen.getByTestId('r2-mobile-review-action');
   fireEvent.click(action);
   expect(screen.getByTestId('r2-mobile-review-dialog')).toHaveAttribute('open');
@@ -225,7 +233,7 @@ it('shows all six persisted review areas with readable choices, unanswered promp
 it('shows accessible progress and bounded next-area navigation while allowing direct area selection', async () => {
   fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
   render(<R2GuidedReview {...props} />);
-  expect(await screen.findByText('Review responses are currently read-only. The paper remains available.')).toBeInTheDocument();
+  expect(await screen.findByText('Review responses are not open right now. The paper remains readable.')).toBeInTheDocument();
   expect(screen.getAllByRole('progressbar', { name: 'Focus areas reviewed on this page' })).toHaveLength(2);
   expect(screen.getAllByRole('progressbar', { name: 'Focus areas reviewed on this page' })[0]).toHaveAttribute('aria-valuenow', '0');
   fireEvent.click(screen.getAllByRole('button', { name: 'Mark area reviewed on this page' })[0]);
@@ -249,7 +257,8 @@ it('shows unsaved edits in My Review and blocks completion until they are saved'
   expect(within(screen.getByRole('list', { name: 'Focus area checklist' })).getByText('Needs refinement')).toBeInTheDocument();
   expect(screen.getByText('Unsaved - return to this area to save')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Finish review' })).toBeDisabled();
-  expect(screen.getByRole('alert')).toHaveTextContent('Save your changes before finishing.');
+  expect(screen.getByRole('alert')).toHaveTextContent('Save your changes before finishing: choose Save all and finish');
+  expect(screen.getByRole('button', { name: 'Save all and finish' })).toBeEnabled();
   expect(fetchMock).toHaveBeenCalledTimes(2);
 });
 

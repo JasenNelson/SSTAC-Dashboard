@@ -2,14 +2,13 @@ import { NextRequest } from 'next/server';
 
 import { guidedCompletionSchema, guidedEntrySchema, guidedR2CompleteSchema, guidedR2EntryValid } from '@/lib/matrix-options/paper/guided-r2-contract';
 import { getGuidedR2Manifest } from '@/lib/matrix-options/paper/guided-r2-manifest';
-import { guidedAuth, guidedGateResponse, guidedOutcomeStatus, guidedR2Identity, guidedR2UiEnabled, guidedR2WritesEnabled, guidedResponse, guidedReviewerGate, guidedRpcErrorResponse, guidedRpcOutcome, guidedSessionUnchanged } from '@/lib/matrix-options/paper/guided-r2-route';
+import { guidedAuth, guidedGateResponse, guidedOutcomeStatus, guidedR2Identity, guidedR2UiEnabled, guidedResponse, guidedReviewerGate, guidedRpcErrorResponse, guidedRpcOutcome, guidedSessionUnchanged, guidedWriteOutcomeResponse } from '@/lib/matrix-options/paper/guided-r2-route';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   if (!guidedR2UiEnabled()) return guidedGateResponse();
-  if (!guidedR2WritesEnabled()) return guidedResponse({ outcome: 'release_read_only' }, 403);
   if (Number(request.headers.get('content-length') ?? 0) > 4000) return guidedResponse({ outcome: 'too_large' }, 413);
   let raw: unknown;
   try { const body = await request.text(); if (body.length > 4000) return guidedResponse({ outcome: 'too_large' }, 413); raw = JSON.parse(body); } catch { return guidedResponse({ outcome: 'invalid_payload' }, 422); }
@@ -35,7 +34,7 @@ export async function POST(request: NextRequest) {
   if (!result) return guidedResponse({ outcome: 'persistence_unavailable' }, 503, rateLimitHeaders);
   const status = guidedOutcomeStatus(result.outcome);
   if (status === 503) return guidedResponse({ outcome: 'persistence_unavailable' }, 503, rateLimitHeaders);
-  if (status !== 200) return guidedResponse({ outcome: result.outcome }, status, rateLimitHeaders);
+  if (status !== 200) return guidedWriteOutcomeResponse(result.outcome, status, rateLimitHeaders);
   const manifest = getGuidedR2Manifest();
   const completion = guidedCompletionSchema.safeParse(result.completion);
   const entries = Array.isArray(result.entries) ? result.entries.map((value) => guidedEntrySchema.safeParse(value)) : null;

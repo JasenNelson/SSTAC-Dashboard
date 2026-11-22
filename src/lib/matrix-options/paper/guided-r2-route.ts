@@ -15,10 +15,24 @@ export function guidedR2UiEnabled(): boolean {
     && resolveMatrixOptionsPaperReviewNavigationGate(process.env.MATRIX_OPTIONS_PAPER_WORKSPACE, process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION) === 'REVIEW_NAVIGATION';
 }
 
-export function guidedR2WritesEnabled(): boolean { return process.env.MATRIX_R2_GUIDED_REVIEW_WRITES === 'true'; }
+/**
+ * Guided R2 writes have one switch: the database activation row, checked first
+ * inside both write RPCs (matrix_guided_r2_save / matrix_guided_r2_complete)
+ * under FOR SHARE. The former MATRIX_R2_GUIDED_REVIEW_WRITES route flag was
+ * removed: authenticated callers can reach the RPCs directly through PostgREST,
+ * so only the activation row ever covered both paths. State reports 'writable'
+ * exactly when activation is true; a closed release returns release_read_only.
+ */
+export const GUIDED_RATE_WINDOW_SECONDS = 60;
 
 export function guidedResponse(body: unknown, status = 200, rateHeaders?: HeadersInit) {
   return NextResponse.json(body, { status, headers: { ...guidedNoStore, ...rateHeaders } });
+}
+
+/** Write-route reply. A guided rate refusal carries the RPC's rolling window as Retry-After. */
+export function guidedWriteOutcomeResponse(outcome: unknown, status: number, rateHeaders?: HeadersInit) {
+  const headers = outcome === 'rate_limited' ? { ...rateHeaders, 'Retry-After': String(GUIDED_RATE_WINDOW_SECONDS) } : rateHeaders;
+  return guidedResponse({ outcome }, status, headers);
 }
 
 export function guidedGateResponse() { return guidedResponse({ error: 'Not found' }, 404); }

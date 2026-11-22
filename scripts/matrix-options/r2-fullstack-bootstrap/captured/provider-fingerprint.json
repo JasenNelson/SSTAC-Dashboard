@@ -1,0 +1,628 @@
+{
+  "provenance": {
+    "project_ref": "qyrhsieynzfgyuqzznap",
+    "captured_at_utc": "2026-11-20T22:35:43Z",
+    "server_version_num": "170004",
+    "method": "read-only MCP execute_sql of fingerprint.sql (sha256 query_sha256), result transcribed verbatim. Capture 1 (2026-11-20T22:35Z, 121 rows) was confirmed by a production-computed digest (866996c6918a3956e21a7b80295c3531). Rule N5 then excluded created_at from the question rows; that single row was recaptured (76f95d346a98bc65aab06d6e243221ca) and confirmed equal in production. rows_md5 is md5 of kind|name|fp joined by LF in byte order of (kind, name). Round-1 review then added public.is_admin() and role matrix_map_owner (2026-11-20); both values were read from production and confirmed equal there by a second read-only query.",
+    "query_sha256": "550551fbf3215e28190ad23be9a2fc7cd04cf292af0e8350c48f03a0f9061676",
+    "rows_md5": "e5646fc890711e313afdba5c4d5a68b2",
+    "row_count": 123
+  },
+  "rows": [
+    {
+      "kind": "bucket",
+      "name": "matrix-paper-review-assets",
+      "fp": "92d481cc0a058c670f748f1541b34c23"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_activation.matrix_guided_r2_activation_check",
+      "fp": "9cd18be113406d8ecde8a6289c073691"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_activation.matrix_guided_r2_activation_pkey",
+      "fp": "b82756eb77ea4faf3682fc8eb2012ad9"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_completion.matrix_guided_r2_completion_document_version_guided_manife_fkey",
+      "fp": "d9f33bbda4f9b931c71e3ec86cd9dfb2"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_completion.matrix_guided_r2_completion_pkey",
+      "fp": "2445df9b3fef3bf14f0eccfbe953441b"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_completion.matrix_guided_r2_completion_revision_check",
+      "fp": "02899df4c84ccf6e159790ceb0927987"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_completion.matrix_guided_r2_completion_submitted_set_digest_check",
+      "fp": "6e3c32f63d35d70739d232259ad46e93"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_completion.matrix_guided_r2_completion_user_fk",
+      "fp": "98518563aecd6cc1924c4f81c52ee132"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_entries.matrix_guided_r2_entries_check",
+      "fp": "b84fb62ff97a95767a104689f970d0bc"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_entries.matrix_guided_r2_entries_check1",
+      "fp": "f0220765a7eeeccf77be82ab743ec9ca"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_entries.matrix_guided_r2_entries_check2",
+      "fp": "10bdd5343b4ad9e9aae0ce891e2ecd43"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_entries.matrix_guided_r2_entries_document_version_guided_manifest__fkey",
+      "fp": "f9d259d22bb66bbf50c135f949ad9071"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_entries.matrix_guided_r2_entries_pkey",
+      "fp": "b22dd4bb2de45ae4b52a1f26e783bc60"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_entries.matrix_guided_r2_entries_revision_check",
+      "fp": "6cc3246557c4a16f9763b7348ccb0de0"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_entries.matrix_guided_r2_entries_submitted_revision_check",
+      "fp": "d75d3036df0bb1568db639fc6e28abfd"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_entries.matrix_guided_r2_entries_user_fk",
+      "fp": "98518563aecd6cc1924c4f81c52ee132"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_events.matrix_guided_r2_events_check",
+      "fp": "92cc4775dd7e494824c144e1992ab270"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_events.matrix_guided_r2_events_document_version_guided_manifest_s_fkey",
+      "fp": "d9f33bbda4f9b931c71e3ec86cd9dfb2"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_events.matrix_guided_r2_events_event_kind_check",
+      "fp": "a67705d5468cbaf2474202fecad6cc2b"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_events.matrix_guided_r2_events_payload_digest_check",
+      "fp": "1701366f46d9bf19af943be74666d1bc"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_events.matrix_guided_r2_events_payload_utf16_units_check",
+      "fp": "ccf4400f6df99ad282e702ae65e9f912"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_events.matrix_guided_r2_events_pkey",
+      "fp": "d4f698736254beb8c8debfc09c82f3bb"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_events.matrix_guided_r2_events_revision_check",
+      "fp": "02899df4c84ccf6e159790ceb0927987"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_events.matrix_guided_r2_events_user_fk",
+      "fp": "98518563aecd6cc1924c4f81c52ee132"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_targets.matrix_guided_r2_targets_check",
+      "fp": "9cd18be113406d8ecde8a6289c073691"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_targets.matrix_guided_r2_targets_check1",
+      "fp": "f8035f1add3d01cfb9cd79c06662b242"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_targets.matrix_guided_r2_targets_pkey",
+      "fp": "01f7c3cbdd6f98ed33a7fdb2d5bfad11"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_guided_r2_targets.matrix_guided_r2_targets_target_kind_check",
+      "fp": "681c61fc4eddaf316d109abb04f4c371"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_questions.matrix_paper_review_questions_cohort_chk",
+      "fp": "d98936e6e2268da50dd296d3527f145f"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_questions.matrix_paper_review_questions_identity_key",
+      "fp": "2c94cc3894ca54d4a9552979fc3c6533"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_questions.matrix_paper_review_questions_number_chk",
+      "fp": "ffdb685971bc4662f42f4c6682073159"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_questions.matrix_paper_review_questions_number_key",
+      "fp": "fd7277649120a7b950a37566da54c1b5"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_questions.matrix_paper_review_questions_pkey",
+      "fp": "3dcafa11800b2a13543f3d3129174d47"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_questions.matrix_paper_review_questions_question_chk",
+      "fp": "c898946bb104cd29402c497b5a12f260"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_questions.matrix_paper_review_questions_sha_chk",
+      "fp": "f1b16b8c043478bd88e9d87c43a5326f"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_questions.matrix_paper_review_questions_version_chk",
+      "fp": "ce91def9c42563dcd3aa82f010337cfe"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_response_events.matrix_paper_review_response_events_action_chk",
+      "fp": "0b00bcc65503a7f9591b0a423e68ea0b"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_response_events.matrix_paper_review_response_events_len_chk",
+      "fp": "771c82ad7bdcf7b0bd05213c0553daf3"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_response_events.matrix_paper_review_response_events_pkey",
+      "fp": "d4f698736254beb8c8debfc09c82f3bb"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_response_events.matrix_paper_review_response_events_response_id_fkey",
+      "fp": "cd019b73538e34cc486b8fd6a82f9250"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_response_events.matrix_paper_review_response_events_revision_chk",
+      "fp": "3af829bb77679ec70c2bab6fd9d7ae8c"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_response_events.matrix_paper_review_response_events_sha_chk",
+      "fp": "5a812d91200494650de943b95df953e2"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_response_events.matrix_paper_review_response_events_user_id_fkey",
+      "fp": "98518563aecd6cc1924c4f81c52ee132"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_responses.matrix_paper_review_responses_draft_len_chk",
+      "fp": "6b13cc803bcbb5890f7b4c263d554f52"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_responses.matrix_paper_review_responses_identity_key",
+      "fp": "02cbd6a6c0dbf071745f04b485ff1245"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_responses.matrix_paper_review_responses_pkey",
+      "fp": "d4f698736254beb8c8debfc09c82f3bb"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_responses.matrix_paper_review_responses_question_fkey",
+      "fp": "afd6f9cbc392c33202ef9be4784e0470"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_responses.matrix_paper_review_responses_revision_chk",
+      "fp": "6cc3246557c4a16f9763b7348ccb0de0"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_responses.matrix_paper_review_responses_submitted_len_chk",
+      "fp": "8a00a29f2f6f3f704edc58265c47a40d"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_responses.matrix_paper_review_responses_submitted_revision_chk",
+      "fp": "723d015ef84600b550159ffeb5cc165d"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_responses.matrix_paper_review_responses_submitted_set_chk",
+      "fp": "0f1953f49ce198c8b733d8cd961de721"
+    },
+    {
+      "kind": "constraint",
+      "name": "matrix_paper_review_responses.matrix_paper_review_responses_user_id_fkey",
+      "fp": "98518563aecd6cc1924c4f81c52ee132"
+    },
+    {
+      "kind": "constraint",
+      "name": "user_roles.user_roles_pkey",
+      "fp": "d4f698736254beb8c8debfc09c82f3bb"
+    },
+    {
+      "kind": "constraint",
+      "name": "user_roles.user_roles_role_check",
+      "fp": "d3b5e5c3bcecb127c9f62cd298e61bc0"
+    },
+    {
+      "kind": "constraint",
+      "name": "user_roles.user_roles_user_id_fkey",
+      "fp": "0c43f862e0d85005ba06cdc9aca14404"
+    },
+    {
+      "kind": "constraint",
+      "name": "user_roles.user_roles_user_id_role_unique",
+      "fp": "d8d7d53a682d96dd9e98d2847e3fa3e7"
+    },
+    {
+      "kind": "data",
+      "name": "matrix_guided_r2_activation.identity",
+      "fp": "b51598257348a810beddbbac1c637933"
+    },
+    {
+      "kind": "data",
+      "name": "matrix_guided_r2_targets",
+      "fp": "c06cdd8b1710d4f908d799fbe9bf56fd"
+    },
+    {
+      "kind": "data",
+      "name": "matrix_paper_review_questions",
+      "fp": "76f95d346a98bc65aab06d6e243221ca"
+    },
+    {
+      "kind": "function",
+      "name": "is_admin()",
+      "fp": "fb2768447069a114bd7d24c2144fde00"
+    },
+    {
+      "kind": "function",
+      "name": "is_matrix_options_paper_admin()",
+      "fp": "320dc9d82ead70b1db247c4a7226c3f4"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_guided_r2_activation_status(p_document_version text, p_guided_manifest_sha256 text, p_review_manifest_sha256 text)",
+      "fp": "e69564b27b696c4be3da5eeef5517cc2"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_guided_r2_complete(p_document_version text, p_guided_manifest_sha256 text, p_review_manifest_sha256 text, p_expected_user_id uuid, p_expected_completion_revision bigint, p_draft_set_digest text)",
+      "fp": "ff8db5040cae6144bea2c19a2e999a4d"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_guided_r2_draft_set_digest(p_user_id uuid, p_document_version text, p_guided_manifest_sha256 text, p_review_manifest_sha256 text)",
+      "fp": "3ae4da037b3a9d53ec059523a3160d10"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_guided_r2_events_append_only()",
+      "fp": "4f3e320ba73f8e23315e368bf6262f8a"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_guided_r2_field_hash(p_value text)",
+      "fp": "c054632ddf5a97fd5ce399d735247094"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_guided_r2_reviewer_allowed(p_document_version text, p_guided_manifest_sha256 text, p_review_manifest_sha256 text)",
+      "fp": "bc63a9cc9c8ecd8f7a6d46b19441ae56"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_guided_r2_save(p_document_version text, p_guided_manifest_sha256 text, p_review_manifest_sha256 text, p_target_kind text, p_target_id text, p_choice_id text, p_rationale text, p_text text, p_expected_revision bigint, p_expected_user_id uuid)",
+      "fp": "84ed61bbb31fd1c96e53a7a919900f6a"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_guided_r2_utf16_units(p_value text)",
+      "fp": "76c4c38ee474bfdc7bfd30486214c7b3"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_guided_r2_validate_entry()",
+      "fp": "f3b59a6a9eb7c307b7b181197e88a2bf"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_paper_review_events_block_update()",
+      "fp": "7f67fa9e3d7df52e27c8bf4c31b8a47b"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_paper_review_save_draft(p_document_version text, p_manifest_sha256 text, p_cohort_id text, p_question_id text, p_text text, p_expected_revision integer)",
+      "fp": "282f638fb5fb9497a6c1c10cd217bd8a"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_paper_review_submit(p_document_version text, p_manifest_sha256 text, p_cohort_id text, p_question_id text, p_text text, p_expected_revision integer)",
+      "fp": "cdd01f39b6c8777a6313c6dd35cb822d"
+    },
+    {
+      "kind": "function",
+      "name": "matrix_paper_review_utf16_length(p_text text)",
+      "fp": "90693d3a58f1606f2f5e658fe568e304"
+    },
+    {
+      "kind": "function",
+      "name": "update_updated_at_column()",
+      "fp": "49828fe032c590d2636caf9e63a62fa3"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_guided_r2_activation.matrix_guided_r2_activation_pkey",
+      "fp": "4b68a2f4da82b27ddeb148aa361ddc68"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_guided_r2_completion.matrix_guided_r2_completion_activation_fk_idx",
+      "fp": "6896809bdf9be6bb3eab2ffc39b5f475"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_guided_r2_completion.matrix_guided_r2_completion_pkey",
+      "fp": "4df964092beee982a75b99883bde7a0f"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_guided_r2_entries.matrix_guided_r2_entries_pkey",
+      "fp": "78de4d5962839765ff83f930842617dc"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_guided_r2_entries.matrix_guided_r2_entries_target_fk_idx",
+      "fp": "3a4ac46da554b008777a798550f8d47b"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_guided_r2_events.matrix_guided_r2_events_pkey",
+      "fp": "00362efb14787c91a07f5b875347a7ea"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_guided_r2_events.matrix_guided_r2_events_release_idx",
+      "fp": "801b132313b397c15241f17a5cab5b73"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_guided_r2_events.matrix_guided_r2_events_user_time_idx",
+      "fp": "87feee1fd243511216743e60dbd4ae58"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_guided_r2_targets.matrix_guided_r2_targets_pkey",
+      "fp": "e39bf6c5e31b085ce392f45fe9f34de0"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_paper_review_questions.matrix_paper_review_questions_identity_key",
+      "fp": "0ba25addab4b4719f42d7ceec4e25be1"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_paper_review_questions.matrix_paper_review_questions_number_key",
+      "fp": "86d188fa55f3fec4183af7dd3d1379b2"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_paper_review_questions.matrix_paper_review_questions_pkey",
+      "fp": "33a0931086eb1bc741b813108a7e4c82"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_paper_review_questions.matrix_paper_review_questions_probe_idx",
+      "fp": "f8fad65f6cc42e80d64317f9d0df0b11"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_paper_review_response_events.matrix_paper_review_response_events_pkey",
+      "fp": "a547189d45b097fff01f5081e22b12e3"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_paper_review_response_events.matrix_paper_review_response_events_response_idx",
+      "fp": "dbb49a820fe9fa5c480b14259db87e1a"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_paper_review_response_events.matrix_paper_review_response_events_user_idx",
+      "fp": "be5c11425542dad5e69e13b94a888c84"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_paper_review_responses.matrix_paper_review_responses_identity_key",
+      "fp": "aef7fd0e5f36ad751e5d9602936a77e8"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_paper_review_responses.matrix_paper_review_responses_pkey",
+      "fp": "442253f47ddbf82136bb1d1558f8f993"
+    },
+    {
+      "kind": "index",
+      "name": "matrix_paper_review_responses.matrix_paper_review_responses_release_idx",
+      "fp": "48f27013bdd112a3c5b3c5d1b88e9ba8"
+    },
+    {
+      "kind": "index",
+      "name": "user_roles.user_roles_pkey",
+      "fp": "ccb7e044b04f5818b3ca8e15f5e2da86"
+    },
+    {
+      "kind": "index",
+      "name": "user_roles.user_roles_user_id_role_unique",
+      "fp": "0ce579d9eb82e8c36f083e0279fa08ea"
+    },
+    {
+      "kind": "policy",
+      "name": "public.matrix_guided_r2_completion.matrix_guided_r2_completion_admin_read",
+      "fp": "a9133bf58c0b727b438d4c96ac6cb9be"
+    },
+    {
+      "kind": "policy",
+      "name": "public.matrix_guided_r2_completion.matrix_guided_r2_completion_own_read",
+      "fp": "ade482ef69bb2189a4fb99bab8bfc31c"
+    },
+    {
+      "kind": "policy",
+      "name": "public.matrix_guided_r2_entries.matrix_guided_r2_entries_admin_read",
+      "fp": "a9133bf58c0b727b438d4c96ac6cb9be"
+    },
+    {
+      "kind": "policy",
+      "name": "public.matrix_guided_r2_entries.matrix_guided_r2_entries_own_read",
+      "fp": "8b15e19d34b4c5d7cc0e8abf01f92272"
+    },
+    {
+      "kind": "policy",
+      "name": "public.matrix_paper_review_questions.matrix_paper_review_questions_select_authenticated",
+      "fp": "5ba439856402399d1a20b484537083af"
+    },
+    {
+      "kind": "policy",
+      "name": "public.matrix_paper_review_response_events.matrix_paper_review_response_events_select_own",
+      "fp": "07a9332683b031cd58b3e262d324ecfc"
+    },
+    {
+      "kind": "policy",
+      "name": "public.matrix_paper_review_response_events.matrix_paper_review_response_events_select_paper_admin",
+      "fp": "e9c371c6ff953c7646dd7ea5da0acb39"
+    },
+    {
+      "kind": "policy",
+      "name": "public.matrix_paper_review_responses.matrix_paper_review_responses_select_own",
+      "fp": "07a9332683b031cd58b3e262d324ecfc"
+    },
+    {
+      "kind": "policy",
+      "name": "public.matrix_paper_review_responses.matrix_paper_review_responses_select_paper_admin",
+      "fp": "e9c371c6ff953c7646dd7ea5da0acb39"
+    },
+    {
+      "kind": "policy",
+      "name": "public.user_roles.Admins can manage roles",
+      "fp": "b6105f6d9d5df3e36ea526c2198ce2c4"
+    },
+    {
+      "kind": "policy",
+      "name": "public.user_roles.Admins can read all roles",
+      "fp": "7f08ee8dfd80240a2510f58f3230de64"
+    },
+    {
+      "kind": "policy",
+      "name": "public.user_roles.Allow system function inserts",
+      "fp": "8ac2eaee9353a1a44ffda65400f43ff1"
+    },
+    {
+      "kind": "policy",
+      "name": "public.user_roles.Users can read own role",
+      "fp": "f41dd539bc7b1fe100563e714847a182"
+    },
+    {
+      "kind": "policy",
+      "name": "storage.objects.matrix_paper_r2_select_authenticated_exact",
+      "fp": "cb0c3c8cd87abd743aac04dbac32bad4"
+    },
+    {
+      "kind": "role",
+      "name": "matrix_map_owner",
+      "fp": "6ef224c8a70c4f7afb5f8ad679e79734"
+    },
+    {
+      "kind": "table",
+      "name": "matrix_guided_r2_activation",
+      "fp": "4fbc2d4b651fd09ff58eace276f30974"
+    },
+    {
+      "kind": "table",
+      "name": "matrix_guided_r2_completion",
+      "fp": "1bb9c74729575373d51fd1ed1d04c64d"
+    },
+    {
+      "kind": "table",
+      "name": "matrix_guided_r2_entries",
+      "fp": "42b3939387961e230c482244859fca1b"
+    },
+    {
+      "kind": "table",
+      "name": "matrix_guided_r2_events",
+      "fp": "ca0399fe1ccc7820a6675ea9f49451cc"
+    },
+    {
+      "kind": "table",
+      "name": "matrix_guided_r2_targets",
+      "fp": "48bea8e8ee81a319ec2d3ee34ec9f7e9"
+    },
+    {
+      "kind": "table",
+      "name": "matrix_paper_review_questions",
+      "fp": "7a6e4068d6d60a77ddd7a3f6a9c152d2"
+    },
+    {
+      "kind": "table",
+      "name": "matrix_paper_review_response_events",
+      "fp": "0b8e872721c0fc375c143c7e1ce653c9"
+    },
+    {
+      "kind": "table",
+      "name": "matrix_paper_review_responses",
+      "fp": "f4d74e9abd6a8c111e299289855f2d39"
+    },
+    {
+      "kind": "table",
+      "name": "user_roles",
+      "fp": "651c4030d625e6cca26b5585747220be"
+    },
+    {
+      "kind": "trigger",
+      "name": "matrix_guided_r2_entries.matrix_guided_r2_validate_entry_trigger",
+      "fp": "9b166ed051b370df0f6a31cc9c01429a"
+    },
+    {
+      "kind": "trigger",
+      "name": "matrix_guided_r2_events.matrix_guided_r2_events_append_only_trigger",
+      "fp": "fb1a385c584b5250b0cbbee647de8784"
+    },
+    {
+      "kind": "trigger",
+      "name": "matrix_paper_review_response_events.matrix_paper_review_response_events_no_update",
+      "fp": "13c585747cdb839bc18ff7ba981b5882"
+    }
+  ]
+}

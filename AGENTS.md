@@ -152,6 +152,19 @@ Auth model:
 - Client code uses public `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
   only.
 
+## Matrix Guided R2 Review (preserve in place)
+
+Mandatory before ANY change to the Matrix Options Guided R2 review (reviewer page, its
+`/api/matrix-options/paper/guided-r2/**` routes, its Supabase tables/RPCs/policies, the
+administrator Guided R2 view or its CSV export, or the legacy v0.9.91 history): read
+`docs/design/matrix-options/GUIDED_R2_REVIEW_ARCHITECTURE.md` (the authority), the current code,
+the relevant Git history and a comparable working reviewer flow first.
+
+- Content revisions change content and configuration INSIDE the established system. They never
+  authorize rebuilding the page, replacing its storage, bypassing Supabase, disconnecting the
+  admin view or CSV export, or accepting visual similarity as functional parity.
+- Run the parity checks that document lists before claiming a change is complete.
+
 ## Never Rules
 
 - Never write verdict determinations or judgments into policy/verdict data.

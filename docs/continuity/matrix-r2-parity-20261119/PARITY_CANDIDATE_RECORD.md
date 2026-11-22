@@ -1,6 +1,11 @@
 # Matrix R2 parity candidate record - 2026-11-19
 
-Lifecycle: REFERENCE. This is a dated local candidate record. Current lane status is
+Lifecycle: REFERENCE, SUPERSEDED by `docs/MATRIX_OPTIONS_STATUS.md` section 3.6 (2026-11-20): the
+candidate merged in PR #832 and its migration is applied; the "unapplied" wording below is historical.
+The follow-on completion candidate (scope reduction, 2026-11-20) restores product parity and adds a
+disposable local full-stack preview only; production activation and go-live automation are deferred to
+a separate later unit, the activation row remains `false`, and no provider operation is authorized.
+This is a dated local candidate record. Current lane status is
 `docs/MATRIX_OPTIONS_STATUS.md` section 3.6; global project status remains `docs/INDEX.md`.
 
 ## Authority and custody

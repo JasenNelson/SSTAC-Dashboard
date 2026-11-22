@@ -22,8 +22,8 @@ unilaterally here.
 **Baseline verification for sections 1-3.4 and 4-7:** Correction 001 working-tree candidate based on HEAD
 `f609b8ebc4ac3a6732bafb1d5caf409879805017`
 **Baseline verification date:** 2026-08-28. Section 3.5 records its dated v0.9.91 history;
-section 3.6 has its own 2026-11-19 local-candidate verification and is not a claim that the
-earlier baseline sections were reverified on that date.
+section 3.6 carries its own dates (2026-11-20 read-only provider facts; 2026-11-22 candidate and
+preview record) and is not a claim that the earlier baseline sections were reverified then.
 **Supersedes for CURRENT status:** the dated Matrix Options status snapshots listed in section 6.
 
 ---
@@ -523,27 +523,89 @@ Documentation coverage for the M1 candidate follows PLAN-R4 section 10.4's manua
 `.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/m1/docs-r12/DOCS_CHECKLIST_M1.md`. The M2
 checklist is `.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/m2/docs/DOCS_CHECKLIST_M2.md`.
 
-### 3.6 Guided R2 reviewer-to-admin parity candidate (2026-11-19)
+### 3.6 Guided R2 review completion (updated 2026-11-22)
 
-The guided R2 interface and structured persistence are a separate release from the historical
-v0.9.91 review. The owner-approved parity correction is a local candidate in
-`codex/matrix-r2-public-privilege-fix-20261119`. It adds authenticated administrator reads of
-guided entries and completion, a Guided R2 view and structured CSV in the existing admin review
-destination, and reviewer unsaved-draft reload recovery with leave-page protection. The guided
-editor still requires explicit Save and Finish Review. The legacy v0.9.91 admin view, responses,
-filters, route and CSV remain on their existing read-only history path. The admin destination
-opens on legacy v0.9.91 by default; Guided R2 is an explicit tab so an unavailable guided query
-does not displace legacy review. The unapplied migration adds validated auth-user deletion
-cascades for guided entries, completion and events. Soft deletion retains those rows; hard
-deletion removes them. The event guard continues to block updates while permitting FK deletion
-cascades, and API roles retain no direct table DELETE grant.
+Architecture authority (read before ANY change to the Guided R2 page, routes, Supabase objects,
+admin view or CSV): `docs/design/matrix-options/GUIDED_R2_REVIEW_ARCHITECTURE.md`. Content
+revisions change content and configuration inside that system; they never authorize rebuilding
+it, replacing its storage or disconnecting the admin/export paths.
 
-This candidate has not been pushed, applied to Supabase, deployed, or activated. Its local
-reviewer-to-admin fixture uses process memory and loopback only; it is evidence for behavior in
-the candidate, not a production or credential-backed verification. The exact review, gate and
-commit result is recorded in
-`docs/continuity/matrix-r2-parity-20261119/PARITY_CANDIDATE_RECORD.md`.
-The live activation gate remains separate and requires a future approved provider procedure.
+Candidate (recorded 2026-11-22): branch `feat/matrix-r2-guided-completion-20261120`, product
+candidate HEAD `0ec2afe2ab7083d8b739c7985131560972d799e3` (tree
+`ff5c273fc706e4c5fc81b07333b3ef1d97bdc74a`): three commits on base `45f3c080` (`93780ab9` Save all,
+recovery and conflicts; `95733518` full-stack preview tooling; `0ec2afe2` status, handoff and
+archives). The candidate is COMMITTED; Mission Control reports it reviewed and six-gate GREEN
+(those gate logs are not committed). A documentation-only commit for the architecture authority
+follows it on the same branch; its own six gates must run on that tip (pending at the time this
+section was written; results are reported with the commit, not here). NOT pushed, no PR, not merged,
+not deployed, not activated.
+
+Owner preview (2026-11-22): accepted on the non-Docker preview (`PREVIEW ACCEPTED`). Owner
+evidence: the reviewer could type and save comments successfully. Administrator visibility after
+that save was NOT separately owner-confirmed.
+
+Provider state (verified read-only 2026-11-20; not re-verified since):
+- The reviewer-to-admin parity work merged in PR #832 (merge `45f3c080`). Its admission migration
+  is APPLIED to production: the ledger records it as version `20261120060356`, while the repo file
+  is `supabase/migrations/20261118000001_matrix_guided_r2_all_users_write_admission.sql` (same
+  bytes, sha256 `06f55a31...5555`). Do not repair the ledger; anyone using the Supabase CLI against
+  production should expect that version mismatch.
+- Production activation is still `false`; guided entries/completion/events are 0/0/0; legacy
+  v0.9.91 holds 2 responses / 12 events.
+- The completion candidate (branch `feat/matrix-r2-guided-completion-20261120`) removes the
+  `MATRIX_R2_GUIDED_REVIEW_WRITES` route flag. The database activation row is now the single write
+  switch: both write RPCs check it first, and it already covered direct PostgREST callers, which
+  the route flag never did. Removing the flag drops one route-layer defense-in-depth key; the
+  replacement evidence in the candidate is two-sided route tests and the SQL source-guard tests.
+  The direct-RPC and activation-ACL checks of the disposable local full stack were never run end
+  to end (that route is retired, below). Production ACL and RPC verification belongs to the
+  authenticated production smoke and the deferred activation unit (below).
+- Reviewers get "Save all unsaved changes" and "Save all and finish". The queue saves one target at
+  a time, never resends a saved target, waits for `Retry-After` (60 s) on the RPC's 24-events-per-
+  minute limit (or the route rate limiter's 429, normalized to the same outcome) and resumes with
+  only the remaining targets, and stops on any conflict. Each tab keeps its own base revision for
+  every draft, so a stale draft stays a blocked conflict until the reviewer chooses Keep or Use saved.
+  Browser recovery copies are kept per page instance (two tabs never replace or delete each other's
+  copy); a reload adopts the tab's own previous instance first, and long-dead copies are cleaned up
+  only after a bounded age (`src/lib/matrix-options/paper/guided-r2-local-drafts.ts`).
+- The admin destination still opens on legacy v0.9.91; Guided R2 is the `?view=guided` tab.
+- `docs/apply-drafts/MATRIX_GUIDED_R2_PROVIDER_PACKET_2026_11_16.md` (hash-pinned, not edited) still
+  describes the route flag as separately required; that wording is superseded by this section. The
+  Vercel `MATRIX_R2_GUIDED_REVIEW_WRITES` key no longer has any effect; removing it belongs to the
+  deferred activation unit so nobody mistakes it for a kill switch.
+
+Scope (owner-approved scope reduction, 2026-11-20): this candidate restores Guided R2 product parity
+(reviewer and administrator experience, legacy v0.9.91 read-only history) and adds a disposable local
+full-stack preview (tooling retained, but RETIRED as a preview route; below). It contains NO production go-live packet and no activation or canary tooling:
+production activation and go-live automation are deferred to a separate later unit, after merge.
+The production activation row remains `false` (as last verified, above) and no provider operation
+or activation is authorized. Still pending: push, one integrated PR, required CI, owner merge
+approval of the exact head, merge, deployment, the authenticated production persistence smoke, and
+the separate activation unit.
+
+Accepted preview (non-Docker, 2026-11-22): `scripts/matrix-options/run-r2-guided-preview.ps1
+-SourceRoot <R2 source>` (`next dev` on 127.0.0.1:49232, `MATRIX_R2_REVIEW_PREVIEW=1`, dead Supabase
+URL). Reviewer `/r2-guided-fixture` renders the real `R2GuidedReview` over the real paper and
+figures (byte and SHA-256 checked against the release); administrator `/r2-guided-admin-fixture`
+renders the real `GuidedAdminClient`; CSV `/api/matrix-options/paper/preview-r2?admin=csv`. Storage
+is the in-memory preview service (anonymous per-browser sessions, lost when the server stops). It
+proves frontend interaction and the shared admin and CSV components; it does NOT prove sign-in,
+RLS, the SECURITY DEFINER RPCs, activation, admission, private-storage delivery or account
+deletion. Production persistence remains a controlled authenticated smoke after merge and
+deployment and before permanent activation; because writes need the activation row `true`, that
+smoke itself requires a separate owner-approved, bounded enabling of the row under the `CLAUDE.md`
+Supabase write gate (architecture authority, sections 14-15). Nothing here authorizes it.
+
+RETIRED (2026-11-22, Mission Control correction): the Docker-based disposable full-stack preview
+(`scripts/matrix-options/r2-fullstack-preview.ps1` with `r2-fullstack-bootstrap/`,
+`playwright.r2-fullstack.config.ts`, `e2e/matrix-options-paper-r2-fullstack.spec.ts`) is no longer
+an owner preview route and is not required for page operation. Its `up` was never run for this
+candidate (the read-only prerequisite audit stopped on the Docker loopback and engine state); no
+run, port reservation, container or volume was created. The files remain in the repository
+unchanged. The external owner launcher `C:\Users\jasen\.codex\p\matrix-r2-preview.ps1` is retired
+and must not be regenerated or used.
+
+The superseded parity record is `docs/continuity/matrix-r2-parity-20261119/PARITY_CANDIDATE_RECORD.md`.
 
 ---
 

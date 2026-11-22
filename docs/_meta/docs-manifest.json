@@ -3505,7 +3505,20 @@
         "option-c",
         "status"
       ],
-      "notes": "SINGLE current-status entrypoint for the Matrix Options / Matrix Map / Option C lane. Lane-scoped ONLY -- it does not claim global project status, which remains docs/INDEX.md plus facts. Records the Option C and Matrix Options baseline and the dated local Guided R2 parity candidate in section 3.6, including legacy admin default and guided hard-delete cascades; the candidate is not applied, deployed or activated."
+      "notes": "SINGLE current-status entrypoint for the Matrix Options / Matrix Map / Option C lane. Lane-scoped ONLY -- it does not claim global project status, which remains docs/INDEX.md plus facts. Records the Option C and Matrix Options baseline and, in section 3.6, the Guided R2 completion candidate (committed at 0ec2afe2, owner-accepted on the non-Docker preview 2026-11-22 with admin visibility not separately owner-confirmed, Docker full-stack preview route retired); it routes Guided R2 architecture to docs/design/matrix-options/GUIDED_R2_REVIEW_ARCHITECTURE.md. Release state (push, merge, deployment, activation) is recorded with dates only in section 3.6."
+    },
+    {
+      "id": "matrix_options.guided_r2_review_architecture",
+      "path": "docs/design/matrix-options/GUIDED_R2_REVIEW_ARCHITECTURE.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "matrix-options",
+        "phase-2",
+        "review",
+        "design",
+        "supabase"
+      ],
+      "notes": "Architecture authority for the Guided R2 reviewer -> Supabase -> administrator review: routes and components, paper/content binding, save, Save all, conflict, recovery, leave-page and finish behavior, tables/RPCs/RLS/admission/activation boundary, admin view and scoped CSV, legacy v0.9.91 read-only history, account deletion, relationship to the v0.9.91 review and /twg/review. Carries the non-negotiable preserve-in-place maintenance rule, the required pre-change investigation, the required parity checks and the preview evidence boundaries. NOT a status page: live state is docs/MATRIX_OPTIONS_STATUS.md section 3.6."
     },
     {
       "id": "continuity.matrix_r2_parity_candidate_2026_11_19",

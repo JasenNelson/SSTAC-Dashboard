@@ -22,7 +22,8 @@ export default function AdminReviewsClient({ rows, state, initialFilters }: { ro
       </div>
       <AdminFunctionsNav />
       <nav aria-label="Review release" className="my-6 flex gap-5"><Link href="/admin/matrix-options-paper-reviews?view=guided" className="underline">Guided R2</Link><Link href="/admin/matrix-options-paper-reviews?view=legacy" aria-current="page" className="font-semibold underline">Legacy v0.9.91</Link></nav>
-      {body}
+      {/* Explicit ready marker for the legacy panel; error assertions are scoped to it (Next.js renders its own route announcer with role="alert"). */}
+      <section data-testid="legacy-review-panel" data-state={state.kind} aria-label="Legacy v0.9.91 reviews">{body}</section>
     </main>
   );
 }

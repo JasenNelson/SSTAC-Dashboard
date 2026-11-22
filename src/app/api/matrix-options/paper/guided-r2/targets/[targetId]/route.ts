@@ -2,14 +2,13 @@ import { NextRequest } from 'next/server';
 
 import { guidedEntrySchema, guidedR2EntryValid, guidedR2SaveSchema, guidedR2Target } from '@/lib/matrix-options/paper/guided-r2-contract';
 import { getGuidedR2Manifest } from '@/lib/matrix-options/paper/guided-r2-manifest';
-import { guidedAuth, guidedGateResponse, guidedOutcomeStatus, guidedR2Identity, guidedR2UiEnabled, guidedR2WritesEnabled, guidedResponse, guidedReviewerGate, guidedRpcErrorResponse, guidedRpcOutcome, guidedSessionUnchanged } from '@/lib/matrix-options/paper/guided-r2-route';
+import { guidedAuth, guidedGateResponse, guidedOutcomeStatus, guidedR2Identity, guidedR2UiEnabled, guidedResponse, guidedReviewerGate, guidedRpcErrorResponse, guidedRpcOutcome, guidedSessionUnchanged, guidedWriteOutcomeResponse } from '@/lib/matrix-options/paper/guided-r2-route';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ targetId: string }> }) {
   if (!guidedR2UiEnabled()) return guidedGateResponse();
-  if (!guidedR2WritesEnabled()) return guidedResponse({ outcome: 'release_read_only' }, 403);
   if (Number(request.headers.get('content-length') ?? 0) > 80000) return guidedResponse({ outcome: 'too_large' }, 413);
   let raw: unknown;
   try { const body = await request.text(); if (body.length > 80000) return guidedResponse({ outcome: 'too_large' }, 413); raw = JSON.parse(body); } catch { return guidedResponse({ outcome: 'invalid_payload' }, 422); }
@@ -47,5 +46,5 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (!row.success || !guidedR2EntryValid(row.data, user.id, manifest.guidedManifestSha256, manifest.reviewManifestSha256) || row.data.target_kind !== target.kind || row.data.target_id !== target.id) return guidedResponse({ outcome: 'persistence_unavailable' }, 503, rateLimitHeaders);
     return guidedResponse({ outcome: 'ok', guidedManifestSha256: manifest.guidedManifestSha256, reviewManifestSha256: manifest.reviewManifestSha256, row: row.data }, 200, rateLimitHeaders);
   }
-  return guidedResponse({ outcome: result.outcome }, status, rateLimitHeaders);
+  return guidedWriteOutcomeResponse(result.outcome, status, rateLimitHeaders);
 }

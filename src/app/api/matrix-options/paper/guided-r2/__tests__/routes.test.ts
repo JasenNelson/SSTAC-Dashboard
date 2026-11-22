@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextRequest } from 'next/server';
 
@@ -45,7 +48,6 @@ beforeEach(() => {
   process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
   process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'true';
   process.env.MATRIX_R2_GUIDED_REVIEW_UI = 'true';
-  delete process.env.MATRIX_R2_GUIDED_REVIEW_WRITES;
   getUserMock.mockResolvedValue({ data: { user }, error: null });
   fromMock.mockImplementation(tableResult);
   rpcMock.mockImplementation((name: string) => Promise.resolve({ data: name === 'matrix_guided_r2_reviewer_allowed' ? true : name === 'matrix_guided_r2_activation_status' ? false : { outcome: 'release_read_only' }, error: null }));
@@ -94,18 +96,44 @@ describe('guided R2 inactive route boundaries', () => {
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
-  it('blocks target and completion writes at the app flag before an RPC', async () => {
+  it('reports read-only state when activation is false and writable only when activation is true (DB row is the one switch)', async () => {
+    const activation = (enabled: boolean) => rpcMock.mockImplementation((name: string) => Promise.resolve({ data: name === 'matrix_guided_r2_reviewer_allowed' ? true : name === 'matrix_guided_r2_activation_status' ? enabled : null, error: null }));
+    activation(false);
+    expect(await (await stateGet(request(`state?${query}`))).json()).toMatchObject({ mode: 'read-only' });
+    activation(true);
+    expect(await (await stateGet(request(`state?${query}`))).json()).toMatchObject({ mode: 'writable' });
+  });
+
+  it('ignores any leftover MATRIX_R2_GUIDED_REVIEW_WRITES value: only activation decides the mode', async () => {
+    try {
+    for (const stale of ['true', 'false']) {
+      process.env.MATRIX_R2_GUIDED_REVIEW_WRITES = stale;
+      rpcMock.mockImplementation((name: string) => Promise.resolve({ data: name === 'matrix_guided_r2_reviewer_allowed' ? true : name === 'matrix_guided_r2_activation_status' ? stale === 'false' : null, error: null }));
+      // A 'false' env value cannot close an active release, and 'true' cannot open an inactive one.
+      expect(await (await stateGet(request(`state?${query}`))).json()).toMatchObject({ mode: stale === 'false' ? 'writable' : 'read-only' });
+    }
+    } finally { delete process.env.MATRIX_R2_GUIDED_REVIEW_WRITES; }
+  });
+
+  it('sends closed-release writes to the database barrier and maps release_read_only to 403 for both write routes', async () => {
     const saveBody = JSON.stringify({ ...identity, targetKind: 'choice-prompt', expectedRevision: 0, expectedUserId: user.id, draft: { choiceId: 'sound' } });
     const save = await targetPut(request('targets/structure-approach', { method: 'PUT', body: saveBody }), { params: Promise.resolve({ targetId: 'structure-approach' }) });
-    const finish = await completePost(request('complete', { method: 'POST', body: JSON.stringify({ ...identity, expectedUserId: user.id, expectedCompletionRevision: 0, draftSetDigest: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855' }) }));
+    const finish = await completePost(request('complete', { method: 'POST', body: JSON.stringify({ ...identity, expectedUserId: user.id, expectedCompletionRevision: 0, draftSetDigest: emptyDigest }) }));
     expect(save.status).toBe(403);
     expect(finish.status).toBe(403);
-    expect(rpcMock).not.toHaveBeenCalled();
-    expect(authMock).not.toHaveBeenCalled();
+    expect(await save.json()).toEqual({ outcome: 'release_read_only' });
+    expect(await finish.json()).toEqual({ outcome: 'release_read_only' });
+    expect(rpcMock.mock.calls.map(([name]) => name)).toEqual(['matrix_guided_r2_reviewer_allowed', 'matrix_guided_r2_save', 'matrix_guided_r2_reviewer_allowed', 'matrix_guided_r2_complete']);
+  });
+
+  it('no guided route or helper reads the removed WRITES flag', () => {
+    const root = path.resolve(__dirname, '..');
+    const files = ['state/route.ts', 'targets/[targetId]/route.ts', 'complete/route.ts', 'feedback/route.ts', 'export/route.ts'].map((file) => path.join(root, file));
+    files.push(path.resolve(root, '../../../../../lib/matrix-options/paper/guided-r2-route.ts'));
+    for (const file of files) expect(readFileSync(file, 'utf8')).not.toMatch(/process\.env\.MATRIX_R2_GUIDED_REVIEW_WRITES/);
   });
 
   it('validates local write inputs before auth or admission for both routes', async () => {
-    process.env.MATRIX_R2_GUIDED_REVIEW_WRITES = 'true';
     const save = (body: string) => targetPut(request('targets/structure-approach', { method: 'PUT', body }), { params: Promise.resolve({ targetId: 'structure-approach' }) });
     const complete = (body: string) => completePost(request('complete', { method: 'POST', body }));
     const validSave = { ...identity, targetKind: 'choice-prompt', expectedRevision: 0, expectedUserId: user.id, draft: { choiceId: 'sound' } };
@@ -126,8 +154,7 @@ describe('guided R2 inactive route boundaries', () => {
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
-  it('maps the inactive database barrier to 403 when the app flag is on', async () => {
-    process.env.MATRIX_R2_GUIDED_REVIEW_WRITES = 'true';
+  it('maps the inactive database barrier to 403', async () => {
     const save = await targetPut(request('targets/structure-approach', { method: 'PUT', body: JSON.stringify({ ...identity, targetKind: 'choice-prompt', expectedRevision: 0, expectedUserId: user.id, draft: { choiceId: 'sound' } }) }), { params: Promise.resolve({ targetId: 'structure-approach' }) });
     expect(save.status).toBe(403);
     expect(await save.json()).toEqual({ outcome: 'release_read_only' });
@@ -144,8 +171,7 @@ describe('guided R2 inactive route boundaries', () => {
     expect(fromMock).not.toHaveBeenCalled();
   });
 
-  it('denies nonallowlisted writes before the write RPC when the app flag is on', async () => {
-    process.env.MATRIX_R2_GUIDED_REVIEW_WRITES = 'true';
+  it('denies nonallowlisted writes before the write RPC', async () => {
     rpcMock.mockResolvedValue({ data: false, error: null });
     const save = await targetPut(request('targets/structure-approach', { method: 'PUT', body: JSON.stringify({ ...identity, targetKind: 'choice-prompt', expectedRevision: 0, expectedUserId: user.id, draft: { choiceId: 'sound' } }) }), { params: Promise.resolve({ targetId: 'structure-approach' }) });
     const finish = await completePost(request('complete', { method: 'POST', body: JSON.stringify({ ...identity, expectedUserId: user.id, expectedCompletionRevision: 0, draftSetDigest: emptyDigest }) }));
@@ -164,27 +190,30 @@ describe('guided R2 inactive route boundaries', () => {
   });
 
   it('validates the returned own row on successful typed save and maps conflict and rate outcomes', async () => {
-    process.env.MATRIX_R2_GUIDED_REVIEW_WRITES = 'true';
     const makeSave = () => targetPut(request('targets/structure-approach', { method: 'PUT', body: JSON.stringify({ ...identity, targetKind: 'choice-prompt', expectedRevision: 0, expectedUserId: user.id, draft: { choiceId: 'sound' } }) }), { params: Promise.resolve({ targetId: 'structure-approach' }) });
     mockWriteOutcomes({ outcome: 'ok', row: savedRow }, { outcome: 'stale_revision' }, { outcome: 'rate_limited' }, { outcome: 'ok', row: { ...savedRow, user_id: '22222222-2222-4222-8222-222222222222' } });
     expect((await makeSave()).status).toBe(200);
-    expect((await makeSave()).status).toBe(409);
-    expect((await makeSave()).status).toBe(429);
+    const conflict = await makeSave();
+    expect(conflict.status).toBe(409);
+    expect(conflict.headers.get('retry-after')).toBeNull();
+    const limited = await makeSave();
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('retry-after')).toBe('60');
     expect((await makeSave()).status).toBe(503);
   });
 
   it('validates completion and maps noop, stale digest, and rate outcomes', async () => {
-    process.env.MATRIX_R2_GUIDED_REVIEW_WRITES = 'true';
     const makeComplete = () => completePost(request('complete', { method: 'POST', body: JSON.stringify({ ...identity, expectedUserId: user.id, expectedCompletionRevision: 0, draftSetDigest: emptyDigest }) }));
     mockWriteOutcomes({ outcome: 'ok', completion: completionRow, entries: [] }, { outcome: 'noop_already_completed', completion: completionRow, entries: [] }, { outcome: 'draft_set_changed' }, { outcome: 'rate_limited' });
     expect((await makeComplete()).status).toBe(200);
     expect((await makeComplete()).status).toBe(200);
     expect((await makeComplete()).status).toBe(409);
-    expect((await makeComplete()).status).toBe(429);
+    const limited = await makeComplete();
+    expect(limited.status).toBe(429);
+    expect(limited.headers.get('retry-after')).toBe('60');
   });
 
   it('rejects a foreign user and an invalid choice before the write RPC', async () => {
-    process.env.MATRIX_R2_GUIDED_REVIEW_WRITES = 'true';
     const foreign = await targetPut(request('targets/structure-approach', { method: 'PUT', body: JSON.stringify({ ...identity, targetKind: 'choice-prompt', expectedRevision: 0, expectedUserId: '22222222-2222-4222-8222-222222222222', draft: { choiceId: 'sound' } }) }), { params: Promise.resolve({ targetId: 'structure-approach' }) });
     const invalid = await targetPut(request('targets/structure-approach', { method: 'PUT', body: JSON.stringify({ ...identity, targetKind: 'choice-prompt', expectedRevision: 0, expectedUserId: user.id, draft: { choiceId: 'invented' } }) }), { params: Promise.resolve({ targetId: 'structure-approach' }) });
     expect(foreign.status).toBe(409);

@@ -34,7 +34,7 @@ test.describe('guided R2 admission canary scaffold', () => {
     await page.goto('/matrix-options/paper/publication/v/phase2-review-2026-11-fa356b89');
     await expect(page.getByRole('heading', { name: 'Phase 2 review draft' })).toBeVisible();
     await expect(page.getByText(/Feedback is optional, linked to your account/).first()).toBeVisible();
-    await expect(page.getByText('Review responses are currently read-only. The paper remains available.')).toBeVisible();
+    await expect(page.getByText('Review responses are not open right now. The paper remains readable.')).toBeVisible();
     await page.getByRole('button', { name: 'My Review' }).click();
     await expect(page.getByText(/Soft deletion retains them until permanent deletion/).last()).toBeVisible();
   });

@@ -110,6 +110,13 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
   what is actually built and deployed; use the dated snapshots below only as historical claim lists.
   Lane-scoped only -- it does not claim global project status, which stays in this index and the
   manifest `facts`.
+- `docs/design/matrix-options/GUIDED_R2_REVIEW_ARCHITECTURE.md` - AUTHORITATIVE architecture of the
+  Guided R2 reviewer -> Supabase -> administrator review (routes, content binding, save/recovery/
+  conflict/finish behavior, tables/RPCs/RLS/activation boundary, admin view and CSV, legacy v0.9.91
+  history, deletion). Read it before ANY change to that page, its routes, SQL, admin view or export:
+  content revisions change content inside the system and never authorize rebuilding it. Required
+  parity checks and preview evidence boundaries are in it. Not a status page; status is section 3.6
+  of `docs/MATRIX_OPTIONS_STATUS.md`, session anchor `FRESH_SESSION_HANDOFF_2026_11_20_MATRIX_R2_GUIDED.md`.
 - `docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md` - preserved historical
   completion record for the PR #791 frontend enablement event supporting Phase 2/L2. Its
   Methodology-restoration claims describe the 2026-08-23 merge state, not the current view registry.
