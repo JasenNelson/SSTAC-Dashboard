@@ -102,6 +102,38 @@ it('restores desktop panel widths, keyboard resize, reset, collapse and focus re
   expect(window.localStorage.getItem('mtwg-paper-panel-widths-v1')).toBeNull();
 });
 
+it('spans the available desktop width with no fixed outer cap while keeping the width controls', async () => {
+  window.localStorage.setItem('mtwg-paper-panel-widths-v1', JSON.stringify({ left: 300, right: 450 }));
+  fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
+  const { container } = render(<R2GuidedReview {...props} />);
+  await screen.findByText('Review responses are not open right now. The paper remains readable.');
+  const layout = screen.getByTestId('r2-workspace-layout');
+  const toolbar = screen.getByTestId('r2-workspace-toolbar');
+  const headerContent = screen.getByRole('heading', { level: 1, name: 'Phase 2 review draft' }).parentElement!;
+  // No fixed outer cap and no centring on the header, toolbar or three-panel workspace.
+  for (const element of [layout, toolbar, headerContent]) {
+    expect(element.className).not.toMatch(/(^|\s)(lg:|xl:|2xl:)?max-w-/);
+    expect(element.className).not.toMatch(/(^|\s)mx-auto(\s|$)/);
+  }
+  expect(container.innerHTML).not.toContain('max-w-[1600px]');
+  // Modest gutter as a margin (the panel math measures the border box) that is zero until the
+  // container passes the former 1600px cap, so no smaller container loses width.
+  const gutter = 'lg:mx-[clamp(0px,calc((100%_-_1600px)/2),1rem)]';
+  const layoutClasses = layout.className.split(/\s+/);
+  expect(layoutClasses).toContain(gutter);
+  expect(layoutClasses.filter((name) => /(^|:)-?m[xytblrse]?-/.test(name))).toEqual([gutter]);
+  expect(layout.className).not.toMatch(/(^|\s)([a-z0-9[\]-]+:)?px-/);
+  // Width controls remain: resize, collapse, reset and reader width.
+  expect(screen.getByRole('separator', { name: 'Resize navigation panel' })).toBeInTheDocument();
+  expect(screen.getByRole('separator', { name: 'Resize review panel' })).toBeInTheDocument();
+  expect(within(toolbar).getByTestId('r2-navigation-toggle')).toHaveAttribute('aria-expanded', 'true');
+  expect(within(toolbar).getByTestId('r2-review-toggle')).toHaveAttribute('aria-expanded', 'true');
+  expect(within(toolbar).getByRole('button', { name: 'Reset panel widths' })).toBeInTheDocument();
+  expect(screen.getByRole('radio', { name: 'Comfortable' })).toBeInTheDocument();
+  expect(screen.getByRole('radio', { name: 'Wide' })).toBeInTheDocument();
+  expect(screen.getByTestId('r2-reading-frame').className).toContain('paper-reading-frame');
+});
+
 it('restores fluid Comfortable/Wide reader preference without enabling writes', async () => {
   fetchMock.mockImplementation((url: string) => Promise.resolve(new Response(JSON.stringify(url.includes('/state?') ? stateResponse() : feedbackResponse()))));
   render(<R2GuidedReview {...props} />);
